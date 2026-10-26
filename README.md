@@ -12,24 +12,27 @@ Bu aşamada proje, doğrudan Vercel üzerinde hızlı ve sorunsuz yayınlanabile
 
 ```
 Insta_Deployment/
-├── index.html       # Ana dashboard arayüzü
+├── index.html       # Ana dashboard arayüzü (Kök dizinde)
 ├── style.css        # Vercel Dark UI arayüz stilleri
-├── app.js           # Etkileşimli dağıtım ve panel kontrol mantığı
-├── vercel.json      # Vercel statik dağıtım yapılandırması
+├── app.js           # Etkileşimli prototip mantığı (Saf JS)
+├── vercel.json      # Vercel statik dağıtım yapılandırması ("framework": null)
 ├── .gitignore       # Gereksiz dosyaların filtrelenmesi
 └── README.md        # Dokümantasyon
 ```
 
 ---
 
-## 🌐 Vercel Dağıtım Yapılandırması (Önemli)
+## 🌐 Vercel Dağıtım Yapılandırması (Önemli Ayarlar)
 
-Vercel üzerinde **`The specified Root Directory "backend" does not exist`** hatası almamak için:
+Vercel üzerinde **`[PYTHON_ENTRYPOINT_NOT_FOUND]`** veya dizin hatası almamak için:
 
 1. [Vercel Dashboard](https://vercel.com) üzerinden projenize gidin.
 2. **Settings** ➜ **General** sekmesini açın.
-3. **Root Directory** alanını kontrol edin:
-   - Eğer burada `backend` yazıyorsa **Edit** butonuna tıklayın.
-   - Değeri temizleyip **`./`** (depo kök dizini) olarak ayarlayın veya boş bırakın.
-   - **Save** butonuna tıklayın.
-4. **Deployments** sekmesine gidip en son dağıtımı yeniden başlatın (**Redeploy**).
+3. **Framework Preset** ayarını kontrol edin:
+   - Eğer `Python` veya `Flask` seçiliyse, bunu **`Other`** olarak değiştirin.
+4. **Root Directory** ayarını kontrol edin:
+   - Değerin **`./`** (veya boş) olduğundan emin olun.
+5. **Build & Development Settings** alanında:
+   - Build Command ve Output Directory alanlarının Override edilmediğinden (varsayılan statik olduğundan) emin olun.
+6. **Save** butonuna tıklayın.
+7. **Deployments** sekmesinden en son commit (`main`) için **Redeploy** başlatın.
