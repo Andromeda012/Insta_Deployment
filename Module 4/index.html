@@ -351,6 +351,7 @@
       <button class="btn btn-white admin-only" onclick="openUsersModal()">👥 Kullanıcılar & Şifre</button>
       <button class="btn btn-white" onclick="openCloudModal()" title="Bulut Veritabanı & Senkronizasyon">☁️ Bulut</button>
       <button class="btn btn-white staff-visible" onclick="exportBackup()" title="Yedek İndir">💾 Yedek</button>
+      <button class="btn btn-white" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">⛶ Tam Ekran</button>
     </div>
   </header>
 
@@ -2808,7 +2809,14 @@ function renderTable(container) {
         })
         .catch(() => {});
     }
-  }, 15000);</script>
+  }, 15000);
+
+  function toggleParentFullscreen() {
+    if (window.parent && typeof window.parent.toggleInAppFullscreen === 'function') {
+      window.parent.toggleInAppFullscreen();
+    }
+  }
+  </script>
   <!-- MODAL: GÖRSEL BÜYÜTÜCÜ / ÇİZİM & FİŞ İNCELEME -->
   <div id="imageViewerModal" class="modal-overlay" style="display:none;">
     <div class="modal-card" style="max-width:850px; background:#0b1f4b; color:#fff;">

@@ -54,6 +54,7 @@ function renderCurrentView() {
 
     const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'production';
     contentContainer.classList.toggle('full-bleed-module', isEmbeddedModule);
+    document.body.classList.toggle('module-immersive-view', isEmbeddedModule);
 
     switch (state.currentRoute) {
         case 'dashboard':
@@ -409,6 +410,25 @@ export function reloadModuleFrame(frameId) {
     }
 }
 
+// In-App Fullscreen Controller (Expands module to 100% inside the platform without opening a new tab)
+export function toggleInAppFullscreen(forceState) {
+    const isNowFullscreen = typeof forceState === 'boolean'
+        ? document.body.classList.toggle('in-app-fullscreen', forceState)
+        : document.body.classList.toggle('in-app-fullscreen');
+
+    // Sync button labels inside embedded module frames if present
+    ['module1-frame', 'module4-frame'].forEach(id => {
+        const frame = document.getElementById(id);
+        const doc = frame?.contentDocument || frame?.contentWindow?.document;
+        const btn = doc?.getElementById('inAppFsBtn');
+        if (btn) {
+            btn.innerHTML = isNowFullscreen ? '✕ Normal Görünüm' : '⛶ Tam Ekran';
+        }
+    });
+
+    return isNowFullscreen;
+}
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     // Expose helpers globally to window for inline template handlers
@@ -432,6 +452,14 @@ document.addEventListener('DOMContentLoaded', () => {
     window.openModule4Modal = openModule4Modal;
     window.syncModule4Cloud = syncModule4Cloud;
     window.reloadModuleFrame = reloadModuleFrame;
+    window.toggleInAppFullscreen = toggleInAppFullscreen;
+
+    // Allow Escape key to exit in-app fullscreen
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.body.classList.contains('in-app-fullscreen')) {
+            toggleInAppFullscreen(false);
+        }
+    });
 
     // Sidebar navigation clicks
     document.querySelectorAll('.nav-item').forEach(item => {

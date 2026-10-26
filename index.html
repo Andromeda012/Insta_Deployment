@@ -110,6 +110,11 @@
                         </select>
                     </div>
 
+                    <!-- In-App Fullscreen Toggle -->
+                    <button class="icon-btn" id="topbar-fullscreen-btn" onclick="window.toggleInAppFullscreen()" title="Site İçi Tam Ekran Modu">
+                        ⛶
+                    </button>
+
                     <!-- Notification Button -->
                     <button class="icon-btn" onclick="window.showToast('4 yeni operasyon bildirimi mevcut')" title="Bildirimler">
                         🔔
@@ -143,6 +148,11 @@
             </div>
         </div>
     </div>
+
+    <!-- In-App Fullscreen Floating Exit Pill -->
+    <button class="in-app-fs-exit-btn" id="in-app-fs-exit-btn" onclick="window.toggleInAppFullscreen()">
+        <span>✕</span> Tam Ekrandan Çık (Sol Menüyü Göster)
+    </button>
 
     <!-- Notification Toast -->
     <div id="toast" class="toast"></div>

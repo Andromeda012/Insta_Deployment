@@ -717,6 +717,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <button class="btn-header btn-header-outline" onclick="openTokenModal()">
       ⚙️ API & Depo Ayarları
     </button>
+    <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
+      ⛶ Tam Ekran
+    </button>
     <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-header">
       🌐 Canlı Siteyi Aç ↗
     </a>
@@ -4330,6 +4333,12 @@ function selectRepoFromDropdown(fullName) {
   const parts = fullName.split('/');
   document.getElementById('repoOwnerInput').value = parts[0];
   document.getElementById('repoNameInput').value = parts[1];
+}
+
+function toggleParentFullscreen() {
+  if (window.parent && typeof window.parent.toggleInAppFullscreen === 'function') {
+    window.parent.toggleInAppFullscreen();
+  }
 }
 </script>
 
