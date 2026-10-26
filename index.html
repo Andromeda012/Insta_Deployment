@@ -3,131 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Insta Deployment - Vercel Cloud Dashboard</title>
+    <title>Global Mobilya — Modüler Operasyon Yönetim Platformu</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="logo-area">
-                <div class="logo-icon">▲</div>
-                <div class="logo-text">
-                    <h2>InstaDeploy</h2>
-                    <span class="badge">Vercel Ready</span>
+    <div class="app-layout">
+        <!-- Persistent Left Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-logo">
+                    <span class="logo-mark">GM</span>
+                </div>
+                <div class="brand-text">
+                    <h2>Global Mobilya</h2>
+                    <span class="brand-tag">Operasyon v0.1</span>
                 </div>
             </div>
 
+            <div class="nav-section-title">ANA PLATFORM</div>
             <nav class="nav-menu">
-                <a href="#overview" class="nav-item active">
-                    <span class="icon">📊</span> Genel Bakış
-                </a>
-                <a href="#deployments" class="nav-item">
-                    <span class="icon">🚀</span> Dağıtımlar
-                </a>
-                <a href="#api" class="nav-item">
-                    <span class="icon">⚡</span> Serverless API
-                </a>
-                <a href="#logs" class="nav-item">
-                    <span class="icon">📜</span> Canlı Loglar
+                <a href="#dashboard" class="nav-item active" data-route="dashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Genel Bakış (Dashboard)</span>
                 </a>
             </nav>
 
+            <div class="nav-section-title">İŞLETME MODÜLLERİ (6)</div>
+            <nav class="nav-menu">
+                <a href="#website" class="nav-item" data-route="website">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-label">1. Web Sitesi Yönetimi</span>
+                </a>
+                <a href="#social" class="nav-item" data-route="social">
+                    <span class="nav-icon">🤖</span>
+                    <span class="nav-label">2. Sosyal Medya & Bot</span>
+                </a>
+                <a href="#crm" class="nav-item" data-route="crm">
+                    <span class="nav-icon">👥</span>
+                    <span class="nav-label">3. CRM & Satış Hunisi</span>
+                </a>
+                <a href="#production" class="nav-item" data-route="production">
+                    <span class="nav-icon">🏭</span>
+                    <span class="nav-label">4. Üretim & Fabrika</span>
+                </a>
+                <a href="#operations" class="nav-item" data-route="operations">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-label">5. Altyapı & Operasyon</span>
+                </a>
+                <a href="#analytics" class="nav-item" data-route="analytics">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-label">6. Performans Analitiği</span>
+                </a>
+            </nav>
+
+            <div class="nav-section-title">PLATFORM YÖNETİMİ</div>
+            <nav class="nav-menu">
+                <a href="#permissions" class="nav-item" data-route="permissions">
+                    <span class="nav-icon">🔐</span>
+                    <span class="nav-label">Kullanıcı Rolleri & Yetki</span>
+                </a>
+            </nav>
+
+            <!-- Sidebar Footer with Current Simulated Role -->
             <div class="sidebar-footer">
-                <div class="server-status">
-                    <span class="status-indicator online"></span>
-                    <span class="status-text">Platform: <strong>Vercel Edge</strong></span>
+                <div class="role-badge-box">
+                    <span class="role-label">Aktif Rol (Prototip):</span>
+                    <span class="badge badge-accent" id="active-role-badge">Admin</span>
+                </div>
+                <div class="user-profile-preview">
+                    <div class="avatar">GM</div>
+                    <div class="profile-info">
+                        <strong>Global Mobilya IT</strong>
+                        <small>operasyon@globalmobilya.com.tr</small>
+                    </div>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <main class="main-content">
+        <!-- Main Body Wrapper -->
+        <div class="main-wrapper">
+            <!-- Top Header -->
             <header class="topbar">
-                <div class="page-title">
-                    <h1>Deployment & Cloud Dashboard</h1>
-                    <p>Instagram Otomasyon ve Dağıtım Yönetim Paneli (Frontend Prototipi)</p>
+                <div class="topbar-left">
+                    <button class="mobile-toggle-btn" id="mobile-sidebar-toggle" aria-label="Menüyü Aç/Kapat">
+                        ☰
+                    </button>
+                    <div class="global-search-wrap">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="global-search-input" placeholder="Ürün, sipariş, iş emri veya müşteri ara... (Enter)">
+                    </div>
                 </div>
-                <div class="topbar-actions">
-                    <button class="btn btn-secondary" id="refresh-btn">🔄 Yenile</button>
-                    <button class="btn btn-primary" id="deploy-btn">🚀 Yeni Dağıtım Tetikle</button>
+
+                <div class="topbar-right">
+                    <!-- Prototype Role Switcher Dropdown -->
+                    <div class="role-switcher-wrap">
+                        <label for="role-select-header" class="role-select-label">Rol Simülasyonu:</label>
+                        <select id="role-select-header" class="form-select-sm">
+                            <option value="admin">Sistem Yöneticisi</option>
+                            <option value="management">Şirket Yönetimi</option>
+                            <option value="sales">Satış & Pazarlama</option>
+                            <option value="production">Üretim Sorumlusu</option>
+                            <option value="infrastructure">Altyapı Operatörü</option>
+                        </select>
+                    </div>
+
+                    <!-- Notification Button -->
+                    <button class="icon-btn" onclick="window.showToast('4 yeni operasyon bildirimi mevcut')" title="Bildirimler">
+                        🔔
+                        <span class="notif-badge">4</span>
+                    </button>
+
+                    <!-- Deployment / Vercel Status Badge -->
+                    <div class="edge-status-pill" title="Vercel Edge Global Deployment">
+                        <span class="status-dot online"></span>
+                        <span>Vercel Edge v0.1</span>
+                    </div>
                 </div>
             </header>
 
-            <!-- Metrics Cards -->
-            <section class="metrics-grid">
-                <div class="card metric-card">
-                    <div class="metric-header">
-                        <span class="metric-title">Cloud Durumu</span>
-                        <span class="metric-icon">🟢</span>
-                    </div>
-                    <div class="metric-value" id="status-val">Aktif</div>
-                    <div class="metric-meta text-success" id="uptime-val">99.99% Uptime</div>
-                </div>
-
-                <div class="card metric-card">
-                    <div class="metric-header">
-                        <span class="metric-title">Çalışma Modu</span>
-                        <span class="metric-icon">▲</span>
-                    </div>
-                    <div class="metric-value">Serverless</div>
-                    <div class="metric-meta text-primary">Vercel Python 3.12 Runtime</div>
-                </div>
-
-                <div class="card metric-card">
-                    <div class="metric-header">
-                        <span class="metric-title">Toplam Dağıtım</span>
-                        <span class="metric-icon">📈</span>
-                    </div>
-                    <div class="metric-value" id="deploy-count">2</div>
-                    <div class="metric-meta text-primary">main dalı ile senkronize</div>
-                </div>
-
-                <div class="card metric-card">
-                    <div class="metric-header">
-                        <span class="metric-title">Ortalama Yanıt</span>
-                        <span class="metric-icon">⚡</span>
-                    </div>
-                    <div class="metric-value" id="latency-val">28 ms</div>
-                    <div class="metric-meta text-success">Global Edge Network</div>
-                </div>
-            </section>
-
-            <!-- Content Split -->
-            <section class="content-split">
-                <!-- Deployment List -->
-                <div class="card panel">
-                    <div class="panel-header">
-                        <h3>Dağıtım Geçmişi</h3>
-                        <span class="tag">Canlı API</span>
-                    </div>
-                    <div class="deployment-list" id="deployment-list">
-                        <!-- Populated by JavaScript -->
-                    </div>
-                </div>
-
-                <!-- Logs Window -->
-                <div class="card panel">
-                    <div class="panel-header">
-                        <h3>Vercel Serverless Logları</h3>
-                        <button class="btn-clear" id="clear-logs">Temizle</button>
-                    </div>
-                    <div class="terminal-window" id="terminal-logs">
-                        <div class="log-line info">[VERCEL] Build optimize edildi: @vercel/python</div>
-                        <div class="log-line success">[ROUTER] /api/(.*) -> api/index.py yönlendirildi.</div>
-                        <div class="log-line success">[STATIC] / -> public/index.html Vercel Edge üzerinde hazır.</div>
-                        <div class="log-line info">[READY] API hazır ve istekleri dinliyor.</div>
-                    </div>
-                </div>
-            </section>
-        </main>
+            <!-- Content Area (Dynamically rendered by router) -->
+            <main class="main-content" id="main-content-view">
+                <!-- Content injected by app.js -->
+            </main>
+        </div>
     </div>
 
+    <!-- Modal / Detail Drawer Overlay -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modal-title">Detay Kartı</h3>
+                <button class="modal-close" id="modal-close-btn">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <!-- Injected content -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
     <div id="toast" class="toast"></div>
 
-    <script src="app.js"></script>
+    <!-- Application Main Script -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
