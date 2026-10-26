@@ -12,9 +12,10 @@ export function renderWebsiteModule(data) {
                     <span class="embed-module-badge">🌐 MODÜL 1</span>
                     <strong class="embed-module-title">Web Sitesi Yönetim Merkezi (Canlı CMS)</strong>
                     <div class="embed-quick-tabs">
+                        <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-analytics')">📊 İstatistikler & Durum</button>
                         <button class="embed-tab-chip active" onclick="window.controlModule1Tab(this, 'tab-products')">🛒 Ürünler</button>
                         <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-company')">🏢 Firma & İletişim</button>
-                        <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-home')">🏠 Ana Sayfa</button>
+                        <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-home')">🏠 Ana Sayfa & Video</button>
                         <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-gallery')">🖼️ Galeri</button>
                         <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-blog')">📝 Blog</button>
                         <button class="embed-tab-chip" onclick="window.controlModule1Tab(this, 'tab-suppliers')">🤝 Tedarikçiler</button>
