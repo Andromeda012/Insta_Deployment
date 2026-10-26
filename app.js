@@ -1,10 +1,28 @@
 document.addEventListener('DOMContentLoaded', () => {
     const deployBtn = document.getElementById('deploy-btn');
+    const refreshBtn = document.getElementById('refresh-btn');
     const clearLogsBtn = document.getElementById('clear-logs');
     const terminalLogs = document.getElementById('terminal-logs');
     const deploymentList = document.getElementById('deployment-list');
     const deployCount = document.getElementById('deploy-count');
     const toast = document.getElementById('toast');
+
+    let count = 2;
+
+    const initialDeployments = [
+        {
+            title: "Frontend Prototip - Vercel Yayını",
+            branch: "main",
+            author: "Andromeda012",
+            timestamp: "Az önce"
+        },
+        {
+            title: "Yönetim Paneli Arayüz Kurulumu",
+            branch: "main",
+            author: "Andromeda012",
+            timestamp: "Dün"
+        }
+    ];
 
     function showToast(message) {
         toast.textContent = message;
@@ -21,38 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
         line.textContent = `[${time}] ${text}`;
         terminalLogs.appendChild(line);
         terminalLogs.scrollTop = terminalLogs.scrollHeight;
-    }
-
-    // Fetch initial deployments from API or fallback
-    async function loadDeployments() {
-        try {
-            const res = await fetch('/api/deployments');
-            if (res.ok) {
-                const data = await res.json();
-                renderDeployments(data.deployments);
-                deployCount.textContent = data.count;
-                addLog('Vercel Serverless API verileri basariyla yuklendi.', 'success');
-                return;
-            }
-        } catch (e) {
-            // Local offline fallback
-        }
-
-        // Default items if running without API
-        renderDeployments([
-            {
-                title: "Vercel Serverless Architecture Migration",
-                branch: "main",
-                author: "Andromeda012",
-                timestamp: "Az once"
-            },
-            {
-                title: "Release v1.0.0 - Production Launch",
-                branch: "main",
-                author: "Andromeda012",
-                timestamp: "Dün"
-            }
-        ]);
     }
 
     function renderDeployments(items) {
@@ -72,64 +58,54 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    deployBtn.addEventListener('click', async () => {
+    deployBtn.addEventListener('click', () => {
         deployBtn.disabled = true;
         deployBtn.innerHTML = '⏳ Dağıtılıyor...';
 
-        addLog('Yeni Vercel Edge dagitimi tetiklendi...', 'info');
+        addLog('Yeni prototip dağıtımı tetiklendi...', 'info');
         showToast('🚀 Dağıtım başlatıldı!');
 
         setTimeout(() => {
-            addLog('API Route /api/deploy cagriliyor...', 'info');
-        }, 500);
-
-        try {
-            const res = await fetch('/api/deploy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    title: `Vercel Cloud Deployment #${parseInt(deployCount.textContent || 0) + 1}`,
-                    branch: 'main'
-                })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                addLog(`[201 CREATED] ${data.message}`, 'success');
-            } else {
-                addLog('Sunucu yaniti alindi (Vercel Edge Simule Edildi)', 'success');
-            }
-        } catch (err) {
-            addLog('Yerel onizleme modunda basariyla simule edildi.', 'success');
-        }
+            addLog('Modüler bileşenler ve statik varlıklar optimize ediliyor...', 'info');
+        }, 600);
 
         setTimeout(() => {
-            const newCount = parseInt(deployCount.textContent || 0) + 1;
-            deployCount.textContent = newCount;
+            addLog('Vercel Global Edge Network ile senkronize edildi.', 'success');
+            count++;
+            deployCount.textContent = count;
 
             const div = document.createElement('div');
             div.className = 'deployment-item';
             div.innerHTML = `
                 <div class="dep-icon">▲</div>
                 <div class="dep-info">
-                    <strong>Vercel Cloud Deployment #${newCount}</strong>
+                    <strong>Yönetim Paneli Dağıtımı #${count}</strong>
                     <span>main • Andromeda012 • Şimdi</span>
                 </div>
                 <span class="badge-status success">Canlıda</span>
             `;
             deploymentList.insertBefore(div, deploymentList.firstChild);
 
-            addLog('✅ Vercel Edge Function ve statik varliklar yayina alindi.', 'success');
+            addLog('✅ Dağıtım tamamlandı! Prototip güncel.', 'success');
             deployBtn.disabled = false;
             deployBtn.innerHTML = '🚀 Yeni Dağıtım Tetikle';
-            showToast('✅ Dağıtım tamamlandı!');
+            showToast('✅ Dağıtım başarıyla tamamlandı!');
         }, 1500);
     });
 
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', () => {
+            addLog('Panel metrikleri ve veriler yenilendi.', 'info');
+            showToast('🔄 Veriler güncellendi');
+        });
+    }
+
     clearLogsBtn.addEventListener('click', () => {
         terminalLogs.innerHTML = '';
-        addLog('Log ekrani temizlendi.', 'info');
+        addLog('Log ekranı temizlendi.', 'info');
     });
 
-    loadDeployments();
+    // Başlangıç yüklemesi
+    renderDeployments(initialDeployments);
+    deployCount.textContent = count;
 });
