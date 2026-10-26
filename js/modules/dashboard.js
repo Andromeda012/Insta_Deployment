@@ -69,16 +69,16 @@ export function renderDashboard(data, navigateTo) {
             <div class="card module-card" onclick="window.navigateTo('website')">
                 <div class="module-card-header">
                     <div class="module-icon-wrap" style="background: rgba(59, 130, 246, 0.12); color: #3b82f6;">🌐</div>
-                    <span class="badge badge-success">Yayında</span>
+                    <span class="badge badge-success">Canlı CMS Aktif</span>
                 </div>
                 <h3>1. Web Sitesi Yönetimi</h3>
-                <p>Kurumsal portal, dijital mobilya kataloğu, ürün serileri, mimari portfolyo, blog ve gelen web formları.</p>
+                <p>GitHub & Vercel bulut bağlantılı ürün kataloğu, firma ayarları, ana sayfa vitrini, galeri, blog ve tedarikçi yönetim merkezi.</p>
                 <div class="module-stats">
-                    <div class="stat-item"><span>Yayındaki Ürün:</span> <strong>${data.website.status.activeCatalogItems}</strong></div>
-                    <div class="stat-item"><span>Yeni Form:</span> <strong>${data.website.status.pendingForms}</strong></div>
+                    <div class="stat-item"><span>Bağlı Depo:</span> <strong>Global-Mobilya-Web</strong></div>
+                    <div class="stat-item"><span>Modüller:</span> <strong>7 Yönetim Sekmesi</strong></div>
                 </div>
                 <div class="module-footer-link">
-                    Modülü Yönet <span>→</span>
+                    Web Sitesi Yönetim Merkezini Aç <span>→</span>
                 </div>
             </div>
 
@@ -120,16 +120,16 @@ export function renderDashboard(data, navigateTo) {
             <div class="card module-card" onclick="window.navigateTo('production')">
                 <div class="module-card-header">
                     <div class="module-icon-wrap" style="background: rgba(245, 158, 11, 0.12); color: #f59e0b;">🏭</div>
-                    <span class="badge badge-warning">3 Darboğaz</span>
+                    <span class="badge badge-success">Canlı Firebase</span>
                 </div>
                 <h3>4. Üretim & Fabrika Kontrol</h3>
-                <p>İmalat iş emirleri, CNC kesim merkezleri durumu, ahşap kurutma, döşemehane ve kalite kontrol adımları.</p>
+                <p>7 istasyonlu canlı Kanban üretim panosu (Çizim, CNC, Zımpara, Tutkal, Membran, Sevkiyat), QR barkod, TV modu, bakiye ve müşteri takip merkezi.</p>
                 <div class="module-stats">
-                    <div class="stat-item"><span>Aktif İş Emri:</span> <strong>42 Adet</strong></div>
-                    <div class="stat-item"><span>CNC Verimlilik:</span> <strong>${data.globalMetrics.cncEfficiency}</strong></div>
+                    <div class="stat-item"><span>Veritabanı:</span> <strong>7/24 Bulut Senkron</strong></div>
+                    <div class="stat-item"><span>İstasyonlar:</span> <strong>6 + Arşiv & Kiosk</strong></div>
                 </div>
                 <div class="module-footer-link">
-                    Modülü Yönet <span>→</span>
+                    Üretim & Sipariş Takip Merkezini Aç <span>→</span>
                 </div>
             </div>
 

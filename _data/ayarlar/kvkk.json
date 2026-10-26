@@ -1,0 +1,29 @@
+{
+  "hero": {
+    "baslik": "KVKK Aydınlatma Metni",
+    "alt_yazi": "Kişisel verilerinizin işlenmesi hakkında bilgilendirme"
+  },
+  "son_guncellenme": "02 Mayıs 2026",
+  "bolumler": [
+    {
+      "id": "veri-sorumlusu",
+      "baslik": "1. Veri Sorumlusu",
+      "metin": "6698 sayılı Kişisel Verilerin Korunması Kanunu uyarınca, kişisel verileriniz; veri sorumlusu olarak Global Kapak Mobilya tarafından aşağıda açıklanan kapsamda işlenebilecektir."
+    },
+    {
+      "id": "hangi-veriler",
+      "baslik": "2. İşlenen Kişisel Veriler",
+      "metin": "İletişim formu, telefon görüşmesi veya e-posta yoluyla bizimle iletişime geçmeniz halinde aşağıdaki kişisel verileriniz işlenebilir: Kimlik bilgileri (Ad, soyad), İletişim bilgileri (Telefon, e-posta, adres), Müşteri işlem bilgileri (Sipariş, talep, fatura)."
+    },
+    {
+      "id": "amac",
+      "baslik": "3. Verilerin İşlenme Amacı",
+      "metin": "Kişisel verileriniz şu amaçlarla işlenmektedir: Ürün ve hizmetlerimiz hakkında bilgi vermek, Fiyat teklifi sunmak ve sipariş süreçlerini yürütmek, Müşteri memnuniyetini ölçmek, Yasal yükümlülükleri yerine getirmek."
+    },
+    {
+      "id": "haklar",
+      "baslik": "4. KVKK Kapsamındaki Haklarınız",
+      "metin": "KVKK'nın 11. maddesi kapsamında veri sahibi olarak çeşitli haklara sahipsiniz: Kişisel verilerinizin işlenip işlenmediğini öğrenme, İşlenmişse bilgi talep etme, Düzeltme veya silme talep etme."
+    }
+  ]
+}

@@ -1,0 +1,3410 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global Kapak Mobilya — Yönetim Merkezi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="icon" href="/resim/logo.png" type="image/png">
+<style>
+:root {
+  --navy: #0B1F4B;
+  --navy-dark: #06132F;
+  --navy-light: #153476;
+  --gold: #C8A96E;
+  --gold-hover: #b89858;
+  --gold-light: #F4E8D1;
+  --bg-main: #F8FAFC;
+  --bg-card: #FFFFFF;
+  --text-dark: #1E293B;
+  --text-muted: #64748B;
+  --border: #E2E8F0;
+  --border-focus: #C8A96E;
+  --danger: #EF4444;
+  --danger-light: #FEE2E2;
+  --success: #10B981;
+  --success-light: #D1FAE5;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.08);
+  --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg-main);
+  color: var(--text-dark);
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  background: var(--navy);
+  color: #fff;
+  padding: 14px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: var(--shadow-md);
+  border-bottom: 2px solid var(--gold);
+}
+.header-left { display: flex; align-items: center; gap: 16px; }
+.header-logo { height: 40px; border-radius: 4px; background: #fff; padding: 3px; }
+.header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0.5px; color:#fff; }
+.header-title span { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
+
+.header-right { display: flex; align-items: center; gap: 12px; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 6px 14px;
+  border-radius: 50px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; }
+.status-dot.connected { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.8); }
+
+.btn-header {
+  background: var(--gold);
+  color: var(--navy-dark);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.btn-header:hover { background: #fff; color: var(--navy); transform: translateY(-1px); }
+.btn-header-outline {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.25);
+}
+.btn-header-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+
+/* MAIN LAYOUT */
+.main-wrapper {
+  max-width: 1380px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* BANNER */
+.token-banner {
+  background: #EFF6FF;
+  border: 1.5px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: #1E40AF;
+  font-size: 13.5px;
+}
+
+/* NAVIGATION TABS */
+.nav-tabs-bar {
+  display: flex;
+  gap: 6px;
+  background: #fff;
+  padding: 8px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+.nav-tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  font-family: 'Montserrat', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.nav-tab-btn:hover { color: var(--navy); background: #F1F5F9; }
+.nav-tab-btn.active {
+  background: var(--navy);
+  color: #fff;
+}
+.nav-tab-btn.active span.badge {
+  background: var(--gold);
+  color: var(--navy);
+}
+.badge {
+  background: #E2E8F0;
+  color: var(--text-dark);
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+/* CONTENT SECTIONS */
+.tab-section { display: none; }
+.tab-section.active { display: block; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* CARDS & PANELS */
+.admin-card {
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  padding: 24px;
+  margin-bottom: 24px;
+}
+.admin-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 16px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.admin-card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.admin-card-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* FORM ELEMENTS */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 18px;
+}
+.form-group {
+  margin-bottom: 16px;
+}
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--navy);
+  margin-bottom: 6px;
+}
+.form-group label span.req { color: var(--danger); }
+.form-control {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--text-dark);
+  transition: all 0.2s;
+}
+.form-control:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.2);
+}
+textarea.form-control { resize: vertical; min-height: 80px; }
+.form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+/* BUTTONS */
+.btn-primary {
+  background: var(--navy);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.btn-primary:hover { background: var(--navy-light); transform: translateY(-1px); }
+.btn-gold {
+  background: var(--gold);
+  color: var(--navy-dark);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.btn-gold:hover { background: var(--gold-hover); transform: translateY(-1px); }
+.btn-secondary {
+  background: #F1F5F9;
+  color: var(--text-dark);
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 10px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-secondary:hover { background: #E2E8F0; }
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-danger:hover { background: #DC2626; }
+.btn-sm { padding: 7px 14px; font-size: 12px; }
+
+/* DRAG & DROP UPLOAD */
+.upload-zone {
+  border: 2px dashed #CBD5E1;
+  border-radius: var(--radius-md);
+  padding: 24px;
+  text-align: center;
+  background: #F8FAFC;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--gold);
+  background: #FFFDF8;
+}
+.upload-zone svg { width: 36px; height: 36px; stroke: var(--gold); margin-bottom: 8px; }
+.upload-zone h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.upload-zone p { font-size: 12px; color: var(--text-muted); }
+.upload-preview {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+  padding: 10px;
+  background: #fff;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.upload-preview img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+/* CARDS GRID */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.product-card {
+  background: #fff;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--gold);
+}
+.product-card-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  background: #F1F5F9;
+}
+.product-card-body {
+  padding: 16px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.product-card-cat {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--gold);
+  letter-spacing: 0.5px;
+}
+.product-card-title {
+  font-family: 'Montserrat', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 4px 0 8px 0;
+}
+.product-card-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 12px;
+  flex: 1;
+}
+.product-card-actions {
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+/* CHIPS */
+.chip-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  min-height: 42px;
+}
+.chip {
+  background: var(--navy);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.chip-remove {
+  cursor: pointer;
+  color: var(--gold);
+  font-weight: bold;
+}
+.chip-input {
+  border: none;
+  outline: none;
+  font-size: 13px;
+  flex: 1;
+  min-width: 120px;
+  padding: 4px 6px;
+}
+
+/* MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 75, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: auto; }
+.modal-box {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 90%;
+  max-width: 580px;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: #F1F5F9;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--navy);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-lg);
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 3000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { background: #065F46; border-left: 4px solid var(--success); }
+.toast.error { background: #991B1B; border-left: 4px solid var(--danger); }
+.toast.info { background: var(--navy); border-left: 4px solid var(--gold); }
+
+/* SPINNER */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: #fff;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media(max-width:768px) {
+  header { padding: 12px 16px; flex-direction: column; gap: 12px; align-items: flex-start; }
+  .header-right { width: 100%; justify-content: space-between; }
+  .main-wrapper { padding: 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <a href="/index.html"><img src="/resim/logo.png" alt="Logo" class="header-logo"></a>
+    <div class="header-title">
+      <h1>Yönetim Merkezi</h1>
+      <span>GLOBAL KAPAK MOBİLYA</span>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="status-pill" id="statusPill" onclick="openTokenModal()" title="GitHub Bağlantı Durumu (Tıklayıp Düzenleyin)">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">GitHub Bağlantısı Yok</span>
+    </div>
+    <button class="btn-header btn-header-outline" onclick="openTokenModal()">
+      ⚙️ API & Depo Ayarları
+    </button>
+    <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-header">
+      🌐 Canlı Siteyi Aç ↗
+    </a>
+  </div>
+</header>
+
+<div class="main-wrapper">
+
+  <!-- TOKEN NOTIFICATION BANNER -->
+  <div class="token-banner" id="tokenBanner" style="display:none;">
+    <div>
+      <strong>ℹ️ GitHub Token Gerekli:</strong> Panelinizin ürün ve fotoğrafları doğrudan sitenize kaydedebilmesi için lütfen GitHub API Token'ınızı tanımlayın.
+    </div>
+    <button class="btn-gold btn-sm" onclick="openTokenModal()">🔑 Token'ı Şimdi Gir</button>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="nav-tabs-bar">
+    <button class="nav-tab-btn active" onclick="switchMainTab(event, 'tab-products')">
+      🛒 Ürün Yönetimi <span class="badge" id="productCountBadge">0</span>
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-company')">
+      🏢 Firma & İletişim
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-home')">
+      🏠 Ana Sayfa & Vitrin
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-gallery')">
+      🖼️ Galeri Yönetimi <span class="badge" id="galCountBadge">0</span>
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-blog')">
+      📝 Blog & Makaleler <span class="badge" id="blogCountBadge">0</span>
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-suppliers')">
+      🤝 Tedarikçiler <span class="badge" id="supCountBadge">0</span>
+    </button>
+    <button class="nav-tab-btn" onclick="switchMainTab(event, 'tab-guide')">
+      💡 Yardım & Kullanım
+    </button>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: ÜRÜN YÖNETİMİ -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section active" id="tab-products">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary btn-sm" id="btnSubList" onclick="switchProductSubTab('list')">📋 Ürün Listesi</button>
+        <button class="btn-gold btn-sm" id="btnSubAdd" onclick="startNewProduct()">➕ Yeni Ürün Ekle</button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="text" class="form-control" id="productSearchBox" placeholder="🔍 Ürün ara..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="filterProductList()">
+        <select class="form-control" id="productCatFilter" style="width:160px; padding:6px 12px; font-size:13px;" onchange="filterProductList()">
+          <option value="all">Tüm Kategoriler</option>
+          <option value="Düz Membran Kapak">Düz Membran</option>
+          <option value="Çerçeveli">Çerçeveli</option>
+          <option value="Özel Ölçü">Özel Ölçü</option>
+          <option value="Akrilik Kapak">Akrilik Kapak</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="subview-product-list">
+      <div id="productLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
+        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <p style="font-weight:600;">Ürünler yükleniyor...</p>
+      </div>
+      <div class="product-grid" id="productGrid" style="display:none;"></div>
+      <div id="productEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+        <div style="font-size:40px; margin-bottom:12px;">📦</div>
+        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Ürün Eklenmedi</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Sitenizde listelenecek ilk membran kapak modelini ekleyin.</p>
+        <button class="btn-gold" onclick="startNewProduct()">➕ İlk Ürünü Ekle</button>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="subview-product-form" style="display:none;">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="formCardTitle">➕ Yeni Membran Kapak Ürünü Ekle</div>
+            <div class="admin-card-desc">Girdiğiniz bilgiler anında buluta kaydedilir ve sitenizde yayına girer.</div>
+          </div>
+          <button class="btn-secondary btn-sm" onclick="switchProductSubTab('list')">← Listeye Dön</button>
+        </div>
+
+        <form id="productForm" onsubmit="saveProduct(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Ürün Adı / Model Adı <span class="req">*</span></label>
+              <input type="text" class="form-control" id="f_title" placeholder="Örn: Viyana Çerçeveli Membran Kapak" required oninput="autoGenerateSlug()">
+            </div>
+            <div class="form-group">
+              <label>Kategori <span class="req">*</span></label>
+              <select class="form-control" id="f_kategori" required>
+                <option value="Düz Membran Kapak">Düz Membran Kapak</option>
+                <option value="Çerçeveli">Çerçeveli Membran Kapak</option>
+                <option value="Özel Ölçü">Özel Ölçü Mutfak & Dolap Kapağı</option>
+                <option value="Akrilik Kapak">Akrilik & High Gloss Kapak</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Ürün Kodu (SKU)</label>
+              <input type="text" class="form-control" id="f_sku" placeholder="Örn: GLB-104">
+            </div>
+            <div class="form-group">
+              <label>Bağlantı Adresi (Slug)</label>
+              <input type="text" class="form-control" id="f_slug" placeholder="viyana-cerceveli-membran" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Kısa Açıklama (Katalogda Görünecek Özet)</label>
+            <input type="text" class="form-control" id="f_kisa" placeholder="Mat beyaz yüzeyli, suya ve neme dayanıklı modern membran kapak modeli.">
+          </div>
+
+          <!-- GÖRSEL YÜKLEME -->
+          <div class="form-group">
+            <label>Ana Ürün Fotoğrafı</label>
+            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
+              <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <h4>Fotoğrafı Buraya Sürükleyin veya Tıklayın</h4>
+              <p>JPG, PNG, WebP desteklenir (Doğrudan sunucuya yüklenir)</p>
+            </div>
+            <div id="imagePreviewBox" class="upload-preview" style="display:none;">
+              <img id="previewImg" src="/resim/logo.png" alt="Önizleme">
+              <div style="flex:1;">
+                <div id="previewFileName" style="font-weight:600; font-size:13px;">resim.jpg</div>
+                <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
+              </div>
+              <button type="button" class="btn-danger btn-sm" onclick="removeSelectedImage()">Kaldır</button>
+            </div>
+            <input type="hidden" id="f_image_url" value="/resim/logo.png">
+          </div>
+
+          <!-- RENKLER -->
+          <div class="form-group">
+            <label>Mevcut Renk Seçenekleri</label>
+            <div class="chip-container" id="colorsContainer">
+              <input type="text" class="chip-input" id="colorInput" placeholder="Renk yazıp Enter'a basın (Örn: Mat Beyaz, Antrasit)..." onkeydown="handleChipKey(event, 'color')">
+            </div>
+          </div>
+
+          <!-- ÖZELLİKLER -->
+          <div class="form-group">
+            <label>Teknik Özellikler (Madde Madde)</label>
+            <div class="chip-container" id="featsContainer">
+              <input type="text" class="chip-input" id="featInput" placeholder="Özellik yazıp Enter'a basın (Örn: 18mm MDF, E1 Standart)..." onkeydown="handleChipKey(event, 'feat')">
+            </div>
+          </div>
+
+          <!-- DETAYLI AÇIKLAMA -->
+          <div class="form-group">
+            <label>Detaylı Açıklama (Ürün Sayfasında Gösterilecek İçerik)</label>
+            <textarea class="form-control" id="f_body" rows="4" placeholder="Ürünün üretim detayları, kullanım alanları, temizlik ve bakım önerileri..."></textarea>
+          </div>
+
+          <!-- ROZETLER & ANA SAYFA GÖSTERİMİ -->
+          <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:24px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0;">
+              <input type="checkbox" id="f_anasayfa" checked> 🏠 Ana Sayfa Vitrininde Göster
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 12px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border);">
+              <input type="checkbox" id="f_populer"> ⭐ Popüler Ürün
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 12px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border);">
+              <input type="checkbox" id="f_yeni"> ✨ Yeni Ürün
+            </label>
+          </div>
+
+          <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn-gold" id="btnProductSave">💾 Kaydet ve Sitede Yayınla</button>
+            <button type="button" class="btn-secondary" onclick="switchProductSubTab('list')">İptal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: FİRMA & İLETİŞİM AYARLARI -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-company">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">🏢 Firma & İletişim Bilgileri</div>
+          <div class="admin-card-desc">Sitenizin header, footer, iletişim sayfası ve WhatsApp butonlarında görünen tüm bilgiler.</div>
+        </div>
+        <button class="btn-gold btn-sm" onclick="saveCompanySettings()">💾 Ayarları Kaydet</button>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Firma Adı</label>
+          <input type="text" class="form-control" id="c_ad" placeholder="Global Kapak Mobilya">
+        </div>
+        <div class="form-group">
+          <label>Slogan</label>
+          <input type="text" class="form-control" id="c_slogan" placeholder="Membran Kapak Uzmanı">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Telefon Numarası</label>
+          <input type="text" class="form-control" id="c_telefon" placeholder="0 (505) 015 1035">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp Numarası (Boşluksuz, Ülke Koduyla)</label>
+          <input type="text" class="form-control" id="c_whatsapp" placeholder="905050151035">
+        </div>
+        <div class="form-group">
+          <label>Kurumsal E-posta</label>
+          <input type="email" class="form-control" id="c_email" placeholder="info@globalkapakmobilya.com">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Açık Adres (Fabrika / Showroom)</label>
+        <textarea class="form-control" id="c_adres" rows="2" placeholder="Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul"></textarea>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Çalışma Saatleri</label>
+          <input type="text" class="form-control" id="c_saatler" placeholder="Hafta içi 08:00 - 18:00 | Cumartesi 08:00 - 13:00">
+        </div>
+        <div class="form-group">
+          <label>Header Kayan Duyuru Metni (Topbar)</label>
+          <input type="text" class="form-control" id="c_topbar" placeholder="📦 5 İş Gününde Teslimat | 🛡️ 5 Yıl Garanti | Türkiye Geneli Kargo">
+        </div>
+      </div>
+
+      <div class="admin-card-title" style="font-size:14px; margin:20px 0 12px 0;">🌐 Sosyal Medya Linkleri</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Instagram URL</label>
+          <input type="url" class="form-control" id="c_instagram" placeholder="https://instagram.com/globalkapak">
+        </div>
+        <div class="form-group">
+          <label>Facebook URL</label>
+          <input type="url" class="form-control" id="c_facebook" placeholder="https://facebook.com/globalkapak">
+        </div>
+        <div class="form-group">
+          <label>LinkedIn URL</label>
+          <input type="url" class="form-control" id="c_linkedin" placeholder="https://linkedin.com/company/globalkapak">
+        </div>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-gold" onclick="saveCompanySettings()">💾 Firma Bilgilerini Kaydet</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 3: ANA SAYFA & VİTRİN -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-home">
+    <div class="admin-card">
+      <div class="admin-card-header">
+        <div>
+          <div class="admin-card-title">🏠 Ana Sayfa Manşet & Bölüm Yönetimi</div>
+          <div class="admin-card-desc">Ana sayfanızdaki manşet başlıkları, sayılar ve tanıtım metinleri.</div>
+        </div>
+        <button class="btn-gold btn-sm" onclick="saveHomeSettings()">💾 Ana Sayfayı Güncelle</button>
+      </div>
+
+      <div class="admin-card-title" style="font-size:14px; margin-bottom:12px;">🌟 Ana Manşet (Hero) Başlıkları</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>1. Büyük Başlık Satırı</label>
+          <input type="text" class="form-control" id="h_baslik1" placeholder="Kalite ve Estetiğin">
+        </div>
+        <div class="form-group">
+          <label>2. Vurgulu Başlık Satırı (Altın Renk)</label>
+          <input type="text" class="form-control" id="h_baslik2" placeholder="Buluştuğu Yer">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Manşet Açıklama Metni (Spot)</label>
+        <textarea class="form-control" id="h_altyazi" rows="2" placeholder="Sektörde 15+ yıllık tecrübemiz ve uzman kadromuzla..."></textarea>
+      </div>
+
+      <div class="admin-card-title" style="font-size:14px; margin:24px 0 12px 0;">📊 İstatistik Sayaçları (Hero Altı)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Sayaç 1 (Sayı & Etiket)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="form-control" id="h_stat1_num" placeholder="15+" style="width:80px;">
+            <input type="text" class="form-control" id="h_stat1_lbl" placeholder="Yıl Sektör Deneyimi">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sayaç 2 (Sayı & Etiket)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="form-control" id="h_stat2_num" placeholder="2K+" style="width:80px;">
+            <input type="text" class="form-control" id="h_stat2_lbl" placeholder="m² Fabrika Alanı">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sayaç 3 (Sayı & Etiket)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="form-control" id="h_stat3_num" placeholder="5" style="width:80px;">
+            <input type="text" class="form-control" id="h_stat3_lbl" placeholder="Yıl Garanti">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Sayaç 4 (Sayı & Etiket)</label>
+          <div style="display:flex; gap:8px;">
+            <input type="text" class="form-control" id="h_stat4_num" placeholder="5" style="width:80px;">
+            <input type="text" class="form-control" id="h_stat4_lbl" placeholder="İş Gününde Teslimat">
+          </div>
+        </div>
+      </div>
+
+      <div class="admin-card-title" style="font-size:14px; margin:28px 0 14px 0;">🏢 Ana Sayfa "Hakkımızda" (Kurumsal Tanıtım) Alanı</div>
+      
+      <!-- HAKKIMIZDA GÖRSELİ -->
+      <div class="form-group">
+        <label>Hakkımızda Alanı Fotoğrafı / Fabrika Görseli</label>
+        <div class="upload-zone" id="homeAboutUploadZone" onclick="document.getElementById('homeAboutFileInput').click()">
+          <input type="file" id="homeAboutFileInput" accept="image/*" style="display:none" onchange="handleHomeAboutFileSelect(event)">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <h4>Fabrika / Üretim / Showroom Görseli Seçin veya Sürükleyin</h4>
+          <p>JPG, PNG, WebP desteklenir (Görsel sitenin solunda yer alır)</p>
+        </div>
+        <div id="homeAboutPreviewBox" class="upload-preview" style="display:none;">
+          <img id="homeAboutPreviewImg" src="/resim/logo.png" alt="Önizleme">
+          <div style="flex:1;">
+            <div id="homeAboutFileName" style="font-weight:600; font-size:13px;">gorsel.jpg</div>
+            <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
+          </div>
+          <button type="button" class="btn-danger btn-sm" onclick="removeHomeAboutImage()">Kaldır</button>
+        </div>
+        <input type="hidden" id="h_about_img_url" value="/resim/logo.png">
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Üst Etiket (Tag)</label>
+          <input type="text" class="form-control" id="h_about_tag" placeholder="Firmamız Hakkında">
+        </div>
+        <div class="form-group">
+          <label>1. Başlık (Firma Adı)</label>
+          <input type="text" class="form-control" id="h_about_b1" placeholder="Global Kapak Mobilya">
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>2. Vurgulu Başlık (Altın Renk)</label>
+          <input type="text" class="form-control" id="h_about_b2" placeholder="Membran Kapak Uzmanı">
+        </div>
+        <div class="form-group">
+          <label>Buton Metni</label>
+          <input type="text" class="form-control" id="h_about_btn_text" placeholder="Daha Fazla Bilgi">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>1. Paragraf (Şirket Profili & Deneyim)</label>
+        <textarea class="form-control" id="h_about_p1" rows="2" placeholder="Global Kapak Mobilya, sektörde 15 yılı aşkın deneyime sahip..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>2. Paragraf (Kalite & Garanti Yaklaşımı)</label>
+        <textarea class="form-control" id="h_about_p2" rows="2" placeholder="Müşteri memnuniyetini ön planda tutarak, her ürünümüzde..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>3. Paragraf (Çevre & Teknoloji Notu)</label>
+        <textarea class="form-control" id="h_about_p3" rows="2" placeholder="Üretim süreçlerimizde çevreye duyarlı yaklaşımı benimsiyor..."></textarea>
+      </div>
+
+      <div style="margin-top:20px;">
+        <button class="btn-gold" id="btnSaveHome" onclick="saveHomeSettings()">💾 Ana Sayfa Ayarlarını Kaydet ve Yayınla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 4: GALERİ YÖNETİMİ -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-gallery">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary btn-sm" id="btnGalSubList" onclick="switchGalSubTab('list')">📋 Fotoğraf Listesi</button>
+        <button class="btn-gold btn-sm" id="btnGalSubAdd" onclick="startNewGallery()">➕ Yeni Fotoğraf Ekle</button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="text" class="form-control" id="galSearchBox" placeholder="🔍 Fotoğraf ara..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="filterAdminGallery()">
+        <select class="form-control" id="galFilterCat" style="width:160px; padding:6px 12px; font-size:13px;" onchange="filterAdminGallery()">
+          <option value="all">Tüm Kategoriler</option>
+          <option value="Mutfak">Mutfak Projeleri</option>
+          <option value="Banyo">Banyo Dolapları</option>
+          <option value="Vestiyer">Vestiyer & Portmanto</option>
+          <option value="Özel Tasarım">Özel Tasarım</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="subview-gal-list">
+      <div id="galLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
+        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <p style="font-weight:600;">Galeri fotoğrafları yükleniyor...</p>
+      </div>
+      <div class="product-grid" id="galGrid" style="display:none;"></div>
+      <div id="galEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+        <div style="font-size:40px; margin-bottom:12px;">🖼️</div>
+        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Fotoğraf Eklenmedi</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Tamamlanan imalat ve montaj fotoğraflarınızı buraya ekleyin.</p>
+        <button class="btn-gold" onclick="startNewGallery()">➕ İlk Fotoğrafı Ekle</button>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="subview-gal-form" style="display:none;">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="galFormTitle">➕ Yeni Galeri Fotoğrafı Ekle</div>
+            <div class="admin-card-desc">Yüklediğiniz fotoğraf anında galeri sayfasında yayına girer.</div>
+          </div>
+          <button class="btn-secondary btn-sm" onclick="switchGalSubTab('list')">← Listeye Dön</button>
+        </div>
+
+        <form id="galForm" onsubmit="saveGalleryItem(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Fotoğraf / Proje Başlığı <span class="req">*</span></label>
+              <input type="text" class="form-control" id="gal_title" placeholder="Örn: Villa Mutfak Membran Kapak Montajı" required>
+            </div>
+            <div class="form-group">
+              <label>Kategori <span class="req">*</span></label>
+              <select class="form-control" id="gal_cat" required>
+                <option value="Mutfak">Mutfak Projeleri</option>
+                <option value="Banyo">Banyo Dolapları</option>
+                <option value="Vestiyer">Vestiyer & Portmanto</option>
+                <option value="Özel Tasarım">Özel Tasarım</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Fotoğraf Yükle</label>
+            <div class="upload-zone" id="galUploadZone" onclick="document.getElementById('galFileInput').click()">
+              <input type="file" id="galFileInput" accept="image/*" style="display:none" onchange="handleGalFileSelect(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <h4>Fotoğrafı Buraya Sürükleyin veya Tıklayın</h4>
+              <p>Yüksek çözünürlüklü JPG, PNG, WebP desteklenir</p>
+            </div>
+            <div id="galPreviewBox" class="upload-preview" style="display:none;">
+              <img id="galPreviewImg" src="/resim/logo.png" alt="Önizleme">
+              <div style="flex:1;">
+                <div id="galFileName" style="font-weight:600; font-size:13px;">foto.jpg</div>
+                <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
+              </div>
+              <button type="button" class="btn-danger btn-sm" onclick="removeGalImage()">Kaldır</button>
+            </div>
+            <input type="hidden" id="gal_image_url" value="/resim/logo.png">
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
+              <input type="checkbox" id="gal_anasayfa" checked> 🏠 Ana Sayfa Galeri Vitrininde Göster
+            </label>
+          </div>
+
+          <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn-gold" id="btnGalSave">💾 Galeriye Kaydet ve Yayınla</button>
+            <button type="button" class="btn-secondary" onclick="switchGalSubTab('list')">İptal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 5: BLOG / MAKALELER -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-blog">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary btn-sm" id="btnBlogSubList" onclick="switchBlogSubTab('list')">📋 Makale Listesi</button>
+        <button class="btn-gold btn-sm" id="btnBlogSubAdd" onclick="startNewBlog()">➕ Yeni Makale Ekle</button>
+      </div>
+      <input type="text" class="form-control" id="blogSearchBox" placeholder="🔍 Makale ara..." style="width:220px; padding:6px 12px; font-size:13px;" oninput="filterAdminBlogs()">
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="subview-blog-list">
+      <div id="blogLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
+        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <p style="font-weight:600;">Makaleler yükleniyor...</p>
+      </div>
+      <div class="product-grid" id="blogGrid" style="display:none;"></div>
+      <div id="blogEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+        <div style="font-size:40px; margin-bottom:12px;">📝</div>
+        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Makale Eklenmedi</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Membran kapak bakımı ve rehber yazıları ekleyerek ziyaretçilerinizi bilgilendirin.</p>
+        <button class="btn-gold" onclick="startNewBlog()">➕ İlk Makaleyi Yaz</button>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="subview-blog-form" style="display:none;">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="blogFormTitle">➕ Yeni Makale Ekle</div>
+            <div class="admin-card-desc">Yazdığınız makale anında blog ve ana sayfanızda yayına girer.</div>
+          </div>
+          <button class="btn-secondary btn-sm" onclick="switchBlogSubTab('list')">← Listeye Dön</button>
+        </div>
+
+        <form id="blogForm" onsubmit="saveBlogItem(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Makale Başlığı <span class="req">*</span></label>
+              <input type="text" class="form-control" id="b_title" placeholder="Örn: Membran Kapak Temizliği ve Bakımında Dikkat Edilecekler" required oninput="autoGenerateBlogSlug()">
+            </div>
+            <div class="form-group">
+              <label>Kategori <span class="req">*</span></label>
+              <select class="form-control" id="b_kategori" required>
+                <option value="Rehber & Bakım">Rehber & Bakım</option>
+                <option value="Dekorasyon Fikirleri">Dekorasyon Fikirleri</option>
+                <option value="Üretim & Teknoloji">Üretim & Teknoloji</option>
+                <option value="Sektörel Haberler">Sektörel Haberler</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Bağlantı Adresi (Slug)</label>
+            <input type="text" class="form-control" id="b_slug" placeholder="membran-kapak-temizligi" required>
+          </div>
+
+          <div class="form-group">
+            <label>Kısa Özet (Katalogda ve Kartta Görünecek Metin) <span class="req">*</span></label>
+            <input type="text" class="form-control" id="b_ozet" placeholder="Membran kapakların uzun ömürlü kullanımı için pratik ipuçları..." required>
+          </div>
+
+          <!-- KAPAK GÖRSELİ -->
+          <div class="form-group">
+            <label>Makale Kapak Fotoğrafı</label>
+            <div class="upload-zone" id="blogUploadZone" onclick="document.getElementById('blogFileInput').click()">
+              <input type="file" id="blogFileInput" accept="image/*" style="display:none" onchange="handleBlogFileSelect(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <h4>Kapak Fotoğrafı Seçin veya Sürükleyin</h4>
+              <p>JPG, PNG, WebP desteklenir</p>
+            </div>
+            <div id="blogPreviewBox" class="upload-preview" style="display:none;">
+              <img id="blogPreviewImg" src="/resim/logo.png" alt="Önizleme">
+              <div style="flex:1;">
+                <div id="blogFileName" style="font-weight:600; font-size:13px;">kapak.jpg</div>
+                <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
+              </div>
+              <button type="button" class="btn-danger btn-sm" onclick="removeBlogImage()">Kaldır</button>
+            </div>
+            <input type="hidden" id="b_image_url" value="/resim/logo.png">
+          </div>
+
+          <div class="form-group">
+            <label>Detaylı Makale İçeriği <span class="req">*</span></label>
+            <textarea class="form-control" id="b_body" rows="8" placeholder="Makalenizin detaylı metnini buraya yazın..." required></textarea>
+          </div>
+
+          <div style="margin-bottom:24px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
+              <input type="checkbox" id="b_anasayfa" checked> 🏠 Ana Sayfa Blog Vitrininde Göster
+            </label>
+          </div>
+
+          <div style="display:flex; gap:12px;">
+            <button type="submit" class="btn-gold" id="btnBlogSave">💾 Makaleyi Yayınla</button>
+            <button type="button" class="btn-secondary" onclick="switchBlogSubTab('list')">İptal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 6: TEDARİKÇİ YÖNETİMİ -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-suppliers">
+    
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:8px;">
+        <button class="btn-primary btn-sm" id="btnSupSubList" onclick="switchSupSubTab('list')">📋 Tedarikçi Listesi</button>
+        <button class="btn-gold btn-sm" id="btnSupSubAdd" onclick="startNewSupplier()">➕ Yeni Tedarikçi Ekle</button>
+      </div>
+      <div style="display:flex; gap:10px;">
+        <input type="text" class="form-control" id="supSearchBox" placeholder="🔍 Tedarikçi ara..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="filterAdminSuppliers()">
+        <select class="form-control" id="supFilterCat" style="width:170px; padding:6px 12px; font-size:13px;" onchange="filterAdminSuppliers()">
+          <option value="all">Tüm Kategoriler</option>
+          <option value="Membran & Folyo">Membran & Folyo</option>
+          <option value="MDF & Ahşap">MDF & Ahşap</option>
+          <option value="Yapıştırıcı">Yapıştırıcı</option>
+          <option value="Aksesuar & Menteşe">Aksesuar & Menteşe</option>
+          <option value="Boya & Vernik">Boya & Vernik</option>
+          <option value="Lojistik & Kargo">Lojistik & Kargo</option>
+          <option value="Makine & Ekipman">Makine & Ekipman</option>
+          <option value="Ambalaj">Ambalaj</option>
+          <option value="Diğer">Diğer</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div id="subview-sup-list">
+      <div id="supLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
+        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <p style="font-weight:600;">Tedarikçiler yükleniyor...</p>
+      </div>
+      <div class="product-grid" id="supGrid" style="display:none;"></div>
+      <div id="supEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+        <div style="font-size:40px; margin-bottom:12px;">🤝</div>
+        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Tedarikçi Eklenmedi</h3>
+        <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">İş ortaklarınızı ve hammadde tedarikçilerinizi buraya ekleyin.</p>
+        <button class="btn-gold" onclick="startNewSupplier()">➕ İlk Tedarikçiyi Ekle</button>
+      </div>
+    </div>
+
+    <!-- FORM VIEW -->
+    <div id="subview-sup-form" style="display:none;">
+      <div class="admin-card">
+        <div class="admin-card-header">
+          <div>
+            <div class="admin-card-title" id="supFormTitle">➕ Yeni Tedarikçi Ekle</div>
+            <div class="admin-card-desc">Tedarikçi bilgileri anında "Tedarikçilerimiz" sayfasında yayına girer.</div>
+          </div>
+          <button class="btn-secondary btn-sm" onclick="switchSupSubTab('list')">← Listeye Dön</button>
+        </div>
+
+        <form id="supForm" onsubmit="saveSupplierItem(event)">
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Firma / Tedarikçi Adı <span class="req">*</span></label>
+              <input type="text" class="form-control" id="sup_ad" placeholder="Örn: Kastamonu Entegre" required oninput="autoGenerateSupSlug()">
+            </div>
+            <div class="form-group">
+              <label>Tedarik Kategorisi <span class="req">*</span></label>
+              <select class="form-control" id="sup_cat" required>
+                <option value="Membran & Folyo">Membran & Folyo</option>
+                <option value="MDF & Ahşap">MDF & Ahşap</option>
+                <option value="Yapıştırıcı">Yapıştırıcı</option>
+                <option value="Aksesuar & Menteşe">Aksesuar & Menteşe</option>
+                <option value="Boya & Vernik">Boya & Vernik</option>
+                <option value="Lojistik & Kargo">Lojistik & Kargo</option>
+                <option value="Makine & Ekipman">Makine & Ekipman</option>
+                <option value="Ambalaj">Ambalaj</option>
+                <option value="Diğer">Diğer</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Bağlantı Adresi (Slug)</label>
+              <input type="text" class="form-control" id="sup_slug" placeholder="kastamonu-entegre" required>
+            </div>
+            <div class="form-group">
+              <label>Web Sitesi Linki (Opsiyonel)</label>
+              <input type="url" class="form-control" id="sup_link" placeholder="https://www.firmaadi.com">
+            </div>
+          </div>
+
+          <!-- LOGO GÖRSELİ -->
+          <div class="form-group">
+            <label>Firma Logosu / Fotoğrafı</label>
+            <div class="upload-zone" id="supUploadZone" onclick="document.getElementById('supFileInput').click()">
+              <input type="file" id="supFileInput" accept="image/*" style="display:none" onchange="handleSupFileSelect(event)">
+              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <h4>Logoyu Buraya Sürükleyin veya Seçin</h4>
+              <p>PNG (Şeffaf arka plan), JPG, WebP veya SVG desteklenir</p>
+            </div>
+            <div id="supPreviewBox" class="upload-preview" style="display:none;">
+              <img id="supPreviewImg" src="/resim/logo.png" alt="Önizleme">
+              <div style="flex:1;">
+                <div id="supFileName" style="font-weight:600; font-size:13px;">logo.png</div>
+                <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
+              </div>
+              <button type="button" class="btn-danger btn-sm" onclick="removeSupImage()">Kaldır</button>
+            </div>
+            <input type="hidden" id="sup_logo_url" value="/resim/logo.png">
+          </div>
+
+          <div class="form-group">
+            <label>Açıklama / İş Ortaklığı Tanıtımı</label>
+            <textarea class="form-control" id="sup_desc" rows="3" placeholder="Yüksek kaliteli MDF levha ve hammadde tedarikinde 10+ yıldır güvenle çalıştığımız stratejik iş ortağımız..."></textarea>
+          </div>
+
+          <div class="form-group" style="max-width:200px;">
+            <label>Görüntülenme Sıralaması</label>
+            <input type="number" class="form-control" id="sup_order" value="1" min="1" max="999">
+          </div>
+
+          <div style="display:flex; gap:12px; margin-top:20px;">
+            <button type="submit" class="btn-gold" id="btnSupSave">💾 Tedarikçiyi Kaydet ve Yayınla</button>
+            <button type="button" class="btn-secondary" onclick="switchSupSubTab('list')">İptal</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <!-- TAB 7: YARDIM & KULLANIM -->
+  <!-- ══════════════════════════════════════════════════════════ -->
+  <div class="tab-section" id="tab-guide">
+    <div class="admin-card">
+      <div class="admin-card-title" style="font-size:18px; margin-bottom:12px;">💡 Global Kapak Yönetim Paneli Rehberi</div>
+      <div style="font-size:14px; line-height:1.8; color:var(--text-dark);">
+        <p>Bu panel, sitenizdeki tüm içerikleri doğrudan <strong>GitHub</strong> ve <strong>Vercel</strong> bulut altyapısına bağlayarak yönetmenizi sağlar.</p>
+        <br>
+        <h4 style="color:var(--navy);">🚀 Nasıl Çalışır?</h4>
+        <ol style="margin-left:20px; margin-bottom:16px;">
+          <li>Panelden ürün, fotoğraf, makale veya firma bilgisi ekleyip <strong>"Kaydet"</strong> dediğinizde, veriler anında bulut sunucunuza işlenir.</li>
+          <li>Vercel bu güncellemeyi <strong>15 saniye içinde</strong> tüm dünyadaki ziyaretçilerinize canlı olarak sunar.</li>
+          <li>Fotoğraflarınız sunucuya optimize edilerek yüklenir, siteniz hiçbir zaman yavaşlamaz.</li>
+        </ol>
+        <h4 style="color:var(--navy);">🔑 API Anahtarı Hakkında</h4>
+        <p>Sağ üstteki <strong>"⚙️ API & Depo Ayarları"</strong> butonundan token ve depo ayarlarınızı istediğiniz zaman güncelleyebilirsiniz. Bu bilgiler sadece kendi tarayıcınızda güvenle saklanır.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- API & TOKEN MODAL -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeTokenModal()">✕</button>
+    <div class="admin-card-title" style="margin-bottom:8px;">⚙️ GitHub API & Depo Ayarları</div>
+    <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+      Panelinizin sitenize doğrudan veri yazabilmesi için GitHub ayarlarınızı buradan yapılandırın.
+    </p>
+
+    <div class="form-group">
+      <label>GitHub Personal Access Token (PAT)</label>
+      <input type="password" class="form-control" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+    </div>
+
+    <div class="form-grid">
+      <div class="form-group">
+        <label>GitHub Kullanıcı Adı</label>
+        <input type="text" class="form-control" id="repoOwnerInput" placeholder="Andromeda012">
+      </div>
+      <div class="form-group">
+        <label>Depo (Repo) Adı</label>
+        <input type="text" class="form-control" id="repoNameInput" placeholder="Global-Mobilya-Web">
+      </div>
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+      <button type="button" class="btn-secondary btn-sm" onclick="fetchUserRepos()">🔍 Depolarımı Otomatik Listele</button>
+      <select id="repoSelectDropdown" class="form-control" style="width:auto; display:none; font-size:12px;" onchange="selectRepoFromDropdown(this.value)">
+        <option value="">Depo Seçiniz...</option>
+      </select>
+    </div>
+
+    <div style="background:#F1F5F9; padding:12px; border-radius:6px; font-size:12px; margin-bottom:18px; line-height:1.6;">
+      <strong>Nasıl Token Alınır? (1 Dakika):</strong><br>
+      1. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Global+Kapak+Panel" target="_blank" style="color:var(--navy); font-weight:700; text-decoration:underline;">Buraya tıklayarak</a> GitHub token sayfasını açın.<br>
+      2. <strong>"repo"</strong> kutucuğunu işaretleyin ve en alttaki yeşil <strong>"Generate token"</strong> butonuna basın.<br>
+      3. Size verilen <code>ghp_...</code> ile başlayan kodu kopyalayıp yukarıdaki kutuya yapıştırın.
+    </div>
+
+    <div style="display:flex; gap:10px;">
+      <button class="btn-gold" onclick="saveToken()" style="flex:1;">Kaydet & Bağlantıyı Test Et</button>
+      <button class="btn-secondary" onclick="closeTokenModal()">Kapat</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toastMsg">
+  <span id="toastIcon">✅</span>
+  <span id="toastText">İşlem başarılı</span>
+</div>
+
+<script>
+// CONFIG & STATE
+let REPO_OWNER = localStorage.getItem('gkm_gh_owner') || 'Andromeda012';
+let REPO_NAME = localStorage.getItem('gkm_gh_repo') || 'Global-Mobilya-Web';
+const BRANCH = 'main';
+
+function resolveAssetUrl(url) {
+  if (!url) return '/resim/logo.png';
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  const clean = url.replace(/^\/+/, '');
+  if (clean === 'resim/logo.png') return '/resim/logo.png';
+  return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${encodeURI(clean)}`;
+}
+
+let allProducts = [];
+let editMode = false;
+let editingSlug = '';
+let editingSha = '';
+let uploadedFileBase64 = null;
+let uploadedFileName = '';
+let colorsList = [];
+let featsList = [];
+
+// STATUS & TOAST
+function checkTokenStatus() {
+  const token = localStorage.getItem('gkm_gh_token');
+  const dot = document.getElementById('statusDot');
+  const text = document.getElementById('statusText');
+  const banner = document.getElementById('tokenBanner');
+
+  if (token) {
+    dot.classList.add('connected');
+    text.textContent = `GitHub Bağlantısı Aktif (${REPO_OWNER}/${REPO_NAME})`;
+    if (banner) banner.style.display = 'none';
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'GitHub Token Bekleniyor';
+    if (banner) banner.style.display = 'flex';
+  }
+}
+
+function showToast(msg, type = 'success') {
+  const toast = document.getElementById('toastMsg');
+  const txt = document.getElementById('toastText');
+  const icon = document.getElementById('toastIcon');
+  toast.className = 'toast show ' + type;
+  txt.textContent = msg;
+  icon.textContent = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
+  setTimeout(() => { toast.classList.remove('show'); }, 4000);
+}
+
+// MAIN TABS
+function switchMainTab(e, tabId) {
+  document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-section').forEach(sec => sec.classList.remove('active'));
+  
+  if (e && e.currentTarget) e.currentTarget.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// PRODUCT SUBTABS
+function switchProductSubTab(view) {
+  const listBtn = document.getElementById('btnSubList');
+  const addBtn = document.getElementById('btnSubAdd');
+  const listView = document.getElementById('subview-product-list');
+  const formView = document.getElementById('subview-product-form');
+
+  if (view === 'list') {
+    listBtn.className = 'btn-primary btn-sm';
+    addBtn.className = 'btn-gold btn-sm';
+    listView.style.display = 'block';
+    formView.style.display = 'none';
+  } else {
+    listBtn.className = 'btn-secondary btn-sm';
+    addBtn.className = 'btn-primary btn-sm';
+    listView.style.display = 'none';
+    formView.style.display = 'block';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// PRODUCTS MODULE
+// ══════════════════════════════════════════════════════════
+async function loadAllProducts() {
+  const loading = document.getElementById('productLoadingIndicator');
+  const grid = document.getElementById('productGrid');
+  const empty = document.getElementById('productEmptyState');
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    let productFiles = [];
+    const token = localStorage.getItem('gkm_gh_token');
+    const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+    // 1. GitHub API
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler?t=${Date.now()}`, { headers });
+      if (r.ok) {
+        const files = await r.json();
+        productFiles = files.filter(f => f.name.endsWith('.json'));
+      }
+    } catch(e) {}
+
+    let loaded = [];
+    if (productFiles.length > 0) {
+      const promises = productFiles.map(async (file) => {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${file.name}?t=${Date.now()}`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+            content.slug = file.name.replace('.json', '');
+            content.sha = data.sha;
+            return content;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(p => p);
+    }
+
+    // Fallback: Local index
+    if (loaded.length === 0) {
+      try {
+        const idxRes = await fetch('/_data/urunler-index.json?t=' + Date.now());
+        if (idxRes.ok) {
+          const ids = await idxRes.json();
+          const promises = ids.map(async (id) => {
+            try {
+              const res = await fetch(`/_data/urunler/${id}.json?t=${Date.now()}`);
+              if (res.ok) {
+                const data = await res.json();
+                data.slug = id;
+                return data;
+              }
+            } catch(e) {}
+            return null;
+          });
+          loaded = (await Promise.all(promises)).filter(p => p);
+        }
+      } catch(e) {}
+    }
+
+    allProducts = loaded;
+    document.getElementById('productCountBadge').textContent = allProducts.length;
+    renderProductGrid(allProducts);
+
+  } catch(err) {
+    showToast('Ürünler yüklenirken hata oluştu', 'error');
+    renderProductGrid([]);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderProductGrid(products) {
+  const grid = document.getElementById('productGrid');
+  const empty = document.getElementById('productEmptyState');
+
+  if (!products || products.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = products.map(p => `
+    <div class="product-card">
+      <img class="product-card-img" src="${resolveAssetUrl(p.ana_resim)}" alt="${p.title}" onerror="this.src='/resim/logo.png'">
+      <div class="product-card-body">
+        <div class="product-card-cat">${p.kategori || 'Membran Kapak'}</div>
+        <div class="product-card-title">${p.title}</div>
+        <div class="product-card-desc">${p.kisa_aciklama || 'Açıklama belirtilmemiş.'}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
+          ${p.anasayfada_goster !== false ? '🏠 Ana Sayfa Vitrininde Aktif' : '📁 Sadece Katalogda'}
+        </div>
+        <div class="product-card-actions">
+          <button class="btn-secondary btn-sm" style="flex:1;" onclick="editProduct('${p.slug}')">✏️ Düzenle</button>
+          <button class="btn-danger btn-sm" onclick="deleteProduct('${p.slug}', '${p.sha || ''}')">🗑️ Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterProductList() {
+  const q = document.getElementById('productSearchBox').value.toLowerCase().trim();
+  const cat = document.getElementById('productCatFilter').value;
+
+  const filtered = allProducts.filter(p => {
+    const matchQ = (p.title && p.title.toLowerCase().includes(q)) || (p.sku && p.sku.toLowerCase().includes(q));
+    const matchCat = cat === 'all' || p.kategori === cat;
+    return matchQ && matchCat;
+  });
+
+  renderProductGrid(filtered);
+}
+
+function startNewProduct() {
+  editMode = false;
+  editingSlug = '';
+  editingSha = '';
+  document.getElementById('formCardTitle').textContent = '➕ Yeni Membran Kapak Ürünü Ekle';
+  document.getElementById('btnProductSave').textContent = '💾 Kaydet ve Sitede Yayınla';
+  document.getElementById('productForm').reset();
+  document.getElementById('f_slug').value = '';
+  document.getElementById('f_slug').readOnly = false;
+  document.getElementById('f_image_url').value = '/resim/logo.png';
+  document.getElementById('f_anasayfa').checked = true;
+  document.getElementById('f_populer').checked = false;
+  document.getElementById('f_yeni').checked = false;
+  colorsList = [];
+  featsList = [];
+  renderChips('colors');
+  renderChips('feats');
+  removeSelectedImage();
+  switchProductSubTab('form');
+}
+
+function editProduct(slug) {
+  const p = allProducts.find(x => x.slug === slug);
+  if (!p) return;
+
+  editMode = true;
+  editingSlug = slug;
+  editingSha = p.sha || '';
+
+  document.getElementById('formCardTitle').textContent = `✏️ "${p.title}" Ürününü Düzenle`;
+  document.getElementById('btnProductSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
+
+  document.getElementById('f_title').value = p.title || '';
+  document.getElementById('f_kategori').value = p.kategori || 'Düz Membran Kapak';
+  document.getElementById('f_sku').value = p.sku || '';
+  document.getElementById('f_slug').value = slug;
+  document.getElementById('f_slug').readOnly = true;
+  document.getElementById('f_kisa').value = p.kisa_aciklama || '';
+  document.getElementById('f_body').value = p.body || '';
+  document.getElementById('f_anasayfa').checked = p.anasayfada_goster !== false;
+  document.getElementById('f_populer').checked = !!p.populer;
+  document.getElementById('f_yeni').checked = !!p.yeni;
+  document.getElementById('f_image_url').value = p.ana_resim || '/resim/logo.png';
+
+  if (p.ana_resim) {
+    document.getElementById('previewImg').src = resolveAssetUrl(p.ana_resim);
+    document.getElementById('previewFileName').textContent = p.ana_resim.split('/').pop();
+    document.getElementById('imagePreviewBox').style.display = 'flex';
+  } else {
+    removeSelectedImage();
+  }
+
+  colorsList = Array.isArray(p.renkler) ? [...p.renkler] : [];
+  featsList = Array.isArray(p.ozellikler) ? [...p.ozellikler] : [];
+  renderChips('colors');
+  renderChips('feats');
+
+  switchProductSubTab('form');
+}
+
+async function saveProduct(e) {
+  if (e) e.preventDefault();
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) {
+    openTokenModal();
+    showToast('Lütfen önce GitHub API Token girin!', 'error');
+    return;
+  }
+
+  const title = document.getElementById('f_title').value.trim();
+  let slug = document.getElementById('f_slug').value.trim() || slugify(title);
+  if (!title || !slug) {
+    showToast('Lütfen ürün adını doldurun!', 'error');
+    return;
+  }
+
+  if (!editMode && allProducts.some(p => p.slug === slug)) {
+    slug = `${slug}-${Date.now().toString().slice(-4)}`;
+  }
+
+  const btn = document.getElementById('btnProductSave');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+
+  try {
+    let finalImageUrl = document.getElementById('f_image_url').value.trim();
+
+    if (uploadedFileBase64) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
+      const cleanExt = uploadedFileName.split('.').pop().toLowerCase() || 'jpg';
+      const imgPath = `resim/yonetilen/${slug}-${Date.now()}.${cleanExt}`;
+
+      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Upload image for ${slug}`, content: uploadedFileBase64, branch: BRANCH })
+      });
+      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    }
+
+    const productData = {
+      title,
+      kategori: document.getElementById('f_kategori').value,
+      sku: document.getElementById('f_sku').value.trim() || undefined,
+      kisa_aciklama: document.getElementById('f_kisa').value.trim(),
+      ana_resim: finalImageUrl || '/resim/logo.png',
+      body: document.getElementById('f_body').value.trim(),
+      anasayfada_goster: document.getElementById('f_anasayfa').checked,
+      populer: document.getElementById('f_populer').checked,
+      yeni: document.getElementById('f_yeni').checked,
+      renkler: colorsList.length > 0 ? colorsList : undefined,
+      ozellikler: featsList.length > 0 ? featsList : undefined
+    };
+
+    let currentSha = editMode ? editingSha : '';
+    if (editMode && !currentSha) {
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+        if (getRes.ok) {
+          const d = await getRes.json();
+          currentSha = d.sha;
+        }
+      } catch(e) {}
+    }
+
+    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(productData, null, 2))));
+    const commitBody = {
+      message: editMode ? `Update product: ${title}` : `Add product: ${title}`,
+      content: jsonBase64,
+      branch: BRANCH
+    };
+    if (currentSha) commitBody.sha = currentSha;
+
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commitBody)
+    });
+
+    if (!saveRes.ok) throw new Error('Ürün kaydedilemedi');
+
+    await updateIndexFile(slug, token);
+
+    editMode = false;
+    editingSlug = '';
+    editingSha = '';
+
+    showToast('🎉 Ürün başarıyla kaydedildi! Sitede yayına alındı.', 'success');
+    setTimeout(() => {
+      loadAllProducts();
+      switchProductSubTab('list');
+    }, 800);
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Kaydet ve Sitede Yayınla';
+  }
+}
+
+async function updateIndexFile(slug, token) {
+  try {
+    let indexList = [];
+    let indexSha = '';
+    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      indexSha = data.sha;
+      indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+    }
+
+    if (!indexList.includes(slug)) {
+      indexList.push(slug);
+      const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+      await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Update urunler-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
+      });
+    }
+  } catch(e) {}
+}
+
+async function deleteProduct(slug, sha) {
+  if (!confirm(`"${slug}" ürününü silmek istediğinize emin misiniz?`)) return;
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('Lütfen önce GitHub API Token girin!', 'error'); return; }
+
+  try {
+    showToast('Ürün siliniyor...', 'info');
+    let currentSha = sha;
+    if (!currentSha) {
+      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (getRes.ok) {
+        const d = await getRes.json();
+        currentSha = d.sha;
+      }
+    }
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete product: ${slug}`, sha: currentSha, branch: BRANCH })
+    });
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+        indexList = indexList.filter(id => id !== slug);
+        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Remove ${slug} from index`, content: newContent, sha: data.sha, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    showToast('Ürün başarıyla silindi!', 'success');
+    loadAllProducts();
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+// CHIPS
+function handleChipKey(e, type) {
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    const input = document.getElementById(type === 'color' ? 'colorInput' : 'featInput');
+    const val = input.value.trim();
+    if (!val) return;
+    if (type === 'color' && !colorsList.includes(val)) colorsList.push(val);
+    if (type === 'feat' && !featsList.includes(val)) featsList.push(val);
+    input.value = '';
+    renderChips(type === 'color' ? 'colors' : 'feats');
+  }
+}
+
+function renderChips(type) {
+  if (type === 'colors') {
+    const cont = document.getElementById('colorsContainer');
+    const input = document.getElementById('colorInput');
+    cont.querySelectorAll('.chip').forEach(c => c.remove());
+    colorsList.forEach((c, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `${c} <span class="chip-remove" onclick="removeChip('colors', ${idx})">✕</span>`;
+      cont.insertBefore(chip, input);
+    });
+  } else {
+    const cont = document.getElementById('featsContainer');
+    const input = document.getElementById('featInput');
+    cont.querySelectorAll('.chip').forEach(c => c.remove());
+    featsList.forEach((f, idx) => {
+      const chip = document.createElement('div');
+      chip.className = 'chip';
+      chip.innerHTML = `${f} <span class="chip-remove" onclick="removeChip('feats', ${idx})">✕</span>`;
+      cont.insertBefore(chip, input);
+    });
+  }
+}
+
+function removeChip(type, index) {
+  if (type === 'colors') { colorsList.splice(index, 1); renderChips('colors'); }
+  else { featsList.splice(index, 1); renderChips('feats'); }
+}
+
+function autoGenerateSlug() {
+  if (!editMode) {
+    document.getElementById('f_slug').value = slugify(document.getElementById('f_title').value);
+  }
+}
+
+function slugify(text) {
+  const trMap = {'ç':'c','ğ':'g','ı':'i','ö':'o','ş':'s','ü':'u','Ç':'c','Ğ':'g','İ':'i','Ö':'o','Ş':'s','Ü':'u'};
+  return text.split('').map(c => trMap[c] || c).join('')
+    .toLowerCase().trim()
+    .replace(/[^a-z0-9 -]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-');
+}
+
+// ══════════════════════════════════════════════════════════
+// COMPANY & SETTINGS MODULE
+// ══════════════════════════════════════════════════════════
+async function loadCompanySettings() {
+  try {
+    const res = await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
+    if (!res.ok) return;
+    const g = await res.json();
+    if (g.firma) {
+      document.getElementById('c_ad').value = g.firma.ad || '';
+      document.getElementById('c_slogan').value = g.firma.slogan || '';
+    }
+    if (g.iletisim) {
+      document.getElementById('c_telefon').value = g.iletisim.telefon || '';
+      document.getElementById('c_whatsapp').value = g.iletisim.whatsapp || '';
+      document.getElementById('c_email').value = g.iletisim.email || '';
+      document.getElementById('c_adres').value = g.iletisim.adres || '';
+      document.getElementById('c_saatler').value = g.iletisim.calisma_saatleri || '';
+    }
+    if (g.topbar) document.getElementById('c_topbar').value = g.topbar.metin || '';
+    if (g.sosyal_medya) {
+      document.getElementById('c_instagram').value = g.sosyal_medya.instagram || '';
+      document.getElementById('c_facebook').value = g.sosyal_medya.facebook || '';
+      document.getElementById('c_linkedin').value = g.sosyal_medya.linkedin || '';
+    }
+  } catch(e) {}
+}
+
+async function saveCompanySettings() {
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+
+  showToast('Firma bilgileri kaydediliyor...', 'info');
+  try {
+    let existingData = {};
+    let sha = '';
+    const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (getRes.ok) {
+      const d = await getRes.json();
+      sha = d.sha;
+      existingData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    }
+
+    existingData.firma = existingData.firma || {};
+    existingData.firma.ad = document.getElementById('c_ad').value.trim();
+    existingData.firma.slogan = document.getElementById('c_slogan').value.trim();
+
+    existingData.iletisim = existingData.iletisim || {};
+    existingData.iletisim.telefon = document.getElementById('c_telefon').value.trim();
+    existingData.iletisim.whatsapp = document.getElementById('c_whatsapp').value.trim();
+    existingData.iletisim.email = document.getElementById('c_email').value.trim();
+    existingData.iletisim.adres = document.getElementById('c_adres').value.trim();
+    existingData.iletisim.calisma_saatleri = document.getElementById('c_saatler').value.trim();
+
+    existingData.topbar = existingData.topbar || {};
+    existingData.topbar.metin = document.getElementById('c_topbar').value.trim();
+
+    existingData.sosyal_medya = existingData.sosyal_medya || {};
+    existingData.sosyal_medya.instagram = document.getElementById('c_instagram').value.trim();
+    existingData.sosyal_medya.facebook = document.getElementById('c_facebook').value.trim();
+    existingData.sosyal_medya.linkedin = document.getElementById('c_linkedin').value.trim();
+
+    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(existingData, null, 2))));
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update company settings', content: jsonBase64, sha: sha || undefined, branch: BRANCH })
+    });
+
+    if (!saveRes.ok) throw new Error('Firma ayarları kaydedilemedi');
+    showToast('🎉 Firma bilgileri başarıyla güncellendi!', 'success');
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// HOMEPAGE MODULE
+// ══════════════════════════════════════════════════════════
+let homeAboutUploadedBase64 = null;
+let homeAboutUploadedFileName = '';
+
+async function loadHomeSettings() {
+  try {
+    const res = await fetch('/_data/ayarlar/anasayfa.json?t=' + Date.now());
+    if (res.ok) {
+      const h = await res.json();
+      if (h.hero) {
+        document.getElementById('h_baslik1').value = h.hero.baslik_1 || '';
+        document.getElementById('h_baslik2').value = h.hero.baslik_2 || '';
+        document.getElementById('h_altyazi').value = h.hero.alt_yazi || '';
+      }
+    }
+    const gRes = await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
+    if (gRes.ok) {
+      const g = await gRes.json();
+      if (g.stats && g.stats.length >= 4) {
+        document.getElementById('h_stat1_num').value = g.stats[0].sayi || '15+';
+        document.getElementById('h_stat1_lbl').value = g.stats[0].etiket || '';
+        document.getElementById('h_stat2_num').value = g.stats[1].sayi || '2K+';
+        document.getElementById('h_stat2_lbl').value = g.stats[1].etiket || '';
+        document.getElementById('h_stat3_num').value = g.stats[2].sayi || '5';
+        document.getElementById('h_stat3_lbl').value = g.stats[2].etiket || '';
+        document.getElementById('h_stat4_num').value = g.stats[3].sayi || '5';
+        document.getElementById('h_stat4_lbl').value = g.stats[3].etiket || '';
+      }
+      if (g.anasayfa_hakkimizda) {
+        const ab = g.anasayfa_hakkimizda;
+        document.getElementById('h_about_tag').value = ab.etiket || 'Firmamız Hakkında';
+        document.getElementById('h_about_b1').value = ab.baslik_1 || 'Global Kapak Mobilya';
+        document.getElementById('h_about_b2').value = ab.baslik_2 || 'Membran Kapak Uzmanı';
+        document.getElementById('h_about_p1').value = ab.paragraf_1 || '';
+        document.getElementById('h_about_p2').value = ab.paragraf_2 || '';
+        document.getElementById('h_about_p3').value = ab.paragraf_3 || '';
+        document.getElementById('h_about_btn_text').value = ab.buton_yazi || 'Daha Fazla Bilgi';
+        document.getElementById('h_about_img_url').value = ab.resim || '/resim/logo.png';
+
+        if (ab.resim && ab.resim !== '/resim/logo.png' && ab.resim !== 'resim/logo.png') {
+          document.getElementById('homeAboutPreviewImg').src = resolveAssetUrl(ab.resim);
+          document.getElementById('homeAboutFileName').textContent = ab.resim.split('/').pop();
+          document.getElementById('homeAboutPreviewBox').style.display = 'flex';
+        } else {
+          removeHomeAboutImage();
+        }
+      }
+    }
+  } catch(e) {}
+}
+
+async function saveHomeSettings() {
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+
+  const btn = document.getElementById('btnSaveHome');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+  }
+
+  showToast('Ana sayfa güncelleniyor...', 'info');
+  try {
+    let homeData = {};
+    let homeSha = '';
+    const hRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/anasayfa.json`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (hRes.ok) {
+      const d = await hRes.json();
+      homeSha = d.sha;
+      homeData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    }
+
+    homeData.hero = homeData.hero || {};
+    homeData.hero.baslik_1 = document.getElementById('h_baslik1').value.trim();
+    homeData.hero.baslik_2 = document.getElementById('h_baslik2').value.trim();
+    homeData.hero.alt_yazi = document.getElementById('h_altyazi').value.trim();
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/anasayfa.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update homepage hero settings', content: btoa(unescape(encodeURIComponent(JSON.stringify(homeData, null, 2)))), sha: homeSha || undefined, branch: BRANCH })
+    });
+
+    let genelData = {};
+    let genelSha = '';
+    const gRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (gRes.ok) {
+      const d = await gRes.json();
+      genelSha = d.sha;
+      genelData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+    }
+
+    genelData.stats = [
+      { sayi: document.getElementById('h_stat1_num').value.trim(), etiket: document.getElementById('h_stat1_lbl').value.trim() },
+      { sayi: document.getElementById('h_stat2_num').value.trim(), etiket: document.getElementById('h_stat2_lbl').value.trim() },
+      { sayi: document.getElementById('h_stat3_num').value.trim(), etiket: document.getElementById('h_stat3_lbl').value.trim() },
+      { sayi: document.getElementById('h_stat4_num').value.trim(), etiket: document.getElementById('h_stat4_lbl').value.trim() }
+    ];
+
+    let finalAboutImg = document.getElementById('h_about_img_url').value.trim();
+    if (homeAboutUploadedBase64) {
+      if (btn) btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
+      const cleanExt = homeAboutUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
+      const imgPath = `resim/yonetilen/anasayfa-hakkimizda-${Date.now()}.${cleanExt}`;
+
+      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'Upload homepage about image', content: homeAboutUploadedBase64, branch: BRANCH })
+      });
+      if (imgRes.ok) finalAboutImg = '/' + imgPath;
+    }
+
+    genelData.anasayfa_hakkimizda = genelData.anasayfa_hakkimizda || {};
+    genelData.anasayfa_hakkimizda.resim = finalAboutImg || 'resim/logo.png';
+    genelData.anasayfa_hakkimizda.etiket = document.getElementById('h_about_tag').value.trim();
+    genelData.anasayfa_hakkimizda.baslik_1 = document.getElementById('h_about_b1').value.trim();
+    genelData.anasayfa_hakkimizda.baslik_2 = document.getElementById('h_about_b2').value.trim();
+    genelData.anasayfa_hakkimizda.paragraf_1 = document.getElementById('h_about_p1').value.trim();
+    genelData.anasayfa_hakkimizda.paragraf_2 = document.getElementById('h_about_p2').value.trim();
+    genelData.anasayfa_hakkimizda.paragraf_3 = document.getElementById('h_about_p3').value.trim();
+    genelData.anasayfa_hakkimizda.buton_yazi = document.getElementById('h_about_btn_text').value.trim() || 'Daha Fazla Bilgi';
+    genelData.anasayfa_hakkimizda.buton_link = 'hakkimizda.html';
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: 'Update homepage about and stats', content: btoa(unescape(encodeURIComponent(JSON.stringify(genelData, null, 2)))), sha: genelSha || undefined, branch: BRANCH })
+    });
+
+    homeAboutUploadedBase64 = null;
+    homeAboutUploadedFileName = '';
+
+    showToast('🎉 Ana sayfa Hakkımızda ve Manşet içerikleri başarıyla güncellendi!', 'success');
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '💾 Ana Sayfa Ayarlarını Kaydet ve Yayınla';
+    }
+  }
+}
+
+function handleHomeAboutFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  homeAboutUploadedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    homeAboutUploadedBase64 = evt.target.result.split(',')[1];
+    document.getElementById('homeAboutPreviewImg').src = evt.target.result;
+    document.getElementById('homeAboutFileName').textContent = file.name;
+    document.getElementById('homeAboutPreviewBox').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeHomeAboutImage() {
+  homeAboutUploadedBase64 = null;
+  homeAboutUploadedFileName = '';
+  const input = document.getElementById('homeAboutFileInput');
+  if (input) input.value = '';
+  const box = document.getElementById('homeAboutPreviewBox');
+  if (box) box.style.display = 'none';
+  const previewImg = document.getElementById('homeAboutPreviewImg');
+  if (previewImg) previewImg.src = '/resim/logo.png';
+}
+
+// ══════════════════════════════════════════════════════════
+// GALLERY MODULE
+// ══════════════════════════════════════════════════════════
+let allGallery = [];
+let editGalMode = false;
+let editingGalSlug = '';
+let editingGalSha = '';
+let galUploadedBase64 = null;
+let galUploadedFileName = '';
+
+function switchGalSubTab(view) {
+  const listBtn = document.getElementById('btnGalSubList');
+  const addBtn = document.getElementById('btnGalSubAdd');
+  const listView = document.getElementById('subview-gal-list');
+  const formView = document.getElementById('subview-gal-form');
+
+  if (view === 'list') {
+    listBtn.className = 'btn-primary btn-sm';
+    addBtn.className = 'btn-gold btn-sm';
+    listView.style.display = 'block';
+    formView.style.display = 'none';
+  } else {
+    listBtn.className = 'btn-secondary btn-sm';
+    addBtn.className = 'btn-primary btn-sm';
+    listView.style.display = 'none';
+    formView.style.display = 'block';
+  }
+}
+
+async function loadAllGallery() {
+  const loading = document.getElementById('galLoadingIndicator');
+  const grid = document.getElementById('galGrid');
+  const empty = document.getElementById('galEmptyState');
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    let files = [];
+    const token = localStorage.getItem('gkm_gh_token');
+    const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri?t=${Date.now()}`, { headers });
+      if (r.ok) {
+        const list = await r.json();
+        files = list.filter(f => f.name.endsWith('.json'));
+      }
+    } catch(e) {}
+
+    let loaded = [];
+    if (files.length > 0) {
+      const promises = files.map(async (file) => {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${file.name}?t=${Date.now()}`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+            content.slug = file.name.replace('.json', '');
+            content.sha = data.sha;
+            return content;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(g => g);
+    }
+
+    if (loaded.length === 0) {
+      const sampleIds = ['galeri-1', 'galeri-2', 'galeri-3'];
+      const promises = sampleIds.map(async (id) => {
+        try {
+          const r = await fetch(`/_data/galeri/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const d = await r.json();
+            d.slug = id;
+            return d;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(g => g);
+    }
+
+    allGallery = loaded;
+    document.getElementById('galCountBadge').textContent = allGallery.length;
+    renderAdminGalleryGrid(allGallery);
+
+  } catch(err) {
+    showToast('Galeri yüklenirken hata oluştu', 'error');
+    renderAdminGalleryGrid([]);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderAdminGalleryGrid(items) {
+  const grid = document.getElementById('galGrid');
+  const empty = document.getElementById('galEmptyState');
+
+  if (!items || items.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = items.map(g => `
+    <div class="product-card">
+      <img class="product-card-img" src="${resolveAssetUrl(g.resim)}" alt="${g.baslik}" onerror="this.src='/resim/logo.png'">
+      <div class="product-card-body">
+        <div class="product-card-cat">${g.kategori || 'Proje'}</div>
+        <div class="product-card-title">${g.baslik || 'Başlıksız Görsel'}</div>
+        <div style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">
+          ${g.anasayfada_goster !== false ? '🏠 Ana Sayfa Vitrininde Aktif' : '📁 Sadece Galeride'}
+        </div>
+        <div class="product-card-actions">
+          <button class="btn-secondary btn-sm" style="flex:1;" onclick="editGallery('${g.slug}')">✏️ Düzenle</button>
+          <button class="btn-danger btn-sm" onclick="deleteGalleryItem('${g.slug}', '${g.sha || ''}')">🗑️ Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterAdminGallery() {
+  const q = document.getElementById('galSearchBox').value.toLowerCase().trim();
+  const cat = document.getElementById('galFilterCat').value;
+
+  const filtered = allGallery.filter(g => {
+    const matchQ = (g.baslik && g.baslik.toLowerCase().includes(q));
+    const matchCat = cat === 'all' || g.kategori === cat;
+    return matchQ && matchCat;
+  });
+
+  renderAdminGalleryGrid(filtered);
+}
+
+function startNewGallery() {
+  editGalMode = false;
+  editingGalSlug = '';
+  editingGalSha = '';
+  document.getElementById('galFormTitle').textContent = '➕ Yeni Galeri Fotoğrafı Ekle';
+  document.getElementById('btnGalSave').textContent = '💾 Galeriye Kaydet ve Yayınla';
+  document.getElementById('galForm').reset();
+  document.getElementById('gal_image_url').value = '/resim/logo.png';
+  document.getElementById('gal_anasayfa').checked = true;
+  removeGalImage();
+  switchGalSubTab('form');
+}
+
+function editGallery(slug) {
+  const g = allGallery.find(x => x.slug === slug);
+  if (!g) return;
+
+  editGalMode = true;
+  editingGalSlug = slug;
+  editingGalSha = g.sha || '';
+
+  document.getElementById('galFormTitle').textContent = `✏️ "${g.baslik}" Fotoğrafını Düzenle`;
+  document.getElementById('btnGalSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
+
+  document.getElementById('gal_title').value = g.baslik || '';
+  document.getElementById('gal_cat').value = g.kategori || 'Mutfak';
+  document.getElementById('gal_anasayfa').checked = g.anasayfada_goster !== false;
+  document.getElementById('gal_image_url').value = g.resim || '/resim/logo.png';
+
+  if (g.resim) {
+    document.getElementById('galPreviewImg').src = resolveAssetUrl(g.resim);
+    document.getElementById('galFileName').textContent = g.resim.split('/').pop();
+    document.getElementById('galPreviewBox').style.display = 'flex';
+  } else {
+    removeGalImage();
+  }
+
+  switchGalSubTab('form');
+}
+
+async function saveGalleryItem(e) {
+  if (e) e.preventDefault();
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+
+  const title = document.getElementById('gal_title').value.trim();
+  let slug = editGalMode ? editingGalSlug : ('galeri-' + Date.now());
+  if (!title) { showToast('Lütfen fotoğraf başlığını yazın!', 'error'); return; }
+
+  const btn = document.getElementById('btnGalSave');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+
+  try {
+    let finalImageUrl = document.getElementById('gal_image_url').value.trim();
+
+    if (galUploadedBase64) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
+      const cleanExt = galUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
+      const imgPath = `resim/galeri-resimleri/${slug}.${cleanExt}`;
+
+      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Upload gallery image for ${slug}`, content: galUploadedBase64, branch: BRANCH })
+      });
+      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    }
+
+    const galData = {
+      baslik: title,
+      kategori: document.getElementById('gal_cat').value,
+      resim: finalImageUrl || '/resim/logo.png',
+      anasayfada_goster: document.getElementById('gal_anasayfa').checked,
+      siralama: Date.now()
+    };
+
+    let currentSha = editGalMode ? editingGalSha : '';
+    if (editGalMode && !currentSha) {
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+        if (getRes.ok) {
+          const d = await getRes.json();
+          currentSha = d.sha;
+        }
+      } catch(e) {}
+    }
+
+    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(galData, null, 2))));
+    const commitBody = {
+      message: editGalMode ? `Update gallery item: ${title}` : `Add gallery item: ${title}`,
+      content: jsonBase64,
+      branch: BRANCH
+    };
+    if (currentSha) commitBody.sha = currentSha;
+
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commitBody)
+    });
+
+    if (!saveRes.ok) throw new Error('Galeri fotoğrafı kaydedilemedi');
+
+    // Update galeri-index.json
+    try {
+      let galIndex = [];
+      let galIndexSha = '';
+      const idxRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (idxRes.ok) {
+        const d = await idxRes.json();
+        galIndexSha = d.sha;
+        galIndex = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+      }
+
+      if (!galIndex.includes(slug)) {
+        galIndex.unshift(slug);
+        const newIndexContent = btoa(unescape(encodeURIComponent(JSON.stringify(galIndex, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Update galeri-index for ${slug}`, content: newIndexContent, sha: galIndexSha || undefined, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    editGalMode = false;
+    editingGalSlug = '';
+    editingGalSha = '';
+
+    showToast('🎉 Fotoğraf galeriye başarıyla eklendi!', 'success');
+    setTimeout(() => {
+      loadAllGallery();
+      switchGalSubTab('list');
+    }, 800);
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Galeriye Kaydet ve Yayınla';
+  }
+}
+
+async function deleteGalleryItem(slug, sha) {
+  if (!confirm(`Bu galeri fotoğrafını silmek istediğinize emin misiniz?`)) return;
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+
+  try {
+    showToast('Fotoğraf siliniyor...', 'info');
+    let currentSha = sha;
+    if (!currentSha) {
+      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (getRes.ok) {
+        const d = await getRes.json();
+        currentSha = d.sha;
+      }
+    }
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete gallery: ${slug}`, sha: currentSha, branch: BRANCH })
+    });
+
+    // Remove from galeri-index.json
+    try {
+      const idxRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (idxRes.ok) {
+        const d = await idxRes.json();
+        let galIndex = JSON.parse(decodeURIComponent(escape(atob(d.content))));
+        galIndex = galIndex.filter(id => id !== slug);
+        const newIndexContent = btoa(unescape(encodeURIComponent(JSON.stringify(galIndex, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Remove ${slug} from galeri-index`, content: newIndexContent, sha: d.sha, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    showToast('Fotoğraf başarıyla silindi!', 'success');
+    loadAllGallery();
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+function handleGalFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  galUploadedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    galUploadedBase64 = evt.target.result.split(',')[1];
+    document.getElementById('galPreviewImg').src = evt.target.result;
+    document.getElementById('galFileName').textContent = file.name;
+    document.getElementById('galPreviewBox').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeGalImage() {
+  galUploadedBase64 = null;
+  galUploadedFileName = '';
+  document.getElementById('galFileInput').value = '';
+  document.getElementById('galPreviewBox').style.display = 'none';
+  document.getElementById('galPreviewImg').src = '/resim/logo.png';
+}
+
+// ══════════════════════════════════════════════════════════
+// BLOG MODULE
+// ══════════════════════════════════════════════════════════
+let allBlogs = [];
+let editBlogMode = false;
+let editingBlogSlug = '';
+let editingBlogSha = '';
+let blogUploadedBase64 = null;
+let blogUploadedFileName = '';
+
+function switchBlogSubTab(view) {
+  const listBtn = document.getElementById('btnBlogSubList');
+  const addBtn = document.getElementById('btnBlogSubAdd');
+  const listView = document.getElementById('subview-blog-list');
+  const formView = document.getElementById('subview-blog-form');
+
+  if (view === 'list') {
+    listBtn.className = 'btn-primary btn-sm';
+    addBtn.className = 'btn-gold btn-sm';
+    listView.style.display = 'block';
+    formView.style.display = 'none';
+  } else {
+    listBtn.className = 'btn-secondary btn-sm';
+    addBtn.className = 'btn-primary btn-sm';
+    listView.style.display = 'none';
+    formView.style.display = 'block';
+  }
+}
+
+async function loadAllBlogs() {
+  const loading = document.getElementById('blogLoadingIndicator');
+  const grid = document.getElementById('blogGrid');
+  const empty = document.getElementById('blogEmptyState');
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    let files = [];
+    const token = localStorage.getItem('gkm_gh_token');
+    const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog?t=${Date.now()}`, { headers });
+      if (r.ok) {
+        const list = await r.json();
+        files = list.filter(f => f.name.endsWith('.json'));
+      }
+    } catch(e) {}
+
+    let loaded = [];
+    if (files.length > 0) {
+      const promises = files.map(async (file) => {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${file.name}?t=${Date.now()}`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+            content.slug = file.name.replace('.json', '');
+            content.sha = data.sha;
+            return content;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(b => b);
+    }
+
+    if (loaded.length === 0) {
+      let ids = [];
+      try {
+        const idxRes = await fetch('/_data/blog-index.json?t=' + Date.now());
+        if (idxRes.ok) ids = await idxRes.json();
+      } catch(e) {}
+      
+      const promises = (ids || []).map(async (id) => {
+        try {
+          const r = await fetch(`/_data/blog/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const d = await r.json();
+            d.slug = id;
+            return d;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(b => b);
+    }
+
+    allBlogs = loaded;
+    document.getElementById('blogCountBadge').textContent = allBlogs.length;
+    renderAdminBlogGrid(allBlogs);
+
+  } catch(err) {
+    showToast('Makaleler yüklenirken hata oluştu', 'error');
+    renderAdminBlogGrid([]);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderAdminBlogGrid(posts) {
+  const grid = document.getElementById('blogGrid');
+  const empty = document.getElementById('blogEmptyState');
+
+  if (!posts || posts.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = posts.map(b => `
+    <div class="product-card">
+      <img class="product-card-img" src="${resolveAssetUrl(b.kapak_resim)}" alt="${b.title}" onerror="this.src='/resim/logo.png'">
+      <div class="product-card-body">
+        <div class="product-card-cat">${b.kategori || 'Makale'}</div>
+        <div class="product-card-title">${b.title || 'Başlıksız Makale'}</div>
+        <div class="product-card-desc">${b.ozet || ''}</div>
+        <div class="product-card-actions">
+          <button class="btn-secondary btn-sm" style="flex:1;" onclick="editBlog('${b.slug}')">✏️ Düzenle</button>
+          <button class="btn-danger btn-sm" onclick="deleteBlogItem('${b.slug}', '${b.sha || ''}')">🗑️ Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterAdminBlogs() {
+  const q = document.getElementById('blogSearchBox').value.toLowerCase().trim();
+  const filtered = allBlogs.filter(b => (b.title && b.title.toLowerCase().includes(q)) || (b.ozet && b.ozet.toLowerCase().includes(q)));
+  renderAdminBlogGrid(filtered);
+}
+
+function startNewBlog() {
+  editBlogMode = false;
+  editingBlogSlug = '';
+  editingBlogSha = '';
+  document.getElementById('blogFormTitle').textContent = '➕ Yeni Makale Ekle';
+  document.getElementById('btnBlogSave').textContent = '💾 Makaleyi Yayınla';
+  document.getElementById('blogForm').reset();
+  document.getElementById('b_slug').value = '';
+  document.getElementById('b_slug').readOnly = false;
+  document.getElementById('b_image_url').value = '/resim/logo.png';
+  document.getElementById('b_anasayfa').checked = true;
+  removeBlogImage();
+  switchBlogSubTab('form');
+}
+
+function editBlog(slug) {
+  const b = allBlogs.find(x => x.slug === slug);
+  if (!b) return;
+
+  editBlogMode = true;
+  editingBlogSlug = slug;
+  editingBlogSha = b.sha || '';
+
+  document.getElementById('blogFormTitle').textContent = `✏️ "${b.title}" Makalesini Düzenle`;
+  document.getElementById('btnBlogSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
+
+  document.getElementById('b_title').value = b.title || '';
+  document.getElementById('b_kategori').value = b.kategori || 'Rehber & Bakım';
+  document.getElementById('b_slug').value = slug;
+  document.getElementById('b_slug').readOnly = true;
+  document.getElementById('b_ozet').value = b.ozet || '';
+  document.getElementById('b_body').value = b.body || '';
+  document.getElementById('b_anasayfa').checked = b.anasayfada_goster !== false;
+  document.getElementById('b_image_url').value = b.kapak_resim || '/resim/logo.png';
+
+  if (b.kapak_resim) {
+    document.getElementById('blogPreviewImg').src = resolveAssetUrl(b.kapak_resim);
+    document.getElementById('blogFileName').textContent = b.kapak_resim.split('/').pop();
+    document.getElementById('blogPreviewBox').style.display = 'flex';
+  } else {
+    removeBlogImage();
+  }
+
+  switchBlogSubTab('form');
+}
+
+function autoGenerateBlogSlug() {
+  if (!editBlogMode) {
+    document.getElementById('b_slug').value = slugify(document.getElementById('b_title').value);
+  }
+}
+
+async function saveBlogItem(e) {
+  if (e) e.preventDefault();
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+
+  const title = document.getElementById('b_title').value.trim();
+  let slug = document.getElementById('b_slug').value.trim() || slugify(title);
+  if (!title || !slug) { showToast('Lütfen makale başlığını yazın!', 'error'); return; }
+
+  if (!editBlogMode && allBlogs.some(b => b.slug === slug)) {
+    slug = `${slug}-${Date.now().toString().slice(-4)}`;
+  }
+
+  const btn = document.getElementById('btnBlogSave');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Yayınlanıyor...';
+
+  try {
+    let finalImageUrl = document.getElementById('b_image_url').value.trim();
+
+    if (blogUploadedBase64) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
+      const cleanExt = blogUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
+      const imgPath = `resim/yonetilen/blog-${slug}-${Date.now()}.${cleanExt}`;
+
+      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Upload blog image for ${slug}`, content: blogUploadedBase64, branch: BRANCH })
+      });
+      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    }
+
+    const blogData = {
+      title,
+      kategori: document.getElementById('b_kategori').value,
+      tarih: new Date().toISOString(),
+      kapak_resim: finalImageUrl || '/resim/logo.png',
+      ozet: document.getElementById('b_ozet').value.trim(),
+      body: document.getElementById('b_body').value.trim(),
+      anasayfada_goster: document.getElementById('b_anasayfa').checked
+    };
+
+    let currentSha = editBlogMode ? editingBlogSha : '';
+    if (editBlogMode && !currentSha) {
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+        if (getRes.ok) {
+          const d = await getRes.json();
+          currentSha = d.sha;
+        }
+      } catch(e) {}
+    }
+
+    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(blogData, null, 2))));
+    const commitBody = {
+      message: editBlogMode ? `Update blog: ${title}` : `Add blog: ${title}`,
+      content: jsonBase64,
+      branch: BRANCH
+    };
+    if (currentSha) commitBody.sha = currentSha;
+
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commitBody)
+    });
+
+    if (!saveRes.ok) throw new Error('Makale kaydedilemedi');
+
+    try {
+      let indexList = [];
+      let indexSha = '';
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        indexSha = data.sha;
+        indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+      }
+
+      if (!indexList.includes(slug)) {
+        indexList.push(slug);
+        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Update blog-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    editBlogMode = false;
+    editingBlogSlug = '';
+    editingBlogSha = '';
+
+    showToast('🎉 Makale başarıyla yayınlandı!', 'success');
+    setTimeout(() => {
+      loadAllBlogs();
+      switchBlogSubTab('list');
+    }, 800);
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Makaleyi Yayınla';
+  }
+}
+
+async function deleteBlogItem(slug, sha) {
+  if (!confirm(`"${slug}" makalesini silmek istediğinize emin misiniz?`)) return;
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+
+  try {
+    showToast('Makale siliniyor...', 'info');
+    let currentSha = sha;
+    if (!currentSha) {
+      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (getRes.ok) {
+        const d = await getRes.json();
+        currentSha = d.sha;
+      }
+    }
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete blog: ${slug}`, sha: currentSha, branch: BRANCH })
+    });
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+        indexList = indexList.filter(id => id !== slug);
+        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Remove ${slug} from blog-index`, content: newContent, sha: data.sha, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    showToast('Makale başarıyla silindi!', 'success');
+    loadAllBlogs();
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+function handleBlogFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  blogUploadedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    blogUploadedBase64 = evt.target.result.split(',')[1];
+    document.getElementById('blogPreviewImg').src = evt.target.result;
+    document.getElementById('blogFileName').textContent = file.name;
+    document.getElementById('blogPreviewBox').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeBlogImage() {
+  blogUploadedBase64 = null;
+  blogUploadedFileName = '';
+  document.getElementById('blogFileInput').value = '';
+  document.getElementById('blogPreviewBox').style.display = 'none';
+  document.getElementById('blogPreviewImg').src = '/resim/logo.png';
+}
+
+// ══════════════════════════════════════════════════════════
+// SUPPLIERS MODULE (FULL CRUD)
+// ══════════════════════════════════════════════════════════
+let allSuppliers = [];
+let editSupMode = false;
+let editingSupSlug = '';
+let editingSupSha = '';
+let supUploadedBase64 = null;
+let supUploadedFileName = '';
+
+function switchSupSubTab(view) {
+  const listBtn = document.getElementById('btnSupSubList');
+  const addBtn = document.getElementById('btnSupSubAdd');
+  const listView = document.getElementById('subview-sup-list');
+  const formView = document.getElementById('subview-sup-form');
+
+  if (view === 'list') {
+    listBtn.className = 'btn-primary btn-sm';
+    addBtn.className = 'btn-gold btn-sm';
+    listView.style.display = 'block';
+    formView.style.display = 'none';
+  } else {
+    listBtn.className = 'btn-secondary btn-sm';
+    addBtn.className = 'btn-primary btn-sm';
+    listView.style.display = 'none';
+    formView.style.display = 'block';
+  }
+}
+
+async function loadAllSuppliers() {
+  const loading = document.getElementById('supLoadingIndicator');
+  const grid = document.getElementById('supGrid');
+  const empty = document.getElementById('supEmptyState');
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+
+  try {
+    let files = [];
+    const token = localStorage.getItem('gkm_gh_token');
+    const headers = token ? { 'Authorization': `token ${token}` } : {};
+
+    try {
+      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler?t=${Date.now()}`, { headers });
+      if (r.ok) {
+        const list = await r.json();
+        files = list.filter(f => f.name.endsWith('.json'));
+      }
+    } catch(e) {}
+
+    let loaded = [];
+    if (files.length > 0) {
+      const promises = files.map(async (file) => {
+        try {
+          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${file.name}?t=${Date.now()}`, { headers });
+          if (res.ok) {
+            const data = await res.json();
+            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+            content.slug = file.name.replace('.json', '');
+            content.sha = data.sha;
+            return content;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(s => s);
+    }
+
+    if (loaded.length === 0) {
+      let ids = [];
+      try {
+        const idxRes = await fetch('/_data/tedarikciler-index.json?t=' + Date.now());
+        if (idxRes.ok) ids = await idxRes.json();
+      } catch(e) {}
+      
+      const promises = (ids || []).map(async (id) => {
+        try {
+          const r = await fetch(`/_data/tedarikciler/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const d = await r.json();
+            d.slug = id;
+            return d;
+          }
+        } catch(e) {}
+        return null;
+      });
+      loaded = (await Promise.all(promises)).filter(s => s);
+    }
+
+    allSuppliers = loaded;
+    document.getElementById('supCountBadge').textContent = allSuppliers.length;
+    renderAdminSupplierGrid(allSuppliers);
+
+  } catch(err) {
+    showToast('Tedarikçiler yüklenirken hata oluştu', 'error');
+    renderAdminSupplierGrid([]);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function renderAdminSupplierGrid(items) {
+  const grid = document.getElementById('supGrid');
+  const empty = document.getElementById('supEmptyState');
+
+  if (!items || items.length === 0) {
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+
+  grid.innerHTML = items.map(s => `
+    <div class="product-card">
+      <div style="height:140px; background:#F8FAFC; display:flex; align-items:center; justify-content:center; padding:16px; border-bottom:1px solid var(--border);">
+        <img src="${resolveAssetUrl(s.logo)}" alt="${s.ad}" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="this.src='/resim/logo.png'">
+      </div>
+      <div class="product-card-body">
+        <div class="product-card-cat">${s.kategori || 'İş Ortağımız'}</div>
+        <div class="product-card-title">${s.ad || 'Tedarikçi'}</div>
+        <div class="product-card-desc">${s.aciklama || 'Açıklama belirtilmemiş.'}</div>
+        ${s.link ? `<div style="font-size:11px; color:var(--gold); margin-bottom:10px; word-break:break-all;">🔗 ${s.link}</div>` : ''}
+        <div class="product-card-actions">
+          <button class="btn-secondary btn-sm" style="flex:1;" onclick="editSupplier('${s.slug}')">✏️ Düzenle</button>
+          <button class="btn-danger btn-sm" onclick="deleteSupplierItem('${s.slug}', '${s.sha || ''}')">🗑️ Sil</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function filterAdminSuppliers() {
+  const q = document.getElementById('supSearchBox').value.toLowerCase().trim();
+  const cat = document.getElementById('supFilterCat').value;
+
+  const filtered = allSuppliers.filter(s => {
+    const matchQ = (s.ad && s.ad.toLowerCase().includes(q)) || (s.aciklama && s.aciklama.toLowerCase().includes(q));
+    const matchCat = cat === 'all' || s.kategori === cat;
+    return matchQ && matchCat;
+  });
+
+  renderAdminSupplierGrid(filtered);
+}
+
+function startNewSupplier() {
+  editSupMode = false;
+  editingSupSlug = '';
+  editingSupSha = '';
+  document.getElementById('supFormTitle').textContent = '➕ Yeni Tedarikçi Ekle';
+  document.getElementById('btnSupSave').textContent = '💾 Tedarikçiyi Kaydet ve Yayınla';
+  document.getElementById('supForm').reset();
+  document.getElementById('sup_slug').value = '';
+  document.getElementById('sup_slug').readOnly = false;
+  document.getElementById('sup_logo_url').value = '/resim/logo.png';
+  document.getElementById('sup_order').value = (allSuppliers.length + 1);
+  removeSupImage();
+  switchSupSubTab('form');
+}
+
+function editSupplier(slug) {
+  const s = allSuppliers.find(x => x.slug === slug);
+  if (!s) return;
+
+  editSupMode = true;
+  editingSupSlug = slug;
+  editingSupSha = s.sha || '';
+
+  document.getElementById('supFormTitle').textContent = `✏️ "${s.ad}" Tedarikçisini Düzenle`;
+  document.getElementById('btnSupSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
+
+  document.getElementById('sup_ad').value = s.ad || '';
+  document.getElementById('sup_cat').value = s.kategori || 'Membran & Folyo';
+  document.getElementById('sup_slug').value = slug;
+  document.getElementById('sup_slug').readOnly = true;
+  document.getElementById('sup_link').value = s.link || '';
+  document.getElementById('sup_desc').value = s.aciklama || '';
+  document.getElementById('sup_order').value = s.siralama || 1;
+  document.getElementById('sup_logo_url').value = s.logo || '/resim/logo.png';
+
+  if (s.logo && s.logo !== '/resim/logo.png') {
+    document.getElementById('supPreviewImg').src = resolveAssetUrl(s.logo);
+    document.getElementById('supFileName').textContent = s.logo.split('/').pop();
+    document.getElementById('supPreviewBox').style.display = 'flex';
+  } else {
+    removeSupImage();
+  }
+
+  switchSupSubTab('form');
+}
+
+function autoGenerateSupSlug() {
+  if (!editSupMode) {
+    document.getElementById('sup_slug').value = slugify(document.getElementById('sup_ad').value);
+  }
+}
+
+async function saveSupplierItem(e) {
+  if (e) e.preventDefault();
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+
+  const ad = document.getElementById('sup_ad').value.trim();
+  let slug = document.getElementById('sup_slug').value.trim() || slugify(ad);
+  if (!ad || !slug) { showToast('Lütfen tedarikçi adını yazın!', 'error'); return; }
+
+  if (!editSupMode && allSuppliers.some(s => s.slug === slug)) {
+    slug = `${slug}-${Date.now().toString().slice(-4)}`;
+  }
+
+  const btn = document.getElementById('btnSupSave');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+
+  try {
+    let finalLogoUrl = document.getElementById('sup_logo_url').value.trim();
+
+    if (supUploadedBase64) {
+      btn.innerHTML = '<div class="spinner"></div> Logo Yükleniyor...';
+      const cleanExt = supUploadedFileName.split('.').pop().toLowerCase() || 'png';
+      const imgPath = `resim/yonetilen/tedarikci-${slug}-${Date.now()}.${cleanExt}`;
+
+      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: `Upload supplier logo for ${slug}`, content: supUploadedBase64, branch: BRANCH })
+      });
+      if (imgRes.ok) finalLogoUrl = '/' + imgPath;
+    }
+
+    const supData = {
+      ad,
+      kategori: document.getElementById('sup_cat').value,
+      aciklama: document.getElementById('sup_desc').value.trim(),
+      link: document.getElementById('sup_link').value.trim() || undefined,
+      logo: finalLogoUrl || '/resim/logo.png',
+      siralama: parseInt(document.getElementById('sup_order').value, 10) || 1
+    };
+
+    let currentSha = editSupMode ? editingSupSha : '';
+    if (editSupMode && !currentSha) {
+      try {
+        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
+          headers: { 'Authorization': `token ${token}` }
+        });
+        if (getRes.ok) {
+          const d = await getRes.json();
+          currentSha = d.sha;
+        }
+      } catch(e) {}
+    }
+
+    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(supData, null, 2))));
+    const commitBody = {
+      message: editSupMode ? `Update supplier: ${ad}` : `Add supplier: ${ad}`,
+      content: jsonBase64,
+      branch: BRANCH
+    };
+    if (currentSha) commitBody.sha = currentSha;
+
+    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
+      method: 'PUT',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(commitBody)
+    });
+
+    if (!saveRes.ok) throw new Error('Tedarikçi kaydedilemedi');
+
+    // Update tedarikciler-index.json
+    try {
+      let indexList = [];
+      let indexSha = '';
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        indexSha = data.sha;
+        indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+      }
+
+      if (!indexList.includes(slug)) {
+        indexList.push(slug);
+        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Update tedarikciler-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    editSupMode = false;
+    editingSupSlug = '';
+    editingSupSha = '';
+
+    showToast('🎉 Tedarikçi başarıyla kaydedildi!', 'success');
+    setTimeout(() => {
+      loadAllSuppliers();
+      switchSupSubTab('list');
+    }, 800);
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Tedarikçiyi Kaydet ve Yayınla';
+  }
+}
+
+async function deleteSupplierItem(slug, sha) {
+  if (!confirm(`"${slug}" tedarikçisini silmek istediğinize emin misiniz?`)) return;
+
+  const token = localStorage.getItem('gkm_gh_token');
+  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+
+  try {
+    showToast('Tedarikçi siliniyor...', 'info');
+    let currentSha = sha;
+    if (!currentSha) {
+      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (getRes.ok) {
+        const d = await getRes.json();
+        currentSha = d.sha;
+      }
+    }
+
+    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
+      method: 'DELETE',
+      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `Delete supplier: ${slug}`, sha: currentSha, branch: BRANCH })
+    });
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
+        headers: { 'Authorization': `token ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
+        indexList = indexList.filter(id => id !== slug);
+        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
+        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
+          method: 'PUT',
+          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: `Remove ${slug} from tedarikciler-index`, content: newContent, sha: data.sha, branch: BRANCH })
+        });
+      }
+    } catch(e) {}
+
+    showToast('Tedarikçi başarıyla silindi!', 'success');
+    loadAllSuppliers();
+
+  } catch(err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+function handleSupFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  supUploadedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    supUploadedBase64 = evt.target.result.split(',')[1];
+    document.getElementById('supPreviewImg').src = evt.target.result;
+    document.getElementById('supFileName').textContent = file.name;
+    document.getElementById('supPreviewBox').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSupImage() {
+  supUploadedBase64 = null;
+  supUploadedFileName = '';
+  document.getElementById('supFileInput').value = '';
+  document.getElementById('supPreviewBox').style.display = 'none';
+  document.getElementById('supPreviewImg').src = '/resim/logo.png';
+}
+
+// ══════════════════════════════════════════════════════════
+// DRAG & DROP & FILE UPLOADS
+// ══════════════════════════════════════════════════════════
+function setupDragAndDrop() {
+  setupZone('uploadZone', processImageFile);
+  setupZone('galUploadZone', (file) => {
+    galUploadedFileName = file.name;
+    const r = new FileReader();
+    r.onload = (evt) => {
+      galUploadedBase64 = evt.target.result.split(',')[1];
+      document.getElementById('galPreviewImg').src = evt.target.result;
+      document.getElementById('galFileName').textContent = file.name;
+      document.getElementById('galPreviewBox').style.display = 'flex';
+    };
+    r.readAsDataURL(file);
+  });
+  setupZone('blogUploadZone', (file) => {
+    blogUploadedFileName = file.name;
+    const r = new FileReader();
+    r.onload = (evt) => {
+      blogUploadedBase64 = evt.target.result.split(',')[1];
+      document.getElementById('blogPreviewImg').src = evt.target.result;
+      document.getElementById('blogFileName').textContent = file.name;
+      document.getElementById('blogPreviewBox').style.display = 'flex';
+    };
+    r.readAsDataURL(file);
+  });
+  setupZone('supUploadZone', (file) => {
+    supUploadedFileName = file.name;
+    const r = new FileReader();
+    r.onload = (evt) => {
+      supUploadedBase64 = evt.target.result.split(',')[1];
+      document.getElementById('supPreviewImg').src = evt.target.result;
+      document.getElementById('supFileName').textContent = file.name;
+      document.getElementById('supPreviewBox').style.display = 'flex';
+    };
+    r.readAsDataURL(file);
+  });
+  setupZone('homeAboutUploadZone', (file) => {
+    homeAboutUploadedFileName = file.name;
+    const r = new FileReader();
+    r.onload = (evt) => {
+      homeAboutUploadedBase64 = evt.target.result.split(',')[1];
+      document.getElementById('homeAboutPreviewImg').src = evt.target.result;
+      document.getElementById('homeAboutFileName').textContent = file.name;
+      document.getElementById('homeAboutPreviewBox').style.display = 'flex';
+    };
+    r.readAsDataURL(file);
+  });
+}
+
+function setupZone(zoneId, handler) {
+  const zone = document.getElementById(zoneId);
+  if (!zone) return;
+
+  ['dragenter', 'dragover'].forEach(name => {
+    zone.addEventListener(name, (e) => { e.preventDefault(); zone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(name => {
+    zone.addEventListener(name, (e) => { e.preventDefault(); zone.classList.remove('dragover'); });
+  });
+
+  zone.addEventListener('drop', (e) => {
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) handler(file);
+  });
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processImageFile(file);
+}
+
+function processImageFile(file) {
+  uploadedFileName = file.name;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    uploadedFileBase64 = evt.target.result.split(',')[1];
+    document.getElementById('previewImg').src = evt.target.result;
+    document.getElementById('previewFileName').textContent = file.name;
+    document.getElementById('imagePreviewBox').style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeSelectedImage() {
+  uploadedFileBase64 = null;
+  uploadedFileName = '';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('imagePreviewBox').style.display = 'none';
+  document.getElementById('previewImg').src = '/resim/logo.png';
+}
+
+// ══════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  checkTokenStatus();
+  loadAllProducts();
+  loadCompanySettings();
+  loadHomeSettings();
+  loadAllGallery();
+  loadAllBlogs();
+  loadAllSuppliers();
+  setupDragAndDrop();
+});
+
+// ══════════════════════════════════════════════════════════
+// TOKEN MODAL & REPO DISCOVERY
+// ══════════════════════════════════════════════════════════
+function openTokenModal() {
+  document.getElementById('tokenInput').value = localStorage.getItem('gkm_gh_token') || '';
+  document.getElementById('repoOwnerInput').value = localStorage.getItem('gkm_gh_owner') || REPO_OWNER;
+  document.getElementById('repoNameInput').value = localStorage.getItem('gkm_gh_repo') || REPO_NAME;
+  document.getElementById('tokenModal').classList.add('open');
+}
+
+function closeTokenModal() {
+  document.getElementById('tokenModal').classList.remove('open');
+}
+
+async function saveToken() {
+  const token = document.getElementById('tokenInput').value.trim();
+  const owner = document.getElementById('repoOwnerInput').value.trim() || 'Andromeda012';
+  const repo = document.getElementById('repoNameInput').value.trim() || 'Global-Mobilya-Web';
+
+  if (!token) {
+    localStorage.removeItem('gkm_gh_token');
+    checkTokenStatus();
+    closeTokenModal();
+    showToast('Token kaldırıldı', 'info');
+    return;
+  }
+
+  showToast('Bağlantı test ediliyor...', 'info');
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!res.ok) throw new Error(`"${owner}/${repo}" reposuna erişilemedi veya token yetkisiz.`);
+
+    localStorage.setItem('gkm_gh_token', token);
+    localStorage.setItem('gkm_gh_owner', owner);
+    localStorage.setItem('gkm_gh_repo', repo);
+    REPO_OWNER = owner;
+    REPO_NAME = repo;
+
+    checkTokenStatus();
+    closeTokenModal();
+    showToast('🎉 GitHub bağlantısı başarıyla kuruldu!', 'success');
+    loadAllProducts();
+    loadAllGallery();
+    loadAllBlogs();
+    loadAllSuppliers();
+
+  } catch(err) {
+    showToast(err.message, 'error');
+  }
+}
+
+async function fetchUserRepos() {
+  const token = document.getElementById('tokenInput').value.trim() || localStorage.getItem('gkm_gh_token');
+  if (!token) { showToast('Önce yukarıya GitHub Token yapıştırın!', 'error'); return; }
+
+  showToast('Depolar taranıyor...', 'info');
+  try {
+    const res = await fetch('https://api.github.com/user/repos?per_page=100&affiliation=owner,collaborator', {
+      headers: { 'Authorization': `token ${token}` }
+    });
+    if (!res.ok) throw new Error('Token ile depolar getirilemedi');
+    const repos = await res.json();
+    const dropdown = document.getElementById('repoSelectDropdown');
+    dropdown.innerHTML = '<option value="">Depo Seçiniz (' + repos.length + ' bulundu)...</option>';
+    repos.forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.full_name;
+      opt.textContent = r.full_name + (r.private ? ' 🔒' : ' 🌐');
+      if (r.name === 'Global-Mobilya-Web' || r.name === 'global-mobilya') opt.selected = true;
+      dropdown.appendChild(opt);
+    });
+    dropdown.style.display = 'block';
+    showToast(`${repos.length} depo listelendi!`, 'success');
+  } catch(e) {
+    showToast('Hata: ' + e.message, 'error');
+  }
+}
+
+function selectRepoFromDropdown(fullName) {
+  if (!fullName) return;
+  const parts = fullName.split('/');
+  document.getElementById('repoOwnerInput').value = parts[0];
+  document.getElementById('repoNameInput').value = parts[1];
+}
+</script>
+
+</body>
+</html>

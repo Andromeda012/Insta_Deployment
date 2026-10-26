@@ -1,0 +1,11 @@
+{
+  "baslik": "sdfs",
+  "kategori": "Mutfak",
+  "resim": "/resim/logo.png",
+  "anasayfada_goster": true,
+  "siralama": 1787672363723
+<<<<<<< HEAD
+}
+=======
+}
+>>>>>>> 9b8dd7a (Implement galeri-index and CDN resilience for gallery page)

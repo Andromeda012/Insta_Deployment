@@ -1,0 +1,670 @@
+backend:
+  name: github
+  repo: emrecanaksoyea34-a11y/global-kapak-mobilyaa
+  branch: main
+  base_url: https://api.netlify.com
+  auth_endpoint: auth
+
+site_url: https://globalkapakmobilya.netlify.app
+display_url: https://globalkapakmobilya.netlify.app
+logo_url: https://globalkapakmobilya.netlify.app/resim/logo.png
+
+media_folder: "resim/yonetilen"
+public_folder: "/resim/yonetilen"
+
+locale: 'tr'
+
+collections:
+  
+  # ════════════════════════════════
+  # 🛒 ÜRÜNLER
+  # ════════════════════════════════
+  - name: "urunler"
+    label: "🛒 Ürünler"
+    label_singular: "Ürün"
+    folder: "_data/urunler"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    summary: "{{title}} - {{kategori}}"
+    preview_path: "urun.html?id={{slug}}"
+    fields:
+      - { label: "Ürün Adı", name: "title", widget: "string" }
+      - { label: "Kategori", name: "kategori", widget: "select", options: ["Düz Membran Kapak", "Çerçeveli", "Özel Ölçü"] }
+      - { label: "Ürün Kodu (SKU)", name: "sku", widget: "string", required: false, hint: "Örn: MK-DUZ-001" }
+      - { label: "Kısa Açıklama", name: "kisa_aciklama", widget: "string", required: false }
+      - { label: "Ana Resim", name: "ana_resim", widget: "image", required: false }
+      - label: "📸 Çoklu Görsel Galerisi"
+        name: "gorseller"
+        widget: "list"
+        required: false
+        hint: "Birden fazla görsel ekleyebilirsiniz. İlk görsel ana görsel olarak gösterilir."
+        field: { label: "Görsel", name: "resim", widget: "image" }
+      - label: "🖼️ Görsel Yerleşim Modu"
+        name: "gorsel_mod"
+        widget: "select"
+        required: false
+        default: "contain"
+        hint: "Görselin kutuda nasıl gösterileceğini seçin"
+        options:
+          - { label: "📐 Tam Boyut — Resim tam görünür, boşluk kalabilir (önerilen)", value: "contain" }
+          - { label: "✂️ Kırpılmış — Kutuyu tam doldurur, kenarlar kesilebilir", value: "cover" }
+          - { label: "↔️ Uzatılmış — Kutuya tam oturur, oran bozulabilir", value: "fill" }
+      - { label: "Detaylı Açıklama", name: "body", widget: "markdown", required: false }
+      - label: "🎨 Renk Seçenekleri"
+        name: "renkler"
+        widget: "list"
+        required: false
+        default: ["Mat Beyaz", "Antrasit", "Ceviz", "Bej", "Lacivert"]
+        hint: "Her satıra bir renk yazın"
+        field: { label: "Renk", name: "renk", widget: "string" }
+      - label: "📏 Boyut/Beden Seçenekleri"
+        name: "bedenler"
+        widget: "list"
+        required: false
+        hint: "Her boyut için etiket ve stok durumu ekleyin"
+        fields:
+          - { label: "Boyut Etiketi", name: "label", widget: "string", hint: "Örn: 40x60 cm veya Standart" }
+          - { label: "Stokta Var", name: "stok", widget: "boolean", default: true }
+      - label: "✓ Özellik Listesi"
+        name: "ozellikler"
+        widget: "list"
+        required: false
+        hint: "Ürünün öne çıkan özellikleri (her satır ayrı madde)"
+        field: { label: "Özellik", name: "ozellik", widget: "string" }
+      - label: "🏷️ Etiketler"
+        name: "etiketler"
+        widget: "list"
+        required: false
+        hint: "Ürün etiketleri (Örn: Mat Yüzey, Mutfak, 5 Yıl Garanti)"
+        field: { label: "Etiket", name: "etiket", widget: "string" }
+      - { label: "⭐ Popüler Ürün", name: "populer", widget: "boolean", default: false, required: false }
+      - { label: "🆕 Yeni Ürün", name: "yeni", widget: "boolean", default: false, required: false }
+
+  # ════════════════════════════════
+  # 📝 BLOG YAZILARI
+  # ════════════════════════════════
+  - name: "blog"
+    label: "📝 Blog Yazıları"
+    label_singular: "Blog Yazısı"
+    folder: "_data/blog"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    summary: "{{title}}"
+    preview_path: "blog-yazi.html?id={{slug}}"
+    fields:
+      - { label: "Başlık", name: "title", widget: "string" }
+      - { label: "Kategori", name: "kategori", widget: "select", options: ["Membran Kapak", "Bakım", "Dekorasyon", "İpuçları", "Sektör Haberleri"] }
+      - { label: "Yayın Tarihi", name: "tarih", widget: "datetime" }
+      - { label: "Kapak Resmi", name: "kapak_resim", widget: "image", required: false }
+      - { label: "Özet", name: "ozet", widget: "string" }
+      - { label: "İçerik", name: "body", widget: "markdown" }
+      - { label: "Etiketler", name: "etiketler", widget: "list", required: false }
+
+  # ════════════════════════════════
+  # 🎨 GALERİ
+  # ════════════════════════════════
+  - name: "galeri"
+    label: "🎨 Galeri"
+    label_singular: "Galeri Öğesi"
+    folder: "_data/galeri"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    summary: "{{baslik}} - {{kategori}}"
+    fields:
+      - { label: "Başlık", name: "baslik", widget: "string" }
+      - { label: "Kategori", name: "kategori", widget: "select", options: ["Mutfak", "Banyo", "Gardırop", "Çocuk Odası", "Ofis", "Diğer"] }
+      - { label: "Resim", name: "resim", widget: "image" }
+      - { label: "Sıralama (1-99)", name: "siralama", widget: "number", default: 1 }
+
+  # ════════════════════════════════
+  # 🤝 TEDARİKÇİLER
+  # ════════════════════════════════
+  - name: "tedarikciler"
+    label: "🤝 Tedarikçiler"
+    label_singular: "Tedarikçi"
+    folder: "_data/tedarikciler"
+    create: true
+    delete: true
+    slug: "{{slug}}"
+    extension: "json"
+    format: "json"
+    summary: "{{ad}} - {{kategori}}"
+    fields:
+      - { label: "Firma Adı", name: "ad", widget: "string" }
+      - { label: "Kategori", name: "kategori", widget: "string", hint: "Örn: Membran, MDF, Yapıştırıcı" }
+      - { label: "Açıklama", name: "aciklama", widget: "text", required: false }
+      - { label: "Logo", name: "logo", widget: "image", required: false }
+      - { label: "Sıralama (1-99)", name: "siralama", widget: "number", default: 1 }
+
+  # ════════════════════════════════
+  # ⚙️ SİTE AYARLARI
+  # ════════════════════════════════
+  - name: "ayarlar"
+    label: "⚙️ Site Ayarları"
+    files:
+      
+      - file: "_data/ayarlar/anasayfa.json"
+        label: "🏠 Anasayfa İçeriği"
+        name: "anasayfa"
+        format: "json"
+        fields:
+          - label: "🎯 Hero (Üst Bölüm)"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Üst Etiket", name: "tag", widget: "string", default: "Premium Membran Kapak" }
+              - { label: "Başlık 1. Satır", name: "baslik_1", widget: "string" }
+              - { label: "Başlık 2. Satır (sarı renkli)", name: "baslik_2", widget: "string" }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "text" }
+              - { label: "Buton 1 - Yazı", name: "buton_1_yazi", widget: "string" }
+              - { label: "Buton 1 - Link", name: "buton_1_link", widget: "string", default: "urunler.html" }
+              - { label: "Buton 2 - Yazı", name: "buton_2_yazi", widget: "string" }
+              - { label: "Buton 2 - Link", name: "buton_2_link", widget: "string", default: "iletisim.html" }
+          - label: "🎬 Slider Resimleri"
+            name: "slider"
+            widget: "list"
+            min: 3
+            max: 5
+            fields:
+              - { label: "Resim", name: "resim", widget: "image" }
+              - { label: "Başlık", name: "baslik", widget: "string", required: false }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "string", required: false }
+          - label: "💎 Neden Biz Kartları"
+            name: "neden_biz"
+            widget: "object"
+            fields:
+              - { label: "Bölüm Başlığı", name: "baslik", widget: "string" }
+              - label: "Kartlar"
+                name: "kartlar"
+                widget: "list"
+                fields:
+                  - { label: "İkon (Emoji)", name: "ikon", widget: "string", default: "🏆" }
+                  - { label: "Başlık", name: "baslik", widget: "string" }
+                  - { label: "Açıklama", name: "aciklama", widget: "string" }
+          - label: "🌳 Yeşil Bant"
+            name: "yesil_bant"
+            widget: "object"
+            fields:
+              - { label: "Ana Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Başlık", name: "alt_baslik", widget: "string" }
+              - { label: "Metin", name: "metin", widget: "text" }
+          - { label: "🎨 Galeri Bölümü Başlığı", name: "galeri_baslik", widget: "string" }
+          - { label: "🎨 Galeri Alt Başlığı", name: "galeri_alt_baslik", widget: "string" }
+
+      - file: "_data/ayarlar/genel.json"
+        label: "📞 Genel Ayarlar (Logo, Telefon, Footer)"
+        name: "genel"
+        format: "json"
+        fields:
+          - label: "🏢 Firma Bilgileri"
+            name: "firma"
+            widget: "object"
+            fields:
+              - { label: "Logo", name: "logo", widget: "image" }
+              - { label: "Firma Adı", name: "ad", widget: "string" }
+              - { label: "Slogan", name: "slogan", widget: "string" }
+              - { label: "Tagline", name: "tagline", widget: "string", required: false }
+          - label: "📞 İletişim Bilgileri"
+            name: "iletisim"
+            widget: "object"
+            fields:
+              - { label: "Telefon", name: "telefon", widget: "string" }
+              - { label: "WhatsApp Numarası", name: "whatsapp", widget: "string", hint: "Format: 905050151035" }
+              - { label: "E-posta", name: "email", widget: "string" }
+              - { label: "Adres", name: "adres", widget: "string" }
+              - { label: "Çalışma Saatleri", name: "calisma_saatleri", widget: "string" }
+          - label: "📱 Sosyal Medya"
+            name: "sosyal_medya"
+            widget: "object"
+            fields:
+              - { label: "Instagram", name: "instagram", widget: "string", required: false }
+              - { label: "Facebook", name: "facebook", widget: "string", required: false }
+              - { label: "Twitter / X", name: "twitter", widget: "string", required: false }
+              - { label: "LinkedIn", name: "linkedin", widget: "string", required: false }
+              - { label: "YouTube", name: "youtube", widget: "string", required: false }
+          - label: "📄 Footer"
+            name: "footer"
+            widget: "object"
+            fields:
+              - { label: "Tanıtım Metni", name: "tanitim_metni", widget: "text" }
+              - { label: "Telif Hakkı Yazısı", name: "alt_metin", widget: "string" }
+          - label: "🔗 Navbar CTA Butonu"
+            name: "nav_cta"
+            widget: "object"
+            fields:
+              - { label: "Buton Yazısı", name: "yazi", widget: "string", default: "Teklif Al" }
+              - { label: "Buton Linki", name: "link", widget: "string", default: "iletisim.html" }
+
+          - label: "📢 Üst Şerit (Topbar)"
+            name: "topbar"
+            widget: "object"
+            fields:
+              - { label: "Metin", name: "metin", widget: "string" }
+              - { label: "Aktif", name: "aktif", widget: "boolean", default: true }
+
+          - label: "📊 İstatistik Sayıları (Stats Bar)"
+            name: "stats"
+            widget: "list"
+            hint: "Anasayfadaki 4 istatistik kutusu"
+            fields:
+              - { label: "Sayı/Değer", name: "sayi", widget: "string", hint: "Örn: 15+ veya 2K+" }
+              - { label: "Etiket", name: "etiket", widget: "string", hint: "Örn: Yıl Sektör Deneyimi" }
+
+          - label: "🏠 Anasayfa Hakkımızda Bölümü"
+            name: "anasayfa_hakkimizda"
+            widget: "object"
+            fields:
+              - { label: "Resim", name: "resim", widget: "image", required: false }
+              - { label: "Başlık 1", name: "baslik_1", widget: "string" }
+              - { label: "Başlık 2 (sarı)", name: "baslik_2", widget: "string" }
+              - { label: "Paragraf 1", name: "paragraf_1", widget: "text" }
+              - { label: "Paragraf 2", name: "paragraf_2", widget: "text", required: false }
+              - { label: "Paragraf 3", name: "paragraf_3", widget: "text", required: false }
+              - { label: "Buton Yazısı", name: "buton_yazi", widget: "string" }
+              - { label: "Buton Linki", name: "buton_link", widget: "string" }
+
+          - label: "👤 Hakkımızda Sayfası Ana Resmi"
+            name: "hakkimizda_resim"
+            widget: "object"
+            fields:
+              - { label: "Resim", name: "resim", widget: "image", required: false }
+              - label: "Görsel Modu"
+                name: "mod"
+                widget: "select"
+                default: "contain"
+                options:
+                  - { label: "📐 Tam Boyut (contain)", value: "contain" }
+                  - { label: "✂️ Kırpılmış (cover)", value: "cover" }
+                  - { label: "↔️ Uzatılmış (fill)", value: "fill" }
+
+      - file: "_data/ayarlar/hakkimizda.json"
+        label: "👤 Hakkımızda Sayfası"
+        name: "hakkimizda"
+        format: "json"
+        fields:
+          - label: "🎯 Hero"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Üst Etiket", name: "tag", widget: "string" }
+              - { label: "Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "string" }
+          - label: "📖 Ana Metin"
+            name: "ana_metin"
+            widget: "object"
+            fields:
+              - { label: "Üst Etiket", name: "tag", widget: "string" }
+              - { label: "Başlık 1", name: "baslik_1", widget: "string" }
+              - { label: "Başlık 2 (sarı)", name: "baslik_2", widget: "string" }
+              - { label: "Paragraf 1", name: "paragraf_1", widget: "text" }
+              - { label: "Paragraf 2", name: "paragraf_2", widget: "text" }
+              - { label: "Paragraf 3", name: "paragraf_3", widget: "text", required: false }
+          - label: "📊 Rakamlar"
+            name: "rakamlar"
+            widget: "list"
+            fields:
+              - { label: "Sayı", name: "sayi", widget: "string" }
+              - { label: "Etiket", name: "etiket", widget: "string" }
+          - label: "✓ Özellikler"
+            name: "ozellikler"
+            widget: "list"
+            fields:
+              - { label: "İkon", name: "ikon", widget: "string", default: "✓" }
+              - { label: "Metin", name: "metin", widget: "string" }
+          - label: "🎯 Misyon & Vizyon"
+            name: "misyon_vizyon"
+            widget: "object"
+            fields:
+              - { label: "Misyon Başlık", name: "misyon_baslik", widget: "string" }
+              - { label: "Misyon Metin", name: "misyon_metin", widget: "text" }
+              - { label: "Vizyon Başlık", name: "vizyon_baslik", widget: "string" }
+              - { label: "Vizyon Metin", name: "vizyon_metin", widget: "text" }
+          - label: "📞 CTA"
+            name: "cta"
+            widget: "object"
+            fields:
+              - { label: "Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Metin", name: "alt_metin", widget: "text" }
+              - { label: "Buton Yazısı", name: "buton_yazi", widget: "string" }
+              - { label: "Buton Link", name: "buton_link", widget: "string" }
+
+      - file: "_data/ayarlar/iletisim.json"
+        label: "📞 İletişim Sayfası"
+        name: "iletisim_sayfa"
+        format: "json"
+        fields:
+          - label: "🎯 Hero"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Üst Etiket", name: "tag", widget: "string" }
+              - { label: "Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "string" }
+          - label: "📝 Form Bölümü"
+            name: "form"
+            widget: "object"
+            fields:
+              - { label: "Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "text" }
+              - { label: "Buton Yazısı", name: "buton_yazi", widget: "string" }
+          - label: "🗺️ Harita"
+            name: "harita"
+            widget: "object"
+            fields:
+              - { label: "Embed URL (Google Maps)", name: "embed_url", widget: "string" }
+              - { label: "Başlık", name: "baslik", widget: "string" }
+          - label: "❓ Sıkça Sorulan Sorular"
+            name: "sss"
+            widget: "list"
+            fields:
+              - { label: "Soru", name: "soru", widget: "string" }
+              - { label: "Cevap", name: "cevap", widget: "text" }
+
+      - file: "_data/ayarlar/kvkk.json"
+        label: "🔒 KVKK Metni"
+        name: "kvkk"
+        format: "json"
+        fields:
+          - label: "Hero"
+            name: "hero"
+            widget: "object"
+            fields:
+              - { label: "Başlık", name: "baslik", widget: "string" }
+              - { label: "Alt Yazı", name: "alt_yazi", widget: "string" }
+          - { label: "Son Güncellenme Tarihi", name: "son_guncellenme", widget: "string" }
+          - label: "📑 KVKK Bölümleri"
+            name: "bolumler"
+            widget: "list"
+            fields:
+              - { label: "Bölüm ID", name: "id", widget: "string" }
+              - { label: "Bölüm Başlığı", name: "baslik", widget: "string" }
+              - { label: "Bölüm Metni", name: "metin", widget: "markdown" }
+
+      - file: "_data/ayarlar/tema.json"
+        label: "🎨 Tema & Görsel Ayarlar"
+        name: "tema"
+        format: "json"
+        fields:
+
+          - label: "🎨 Renkler"
+            name: "renkler"
+            widget: "object"
+            fields:
+              - { label: "Ana Renk (Lacivert)", name: "ana_renk", widget: "color", default: "#0B1F4B" }
+              - { label: "Ana Renk 2 (Orta Lacivert)", name: "ana_renk_2", widget: "color", default: "#1A3A7A" }
+              - { label: "Ana Renk 3 (Açık Lacivert)", name: "ana_renk_3", widget: "color", default: "#2453A8" }
+              - { label: "Vurgu Rengi (Altın)", name: "vurgu_renk", widget: "color", default: "#C8A96E" }
+              - { label: "Arkaplan (Açık Gri)", name: "arkaplan", widget: "color", default: "#f7f7f7" }
+              - { label: "Metin Rengi", name: "metin", widget: "color", default: "#333333" }
+              - { label: "Soluk Metin", name: "soluk_metin", widget: "color", default: "#777777" }
+              - { label: "Kenarlık Rengi", name: "sinir", widget: "color", default: "#e5e5e5" }
+              - { label: "Footer Arkaplanı", name: "footer_bg", widget: "color", default: "#060E22" }
+
+          - label: "✍️ Yazı Tipleri"
+            name: "tipografi"
+            widget: "object"
+            fields:
+              - label: "Başlık Fontu"
+                name: "baslik_font"
+                widget: "select"
+                default: "Montserrat"
+                options:
+                  - { label: "Montserrat (Varsayılan)", value: "Montserrat" }
+                  - { label: "Playfair Display (Klasik)", value: "Playfair Display" }
+                  - { label: "Raleway (Modern)", value: "Raleway" }
+                  - { label: "Poppins (Yuvarlak)", value: "Poppins" }
+                  - { label: "Oswald (Güçlü)", value: "Oswald" }
+                  - { label: "Lato (Sade)", value: "Lato" }
+                  - { label: "Roboto (Nötr)", value: "Roboto" }
+                  - { label: "Nunito (Yumuşak)", value: "Nunito" }
+              - label: "Gövde Fontu"
+                name: "govde_font"
+                widget: "select"
+                default: "Open Sans"
+                options:
+                  - { label: "Open Sans (Varsayılan)", value: "Open Sans" }
+                  - { label: "Lato", value: "Lato" }
+                  - { label: "Roboto", value: "Roboto" }
+                  - { label: "Nunito", value: "Nunito" }
+                  - { label: "Source Sans Pro", value: "Source Sans Pro" }
+              - label: "Gövde Yazı Boyutu"
+                name: "govde_boyut"
+                widget: "select"
+                default: "14px"
+                options:
+                  - { label: "Küçük (13px)", value: "13px" }
+                  - { label: "Normal (14px)", value: "14px" }
+                  - { label: "Orta (15px)", value: "15px" }
+                  - { label: "Büyük (16px)", value: "16px" }
+
+          - label: "🧭 Navigasyon (Üst Menü)"
+            name: "nav"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan Rengi", name: "arkaplan", widget: "color", default: "#ffffff" }
+              - label: "Yükseklik"
+                name: "yukseklik"
+                widget: "select"
+                default: "65px"
+                options: ["55px","60px","65px","70px","75px","80px"]
+              - { label: "Gölge Göster", name: "golge", widget: "boolean", default: true }
+              - label: "Logo Yüksekliği"
+                name: "logo_yukseklik"
+                widget: "select"
+                default: "48px"
+                options: ["36px","40px","44px","48px","52px","56px","60px"]
+              - { label: "Menü Link Rengi", name: "link_renk", widget: "color", default: "#0B1F4B" }
+              - label: "Menü Link Boyutu"
+                name: "link_boyut"
+                widget: "select"
+                default: "11.5px"
+                options: ["10px","11px","11.5px","12px","13px","14px"]
+              - { label: "CTA Buton Arkaplanı", name: "cta_arkaplan", widget: "color", default: "#C8A96E" }
+              - { label: "CTA Buton Yazı Rengi", name: "cta_renk", widget: "color", default: "#0B1F4B" }
+
+          - label: "📢 Üst Şerit (Topbar)"
+            name: "topbar"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan Rengi", name: "arkaplan", widget: "color", default: "#0B1F4B" }
+              - { label: "Yazı Rengi", name: "renk", widget: "string", default: "rgba(255,255,255,0.75)" }
+              - label: "Yazı Boyutu"
+                name: "boyut"
+                widget: "select"
+                default: "12px"
+                options: ["11px","12px","13px","14px"]
+              - { label: "Göster", name: "goster", widget: "boolean", default: true }
+
+          - label: "🦸 Hero (Üst Banner)"
+            name: "hero"
+            widget: "object"
+            fields:
+              - label: "Minimum Yükseklik"
+                name: "min_yukseklik"
+                widget: "select"
+                default: "520px"
+                options: ["400px","450px","500px","520px","580px","650px","700px","100vh"]
+              - label: "Karartma Yoğunluğu"
+                name: "overlay_opakligi"
+                widget: "select"
+                default: "0.92"
+                hint: "0 = şeffaf, 1 = tamamen siyah"
+                options:
+                  - { label: "Çok Az (%50)", value: "0.50" }
+                  - { label: "Az (%65)", value: "0.65" }
+                  - { label: "Orta (%80)", value: "0.80" }
+                  - { label: "Fazla (%92)", value: "0.92" }
+                  - { label: "Tam (%100)", value: "1.00" }
+              - label: "Başlık Boyutu"
+                name: "baslik_boyut"
+                widget: "select"
+                default: "42px"
+                options: ["28px","32px","36px","40px","42px","48px","54px","60px"]
+              - label: "Alt Yazı Boyutu"
+                name: "altyazi_boyut"
+                widget: "select"
+                default: "15px"
+                options: ["13px","14px","15px","16px","17px","18px"]
+              - { label: "Etiket Arkaplanı", name: "tag_arkaplan", widget: "color", default: "#C8A96E" }
+              - { label: "Etiket Yazı Rengi", name: "tag_renk", widget: "color", default: "#0B1F4B" }
+              - { label: "Birincil Buton Arkaplanı", name: "buton_birincil_arkaplan", widget: "color", default: "#C8A96E" }
+              - { label: "Birincil Buton Yazı Rengi", name: "buton_birincil_renk", widget: "color", default: "#0B1F4B" }
+
+          - label: "📊 İstatistik Barı"
+            name: "stats_bar"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan", name: "arkaplan", widget: "color", default: "#0B1F4B" }
+              - { label: "Sayı Rengi", name: "sayi_renk", widget: "color", default: "#C8A96E" }
+              - { label: "Etiket Rengi", name: "etiket_renk", widget: "string", default: "rgba(255,255,255,0.5)" }
+              - label: "Sayı Boyutu"
+                name: "sayi_boyut"
+                widget: "select"
+                default: "30px"
+                options: ["22px","26px","30px","34px","38px"]
+
+          - label: "🏷️ Bölüm Başlıkları"
+            name: "bolum_basligi"
+            widget: "object"
+            fields:
+              - { label: "Başlık Rengi", name: "baslik_renk", widget: "color", default: "#0B1F4B" }
+              - label: "Başlık Boyutu"
+                name: "baslik_boyut"
+                widget: "select"
+                default: "30px"
+                options: ["22px","24px","26px","28px","30px","34px","38px"]
+              - { label: "Etiket Rengi", name: "tag_renk", widget: "color", default: "#C8A96E" }
+              - { label: "Çizgi Rengi", name: "cizgi_renk", widget: "color", default: "#C8A96E" }
+              - label: "Çizgi Genişliği"
+                name: "cizgi_genislik"
+                widget: "select"
+                default: "50px"
+                options: ["30px","40px","50px","60px","80px","100px"]
+
+          - label: "🛒 Ürün Kartı"
+            name: "urun_karti"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan", name: "arkaplan", widget: "color", default: "#ffffff" }
+              - { label: "Kenarlık Rengi", name: "sinir_renk", widget: "color", default: "#e5e5e5" }
+              - label: "Köşe Yuvarlama"
+                name: "sinir_radius"
+                widget: "select"
+                default: "0px"
+                options: ["0px","4px","6px","8px","12px","16px","20px"]
+              - { label: "Başlık Rengi", name: "baslik_renk", widget: "color", default: "#0B1F4B" }
+              - label: "Başlık Boyutu"
+                name: "baslik_boyut"
+                widget: "select"
+                default: "14px"
+                options: ["12px","13px","14px","15px","16px"]
+              - { label: "Açıklama Rengi", name: "aciklama_renk", widget: "color", default: "#777777" }
+              - label: "Görsel Yüksekliği"
+                name: "resim_yukseklik"
+                widget: "select"
+                default: "210px"
+                options: ["150px","180px","200px","210px","240px","280px","320px"]
+              - { label: "Rozet Arkaplanı", name: "badge_arkaplan", widget: "color", default: "#C8A96E" }
+              - { label: "Rozet Yazı Rengi", name: "badge_renk", widget: "color", default: "#0B1F4B" }
+
+          - label: "💎 Özellikler Bölümü (Neden Biz)"
+            name: "ozellikler_bolumu"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan Rengi", name: "arkaplan", widget: "color", default: "#0B1F4B" }
+              - { label: "İkon Arkaplanı", name: "ikon_arkaplan", widget: "string", default: "rgba(200,169,110,0.15)" }
+              - { label: "İkon Rengi", name: "ikon_renk", widget: "color", default: "#C8A96E" }
+              - { label: "Başlık Rengi", name: "baslik_renk", widget: "color", default: "#ffffff" }
+              - { label: "Metin Rengi", name: "metin_renk", widget: "string", default: "rgba(255,255,255,0.5)" }
+
+          - label: "🖼️ Galeri"
+            name: "galeri"
+            widget: "object"
+            fields:
+              - { label: "Bölüm Arkaplanı", name: "arkaplan", widget: "color", default: "#f7f7f7" }
+              - label: "Görsel Yüksekliği"
+                name: "item_yukseklik"
+                widget: "select"
+                default: "220px"
+                options: ["160px","180px","200px","220px","260px","300px"]
+
+          - label: "📝 Blog Kartı"
+            name: "blog"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan", name: "arkaplan", widget: "color", default: "#ffffff" }
+              - label: "Köşe Yuvarlama"
+                name: "sinir_radius"
+                widget: "select"
+                default: "4px"
+                options: ["0px","4px","6px","8px","12px"]
+              - { label: "Başlık Rengi", name: "baslik_renk", widget: "color", default: "#0B1F4B" }
+              - label: "Başlık Boyutu"
+                name: "baslik_boyut"
+                widget: "select"
+                default: "14px"
+                options: ["12px","13px","14px","15px","16px"]
+              - label: "Görsel Yüksekliği"
+                name: "resim_yukseklik"
+                widget: "select"
+                default: "170px"
+                options: ["130px","150px","170px","200px","220px"]
+
+          - label: "🔘 Butonlar"
+            name: "butonlar"
+            widget: "object"
+            fields:
+              - { label: "Birincil Buton Arkaplanı", name: "birincil_arkaplan", widget: "color", default: "#C8A96E" }
+              - { label: "Birincil Buton Yazı Rengi", name: "birincil_renk", widget: "color", default: "#0B1F4B" }
+              - label: "Köşe Yuvarlama"
+                name: "radius"
+                widget: "select"
+                default: "4px"
+                options: ["0px","2px","4px","6px","8px","20px","50px"]
+              - label: "Yazı Boyutu"
+                name: "boyut"
+                widget: "select"
+                default: "13px"
+                options: ["11px","12px","13px","14px","15px"]
+
+          - label: "🦶 Footer (Alt Bölüm)"
+            name: "footer"
+            widget: "object"
+            fields:
+              - { label: "Arkaplan Rengi", name: "arkaplan", widget: "color", default: "#060E22" }
+              - { label: "Metin Rengi", name: "metin_renk", widget: "string", default: "rgba(255,255,255,0.5)" }
+              - { label: "Başlık Rengi", name: "baslik_renk", widget: "color", default: "#C8A96E" }
+              - { label: "Link Rengi", name: "link_renk", widget: "string", default: "rgba(255,255,255,0.45)" }
+
+          - label: "📋 Form Alanları"
+            name: "form"
+            widget: "object"
+            fields:
+              - { label: "Kenarlık Rengi", name: "sinir_renk", widget: "color", default: "#e5e5e5" }
+              - { label: "Arkaplan", name: "arkaplan", widget: "color", default: "#ffffff" }
+              - { label: "Yazı Rengi", name: "metin_renk", widget: "color", default: "#333333" }
+              - label: "Köşe Yuvarlama"
+                name: "radius"
+                widget: "select"
+                default: "4px"
+                options: ["0px","2px","4px","6px","8px"]
+
+          - label: "📐 Boşluklar"
+            name: "bosluklar"
+            widget: "object"
+            fields:
+              - label: "Bölüm Üst-Alt Boşluk"
+                name: "bolum_ust_alt"
+                widget: "select"
+                default: "70px"
+                hint: "Her bölümün üst ve alt boşluğu"
+                options: ["40px","50px","60px","70px","80px","100px","120px"]

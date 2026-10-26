@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sipariş Takibi — Global Kapak Mobilya</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0B1F4B;
+      --navy-dark: #06132F;
+      --navy-light: #153476;
+      --gold: #C8A96E;
+      --gold-hover: #b89858;
+      --gold-light: #F4E8D1;
+      --bg-main: #f8fafc;
+      --bg-card: #ffffff;
+      --text-dark: #1E293B;
+      --text-muted: #64748B;
+      --border: #E2E8F0;
+      --success: #10B981;
+      --success-light: #D1FAE5;
+      --purple: #8B5CF6;
+      --purple-light: #EDE9FE;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    body {
+      background: var(--bg-main);
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+    }
+    .header-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .logo-img {
+      height: 60px;
+      margin-bottom: 0.75rem;
+      object-fit: contain;
+    }
+    .brand-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: -0.5px;
+    }
+    .brand-sub {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .track-card {
+      background: var(--bg-card);
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(11, 31, 75, 0.08);
+      border: 1px solid var(--border);
+      width: 100%;
+      max-width: 860px;
+      padding: 2.2rem;
+      margin-bottom: 2rem;
+    }
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+    .search-box input {
+      flex: 1;
+      padding: 0.9rem 1.2rem;
+      font-size: 1rem;
+      font-weight: 600;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--gold);
+    }
+    .search-box button {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      padding: 0 1.8rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s;
+    }
+    .search-box button:hover {
+      background: var(--navy-light);
+    }
+    .result-container {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .order-header-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 1rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    .order-code-badge {
+      display: inline-block;
+      background: var(--gold-light);
+      color: #785412;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 6px;
+      margin-bottom: 6px;
+    }
+    .order-cust-name {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .order-stage-badge {
+      background: var(--navy);
+      color: #fff;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .timeline-wrapper {
+      margin: 2.5rem 0;
+      overflow-x: auto;
+      padding-bottom: 1rem;
+    }
+    .timeline {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      min-width: 680px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 24px;
+      left: 30px;
+      right: 30px;
+      height: 4px;
+      background: var(--border);
+      z-index: 1;
+    }
+    .timeline-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      width: 90px;
+      text-align: center;
+    }
+    .step-icon-bubble {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: #fff;
+      border: 3px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      transition: all 0.3s;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .step-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-top: 10px;
+    }
+    .timeline-step.completed .step-icon-bubble {
+      background: var(--success);
+      border-color: var(--success);
+      color: #fff;
+    }
+    .timeline-step.completed .step-label {
+      color: var(--success);
+      font-weight: 700;
+    }
+    .timeline-step.active .step-icon-bubble {
+      background: var(--navy);
+      border-color: var(--gold);
+      color: #fff;
+      transform: scale(1.15);
+      box-shadow: 0 0 0 6px var(--gold-light);
+    }
+    .timeline-step.active .step-label {
+      color: var(--navy);
+      font-weight: 800;
+    }
+    .details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.2rem;
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 1.4rem;
+      border: 1px solid var(--border);
+      margin-bottom: 2rem;
+    }
+    .detail-item-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+    }
+    .detail-item-val {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    .history-card {
+      margin-top: 1.5rem;
+    }
+    .history-title {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1rem;
+    }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      background: #fff;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      font-size: 0.85rem;
+    }
+    .hist-stage {
+      font-weight: 700;
+      color: var(--navy);
+    }
+    .hist-time {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+    .footer-support {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-top: 1.5rem;
+    }
+    .footer-support a {
+      color: var(--navy);
+      font-weight: 700;
+      text-decoration: none;
+    }
+    .not-found-alert {
+      display: none;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header-box">
+    <img src="/resim/logo.png" alt="Global Kapak Mobilya" class="logo-img" onerror="this.style.display='none'">
+    <h1 class="brand-title">GLOBAL KAPAK MOBİLYA</h1>
+    <p class="brand-sub">Canlı Sipariş & Üretim Durumu Sorgulama</p>
+  </div>
+
+  <div class="track-card">
+    <div class="search-box">
+      <input type="text" id="trackInput" placeholder="Örn: SIP-2026-A8K2 Takip Kodunu Giriniz..." />
+      <button onclick="queryOrder()"><span style="font-size:1.1rem">🔍</span> Sorgula</button>
+    </div>
+
+    <div id="notFoundAlert" class="not-found-alert">
+      Belirtilen takip koduna ait sipariş bulunamadı. Lütfen sipariş fişinizdeki kodu kontrol ediniz.
+    </div>
+
+    <div id="resultContainer" class="result-container">
+      <div class="order-header-info">
+        <div>
+          <span id="resTrackingCode" class="order-code-badge">SIP-XXXX-XXXX</span>
+          <h2 id="resCustomerName" class="order-cust-name">Müşteri Adı</h2>
+          <div id="resProductTitle" style="color:var(--text-muted); font-size:0.95rem; margin-top:4px;">Ürün Başlığı</div>
+        </div>
+        <div>
+          <div id="resStageBadge" class="order-stage-badge">
+            <span id="resStageIcon">📐</span>
+            <span id="resStageName">Çizim</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HORIZONTAL TIMELINE -->
+      <div class="timeline-wrapper">
+        <div id="timelineContainer" class="timeline">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+
+      <!-- ORDER DETAILS (Zero Financials) -->
+      <div class="details-grid">
+        <div>
+          <div class="detail-item-title">Membran Rengi / Folyo</div>
+          <div id="resColor" class="detail-item-val">-</div>
+        </div>
+        <div>
+          <div class="detail-item-title">Model & Desen</div>
+          <div id="resPattern" class="detail-item-val">-</div>
+        </div>
+        <div>
+          <div class="detail-item-title">MDF Kalınlığı</div>
+          <div id="resThickness" class="detail-item-val">-</div>
+        </div>
+        <div>
+          <div class="detail-item-title">Kapak / Parça Adedi</div>
+          <div id="resParts" class="detail-item-val">-</div>
+        </div>
+        <div>
+          <div class="detail-item-title">Toplam Alan</div>
+          <div id="resArea" class="detail-item-val">-</div>
+        </div>
+        <div>
+          <div class="detail-item-title">Tahmini Teslimat</div>
+          <div id="resDelivery" class="detail-item-val" style="color:var(--gold);">-</div>
+        </div>
+      </div>
+
+      <!-- STAGE HISTORY -->
+      <div class="history-card">
+        <div class="history-title">Aşama Geçmişi & Notlar</div>
+        <div id="resHistoryList" class="history-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-support">
+    Sorularınız için bizimle iletişime geçebilirsiniz: <a href="tel:02120000000">Global Kapak Mobilya</a>
+  </div>
+
+  <script>
+    const STAGES = [
+      { id: 'cizim', name: 'Çizim', icon: '📐' },
+      { id: 'cnc', name: 'CNC Kesim', icon: '🪚' },
+      { id: 'zimpara', name: 'Zımpara', icon: '🪵' },
+      { id: 'tutkal', name: 'Tutkal', icon: '🧴' },
+      { id: 'membran', name: 'Membran Pres', icon: '🗜️' },
+      { id: 'sevkiyat', name: 'Sevkiyat', icon: '🚚' },
+      { id: 'tamamlandi', name: 'Teslim Edildi', icon: '✅' }
+    ];
+
+    function getLocalOrders() {
+      try {
+        return JSON.parse(localStorage.getItem('global_kapak_orders') || '[]');
+      } catch(e) {
+        return [];
+      }
+    }
+
+    async function queryOrder(overrideCode) {
+      const input = document.getElementById('trackInput');
+      const code = (overrideCode || input.value || '').trim().toUpperCase();
+      const alertBox = document.getElementById('notFoundAlert');
+      const resultBox = document.getElementById('resultContainer');
+
+      if (!code) return;
+
+      alertBox.style.display = 'none';
+
+      let order = null;
+
+      // 1. Check cloud endpoint (Google Firebase Realtime Database)
+      const DEFAULT_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/siparisler.json';
+      const cloudEndpoint = localStorage.getItem('global_cloud_endpoint') || DEFAULT_FIREBASE_URL;
+      if (cloudEndpoint) {
+        try {
+          const res = await fetch(cloudEndpoint);
+          if (res.ok) {
+            const data = await res.json();
+            const list = Array.isArray(data) ? data : Object.values(data || {});
+            order = list.find(o => o && o.trackingCode && o.trackingCode.toUpperCase() === code);
+          }
+        } catch(e) {
+          console.warn('Bulut sorgusu başarısız, yerel bellek kontrol ediliyor:', e);
+        }
+      }
+
+      // 2. Fallback to local storage
+      if (!order) {
+        const localOrders = getLocalOrders();
+        order = localOrders.find(o => o.trackingCode && o.trackingCode.toUpperCase() === code);
+      }
+
+      if (!order) {
+        alertBox.style.display = 'block';
+        resultBox.style.display = 'none';
+        return;
+      }
+
+      renderOrderResult(order);
+    }
+
+    function renderOrderResult(order) {
+      const alertBox = document.getElementById('notFoundAlert');
+      const resultBox = document.getElementById('resultContainer');
+      alertBox.style.display = 'none';
+      resultBox.style.display = 'block';
+
+      document.getElementById('resTrackingCode').innerText = order.trackingCode;
+      document.getElementById('resCustomerName').innerText = order.customerName || 'Müşteri';
+      document.getElementById('resProductTitle').innerText = order.productTitle || 'Membran Kapak İmalatı';
+
+      const curIdx = STAGES.findIndex(s => s.id === order.currentStage);
+      const curStage = STAGES[curIdx] || STAGES[0];
+
+      document.getElementById('resStageIcon').innerText = curStage.icon;
+      document.getElementById('resStageName').innerText = curStage.name;
+
+      // Render timeline
+      const tContainer = document.getElementById('timelineContainer');
+      tContainer.innerHTML = STAGES.map((s, idx) => {
+        let cls = 'timeline-step';
+        if (idx < curIdx || (curIdx === STAGES.length - 1 && idx === curIdx)) cls += ' completed';
+        else if (idx === curIdx) cls += ' active';
+
+        return `
+          <div class="${cls}">
+            <div class="step-icon-bubble">${idx < curIdx ? '✓' : s.icon}</div>
+            <div class="step-label">${s.name}</div>
+          </div>
+        `;
+      }).join('');
+
+      // Tech details
+      document.getElementById('resColor').innerText = order.membraneColor || '-';
+      document.getElementById('resPattern').innerText = order.modelPattern || '-';
+      document.getElementById('resThickness').innerText = order.mdfThickness || '18mm';
+      document.getElementById('resParts').innerText = (order.partCount || '-') + ' Adet';
+      document.getElementById('resArea').innerText = order.totalAreaM2 ? (order.totalAreaM2 + ' m²') : '-';
+      document.getElementById('resDelivery').innerText = order.estimatedDelivery || 'Planlanıyor';
+
+      // History
+      const histContainer = document.getElementById('resHistoryList');
+      if (order.stageHistory && order.stageHistory.length > 0) {
+        histContainer.innerHTML = order.stageHistory.map(h => {
+          const d = h.timestamp ? new Date(h.timestamp).toLocaleString('tr-TR') : '';
+          return `
+            <div class="history-item">
+              <div>
+                <span class="hist-stage">${h.stageName}</span>
+                ${h.note ? `<span style="color:var(--text-muted); margin-left:8px;">— ${h.note}</span>` : ''}
+              </div>
+              <div class="hist-time">${d}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        histContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:8px;">Henüz aşama geçmişi kaydı bulunmuyor.</div>';
+      }
+    }
+
+    // Auto read ?kod= or ?code= from URL
+    window.addEventListener('DOMContentLoaded', () => {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('kod') || params.get('code');
+      if (code) {
+        const input = document.getElementById('trackInput');
+        if (input) input.value = code;
+        queryOrder(code);
+      }
+    });
+  </script>
+</body>
+</html>

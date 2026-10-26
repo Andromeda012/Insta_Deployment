@@ -52,6 +52,9 @@ export function navigateTo(route) {
 function renderCurrentView() {
     if (!contentContainer) return;
 
+    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'production';
+    contentContainer.classList.toggle('full-bleed-module', isEmbeddedModule);
+
     switch (state.currentRoute) {
         case 'dashboard':
             contentContainer.innerHTML = renderDashboard(mockData, navigateTo);
@@ -95,6 +98,10 @@ export function setRole(roleId) {
     if (roleSelectHeader) {
         roleSelectHeader.value = role.id;
     }
+
+    // Sync role with Module 4 (Production Order System)
+    const mod4Role = roleId === 'admin' ? 'admin' : (roleId === 'management' || roleId === 'sales') ? 'staff_authorized' : 'viewer';
+    localStorage.setItem('global_kapak_role', mod4Role);
 
     showToast(`Aktif Rol Değiştirildi: ${role.name}`);
     renderCurrentView();
@@ -348,6 +355,60 @@ export function triggerRefresh() {
     renderCurrentView();
 }
 
+// Embedded Module 1 & Module 4 Bridge Controllers
+export function controlModule1Tab(btnEl, tabId) {
+    if (btnEl) {
+        btnEl.closest('.embed-quick-tabs')?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+    const frame = document.getElementById('module1-frame');
+    if (frame && frame.contentWindow && typeof frame.contentWindow.switchMainTab === 'function') {
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        const targetBtn = doc.querySelector(`.nav-tab-btn[onclick*="${tabId}"]`);
+        frame.contentWindow.switchMainTab({ currentTarget: targetBtn }, tabId);
+    }
+}
+
+export function openModule1TokenModal() {
+    const frame = document.getElementById('module1-frame');
+    if (frame && frame.contentWindow && typeof frame.contentWindow.openTokenModal === 'function') {
+        frame.contentWindow.openTokenModal();
+    }
+}
+
+export function controlModule4Tab(btnEl, tabName) {
+    if (btnEl) {
+        btnEl.closest('.embed-quick-tabs')?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+    const frame = document.getElementById('module4-frame');
+    if (frame && frame.contentWindow && typeof frame.contentWindow.setTab === 'function') {
+        frame.contentWindow.setTab(tabName);
+    }
+}
+
+export function openModule4Modal(modalId) {
+    const frame = document.getElementById('module4-frame');
+    if (frame && frame.contentWindow && typeof frame.contentWindow.openModal === 'function') {
+        frame.contentWindow.openModal(modalId);
+    }
+}
+
+export function syncModule4Cloud() {
+    const frame = document.getElementById('module4-frame');
+    if (frame && frame.contentWindow && typeof frame.contentWindow.syncWithCloud === 'function') {
+        frame.contentWindow.syncWithCloud(false);
+    }
+}
+
+export function reloadModuleFrame(frameId) {
+    const frame = document.getElementById(frameId);
+    if (frame && frame.contentWindow) {
+        frame.contentWindow.location.reload();
+        showToast('Modül görünümü yenilendi.');
+    }
+}
+
 // Initialize Application
 document.addEventListener('DOMContentLoaded', () => {
     // Expose helpers globally to window for inline template handlers
@@ -365,6 +426,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.filterTableByStage = filterTableByStage;
     window.toggleAnalyticsEmptyState = toggleAnalyticsEmptyState;
     window.triggerRefresh = triggerRefresh;
+    window.controlModule1Tab = controlModule1Tab;
+    window.openModule1TokenModal = openModule1TokenModal;
+    window.controlModule4Tab = controlModule4Tab;
+    window.openModule4Modal = openModule4Modal;
+    window.syncModule4Cloud = syncModule4Cloud;
+    window.reloadModuleFrame = reloadModuleFrame;
 
     // Sidebar navigation clicks
     document.querySelectorAll('.nav-item').forEach(item => {

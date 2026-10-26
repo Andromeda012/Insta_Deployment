@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Kapak Mobilya — Sipariş & Üretim Takip Paneli</title>
+  <link rel="icon" href="/favicon.ico" type="image/x-icon">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --navy: #0B1F4B;
+    --navy-dark: #06132F;
+    --navy-light: #153476;
+    --gold: #C8A96E;
+    --gold-hover: #b89858;
+    --gold-light: #F4E8D1;
+    --bg-main: #f8fafc;
+    --bg-card: #ffffff;
+    --text-dark: #1E293B;
+    --text-muted: #64748B;
+    --border: #E2E8F0;
+    --danger: #EF4444;
+    --danger-light: #FEE2E2;
+    --success: #10B981;
+    --success-light: #D1FAE5;
+    --purple: #8B5CF6;
+    --purple-light: #EDE9FE;
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 14px rgba(0,0,0,0.08);
+    --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-main);
+    color: var(--text-dark);
+    line-height: 1.5;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  h1, h2, h3, h4, .font-heading { font-family: 'Montserrat', sans-serif; }
+
+  header {
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: var(--shadow-md);
+    border-bottom: 3px solid var(--gold);
+  }
+  .header-left { display: flex; align-items: center; gap: 14px; }
+  .header-logo { height: 42px; width: auto; object-fit: contain; }
+  .header-title-box { display: flex; flex-direction: column; }
+  .header-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+  }
+  .header-subtitle {
+    font-size: 0.72rem;
+    color: var(--gold);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .pulse-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: #10B981;
+    display: inline-block; animation: pulse 1.5s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } }
+
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+
+  .nav-tabs {
+    display: flex; background: rgba(255, 255, 255, 0.08); padding: 3px; border-radius: 8px; gap: 3px;
+  }
+  .nav-tab-btn {
+    background: transparent; border: none; color: #cbd5e1; font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer;
+    transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .nav-tab-btn:hover { color: #fff; background: rgba(255, 255, 255, 0.1); }
+  .nav-tab-btn.active {
+    background: var(--gold); color: var(--navy-dark); font-weight: 700; box-shadow: var(--shadow-sm);
+  }
+
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 14px; border-radius: var(--radius-sm); font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .btn-gold { background: var(--gold); color: var(--navy-dark); }
+  .btn-gold:hover { background: var(--gold-hover); color: #fff; }
+  .btn-navy { background: var(--navy-light); color: #fff; }
+  .btn-navy:hover { background: var(--navy); }
+  .btn-white { background: #fff; color: var(--navy); border: 1px solid var(--border); }
+  .btn-white:hover { background: var(--bg-main); }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-danger:hover { background: #dc2626; }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-success:hover { background: #059669; }
+
+  .role-badge {
+    font-family: 'Montserrat', sans-serif; font-size: 0.72rem; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .role-admin { background: var(--gold-light); color: #855d14; border: 1px solid var(--gold); }
+  .role-authorized { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+  .role-viewer { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+
+  .stats-strip { background: var(--bg-card); border-bottom: 1px solid var(--border); padding: 10px 24px; }
+  .stats-container {
+    max-width: 1700px; margin: 0 auto; display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px;
+  }
+  .stat-card {
+    background: var(--bg-main); border: 1px solid var(--border); border-radius: 8px;
+    padding: 8px 12px; display: flex; align-items: center; gap: 10px;
+  }
+  .stat-icon { font-size: 1.4rem; }
+  .stat-num { font-size: 1.15rem; font-weight: 800; font-family: 'Montserrat', sans-serif; line-height: 1.1; }
+  .stat-text { font-size: 0.72rem; color: var(--text-muted); font-weight: 500; }
+
+  .filter-wrapper { max-width: 1700px; margin: 14px auto 0; padding: 0 24px; width: 100%; }
+  .filter-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md);
+    padding: 10px 16px; display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px; box-shadow: var(--shadow-sm);
+  }
+  .search-box { flex: 1; min-width: 280px; position: relative; }
+  .search-input {
+    width: 100%; padding: 8px 12px 8px 34px; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); font-size: 0.85rem; background: var(--bg-main); color: var(--text-dark);
+  }
+  .search-input:focus { outline: none; border-color: var(--gold); }
+  .search-icon-abs { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+  .filter-select {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 0.85rem; background: var(--bg-main); color: var(--text-dark); cursor: pointer;
+  }
+
+  .main-body { max-width: 1700px; margin: 0 auto; padding: 18px 24px; width: 100%; flex: 1; }
+
+  .kanban-board {
+    display: grid; grid-template-columns: repeat(7, minmax(240px, 1fr)); gap: 12px;
+    overflow-x: auto; padding-bottom: 20px; align-items: flex-start;
+  }
+  .kanban-col {
+    background: #F1F5F9; border: 1px solid var(--border); border-radius: var(--radius-md);
+    display: flex; flex-direction: column; min-height: 580px;
+  }
+  .kanban-col-head {
+    background: var(--bg-card); padding: 10px 14px; border-radius: var(--radius-md) var(--radius-md) 0 0;
+    border-bottom: 2px solid var(--border); display: flex; align-items: center; justify-content: space-between;
+  }
+  .col-title {
+    font-family: 'Montserrat', sans-serif; font-size: 0.88rem; font-weight: 700; color: var(--navy);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .col-count { background: var(--navy); color: #fff; font-size: 0.72rem; font-weight: 700; padding: 2px 7px; border-radius: 12px; }
+  .kanban-cards-area { padding: 10px; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+  .order-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 12px; box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 8px;
+    transition: all 0.2s ease; position: relative;
+  }
+  .order-card:hover { box-shadow: var(--shadow-md); border-color: var(--gold); }
+  .card-critical { border-left: 4px solid var(--danger) !important; background: #fffafa; }
+  .card-urgent { border-left: 4px solid #f97316 !important; }
+  .card-header-flex { display: flex; align-items: center; justify-content: space-between; }
+  .track-code-badge {
+    font-family: monospace; font-weight: 700; font-size: 0.8rem; background: var(--navy);
+    color: var(--gold); padding: 2px 6px; border-radius: 4px; cursor: pointer;
+  }
+  .priority-badge {
+    font-size: 0.65rem; font-weight: 700; padding: 2px 6px; border-radius: 4px;
+    text-transform: uppercase; font-family: 'Montserrat', sans-serif;
+  }
+  .priority-normal { background: #e2e8f0; color: #475569; }
+  .priority-acil { background: #ffedd5; color: #c2410c; }
+  .priority-kritik { background: #fee2e2; color: #b91c1c; }
+
+  .card-customer {
+    font-family: 'Montserrat', sans-serif; font-size: 0.95rem; font-weight: 700;
+    color: var(--navy); line-height: 1.25; cursor: pointer;
+  }
+  .card-specs-tags { display: flex; flex-wrap: wrap; gap: 4px; }
+  .spec-pill {
+    font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; background: var(--bg-main);
+    border: 1px solid var(--border); color: var(--text-muted); font-weight: 500;
+  }
+  .spec-pill.foil-color { background: var(--purple-light); color: #6b21a8; font-weight: 700; border-color: #d8b4fe; }
+  .card-actions-bar { display: flex; align-items: center; gap: 5px; margin-top: 4px; }
+  .btn-step-next {
+    flex: 1; padding: 5px 8px; font-size: 0.75rem; font-weight: 700; background: var(--navy); color: var(--gold);
+  }
+  .btn-step-next:hover { background: var(--navy-light); }
+
+  /* CRITICAL: MODAL OVERLAYS MUST BE HIDDEN BY DEFAULT! */
+  .modal-overlay {
+    display: none !important;
+    position: fixed;
+    inset: 0;
+    background: rgba(11, 31, 75, 0.75);
+    backdrop-filter: blur(4px);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-overlay.open {
+    display: flex !important;
+  }
+
+  .modal-card {
+    background: #fff; border-radius: var(--radius-md); width: 100%; max-width: 760px;
+    max-height: 90vh; overflow-y: auto; box-shadow: var(--shadow-lg); border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+  }
+  .modal-header {
+    background: var(--navy); color: #fff; padding: 14px 20px; display: flex;
+    align-items: center; justify-content: space-between; border-bottom: 2px solid var(--gold);
+  }
+  .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .modal-footer {
+    padding: 12px 20px; background: var(--bg-main); border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+
+  .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group.col-span-2 { grid-column: span 2; }
+  .form-label { font-size: 0.78rem; font-weight: 700; color: var(--navy); font-family: 'Montserrat', sans-serif; }
+  .form-input, .form-select, .form-textarea {
+    padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    font-size: 0.85rem; background: #fff; color: var(--text-dark);
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--gold); }
+  .form-textarea { min-height: 70px; resize: vertical; }
+
+  #toastContainer {
+    position: fixed; bottom: 24px; right: 24px; z-index: 999999;
+    display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+  }
+  .toast {
+    padding: 10px 18px; border-radius: 8px; font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem; font-weight: 700; box-shadow: var(--shadow-lg); color: #fff; transition: all 0.3s ease;
+  }
+
+  @media print {
+    html, body {
+      background: #fff !important;
+      color: #000 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: visible !important;
+      width: 100% !important;
+      height: auto !important;
+    }
+    body * {
+      visibility: hidden !important;
+    }
+    #printArea, #printArea * {
+      visibility: visible !important;
+    }
+    #printArea {
+      position: absolute !important;
+      left: 0 !important;
+      top: 0 !important;
+      width: 100% !important;
+      margin: 0 !important;
+      padding: 15px !important;
+      display: block !important;
+      background: #fff !important;
+      z-index: 999999 !important;
+      box-sizing: border-box !important;
+    }
+    header, nav, main, footer, .stats-strip, .filter-wrapper, .modal-overlay, .no-print, #mainContent, #filterWrapper, #statsContainer {
+      display: none !important;
+    }
+  }
+  #printArea { display: none; }
+
+/* CRITICAL: Ensure modals are always hidden unless active/open */
+.modal-overlay {
+  display: none !important;
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(11, 31, 75, 0.72) !important;
+  backdrop-filter: blur(5px) !important;
+  -webkit-backdrop-filter: blur(5px) !important;
+  z-index: 99999 !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1rem !important;
+  overflow-y: auto !important;
+}
+.modal-overlay.open, .modal-overlay.active {
+  display: flex !important;
+}
+
+  </style>
+</head>
+<body>
+<!-- HEADER -->
+  <header>
+    <div class="header-left">
+      <img src="/resim/logo.png" alt="Global Kapak Logo" class="header-logo" onerror="this.style.display='none'" />
+      <div class="header-title-box">
+        <div class="header-title">GLOBAL KAPAK MOBİLYA</div>
+        <div class="header-subtitle">
+          <span class="pulse-dot"></span>
+          <span>Üretim & Sipariş Takip Merkezi</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="nav-tabs">
+      <button class="nav-tab-btn active" data-tab="kanban" onclick="setTab('kanban')">📋 Pano (Canlı Üretim)</button>
+      <button class="nav-tab-btn" data-tab="table" onclick="setTab('table')">📑 Liste</button>
+      <button class="nav-tab-btn" data-tab="archive" onclick="setTab('archive')">📁 Bitenler (Arşiv)</button>
+      <button class="nav-tab-btn" data-tab="kiosk" onclick="setTab('kiosk')">📺 Büyük TV Modu</button>
+      <button class="nav-tab-btn" data-tab="scanner" onclick="setTab('scanner')">📷 QR Tara</button>
+      <button class="nav-tab-btn" data-tab="track" onclick="setTab('track')">🔍 Müşteri Takip</button>
+    </div>
+
+    <div class="header-right">
+      <span id="roleBadgeEl" class="role-badge role-viewer">👁️ İzleyici (Atölye)</span>
+      <button id="roleSwitchBtn" class="btn btn-navy" onclick="toggleUserRole()">👑 Yönetici Girişi</button>
+      
+      <button class="btn btn-gold staff-visible" onclick="openModal('newOrderModal')">+ Yeni Sipariş</button>
+      <button class="btn btn-white admin-only" onclick="openUsersModal()">👥 Kullanıcılar & Şifre</button>
+      <button class="btn btn-white" onclick="openCloudModal()" title="Bulut Veritabanı & Senkronizasyon">☁️ Bulut</button>
+      <button class="btn btn-white staff-visible" onclick="exportBackup()" title="Yedek İndir">💾 Yedek</button>
+    </div>
+  </header>
+
+  <!-- STATS BAR -->
+  <div class="stats-strip">
+    <div class="stats-container" id="statsContainer">
+      <!-- Generated dynamically -->
+    </div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-wrapper" id="filterWrapper">
+    <div class="filter-card">
+      <div class="search-box">
+        <span class="search-icon-abs">🔍</span>
+        <input type="text" id="searchInput" class="search-input" placeholder="Müşteri adı, takip kodu (SIP-...), membran rengi veya model ara..." oninput="onFilterChange()" />
+      </div>
+
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <select id="stageFilter" class="filter-select" onchange="onFilterChange()">
+          <option value="active" selected>🏭 Aktif Üretimdekiler (Bitenler Hariç)</option>
+          <option value="cizim">1. Çizim</option>
+          <option value="cnc">2. CNC Kesim</option>
+          <option value="zimpara">3. Zımpara</option>
+          <option value="tutkal">4. Tutkal</option>
+          <option value="membran">5. Membran Pres</option>
+          <option value="sevkiyat">6. Sevkiyat</option>
+          <option value="tamamlandi">✅ Bitenler / Arşiv</option>
+          <option value="all">📋 Tüm Kayıtlar (Bitenler Dahil)</option>
+        </select>
+
+        <select id="priorityFilter" class="filter-select" onchange="onFilterChange()">
+          <option value="all">Tüm Aciliyetler</option>
+          <option value="normal">Normal</option>
+          <option value="acil">Acil</option>
+          <option value="kritik">Kritik</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN BODY -->
+  <main class="main-body" id="mainContent">
+    <!-- View container -->
+  </main>
+
+  <!-- MODAL: YENİ SİPARİŞ -->
+  <div id="newOrderModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; color:#fff;">+ Yeni Sipariş & İmalat Girişi</h3>
+        <button class="btn btn-navy" style="padding:2px 8px;" onclick="closeModal('newOrderModal')">✕</button>
+      </div>
+      <form id="newOrderForm" onsubmit="handleCreateOrder(event)">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Müşteri Adı / Ünvanı *</label>
+              <input type="text" id="m_customerName" class="form-input" placeholder="Örn: Kuzey Mobilya (Ahmet Bey)" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Müşteri Telefon Numarası</label>
+              <input type="text" id="m_customerPhone" class="form-input" placeholder="0505 123 45 67" />
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label">Sipariş Başlığı *</label>
+              <input type="text" id="m_productTitle" class="form-input" placeholder="Örn: Mutfak Dolabı Membran Kapaklar (Country Model)" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Membran / Folyo Rengi</label>
+              <input type="text" id="m_membraneColor" class="form-input" placeholder="Örn: AGT 601 Mat Beyaz" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Model / Desen</label>
+              <input type="text" id="m_modelPattern" class="form-input" placeholder="Örn: Country Fitilli / Düz" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">MDF Kalınlığı</label>
+              <select id="m_mdfThickness" class="form-select">
+                <option value="18mm">18 mm</option>
+                <option value="22mm">22 mm</option>
+                <option value="25mm">25 mm</option>
+                <option value="8mm">8 mm</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Freze / Kulp Tipi</label>
+              <input type="text" id="m_millingProfile" class="form-input" placeholder="Örn: R3 Pah / 45° Gizli Kulp" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Kapak / Parça Sayısı</label>
+              <input type="number" id="m_partCount" class="form-input" placeholder="Örn: 24" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Toplam Metrekare (m²)</label>
+              <input type="number" step="0.01" id="m_totalAreaM2" class="form-input" placeholder="Örn: 14.5" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Termin (Teslim) Tarihi</label>
+              <input type="date" id="m_estimatedDelivery" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Öncelik Durumu</label>
+              <select id="m_priority" class="form-select">
+                <option value="normal">Normal</option>
+                <option value="acil">Acil</option>
+                <option value="kritik">Kritik</option>
+              </select>
+            </div>
+
+            <!-- Finansal Alanlar (Yönetici ve Yetkili Personel Görür) -->
+            <div class="form-group staff-visible">
+              <label class="form-label">Toplam Fiyat (TL)</label>
+              <input type="number" step="0.01" id="m_totalPrice" class="form-input" placeholder="0.00" />
+            </div>
+            <div class="form-group staff-visible">
+              <label class="form-label">Alınan Peşinat (TL)</label>
+              <input type="number" step="0.01" id="m_deposit" class="form-input" placeholder="0.00" />
+            </div>
+            <div class="form-group col-span-2 staff-visible">
+              <label class="form-label">Ödeme Durumu</label>
+              <select id="m_paymentStatus" class="form-select">
+                <option value="bekliyor">Ödeme Bekliyor</option>
+                <option value="kismi">Kısmi Ödeme (Bakiye Var)</option>
+                <option value="odendi">Tamamı Ödendi</option>
+                <option value="cari">Cari / Açık Hesap</option>
+                <option value="kapida">Teslimatta / Kapıda Ödeme</option>
+              </select>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label style="display:flex; align-items:center; gap:8px; font-size:0.85rem; cursor:pointer;">
+                <input type="checkbox" id="m_whatsappEnabled" checked />
+                <span>Bu müşteri için WhatsApp bilgilendirme butonunu aktif et</span>
+              </label>
+            </div>
+
+            <div class="form-group col-span-2">
+              <label class="form-label">Sipariş & İmalat Notları</label>
+              <textarea id="m_productDetails" class="form-textarea" placeholder="Özel ölçüler, camlı kapaklar, yön detayları..."></textarea>
+            </div>
+
+            <!-- Sipariş Fotoğrafı / Çizim / Fiş Görseli Yükleme -->
+            <div class="form-group col-span-2">
+              <label class="form-label" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>📷 Sipariş Fotoğrafı / CAD Çizim / Fiş Görseli</span>
+                <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(İsteğe bağlı)</span>
+              </label>
+              <div style="border: 2px dashed var(--border); border-radius: 8px; padding: 14px; text-align: center; background: #f8fafc; cursor: pointer; transition: all 0.2s;" onclick="document.getElementById('m_orderImage').click()">
+                <input type="file" id="m_orderImage" accept="image/*" style="display:none;" onchange="handleImageSelect(event, 'newOrderImgPreview', 'newOrderImgContainer')" />
+                <div id="newOrderImgPlaceholder">
+                  <div style="font-size: 2rem; margin-bottom: 4px;">📸</div>
+                  <div style="font-size: 0.88rem; font-weight: 700; color: var(--navy);">Fotoğraf veya Çizim Seçmek İçin Tıklayın</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">JPG, PNG veya WEBP (Max 5MB)</div>
+                </div>
+                <div id="newOrderImgContainer" style="display:none; margin-top: 8px;">
+                  <img id="newOrderImgPreview" src="" alt="Sipariş Görseli" style="max-height: 150px; max-width: 100%; border-radius: 6px; border: 1px solid var(--border); box-shadow: 0 2px 6px rgba(0,0,0,0.1); object-fit: contain;" />
+                  <div style="margin-top: 8px;">
+                    <button type="button" class="btn btn-white" style="font-size: 0.75rem; padding: 3px 10px; color: var(--danger); border: 1px solid var(--danger);" onclick="clearNewOrderImage(event)">✕ Görseli Kaldır</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-white" onclick="closeModal('newOrderModal')">İptal</button>
+          <button type="submit" class="btn btn-gold">Siparişi Kaydet ve Başlat ➔</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: SİPARİŞ DETAY -->
+  <div id="orderDetailsModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; color:#fff;" id="detailModalTitle">Sipariş Detayı</h3>
+        <button class="btn btn-navy" style="padding:2px 8px;" onclick="closeModal('orderDetailsModal')">✕</button>
+      </div>
+      <div class="modal-body" id="detailModalBody">
+        <!-- Content -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-white" onclick="closeModal('orderDetailsModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SEVKİYAT VE BAKIYE UYARISI -->
+  <div id="dispatchAlertModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-body" id="dispatchAlertBody">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer" style="justify-content:center;">
+        <button class="btn btn-gold" onclick="closeModal('dispatchAlertModal')">Anladım / Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: FİRE BİLDİR -->
+  <div id="fireModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:480px;">
+      <div class="modal-header" style="background:#b91c1c;">
+        <h3 style="font-size:1.1rem; color:#fff;">⚠️ Fire / Hatalı Parça Bildirimi</h3>
+        <button class="btn btn-danger" style="padding:2px 8px;" onclick="closeModal('fireModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="fireOrderId" />
+        <div class="form-group">
+          <label class="form-label">Fire Veren Parça Sayısı *</label>
+          <input type="number" id="fireCountInput" class="form-input" value="1" min="1" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hata / Fire Nedeni *</label>
+          <textarea id="fireReasonInput" class="form-textarea" placeholder="Örn: Pres esnasında folyo yandı, 1 adet 72x45 kapak yeniden kesilmeli."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-white" onclick="closeModal('fireModal')">İptal</button>
+        <button class="btn btn-danger" onclick="submitFireReport()">Fireyi Kaydet ve Çizime Gönder</button>
+      </div>
+    </div>
+  </div>
+
+    <!-- MODAL: KULLANICI GİRİŞİ (PERSONEL & YÖNETİCİ) -->
+  <div id="loginModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:400px;">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; color:#fff;">🔐 Personel & Yönetici Girişi</h3>
+        <button class="btn btn-navy" style="padding:2px 8px;" onclick="closeModal('loginModal')">✕</button>
+      </div>
+      <form onsubmit="submitLogin(event)">
+        <div class="modal-body">
+          <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:12px;">
+            Lütfen yetkili veya personel kullanıcı adı ve şifrenizi giriniz:
+          </p>
+          <div class="form-group" style="margin-bottom:12px;">
+            <label class="form-label" style="font-weight:700;">Kullanıcı Adı *</label>
+            <input type="text" id="loginUsernameInput" class="form-input" placeholder="Örn: yonetici veya kullanıcı adı" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-weight:700;">Şifre *</label>
+            <input type="password" id="loginPassInput" class="form-input" placeholder="Şifrenizi giriniz" required />
+          </div>
+          <div style="font-size:0.75rem; color:var(--text-muted); margin-top:10px; background:#f8fafc; padding:8px 10px; border-radius:6px; border:1px solid var(--border);">
+            💡 <strong>Giriş Bilgileri:</strong><br>
+            • 👑 Yönetici: <code>yonetici</code> / Şifre: <code>123</code> (Tam Yetki & Sipariş Silme)<br>
+            • ⭐ Yetkili Personel: <code>yetkili</code> / Şifre: <code>123</code> (Ciro, Fiyat & Ödeme Görür / Silemez)<br>
+            • 👁️ Atölye / İzleyici: <code>izleyici</code> / Şifre: <code>123</code> (İmalat Takip - Fiyatlar Gizli)
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-white" onclick="closeModal('loginModal')">İptal</button>
+          <button type="submit" class="btn btn-gold" style="font-weight:700;">Giriş Yap</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: ÖDEME AL & BAKİYE SIFIRLA -->
+  <div id="paymentModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:460px;">
+      <div class="modal-header" style="background:#065f46;">
+        <h3 style="font-size:1.1rem; color:#fff;">💳 Ödeme Tahsilatı & Bakiye Sıfırlama</h3>
+        <button class="btn btn-success" style="padding:2px 8px; background:rgba(255,255,255,0.2);" onclick="closeModal('paymentModal')">✕</button>
+      </div>
+      <div class="modal-body" id="paymentModalBody">
+        <!-- Dynamic payment form -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: KULLANICI YÖNETİMİ (ADMIN ONLY) -->
+  <div id="usersModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:650px;">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; color:#fff;">👥 Kullanıcı Kaydı & Yetki Yönetimi</h3>
+        <button class="btn btn-navy" style="padding:2px 8px;" onclick="closeModal('usersModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <!-- ANA YÖNETİCİ ŞİFRE DEĞİŞTİRME FORMU -->
+        <div style="background: linear-gradient(135deg, #fffbeb 0%, #fff 100%); border: 2px solid var(--gold); border-radius: 10px; padding: 14px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(200,169,110,0.15);">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h4 style="font-size: 0.95rem; font-weight: 800; color: var(--navy); display: flex; align-items: center; gap: 6px;">
+              🔑 Ana Yönetici Şifresini Değiştir
+            </h4>
+            <span id="currentAdminPassLabel" style="font-size: 0.8rem; color: #854d0e; font-weight: 700; background: var(--gold-light); padding: 2px 8px; border-radius: 4px;"></span>
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">
+            Buradan belirleyeceğiniz yeni şifre ile sağ üstteki Yönetici Girişi'nden panele erişebilirsiniz.
+          </p>
+          <form id="changeAdminPassForm" onsubmit="handleChangeAdminPassword(event)">
+            <div style="display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap;">
+              <div style="flex: 1; min-width: 170px;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--navy); display: block; margin-bottom: 4px;">Yeni Yönetici Şifresi *</label>
+                <input type="password" id="newAdminPasswordInput" class="form-input" placeholder="Yeni şifrenizi yazın" required style="padding: 8px 12px; font-size: 0.9rem;" />
+              </div>
+              <div style="flex: 1; min-width: 170px;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: var(--navy); display: block; margin-bottom: 4px;">Yeni Şifre (Tekrar) *</label>
+                <input type="password" id="confirmAdminPasswordInput" class="form-input" placeholder="Şifreyi tekrar yazın" required style="padding: 8px 12px; font-size: 0.9rem;" />
+              </div>
+              <button type="submit" class="btn btn-gold" style="padding: 9px 18px; font-size: 0.9rem; font-weight: 700;">💾 Şifreyi Kaydet</button>
+            </div>
+          </form>
+        </div>
+
+        <div style="background:var(--bg-main); border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <h4 style="font-size:0.85rem; font-weight:700; color:var(--navy); margin-bottom:8px;">+ Yeni Personel / Kullanıcı Ekle</h4>
+          <form id="newUserForm" onsubmit="handleCreateUser(event)">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Kullanıcı Adı *</label>
+                <input type="text" id="nu_username" class="form-input" placeholder="Örn: ahmet_cnc" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Ad Soyad / Görev *</label>
+                <input type="text" id="nu_displayName" class="form-input" placeholder="Örn: Ahmet Usta (CNC)" required />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Rol / Yetki *</label>
+                <select id="nu_role" class="form-select">
+                  <option value="viewer">👁️ İzleyici (Atölye - Ciro ve Fiyatlar Gizli)</option>
+                  <option value="staff_authorized">⭐ Yetkili Personel (Ciro, Fiyat & Ödeme Görür / Sipariş Silemez)</option>
+                  <option value="admin">👑 Yönetici (Tam Yetki - Ciro, Silme ve Hesap Yönetimi)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Giriş Şifresi *</label>
+                <input type="password" id="nu_password" class="form-input" placeholder="Şifre belirleyin" required />
+              </div>
+            </div>
+            <div style="margin-top:10px; text-align:right;">
+              <button type="submit" class="btn btn-navy">+ Kullanıcıyı Kaydet</button>
+            </div>
+          </form>
+        </div>
+
+        <div>
+          <h4 style="font-size:0.85rem; font-weight:700; color:var(--navy); margin-bottom:8px;">Kayıtlı Kullanıcılar</h4>
+          <div id="usersListContainer" style="display:flex; flex-direction:column; gap:6px;"></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-white" onclick="closeModal('usersModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BULUT VERİTABANI VE SENKRONİZASYON -->
+  <div id="cloudModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:550px;">
+      <div class="modal-header">
+        <h3 style="font-size:1.1rem; color:#fff;">☁️ 7/24 Bulut Veritabanı & Senkronizasyon</h3>
+        <button class="btn btn-navy" style="padding:2px 8px;" onclick="closeModal('cloudModal')">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size:0.85rem; color:var(--text-muted);">
+          Fabrikanın farklı yerlerindeki telefonlar ve ofis bilgisayarlarının aynı ortak veritabanına bağlanması için Firebase veya bulut REST endpoint URL'inizi buraya bağlayabilirsiniz.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Bulut Veritabanı URL'i (Firebase Realtime DB veya REST API)</label>
+          <input type="text" id="cloudEndpointInput" class="form-input" placeholder="https://[projeniz].firebaseio.com/siparisler.json" />
+        </div>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button class="btn btn-gold" onclick="saveCloudConfig()">Bulutu Kaydet ve Bağlan</button>
+          <button class="btn btn-navy" onclick="syncWithCloud()">Şimdi Eşitle</button>
+        </div>
+        <div id="cloudSyncStatus" style="font-size:0.8rem; margin-top:10px; padding:8px; border-radius:6px; background:#f8fafc; border:1px solid var(--border);">
+          Durum: Cihaz hafızası aktif.
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-white" onclick="closeModal('cloudModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOASTS -->
+  <div id="toastContainer"></div>
+
+  <!-- PRINT AREA -->
+  <div id="printArea"></div>
+<input type="file" id="backupFileInput" accept=".json" style="display:none;" onchange="importBackup(event)">
+
+<script>
+const STAGES = [
+    { id: 'cizim', name: 'Çizim', icon: '📐' },
+    { id: 'cnc', name: 'CNC Kesim', icon: '🪚' },
+    { id: 'zimpara', name: 'Zımpara', icon: '🪵' },
+    { id: 'tutkal', name: 'Tutkal', icon: '🧴' },
+    { id: 'membran', name: 'Membran', icon: '🗜️' },
+    { id: 'sevkiyat', name: 'Sevkiyat', icon: '🚚' },
+    { id: 'tamamlandi', name: 'Tamamlandı', icon: '✅' }
+  ];
+
+  // DEFAULT ROLE IS ALWAYS VIEWER! (Financials hidden)
+  let userRole = localStorage.getItem('global_kapak_role') || 'viewer';
+  let currentTab = 'kanban';
+  
+  // Yerel hafızadan güvenle oku (boşsa boş dizi ile başla, buluttan gelen gerçek veriyi koru)
+  let orders = [];
+  try {
+    const rawLocalOrders = localStorage.getItem('global_kapak_orders');
+    if (rawLocalOrders) {
+      const parsedLocal = JSON.parse(rawLocalOrders);
+      orders = Array.isArray(parsedLocal) ? parsedLocal : Object.values(parsedLocal || {});
+    }
+  } catch(e) {
+    orders = [];
+  }
+  
+  let users = JSON.parse(localStorage.getItem('global_kapak_users') || 'null');
+  const DEFAULT_FIREBASE_BASE = 'https://global-kapak-default-rtdb.firebaseio.com';
+  const DEFAULT_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/siparisler.json';
+  const DEFAULT_USERS_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/kullanicilar.json';
+  const DEFAULT_IMAGES_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/siparis_gorseller';
+  let cloudEndpoint = localStorage.getItem('global_cloud_endpoint') || DEFAULT_FIREBASE_URL;
+  let usersCloudEndpoint = DEFAULT_USERS_FIREBASE_URL;
+
+  function getCloudBaseUrl() {
+    if (cloudEndpoint && (cloudEndpoint.includes('firebaseio.com') || cloudEndpoint.includes('firebasedatabase.app'))) {
+      return cloudEndpoint.replace(/\/siparisler\.json.*$/, '').replace(/\/+$/, '');
+    }
+    return DEFAULT_FIREBASE_BASE;
+  }
+
+  function normalizeOrdersData(data) {
+    if (!data) return [];
+    let list = [];
+    if (Array.isArray(data)) {
+      list = data.filter(Boolean);
+    } else if (typeof data === 'object') {
+      list = Object.entries(data).map(([key, val]) => {
+        if (val && typeof val === 'object') {
+          return { id: val.id || key, ...val };
+        }
+        return null;
+      }).filter(Boolean);
+    }
+
+    const byId = new Map();
+    list.forEach(item => {
+      if (!item || !item.id) return;
+      const existing = byId.get(item.id);
+      if (!existing) {
+        byId.set(item.id, { ...item });
+      } else {
+        const merged = { ...existing, ...item };
+        if (!merged.customerName) merged.customerName = existing.customerName || item.customerName;
+        if (!merged.orderNumber) merged.orderNumber = existing.orderNumber || item.orderNumber;
+        byId.set(item.id, merged);
+      }
+    });
+
+    return Array.from(byId.values());
+  }
+
+  // LocalStorage kotasını koruyarak (5MB sınırını aşmadan) yerel hafızaya kaydet
+  function saveLocalOrders() {
+    try {
+      const safe = orders.map(o => {
+        if (o.receiptImage && o.receiptImage.length > 500) {
+          const c = { ...o };
+          delete c.receiptImage;
+          c.hasReceiptImage = true;
+          return c;
+        }
+        return o;
+      });
+      localStorage.setItem('global_kapak_orders', JSON.stringify(safe));
+    } catch(err) {
+      console.warn('Yerel bellek kayıt uyarısı (kota vb.):', err);
+    }
+  }
+
+  // Tekil siparişi buluta kaydet (ASLA diğer ekranları veya diğer siparişleri ezmez!)
+  async function saveOrderSingle(order, patchFields = null) {
+    saveLocalOrders();
+    if (!order || !order.id) return;
+    try {
+      const url = `${getCloudBaseUrl()}/siparisler/${order.id}.json`;
+      const payload = patchFields ? { ...patchFields } : { ...order };
+      payload.id = order.id;
+      if (payload.receiptImage && payload.receiptImage.length > 500) {
+        payload.hasReceiptImage = true;
+        payload.receiptImage = "";
+      }
+      payload.updatedAt = new Date().toISOString();
+      order.updatedAt = payload.updatedAt;
+
+      await fetch(url, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch(err) {
+      console.warn(`Sipariş bulut kayıt hatası (${order.id}):`, err);
+    }
+  }
+
+  // Yeni siparişi buluta tekil olarak ekle
+  async function createOrderInCloud(newOrder) {
+    saveLocalOrders();
+    try {
+      const url = `${getCloudBaseUrl()}/siparisler/${newOrder.id}.json`;
+      const payload = { ...newOrder, updatedAt: new Date().toISOString() };
+      payload.id = newOrder.id;
+      if (payload.receiptImage && payload.receiptImage.length > 500) {
+        payload.hasReceiptImage = true;
+        payload.receiptImage = "";
+      }
+      await fetch(url, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch(err) {
+      console.warn('Yeni sipariş buluta eklenirken hata:', err);
+    }
+  }
+
+  // Siparişi buluttan tekil olarak sil
+  async function deleteOrderFromCloud(orderId) {
+    saveLocalOrders();
+    try {
+      const url = `${getCloudBaseUrl()}/siparisler/${orderId}.json`;
+      await fetch(url, { method: 'DELETE' });
+      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, { method: 'DELETE' }).catch(() => {});
+    } catch(err) {
+      console.warn('Sipariş buluttan silinirken hata:', err);
+    }
+  }
+
+  // Toplu yedek yükleme gibi durumlar için toplu bulut kaydı
+  async function saveAllOrdersToCloud(ordersList) {
+    saveLocalOrders();
+    try {
+      const keyed = {};
+      (ordersList || []).forEach(o => {
+        if (!o || !o.id) return;
+        const c = { ...o };
+        if (c.receiptImage && c.receiptImage.length > 500) {
+          c.hasReceiptImage = true;
+          c.receiptImage = "";
+        }
+        keyed[o.id] = c;
+      });
+      await fetch(`${getCloudBaseUrl()}/siparisler.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(keyed)
+      });
+    } catch(err) {
+      console.warn('Toplu sipariş bulut kayıt hatası:', err);
+    }
+  }
+
+  // Genel uyumluluk fonksiyonu
+  function saveOrders(pushToCloud = true) {
+    saveLocalOrders();
+    if (pushToCloud) {
+      saveAllOrdersToCloud(orders);
+    }
+  }
+
+  function normalizeLoginStr(str) {
+    return String(str || '')
+      .trim()
+      .replace(/İ/g, 'i')
+      .replace(/I/g, 'ı')
+      .toLowerCase();
+  }
+
+  function saveUsers(pushToCloud = true) {
+    localStorage.setItem('global_kapak_users', JSON.stringify(users));
+    if (pushToCloud && usersCloudEndpoint) {
+      fetch(usersCloudEndpoint, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(users)
+      }).catch(err => console.warn('Kullanıcı bulut kayıt hatası:', err));
+    }
+  }
+
+  async function syncUsersFromCloud() {
+    if (!usersCloudEndpoint) return;
+    try {
+      const res = await fetch(usersCloudEndpoint);
+      if (res.ok) {
+        const remoteUsers = await res.json();
+        if (Array.isArray(remoteUsers) && remoteUsers.length > 0) {
+          const merged = [...remoteUsers];
+          users.forEach(localU => {
+            if (!merged.some(r => normalizeLoginStr(r.username) === normalizeLoginStr(localU.username))) {
+              merged.push(localU);
+            }
+          });
+          users = merged;
+          localStorage.setItem('global_kapak_users', JSON.stringify(users));
+          if (document.getElementById('usersModal')?.classList.contains('open')) {
+            loadUsersList();
+          }
+        }
+      }
+    } catch(e) {
+      console.warn('Kullanıcı bulut senkronizasyon hatası:', e);
+    }
+  }
+
+  if (!users) {
+    users = [
+      { id: 'u_1', username: 'yonetici', displayName: 'Yönetici (Yetkili)', role: 'admin', password: '123' },
+      { id: 'u_2', username: 'yetkili', displayName: 'Yetkili Personel', role: 'staff_authorized', password: '123' },
+      { id: 'u_3', username: 'izleyici', displayName: 'Atölye / İzleyici', role: 'viewer', password: '123' }
+    ];
+    localStorage.setItem('global_kapak_users', JSON.stringify(users));
+  } else {
+    // 'yetkili' kullanıcısı eksikse otomatik ekle
+    if (!users.some(u => u.username === 'yetkili' || u.role === 'staff_authorized')) {
+      users.push({ id: 'u_yetkili', username: 'yetkili', displayName: 'Yetkili Personel', role: 'staff_authorized', password: '123' });
+      localStorage.setItem('global_kapak_users', JSON.stringify(users));
+    }
+  }
+
+  // YETKİ KONTROL YARDIMCILARI
+  function canViewFinances() {
+    return userRole === 'admin' || userRole === 'staff_authorized';
+  }
+
+  function canCollectPayment() {
+    return userRole === 'admin' || userRole === 'staff_authorized';
+  }
+
+  function canDeleteOrders() {
+    return userRole === 'admin';
+  }
+
+  let audioCtx = null;
+  function playAlarmSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      const now = audioCtx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        const start = now + (i * 0.25);
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(750, start);
+        osc.frequency.setValueAtTime(950, start + 0.1);
+        gain.gain.setValueAtTime(0.3, start);
+        gain.gain.exponentialRampToValueAtTime(0.01, start + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(start);
+        osc.stop(start + 0.25);
+      }
+    } catch (e) {}
+  }
+
+  function updateRoleUI() {
+    const activeUser = JSON.parse(localStorage.getItem('global_active_user') || 'null');
+    const badge = document.getElementById('roleBadgeEl');
+    const btn = document.getElementById('roleSwitchBtn');
+    const adminEls = document.querySelectorAll('.admin-only');
+    const staffEls = document.querySelectorAll('.staff-visible');
+
+    if (userRole === 'admin') {
+      const name = (activeUser && activeUser.displayName) ? activeUser.displayName : 'Yönetici (Yetkili)';
+      badge.className = 'role-badge role-admin';
+      badge.innerHTML = `👑 ${name}`;
+      btn.innerText = '🔒 Çıkış Yap';
+      btn.className = 'btn btn-white';
+      adminEls.forEach(el => el.style.display = '');
+      staffEls.forEach(el => el.style.display = '');
+    } else if (userRole === 'staff_authorized') {
+      const name = (activeUser && activeUser.displayName) ? activeUser.displayName : 'Yetkili Personel';
+      badge.className = 'role-badge role-authorized';
+      badge.innerHTML = `⭐ ${name}`;
+      btn.innerText = '🔒 Çıkış Yap';
+      btn.className = 'btn btn-white';
+      adminEls.forEach(el => el.style.display = 'none');
+      staffEls.forEach(el => el.style.display = '');
+    } else {
+      const name = (activeUser && activeUser.displayName && activeUser.role === 'viewer') ? activeUser.displayName : 'İzleyici (Atölye)';
+      badge.className = 'role-badge role-viewer';
+      badge.innerHTML = `👁️ ${name}`;
+      btn.innerText = '🔐 Personel Girişi';
+      btn.className = 'btn btn-navy';
+      adminEls.forEach(el => el.style.display = 'none');
+      staffEls.forEach(el => el.style.display = 'none');
+    }
+  }
+
+  function toggleUserRole() {
+    if (userRole === 'admin' || userRole === 'staff_authorized' || localStorage.getItem('global_active_user')) {
+      userRole = 'viewer';
+      localStorage.setItem('global_kapak_role', 'viewer');
+      localStorage.removeItem('global_active_user');
+      updateRoleUI();
+      renderView();
+      renderStats();
+      showToast('Çıkış yapıldı. İzleyici moduna geçildi.');
+    } else {
+      openModal('loginModal');
+    }
+  }
+
+  async function submitLogin(event) {
+    if (event) event.preventDefault();
+    const rawUsername = document.getElementById('loginUsernameInput')?.value || '';
+    const rawPass = document.getElementById('loginPassInput')?.value || '';
+    const username = normalizeLoginStr(rawUsername);
+    const pass = String(rawPass).trim();
+    const customAdminPass = localStorage.getItem('global_admin_pass');
+
+    if (!pass) {
+      showToast('Lütfen şifrenizi girin!', '#EF4444');
+      return;
+    }
+
+    // 1. Ana Yönetici kontrolü
+    const isMainAdmin = (username === 'yonetici' || username === 'admin' || !username);
+    let adminValid = false;
+    if (isMainAdmin) {
+      if (customAdminPass) {
+        adminValid = (pass === customAdminPass);
+      } else {
+        adminValid = (pass === '123' || pass === 'global123');
+      }
+    }
+
+    if (adminValid) {
+      userRole = 'admin';
+      const loggedUser = { username: 'yonetici', displayName: 'Yönetici (Yetkili)', role: 'admin' };
+      localStorage.setItem('global_kapak_role', 'admin');
+      localStorage.setItem('global_active_user', JSON.stringify(loggedUser));
+      closeModal('loginModal');
+      if (document.getElementById('loginUsernameInput')) document.getElementById('loginUsernameInput').value = '';
+      if (document.getElementById('loginPassInput')) document.getElementById('loginPassInput').value = '';
+      updateRoleUI();
+      renderView();
+      renderStats();
+      showToast('👑 Yönetici girişi başarılı! Tüm yetkiler açıldı.', '#10B981');
+      return;
+    }
+
+    // 2. Yerel kullanıcı listesinde arama (Kullanıcı Adı VEYA Ad Soyad ile eşleşme)
+    const matchUser = (u) => {
+      const uName = normalizeLoginStr(u.username);
+      const uDisp = normalizeLoginStr(u.displayName);
+      const uPass = String(u.password || '').trim();
+      return (uName === username || uDisp === username) && (uPass === pass);
+    };
+
+    let foundUser = users.find(matchUser);
+
+    // 3. Bulunamadıysa buluttan güncel kullanıcıları hemen çekip tekrar ara
+    if (!foundUser && usersCloudEndpoint) {
+      try {
+        const res = await fetch(usersCloudEndpoint);
+        if (res.ok) {
+          const remoteUsers = await res.json();
+          if (Array.isArray(remoteUsers)) {
+            users = remoteUsers;
+            localStorage.setItem('global_kapak_users', JSON.stringify(users));
+            foundUser = users.find(matchUser);
+          }
+        }
+      } catch(e) {}
+    }
+
+    if (foundUser) {
+      userRole = foundUser.role;
+      localStorage.setItem('global_kapak_role', foundUser.role);
+      localStorage.setItem('global_active_user', JSON.stringify(foundUser));
+      closeModal('loginModal');
+      if (document.getElementById('loginUsernameInput')) document.getElementById('loginUsernameInput').value = '';
+      if (document.getElementById('loginPassInput')) document.getElementById('loginPassInput').value = '';
+      updateRoleUI();
+      renderView();
+      renderStats();
+      if (foundUser.role === 'admin') {
+        showToast(`👑 Hoş geldiniz, ${foundUser.displayName}! (Yönetici)`, '#10B981');
+      } else if (foundUser.role === 'staff_authorized') {
+        showToast(`⭐ Hoş geldiniz, ${foundUser.displayName}! (Yetkili Personel)`, '#059669');
+      } else {
+        showToast(`👤 Hoş geldiniz, ${foundUser.displayName}! (Atölye)`, '#2563eb');
+      }
+      return;
+    }
+
+    showToast('Hatalı kullanıcı adı veya şifre! (Büyük/küçük harf ve boşlukları kontrol ediniz)', '#EF4444');
+  }
+
+  function setTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.nav-tab-btn').forEach(b => {
+      b.classList.toggle('active', b.getAttribute('data-tab') === tab);
+    });
+    document.getElementById('filterWrapper').style.display = (tab === 'kanban' || tab === 'table' || tab === 'archive' || tab === 'kiosk') ? 'block' : 'none';
+    renderView();
+  }
+
+  function renderStats() {
+    const activeOrders = orders.filter(o => o.currentStage !== 'tamamlandi');
+    const completedOrders = orders.filter(o => o.currentStage === 'tamamlandi');
+    const totalActive = activeOrders.length;
+    const totalParts = activeOrders.reduce((acc, o) => acc + (parseInt(o.partCount) || 0), 0);
+    const totalM2 = activeOrders.reduce((acc, o) => acc + (parseFloat(o.totalAreaM2) || 0), 0);
+    const urgent = activeOrders.filter(o => o.priority === 'acil' || o.priority === 'kritik').length;
+
+    let html = `
+      <div class="stat-card">
+        <span class="stat-icon">📦</span>
+        <div><div class="stat-num">${totalActive}</div><div class="stat-text">Aktif Sipariş</div></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">📐</span>
+        <div><div class="stat-num">${totalM2.toFixed(1)} m²</div><div class="stat-text">Aktif Alan</div></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">🪵</span>
+        <div><div class="stat-num">${totalParts}</div><div class="stat-text">Kapak / Parça</div></div>
+      </div>
+      <div class="stat-card">
+        <span class="stat-icon">⚡</span>
+        <div><div class="stat-num" style="color:var(--danger)">${urgent}</div><div class="stat-text">Acil İş</div></div>
+      </div>
+      <div class="stat-card" style="cursor:pointer;" title="Biten İşleri İncelemek İçin Tıklayın" onclick="setTab('archive')">
+        <span class="stat-icon">✅</span>
+        <div><div class="stat-num" style="color:var(--success)">${completedOrders.length}</div><div class="stat-text">Biten / Arşiv ➔</div></div>
+      </div>
+    `;
+
+    // CİRO VE BAKİYE: YÖNETİCİ VE YETKİLİ PERSONEL GÖRÜR (İZLEYİCİYE GİZLİ)
+    if (canViewFinances()) {
+      const totalRevenue = orders.reduce((acc, o) => acc + (parseFloat(o.totalPrice) || 0), 0);
+      const totalBalance = orders.reduce((acc, o) => acc + (parseFloat(o.remainingBalance) || 0), 0);
+      html += `
+        <div class="stat-card">
+          <span class="stat-icon">💰</span>
+          <div><div class="stat-num" style="color:var(--navy)">${totalRevenue.toLocaleString('tr-TR')} ₺</div><div class="stat-text">Toplam Ciro</div></div>
+        </div>
+        <div class="stat-card">
+          <span class="stat-icon">💳</span>
+          <div><div class="stat-num" style="color:var(--gold)">${totalBalance.toLocaleString('tr-TR')} ₺</div><div class="stat-text">Tahsil Edilecek Bakiye</div></div>
+        </div>
+      `;
+    }
+
+    document.getElementById('statsContainer').innerHTML = html;
+  }
+
+  function renderView() {
+    renderStats();
+    const container = document.getElementById('mainContent');
+    if (currentTab === 'kanban') renderKanban(container);
+    else if (currentTab === 'table') renderTable(container);
+    else if (currentTab === 'archive') renderArchive(container);
+    else if (currentTab === 'kiosk') renderKiosk(container);
+    else if (currentTab === 'scanner') renderScanner(container);
+    else if (currentTab === 'track') renderTrackView(container);
+  }
+
+  function renderArchive(container) {
+    const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const completedList = orders.filter(o => {
+      const isDone = (o.currentStage === 'tamamlandi');
+      const matchesQ = !q || 
+        (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+        (o.trackingCode && o.trackingCode.toLowerCase().includes(q)) ||
+        (o.membraneColor && o.membraneColor.toLowerCase().includes(q));
+      return isDone && matchesQ;
+    });
+
+    let html = `
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <h2 style="font-size:1.25rem; font-weight:800; color:var(--navy);">📁 Biten Siparişler Arşivi</h2>
+          <p style="font-size:0.85rem; color:var(--text-muted);">Tamamlanan ve teslim edilen tüm geçmiş siparişler burada güvenle saklanır.</p>
+        </div>
+        <div style="background:#d1fae5; border:1px solid #10b981; border-radius:8px; padding:6px 14px; font-weight:700; color:#065f46; font-size:0.85rem;">
+          Toplam Arşiv: ${completedList.length} Adet Biten İş
+        </div>
+      </div>
+    `;
+
+    if (completedList.length === 0) {
+      html += `
+        <div style="background:#fff; border-radius:12px; border:1px solid var(--border); padding:50px 20px; text-align:center; box-shadow:var(--shadow-sm);">
+          <div style="font-size:3rem; margin-bottom:10px;">📭</div>
+          <h3 style="font-size:1.1rem; color:var(--navy); font-weight:700;">Henüz Arşivlenmiş / Biten Sipariş Yok</h3>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-top:6px;">Sevkiyat istasyonundaki siparişler "Tamamlandı & Kaldır" yapıldığında otomatik olarak buraya taşınır.</p>
+        </div>
+      `;
+      container.innerHTML = html;
+      return;
+    }
+
+    html += `
+      <div style="background:#fff; border-radius:10px; border:1px solid var(--border); overflow:hidden; box-shadow:var(--shadow-sm);">
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+            <thead>
+              <tr style="background:var(--navy); color:#fff; font-family:'Montserrat',sans-serif;">
+                <th style="padding:10px 14px;">Takip Kodu</th>
+                <th style="padding:10px 14px;">Müşteri</th>
+                <th style="padding:10px 14px;">Ürün & Renk</th>
+                <th style="padding:10px 14px;">Parça & Alan</th>
+                <th style="padding:10px 14px;">Tamamlanma Tarihi</th>
+                ${canViewFinances() ? '<th style="padding:10px 14px;">Finans / Ödeme</th>' : ''}
+                <th style="padding:10px 14px; text-align:right;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    completedList.forEach(o => {
+      const lastHist = (o.stageHistory && o.stageHistory.length > 0) ? o.stageHistory[o.stageHistory.length - 1] : null;
+      const doneDate = lastHist && lastHist.timestamp ? new Date(lastHist.timestamp).toLocaleString('tr-TR') : (o.orderDate || '-');
+
+      let finBadge = '';
+      if (canViewFinances()) {
+        const isPaid = (o.remainingBalance || 0) <= 0 || o.paymentStatus === 'odendi';
+        finBadge = `<span class="spec-pill" style="${isPaid ? 'background:#d1fae5; color:#065f46;' : 'background:#fee2e2; color:#991b1b; font-weight:700;'}">
+          ${isPaid ? '✅ Ödendi' : 'Bakiye: ' + Number(o.remainingBalance).toLocaleString('tr-TR') + ' ₺'}
+        </span>`;
+      }
+
+      html += `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 14px;">
+            <span class="track-code-badge" onclick="showDetails('${o.id}')" style="cursor:pointer;">${o.trackingCode}</span>
+          </td>
+          <td style="padding:10px 14px; font-weight:700; color:var(--navy);">
+            ${o.customerName}
+            ${o.customerPhone ? `<div style="font-size:0.75rem; color:var(--text-muted); font-weight:400;">${o.customerPhone}</div>` : ''}
+          </td>
+          <td style="padding:10px 14px;">
+            <div>${o.productTitle || '-'}</div>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${o.membraneColor || ''} ${o.modelPattern ? '• ' + o.modelPattern : ''}</div>
+          </td>
+          <td style="padding:10px 14px;">
+            <span style="font-weight:600;">${o.partCount ? o.partCount + ' Parça' : '-'}</span>
+            ${o.totalAreaM2 ? `<span style="color:var(--text-muted); font-size:0.75rem; margin-left:4px;">(${o.totalAreaM2} m²)</span>` : ''}
+          </td>
+          <td style="padding:10px 14px; color:var(--text-muted); font-size:0.8rem;">
+            <span>📅 ${doneDate}</span>
+          </td>
+          ${canViewFinances() ? `<td style="padding:10px 14px;">${finBadge}</td>` : ''}
+          <td style="padding:10px 14px; text-align:right;">
+            ${(o.hasReceiptImage || o.receiptImage) ? `
+              <button class="btn btn-white" style="padding:4px 7px; font-size:0.75rem; margin-right:4px;" onclick="openImageViewer('${o.id}', '${o.customerName}')" title="Görseli İncele">📷</button>
+            ` : ''}
+            ${(o.remainingBalance || 0) > 0 && canCollectPayment() ? `
+              <button class="btn btn-success" style="padding:4px 8px; font-size:0.75rem; font-weight:700; background:#065f46; margin-right:4px;" onclick="openPaymentModal('${o.id}')">💳 Ödeme Al</button>
+            ` : ''}
+            <button class="btn btn-navy" style="padding:4px 8px; font-size:0.75rem;" onclick="showDetails('${o.id}')">Detay</button>
+            <button class="btn btn-gold" style="padding:4px 8px; font-size:0.75rem;" onclick="printJobOrder('${o.id}')">🖨️ Fiş</button>
+            ${canViewFinances() ? `
+              <button class="btn btn-white" style="padding:4px 8px; font-size:0.75rem; border:1px solid var(--border); margin-left:4px;" title="Aktif Üretime Geri Döndür" onclick="stepStage('${o.id}', 'sevkiyat')">↺ Aktife Al</button>
+            ` : ''}
+            ${canDeleteOrders() ? `
+              <button class="btn btn-danger" style="padding:4px 8px; font-size:0.75rem; margin-left:4px;" title="Siparişi Kalıcı Olarak Sil (Sadece Yönetici)" onclick="deleteOrderPermanently('${o.id}')">🗑️ Sil</button>
+            ` : ''}
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table></div></div>`;
+    container.innerHTML = html;
+  }
+
+  function getFilteredOrders() {
+    const q = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const stage = document.getElementById('stageFilter')?.value || 'active';
+    const prio = document.getElementById('priorityFilter')?.value || 'all';
+
+    return orders.filter(o => {
+      const matchesQ = !q || (o.customerName && o.customerName.toLowerCase().includes(q)) ||
+        (o.trackingCode && o.trackingCode.toLowerCase().includes(q)) ||
+        (o.membraneColor && o.membraneColor.toLowerCase().includes(q));
+
+      let matchesStage = true;
+      if (stage === 'active') {
+        matchesStage = (o.currentStage !== 'tamamlandi');
+      } else if (stage === 'all') {
+        matchesStage = true;
+      } else {
+        matchesStage = (o.currentStage === stage);
+      }
+
+      const matchesPrio = prio === 'all' || o.priority === prio;
+      return matchesQ && matchesStage && matchesPrio;
+    });
+  }
+
+  function onFilterChange() { renderView(); }
+
+    // SİPARİŞİ KALICI OLARAK SİLME (SADECE YÖNETİCİ)
+  function deleteOrderPermanently(orderId) {
+    if (!canDeleteOrders()) {
+      showToast('Sadece Ana Yönetici sipariş silebilir!', '#EF4444');
+      return;
+    }
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    if (!confirm(`"${o.customerName}" (${o.trackingCode}) nolu siparişi kalıcı olarak SİLMEK istediğinize emin misiniz?\n\nBu işlem geri alınamaz!`)) {
+      return;
+    }
+
+    orders = orders.filter(x => x.id !== orderId);
+    deleteOrderFromCloud(orderId);
+    renderView();
+    renderStats();
+    showToast(`Sipariş kalıcı olarak silindi: ${o.trackingCode}`, '#10B981');
+  }
+
+  function renderKanban(container) {
+    const list = getFilteredOrders();
+    const stageFilterVal = document.getElementById('stageFilter')?.value || 'active';
+
+    // Varsayılan: Yalnızca aktif 6 üretim istasyonu görünür (Bitenler arşive kalkar, ekranda yer kaplamaz).
+    let kanbanStages = [];
+    if (stageFilterVal === 'tamamlandi') {
+      kanbanStages = STAGES.filter(s => s.id === 'tamamlandi');
+    } else if (stageFilterVal !== 'active' && stageFilterVal !== 'all') {
+      kanbanStages = STAGES.filter(s => s.id === stageFilterVal);
+    } else {
+      kanbanStages = STAGES.filter(s => s.id !== 'tamamlandi');
+    }
+
+    let html = `<div class="kanban-board">`;
+    kanbanStages.forEach(stage => {
+      const stageOrders = list.filter(o => o.currentStage === stage.id);
+      html += `
+        <div class="kanban-col">
+          <div class="kanban-col-head">
+            <span class="col-title">${stage.icon} ${stage.name}</span>
+            <span class="col-count">${stageOrders.length}</span>
+          </div>
+          <div class="kanban-cards-area">
+      `;
+      if (stageOrders.length === 0) {
+        html += `<div style="text-align:center; padding:30px 10px; color:var(--text-muted); font-size:0.75rem;">Sipariş yok</div>`;
+      } else {
+        stageOrders.forEach(order => { html += renderCard(order); });
+      }
+      html += `</div></div>`;
+    });
+    html += `</div>`;
+    container.innerHTML = html;
+  }
+
+  function renderCard(o) {
+    const curIdx = STAGES.findIndex(s => s.id === o.currentStage);
+    const nextStage = curIdx < STAGES.length - 1 ? STAGES[curIdx + 1] : null;
+    const prevStage = curIdx > 0 ? STAGES[curIdx - 1] : null;
+
+    let financialBadge = '';
+    if (canViewFinances() && o.remainingBalance !== undefined) {
+      const isPaid = (o.remainingBalance || 0) <= 0 || o.paymentStatus === 'odendi';
+      financialBadge = `
+        <span class="spec-pill" style="${isPaid ? 'background:#d1fae5; color:#065f46;' : 'background:#fee2e2; color:#991b1b; font-weight:700;'}">
+          ${isPaid ? '✅ Ödendi' : 'Bakiye: ' + Number(o.remainingBalance).toLocaleString('tr-TR') + ' ₺'}
+        </span>
+      `;
+    }
+
+    const imageBadge = (o.hasReceiptImage || o.receiptImage) ? `
+      <span class="spec-pill" style="background:#e0e7ff; color:#3730a3; cursor:pointer; font-weight:600;" onclick="openImageViewer('${o.id}', '${o.customerName}')" title="Çizim / Görseli İncele">
+        📷 Görsel
+      </span>
+    ` : '';
+
+    const hasFire = (o.stageHistory || []).some(h => (h.stageName || '').includes('FİRE') || (h.note || '').includes('FİRE'));
+
+    return `
+      <div class="order-card ${o.priority === 'kritik' ? 'card-critical' : o.priority === 'acil' ? 'card-urgent' : ''}">
+        <div class="card-header-flex">
+          <span class="track-code-badge" onclick="showDetails('${o.id}')">${o.trackingCode}</span>
+          <span class="priority-badge priority-${o.priority}">${o.priority}</span>
+        </div>
+
+        <div class="card-customer" onclick="showDetails('${o.id}')" title="Detayları İncelemek İçin Tıklayın">${o.customerName}</div>
+        <div style="font-size:0.78rem; color:var(--text-muted); line-height:1.2;">${o.productTitle}</div>
+
+        <div class="card-specs-tags">
+          ${o.membraneColor ? `<span class="spec-pill foil-color">🎨 ${o.membraneColor}</span>` : ''}
+          ${o.modelPattern ? `<span class="spec-pill">📐 ${o.modelPattern}</span>` : ''}
+          ${o.partCount ? `<span class="spec-pill">🔢 ${o.partCount} Parça</span>` : ''}
+          ${o.totalAreaM2 ? `<span class="spec-pill">📏 ${o.totalAreaM2} m²</span>` : ''}
+          ${imageBadge}
+          ${financialBadge}
+        </div>
+
+        ${hasFire ? `
+          <div style="background:#fee2e2; border:1px solid #ef4444; border-radius:6px; padding:3px 8px; font-size:0.72rem; color:#991b1b; font-weight:700; margin-top:5px; display:flex; align-items:center; gap:4px; cursor:pointer;" onclick="showDetails('${o.id}')" title="Fire detayını görmek için tıklayın">
+            <span>⚠️</span> <span>FİRE BİLDİRİMİ VAR (Detay Gör ➔)</span>
+          </div>
+        ` : ''}
+
+        <div style="display:flex; justify-content:space-between; font-size:0.72rem; color:var(--text-muted); padding-top:4px; border-top:1px dashed var(--border); margin-top:5px;">
+          <span>🕒 ${o.estimatedDelivery ? 'Termin: ' + o.estimatedDelivery : o.orderDate}</span>
+        </div>
+
+        <!-- DOĞRUDAN DETAY, FİRE VE FİŞ BUTONLARI -->
+        <div style="display:flex; gap:4px; margin-top:6px; margin-bottom:4px;">
+          <button class="btn btn-white" style="flex:1; padding:4px 6px; font-size:0.75rem; font-weight:700; border:1px solid var(--border); display:flex; align-items:center; justify-content:center; gap:4px; background:#f8fafc;" onclick="showDetails('${o.id}')" title="Sipariş Detayı, Çizim ve Notlar">
+            🔍 Detay
+          </button>
+          <button class="btn btn-white" style="padding:4px 8px; font-size:0.75rem; font-weight:700; border:1px solid #fecaca; color:#b91c1c; display:flex; align-items:center; gap:3px;" onclick="openFireModal('${o.id}')" title="Hatalı Parça / Fire Bildir">
+            ⚠️ Fire
+          </button>
+          <button class="btn btn-white" style="padding:4px 8px; font-size:0.75rem; border:1px solid var(--border);" onclick="printJobOrder('${o.id}')" title="İş Emri Fişi Yazdır">
+            🖨️ Fiş
+          </button>
+        </div>
+
+        <!-- AŞAMA VE ÖDEME AKSİYON BARI -->
+        <div class="card-actions-bar">
+          ${prevStage && (userRole === 'admin' || userRole === 'staff_authorized') ? `
+            <button class="btn btn-white" style="padding:4px 8px; font-size:0.75rem;" title="Geri Al" onclick="stepStage('${o.id}', '${prevStage.id}')">⬅️</button>
+          ` : ''}
+
+          ${(o.remainingBalance || 0) > 0 && canCollectPayment() ? `
+            <button class="btn btn-white" style="padding:4px 8px; font-size:0.75rem; border:1px solid #10b981; color:#065f46; font-weight:700;" title="Kalan Bakiyeyi Tahsil Et" onclick="openPaymentModal('${o.id}')">💳 Ödeme Al</button>
+          ` : ''}
+
+          ${nextStage ? `
+            <button class="${o.currentStage === 'sevkiyat' ? 'btn-success' : 'btn-step-next'}" style="${o.currentStage === 'sevkiyat' ? 'font-weight:700; background:#10B981; color:#fff;' : ''}" onclick="${o.currentStage === 'sevkiyat' ? "handleCompleteOrderClick('" + o.id + "')" : "stepStage('" + o.id + "', '" + nextStage.id + "')"}">
+              ${o.currentStage === 'sevkiyat' ? '✅ Tamamlandı & Kaldır' : nextStage.name + ' ➔'}
+            </button>
+          ` : `
+            <button class="btn btn-success" style="flex:1; padding:4px 8px; font-size:0.75rem;" disabled>✅ Arşivlendi</button>
+          `}
+        </div>
+      </div>
+    `;
+  }
+
+function renderTable(container) {
+    const list = getFilteredOrders();
+    let html = `
+      <div style="background:#fff; border-radius:10px; border:1px solid var(--border); overflow:hidden; box-shadow:var(--shadow-sm);">
+        <div style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.85rem; text-align:left;">
+            <thead>
+              <tr style="background:var(--navy); color:#fff; font-family:'Montserrat',sans-serif;">
+                <th style="padding:10px 14px;">Takip Kodu</th>
+                <th style="padding:10px 14px;">Müşteri</th>
+                <th style="padding:10px 14px;">Ürün / Renk</th>
+                <th style="padding:10px 14px;">Ölçü / Adet</th>
+                <th style="padding:10px 14px;">Aşama</th>
+                <th style="padding:10px 14px;">Termin</th>
+                ${canViewFinances() ? '<th style="padding:10px 14px;">Ödeme</th>' : ''}
+                <th style="padding:10px 14px; text-align:right;">İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+    `;
+
+    list.forEach(o => {
+      const stageObj = STAGES.find(s => s.id === o.currentStage) || { name: o.currentStage, icon: '' };
+      html += `
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:10px 14px;"><span class="track-code-badge" onclick="showDetails('${o.id}')">${o.trackingCode}</span></td>
+          <td style="padding:10px 14px; font-weight:700; color:var(--navy);">${o.customerName}</td>
+          <td style="padding:10px 14px;">
+            <div>${o.productTitle}</div>
+            ${o.membraneColor ? '<div style="font-size:0.75rem; color:#7c3aed; font-weight:700;">' + o.membraneColor + '</div>' : ''}
+          </td>
+          <td style="padding:10px 14px;">${o.partCount} Adet (${o.totalAreaM2} m²)</td>
+          <td style="padding:10px 14px;"><span class="spec-pill" style="background:#dbeafe; color:#1e40af; font-weight:700;">${stageObj.icon} ${stageObj.name}</span></td>
+          <td style="padding:10px 14px;">${o.estimatedDelivery || o.orderDate}</td>
+          ${canViewFinances() ? `
+            <td style="padding:10px 14px;">
+              <span class="spec-pill" style="${(o.remainingBalance || 0) <= 0 ? 'background:#d1fae5; color:#065f46;' : 'background:#fee2e2; color:#991b1b; font-weight:700;'}">
+                ${(o.remainingBalance || 0) <= 0 ? 'Ödendi' : 'Bakiye: ' + Number(o.remainingBalance).toLocaleString('tr-TR') + ' ₺'}
+              </span>
+            </td>
+          ` : ''}
+          <td style="padding:10px 14px; text-align:right;">
+            ${(o.hasReceiptImage || o.receiptImage) ? `
+              <button class="btn btn-white" style="padding:3px 7px; font-size:0.75rem; margin-right:4px;" onclick="openImageViewer('${o.id}', '${o.customerName}')" title="Görseli İncele">📷</button>
+            ` : ''}
+            <button class="btn btn-white" style="padding:3px 8px; font-size:0.75rem;" onclick="showDetails('${o.id}')">Detay</button>
+            <button class="btn btn-navy" style="padding:3px 8px; font-size:0.75rem;" onclick="printJobOrder('${o.id}')">İş Emri</button>
+          
+            ${o.currentStage === 'tamamlandi' && canViewFinances() ? `
+              <button class="btn btn-white" style="padding:3px 6px; font-size:0.75rem; border:1px solid var(--border); margin-left:4px;" title="Aktif Üretime Geri Döndür" onclick="stepStage('${o.id}', 'sevkiyat')">↺ Aktife Al</button>
+            ` : ''}
+            ${canDeleteOrders() ? `
+              <button class="btn btn-danger" style="padding:3px 6px; font-size:0.75rem; margin-left:4px;" title="Siparişi Sil (Sadece Yönetici)" onclick="deleteOrderPermanently('${o.id}')">🗑️</button>
+            ` : ''}
+          </td>
+        </tr>
+      `;
+    });
+
+    html += `</tbody></table></div></div>`;
+    container.innerHTML = html;
+  }
+
+  function renderKiosk(container) { renderKanban(container); }
+
+  function renderScanner(container) {
+    container.innerHTML = `
+      <div style="max-width:550px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:12px; padding:24px; text-align:center; box-shadow:var(--shadow-md);">
+        <h2 style="font-size:1.3rem; color:var(--navy); margin-bottom:6px;">📷 Sevkiyat QR Barkod Okuyucu</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;">
+          Paket veya atölye iş emrindeki QR takip kodunu giriniz veya okutunuz:
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:18px;">
+          <input type="text" id="scannerInput" class="form-input" placeholder="SIP-2026-A8K2" style="font-size:1.1rem; text-transform:uppercase; font-family:monospace; font-weight:700; flex:1;" />
+          <button class="btn btn-gold" style="font-size:0.9rem;" onclick="executeScan(document.getElementById('scannerInput').value)">
+            Sevkiyata Al ➔
+          </button>
+        </div>
+        <div style="background:#f8fafc; border:1px dashed var(--border); border-radius:10px; padding:20px; font-size:0.85rem; color:var(--text-muted);">
+          💡 <strong>Sevkiyat Kuralı:</strong> Barkod okutulduğunda sipariş otomatik olarak <strong>"Sevkiyat"</strong> aşamasına geçer ve tahsil edilmemiş bakiye varsa yönetici ekranına sesli bakiye alarmı verir.
+        </div>
+      </div>
+    `;
+  }
+
+  function renderTrackView(container) {
+    container.innerHTML = `
+      <div style="max-width:650px; margin:0 auto; background:#fff; border:1px solid var(--border); border-radius:12px; padding:24px; text-align:center; box-shadow:var(--shadow-md);">
+        <div style="font-size:2rem; margin-bottom:4px;">🏭</div>
+        <h2 style="font-size:1.3rem; color:var(--navy); margin-bottom:4px;">Canlı Sipariş & İmalat Takibi</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;">
+          Size iletilen takip kodu ile siparişinizin üretim aşamasını canlı izleyebilirsiniz.
+        </p>
+        <div style="display:flex; gap:8px; margin-bottom:20px;">
+          <input type="text" id="custTrackCode" class="form-input" placeholder="Takip Kodu (Örn: SIP-2026-A8K2)" style="font-size:1rem; text-transform:uppercase; font-family:monospace; font-weight:700; flex:1;" />
+          <button class="btn btn-navy" onclick="queryCustomerTrack()">Sorgula ➔</button>
+        </div>
+        <div id="custTrackResult" style="display:none; text-align:left; background:#f8fafc; border:1px solid var(--border); border-radius:10px; padding:16px;"></div>
+      </div>
+    `;
+  }
+
+  function queryCustomerTrack() {
+    const code = (document.getElementById('custTrackCode').value || '').trim().toUpperCase();
+    const order = orders.find(o => o.trackingCode.toUpperCase() === code);
+    const resEl = document.getElementById('custTrackResult');
+
+    if (!order) {
+      resEl.style.display = 'block';
+      resEl.innerHTML = `<div style="color:var(--danger); font-weight:700; text-align:center;">Bu takip koduna ait sipariş bulunamadı. Lütfen kontrol ediniz.</div>`;
+      return;
+    }
+
+    const curIdx = STAGES.findIndex(s => s.id === order.currentStage);
+    const curStage = STAGES[curIdx] || STAGES[0];
+
+    let stagesHtml = `<div style="display:flex; justify-content:space-between; margin:20px 0; overflow-x:auto; padding-bottom:6px;">`;
+    STAGES.forEach((s, idx) => {
+      const isDone = idx < curIdx;
+      const isCur = idx === curIdx;
+      stagesHtml += `
+        <div style="display:flex; flex-direction:column; align-items:center; min-width:70px;">
+          <div style="width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:bold; border:2px solid ${isCur ? 'var(--gold)' : isDone ? 'var(--success)' : '#cbd5e1'}; background:${isCur ? 'var(--gold-light)' : isDone ? 'var(--success-light)' : '#fff'}; color:${isCur ? '#855d14' : isDone ? '#065f46' : '#64748b'};">
+            ${isDone ? '✓' : s.icon}
+          </div>
+          <div style="font-size:0.72rem; margin-top:4px; font-weight:${isCur ? '800' : '500'}; color:${isCur ? 'var(--navy)' : 'var(--text-muted)'}; text-align:center;">
+            ${s.name}
+          </div>
+        </div>
+      `;
+    });
+    stagesHtml += `</div>`;
+
+    resEl.style.display = 'block';
+    resEl.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border); padding-bottom:10px; margin-bottom:12px;">
+        <div>
+          <span style="font-size:0.75rem; color:var(--text-muted);">Sipariş No:</span>
+          <div style="font-family:monospace; font-weight:800; font-size:1.1rem; color:var(--navy);">${order.trackingCode}</div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.75rem; color:var(--text-muted);">Müşteri:</span>
+          <div style="font-weight:700; font-size:0.95rem;">${order.customerName}</div>
+        </div>
+      </div>
+      <div style="background:#e0f2fe; border:1px solid #bae6fd; border-radius:8px; padding:10px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <span style="font-size:0.7rem; color:#0369a1; font-weight:700; text-transform:uppercase;">GÜNCEL DURUM:</span>
+          <div style="font-size:1.15rem; font-weight:800; color:#075985;">${curStage.icon} ${curStage.name}</div>
+        </div>
+        <div style="text-align:right;">
+          <span style="font-size:0.7rem; color:#0369a1; font-weight:700;">TAHMİNİ TESLİM:</span>
+          <div style="font-size:0.95rem; font-weight:700; color:#075985;">${order.estimatedDelivery || '-'}</div>
+        </div>
+      </div>
+      ${stagesHtml}
+      <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; font-size:0.8rem; border-top:1px solid var(--border); padding-top:10px;">
+        <div>Membran Rengi: <strong>${order.membraneColor || 'Standart'}</strong></div>
+        <div>Model / Desen: <strong>${order.modelPattern || 'Düz'}</strong></div>
+        <div>Parça Sayısı: <strong>${order.partCount || 0} Adet</strong></div>
+        <div>Toplam Metrekare: <strong>${order.totalAreaM2 || 0} m²</strong></div>
+      </div>
+    `;
+  }
+
+  function executeScan(code) {
+    if (!code) return;
+    const clean = code.trim().toUpperCase();
+    const o = orders.find(x => x.trackingCode.toUpperCase() === clean);
+
+    if (!o) {
+      showToast('Bu koda ait sipariş bulunamadı: ' + clean, '#EF4444');
+      return;
+    }
+
+    if (o.currentStage !== 'sevkiyat' && o.currentStage !== 'tamamlandi') {
+      o.currentStage = 'sevkiyat';
+      if (!o.stageHistory) o.stageHistory = [];
+      o.stageHistory.push({
+        stageName: 'Sevkiyat',
+        timestamp: new Date().toISOString(),
+        note: 'Sevkiyat istasyonunda QR barkod okutuldu.'
+      });
+      saveOrderSingle(o, {
+        currentStage: 'sevkiyat',
+        stageHistory: o.stageHistory,
+        updatedAt: new Date().toISOString()
+      });
+      renderView();
+    }
+
+    playAlarmSound();
+
+    const hasUnpaid = (o.remainingBalance || 0) > 0 && o.paymentStatus !== 'odendi';
+    const alertBody = document.getElementById('dispatchAlertBody');
+
+    let warningHtml = '';
+    if (hasUnpaid) {
+      const balanceHtml = canViewFinances()
+        ? `<div style="font-size:1.05rem; color:#7f1d1d; margin-top:4px;">
+            Kalan Bakiye: <strong style="font-size:1.3rem;">${Number(o.remainingBalance).toLocaleString('tr-TR')} TL</strong>
+           </div>`
+        : `<div style="font-size:0.95rem; font-weight:700; color:#b91c1c; margin-top:6px; background:#fff; padding:6px 12px; border-radius:6px; display:inline-block; border:1px dashed #ef4444;">
+            🔒 Bu siparişin ödenmemiş tahsilatı bulunmaktadır. Lütfen yetkili veya muhasebe ile iletişime geçiniz.
+           </div>`;
+
+      warningHtml = `
+        <div style="background:#fee2e2; border:2px solid #ef4444; border-radius:10px; padding:14px; margin-top:14px; text-align:center;">
+          <div style="font-size:1.4rem; font-weight:800; color:#b91c1c;">⚠️ DİKKAT: TAHSİLAT YAPILMADI!</div>
+          ${balanceHtml}
+          <p style="font-size:0.8rem; color:#991b1b; margin-top:6px;">
+            Ürün araca yüklenmeden veya teslim edilmeden önce muhasebe/tahsilat kontrolü yapınız!
+          </p>
+        </div>
+      `;
+    } else {
+      warningHtml = `
+        <div style="background:#d1fae5; border:2px solid #10b981; border-radius:10px; padding:12px; margin-top:14px; text-align:center;">
+          <div style="font-size:1.1rem; font-weight:700; color:#065f46;">✅ ÖDEME TAMAMLANDI / BAKİYE YOK</div>
+          <div style="font-size:0.8rem; color:#047857;">Siparişin bakiye borcu bulunmamaktadır. Sevkiyata uygundur.</div>
+        </div>
+      `;
+    }
+
+    alertBody.innerHTML = `
+      <div style="text-align:center; margin-bottom:12px;">
+        <span style="font-size:2.8rem;">🔔🚚</span>
+        <h2 style="font-size:1.25rem; font-weight:800; color:var(--navy); margin-top:4px;">Sevkiyat İstasyonunda QR Okutuldu!</h2>
+        <p style="color:var(--text-muted); font-size:0.85rem;">Paket barkodu başarıyla doğrulandı.</p>
+      </div>
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px; display:flex; flex-direction:column; gap:6px; font-size:0.85rem;">
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Müşteri:</span>
+          <strong>${o.customerName}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between;">
+          <span style="color:var(--text-muted);">Takip Kodu:</span>
+          <span class="track-code-badge">${o.trackingCode}</span>
+        </div>
+      </div>
+      ${warningHtml}
+    `;
+
+    openModal('dispatchAlertModal');
+  }
+
+  function stepStage(orderId, targetStage) {
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    const stageObj = STAGES.find(s => s.id === targetStage);
+    o.currentStage = targetStage;
+    if (!o.stageHistory) o.stageHistory = [];
+    o.stageHistory.push({
+      stageName: stageObj.name,
+      timestamp: new Date().toISOString(),
+      note: targetStage === 'tamamlandi' ? 'Sipariş tamamlandı ve ekrandan kaldırılarak arşive alındı.' : `${stageObj.name} aşamasına geçirildi.`
+    });
+
+    saveOrderSingle(o, {
+      currentStage: o.currentStage,
+      stageHistory: o.stageHistory,
+      updatedAt: new Date().toISOString()
+    });
+    renderView();
+
+    if (targetStage === 'tamamlandi') {
+      showToast(`✅ ${o.customerName} tamamlandı ve ekrandan kaldırılarak arşive alındı!`, '#10B981');
+    } else {
+      showToast(`${o.customerName} ➔ ${stageObj.name} aşamasına alındı.`);
+    }
+
+    if (targetStage === 'sevkiyat') {
+      executeScan(o.trackingCode);
+    }
+  }
+
+  
+  // ÖDEME TAHSİLATI & BAKİYE SIFIRLAMA
+  let activePaymentOrderId = null;
+  let activePaymentCompleteAfter = false;
+
+  function openPaymentModal(orderId, andCompleteAfter = false) {
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    activePaymentOrderId = orderId;
+    activePaymentCompleteAfter = andCompleteAfter;
+
+    const remaining = Math.max(0, parseFloat(o.remainingBalance) || 0);
+    const body = document.getElementById('paymentModalBody');
+
+    body.innerHTML = `
+      <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:14px; font-size:0.85rem;">
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="color:var(--text-muted);">Müşteri:</span>
+          <strong>${o.customerName}</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="color:var(--text-muted);">Takip Kodu:</span>
+          <span class="track-code-badge">${o.trackingCode}</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="color:var(--text-muted);">Toplam Sipariş Tutarı:</span>
+          <strong>${Number(o.totalPrice || 0).toLocaleString('tr-TR')} TL</strong>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+          <span style="color:var(--text-muted);">Daha Önce Alınan:</span>
+          <span style="color:var(--success); font-weight:700;">${Number(o.deposit || 0).toLocaleString('tr-TR')} TL</span>
+        </div>
+        <div style="display:flex; justify-content:space-between; padding-top:6px; border-top:1px solid var(--border); font-size:1.05rem;">
+          <span style="font-weight:700; color:var(--danger);">Kalan Tahsil Edilecek Bakiye:</span>
+          <strong style="color:var(--danger); font-size:1.2rem;">${Number(remaining).toLocaleString('tr-TR')} TL</strong>
+        </div>
+      </div>
+
+      <form onsubmit="handleConfirmPayment(event)">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label class="form-label" style="font-weight:700;">Tahsil Edilen Tutar (TL) *</label>
+          <input type="number" id="payAmountInput" class="form-input" value="${remaining}" step="any" min="0" required style="font-size:1.1rem; font-weight:700; color:#065f46;" />
+        </div>
+        <div class="form-group" style="margin-bottom:14px;">
+          <label class="form-label" style="font-weight:700;">Ödeme Yöntemi *</label>
+          <select id="payMethodSelect" class="form-select" style="font-size:0.9rem;">
+            <option value="Nakit">💵 Nakit</option>
+            <option value="Havale / EFT">🏦 Banka Havale / EFT</option>
+            <option value="Kredi Kartı">💳 Kredi Kartı</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button type="button" class="btn btn-white" onclick="closeModal('paymentModal')">İptal</button>
+          <button type="submit" class="btn btn-success" style="font-weight:700; background:#065f46;">
+            ${andCompleteAfter ? '✅ Bakiyeyi Sıfırla & İşi Tamamla' : '✅ Bakiyeyi Sıfırla & Kaydet'}
+          </button>
+        </div>
+      </form>
+    `;
+
+    openModal('paymentModal');
+  }
+
+  function handleConfirmPayment(e) {
+    e.preventDefault();
+    const o = orders.find(x => x.id === activePaymentOrderId);
+    if (!o) return;
+
+    const payAmount = parseFloat(document.getElementById('payAmountInput').value) || 0;
+    const payMethod = document.getElementById('payMethodSelect').value;
+
+    const oldBalance = parseFloat(o.remainingBalance) || 0;
+    const newBalance = Math.max(0, oldBalance - payAmount);
+
+    o.deposit = (parseFloat(o.deposit) || 0) + payAmount;
+    o.remainingBalance = newBalance;
+
+    if (newBalance <= 0) {
+      o.paymentStatus = 'odendi';
+    } else {
+      o.paymentStatus = 'kismi';
+    }
+
+    o.stageHistory.push({
+      stageName: 'Tahsilat',
+      timestamp: new Date().toISOString(),
+      note: `${Number(payAmount).toLocaleString('tr-TR')} TL tahsilat alındı (${payMethod}). Kalan Bakiye: ${Number(newBalance).toLocaleString('tr-TR')} TL.`
+    });
+
+    closeModal('paymentModal');
+
+    saveOrderSingle(o, {
+      remainingBalance: o.remainingBalance,
+      paymentStatus: o.paymentStatus,
+      stageHistory: o.stageHistory,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Eğer tamamlandı akışından çağrıldıysa işi tamamla
+    if (activePaymentCompleteAfter) {
+      closeModal('dispatchAlertModal');
+      stepStage(o.id, 'tamamlandi');
+    } else {
+      renderView();
+      showToast(`✅ ${o.customerName} siparişinin bakiyesi güncellendi (Kalan: ${newBalance.toLocaleString('tr-TR')} TL)`, '#10B981');
+    }
+  }
+
+  // TESLİMATTAN TAMAMLANDI BUTONUNA BASILDIĞINDA BAKİYE UYARISI
+  function handleCompleteOrderClick(orderId) {
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    const remaining = parseFloat(o.remainingBalance) || 0;
+    const hasUnpaid = remaining > 0 && o.paymentStatus !== 'odendi';
+
+    if (hasUnpaid) {
+      // SESLİ ALARM ÇAL!
+      playAlarmSound();
+
+      // UYARI PENCERESİNİ AÇ!
+      const alertBody = document.getElementById('dispatchAlertBody');
+      const balanceHtml = canViewFinances()
+        ? `<div style="font-size:1.15rem; color:#7f1d1d; margin-top:6px; font-weight:800;">
+             Kalan Bakiye: <span style="font-size:1.4rem; color:#b91c1c;">${Number(remaining).toLocaleString('tr-TR')} TL</span>
+           </div>`
+        : `<div style="font-size:0.95rem; font-weight:700; color:#b91c1c; margin-top:8px; background:#fff; padding:8px 12px; border-radius:6px; display:inline-block; border:1px dashed #ef4444;">
+             🔒 Bu siparişin ödenmemiş tahsilatı bulunmaktadır! (Tutar yetkilide görünür)
+           </div>`;
+
+      alertBody.innerHTML = `
+        <div style="text-align:center; margin-bottom:14px;">
+          <span style="font-size:3.2rem;">⚠️🚨</span>
+          <h2 style="font-size:1.35rem; font-weight:800; color:#b91c1c; margin-top:4px;">DİKKAT: ÖDENMEMİŞ BAKİYE VAR!</h2>
+          <p style="color:var(--text-muted); font-size:0.88rem;">Sipariş tamamlanıp teslim edilmeden önce tahsilat kontrolü yapınız.</p>
+        </div>
+
+        <div style="background:#fee2e2; border:2px solid #ef4444; border-radius:10px; padding:14px; text-align:center; margin-bottom:14px;">
+          <div style="font-weight:700; color:#7f1d1d; font-size:1rem;">Müşteri: <strong>${o.customerName}</strong> (${o.trackingCode})</div>
+          ${balanceHtml}
+          <p style="font-size:0.8rem; color:#991b1b; margin-top:8px;">
+            Tahsilat yapılmadan ürünün fabrikadan çıkışı yapılamaz.
+          </p>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${canCollectPayment() ? `
+            <button class="btn btn-success" style="padding:10px; font-weight:700; font-size:0.95rem;" onclick="openPaymentModal('${o.id}', true)">
+              💳 Şimdi Ödeme Al & İşi Tamamla
+            </button>
+            <button class="btn btn-navy" style="padding:8px; font-size:0.85rem;" onclick="closeModal('dispatchAlertModal'); stepStage('${o.id}', 'tamamlandi');">
+              ⚠️ Onayla ve Yine de Tamamla
+            </button>
+          ` : `
+            <div style="text-align:center; font-size:0.85rem; color:#b91c1c; font-weight:700; padding:6px;">
+              Lütfen muhasebe veya yetkili personele danışarak ödemeyi kapattırın!
+            </div>
+          `}
+          <button class="btn btn-white" style="padding:8px;" onclick="closeModal('dispatchAlertModal')">
+            ❌ İptal / Sevkiyatta Bırak
+          </button>
+        </div>
+      `;
+
+      openModal('dispatchAlertModal');
+      return;
+    }
+
+    // Bakiye yoksa doğrudan tamamla
+    stepStage(orderId, 'tamamlandi');
+  }
+
+
+    // GÖRSEL & ÇİZİM YÖNETİM FONKSİYONLARI
+  let currentNewOrderImage = '';
+
+  // Resim sıkıştırma yardımcısı (HTML5 Canvas ile max 1200px, 0.75 kalite JPEG)
+  function compressImageFile(file, maxWidth = 1200, maxHeight = 1200, quality = 0.75) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let w = img.width;
+          let h = img.height;
+          if (w > maxWidth || h > maxHeight) {
+            if (w > h) {
+              h = Math.round((h * maxWidth) / w);
+              w = maxWidth;
+            } else {
+              w = Math.round((w * maxHeight) / h);
+              h = maxHeight;
+            }
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedDataUrl);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Görseli sadece talep edildiğinde buluttan yükle
+  async function loadOrderImage(orderId) {
+    const o = orders.find(x => x.id === orderId);
+    if (o && o.receiptImage) return o.receiptImage;
+    try {
+      const res = await fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.image) {
+          if (o) o.receiptImage = data.image; // bellekte önbelleğe al
+          return data.image;
+        }
+      }
+    } catch(e) {
+      console.warn('Görsel buluttan yüklenemedi:', e);
+    }
+    return null;
+  }
+
+  // Görsel Büyütücü Modalını Aç (Direct src veya on-demand orderId destekler)
+  async function openImageViewer(orderIdOrSrc, title = '') {
+    const imgEl = document.getElementById('imageViewerImg');
+    const titleEl = document.getElementById('imageViewerTitle');
+    const downloadBtn = document.getElementById('imageDownloadBtn');
+    
+    if (titleEl) titleEl.innerText = title ? `📷 ${title}` : '📷 Sipariş Görseli & Çizim';
+    openModal('imageViewerModal');
+
+    if (typeof orderIdOrSrc === 'string' && (orderIdOrSrc.startsWith('data:') || orderIdOrSrc.startsWith('http'))) {
+      if (imgEl) imgEl.src = orderIdOrSrc;
+      if (downloadBtn) downloadBtn.href = orderIdOrSrc;
+      return;
+    }
+
+    const orderId = orderIdOrSrc;
+    const o = orders.find(x => x.id === orderId);
+    if (o && o.customerName && !title && titleEl) {
+      titleEl.innerText = `📷 ${o.customerName} - Sipariş Görseli`;
+    }
+
+    if (imgEl) {
+      imgEl.src = '';
+      imgEl.alt = 'Görsel yükleniyor... Lütfen bekleyiniz.';
+    }
+
+    const imgSrc = await loadOrderImage(orderId);
+    if (imgSrc) {
+      if (imgEl) {
+        imgEl.src = imgSrc;
+        imgEl.alt = 'Sipariş Görseli';
+      }
+      if (downloadBtn) downloadBtn.href = imgSrc;
+    } else {
+      if (imgEl) imgEl.alt = 'Görsel bulunamadı veya henüz eklenmedi.';
+      showToast('Görsel yüklenemedi!', '#EF4444');
+    }
+  }
+
+  function handleImageSelect(event, previewId, containerId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    compressImageFile(file).then(dataUrl => {
+      currentNewOrderImage = dataUrl;
+      const preview = document.getElementById(previewId);
+      const container = document.getElementById(containerId);
+      const placeholder = document.getElementById('newOrderImgPlaceholder');
+      if (preview) preview.src = currentNewOrderImage;
+      if (container) container.style.display = 'block';
+      if (placeholder) placeholder.style.display = 'none';
+      showToast('Görsel optimize edildi ve hazırlandı.', '#10B981');
+    }).catch(err => {
+      showToast('Görsel işlenemedi: ' + err.message, '#EF4444');
+    });
+  }
+
+  function clearNewOrderImage(event) {
+    if (event) event.stopPropagation();
+    currentNewOrderImage = '';
+    const fileInput = document.getElementById('m_orderImage');
+    if (fileInput) fileInput.value = '';
+    const container = document.getElementById('newOrderImgContainer');
+    const placeholder = document.getElementById('newOrderImgPlaceholder');
+    if (container) container.style.display = 'none';
+    if (placeholder) placeholder.style.display = 'block';
+  }
+
+  async function handleDetailImageUpload(event, orderId) {
+    const file = event.target.files[0];
+    if (!file) return;
+    showToast('Görsel işleniyor ve buluta yükleniyor...', 'info');
+    try {
+      const compressedDataUrl = await compressImageFile(file);
+      const o = orders.find(x => x.id === orderId);
+      if (o) {
+        o.receiptImage = compressedDataUrl;
+        o.hasReceiptImage = true;
+        // 1. Görseli /siparis_gorseller/{orderId}.json konumuna kaydet
+        await fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: compressedDataUrl })
+        });
+        // 2. Sipariş objesini güncelle
+        await saveOrderSingle(o, { hasReceiptImage: true });
+        showDetails(orderId);
+        renderView();
+        showToast('✅ Çizim / Görsel başarıyla kaydedildi!', '#10B981');
+      }
+    } catch(err) {
+      showToast('Görsel yüklenirken hata oluştu: ' + err.message, '#EF4444');
+    }
+  }
+
+  async function removeDetailImage(orderId) {
+    if (!confirm('Ekli görseli kaldırmak istediğinize emin misiniz?')) return;
+    const o = orders.find(x => x.id === orderId);
+    if (o) {
+      delete o.receiptImage;
+      o.hasReceiptImage = false;
+      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, { method: 'DELETE' }).catch(() => {});
+      await saveOrderSingle(o, { hasReceiptImage: false });
+      showDetails(orderId);
+      renderView();
+      showToast('Görsel kaldırıldı.');
+    }
+  }
+
+  async function handleCreateOrder(e) {
+    e.preventDefault();
+    const code = 'SIP-2026-' + Math.random().toString(36).substring(2, 6).toUpperCase();
+    const price = parseFloat(document.getElementById('m_totalPrice').value) || 0;
+    const deposit = parseFloat(document.getElementById('m_deposit').value) || 0;
+    const orderId = 'ord_' + Date.now();
+    const hasImg = Boolean(currentNewOrderImage);
+
+    if (hasImg) {
+      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: currentNewOrderImage })
+      }).catch(err => console.warn('Görsel yükleme hatası:', err));
+    }
+
+    const newOrder = {
+      id: orderId,
+      trackingCode: code,
+      orderNumber: code,
+      customerName: document.getElementById('m_customerName').value,
+      customerPhone: document.getElementById('m_customerPhone').value,
+      productTitle: document.getElementById('m_productTitle').value,
+      membraneColor: document.getElementById('m_membraneColor').value,
+      modelPattern: document.getElementById('m_modelPattern').value,
+      mdfThickness: document.getElementById('m_mdfThickness').value,
+      millingProfile: document.getElementById('m_millingProfile').value,
+      partCount: parseInt(document.getElementById('m_partCount').value) || 0,
+      totalAreaM2: parseFloat(document.getElementById('m_totalAreaM2').value) || 0,
+      estimatedDelivery: document.getElementById('m_estimatedDelivery').value,
+      priority: document.getElementById('m_priority').value,
+      currentStage: 'cizim',
+      totalPrice: price,
+      deposit: deposit,
+      remainingBalance: price - deposit,
+      paymentStatus: document.getElementById('m_paymentStatus').value,
+      whatsappEnabled: document.getElementById('m_whatsappEnabled').checked,
+      productDetails: document.getElementById('m_productDetails').value,
+      orderDate: new Date().toISOString().split('T')[0],
+      hasReceiptImage: hasImg,
+      receiptImage: currentNewOrderImage || '',
+      updatedAt: new Date().toISOString(),
+      stageHistory: [
+        { stageName: 'Çizim', timestamp: new Date().toISOString(), note: 'Sipariş oluşturuldu, CAD çizimine alındı.' }
+      ]
+    };
+
+    orders.unshift(newOrder);
+    createOrderInCloud(newOrder);
+    closeModal('newOrderModal');
+    document.getElementById('newOrderForm').reset();
+    clearNewOrderImage();
+    renderView();
+    renderStats();
+    showToast(`✅ Yeni Sipariş Eklendi: ${newOrder.customerName} (${code})`, '#10B981');
+  }
+
+  function showDetails(orderId) {
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    const stageObj = STAGES.find(s => s.id === o.currentStage) || { name: o.currentStage, icon: '' };
+    document.getElementById('detailModalTitle').innerText = `${o.customerName} (${o.trackingCode})`;
+
+    let whatsappBtn = '';
+    const phoneStr = String(o.customerPhone || '').trim();
+    if (o.whatsappEnabled && phoneStr) {
+      const cleanPhone = phoneStr.replace(/[^0-9]/g, '');
+      const fullPhone = cleanPhone.startsWith('90') ? cleanPhone : '90' + cleanPhone.replace(/^0/, '');
+      const trackUrl = `${window.location.origin}/siparis-paneli?kod=${o.trackingCode}`;
+      const msg = `Sayın *${o.customerName}*, *${o.trackingCode}* nolu siparişiniz şu an *${stageObj.name}* aşamasındadır. Canlı takip için: ${trackUrl}`;
+      whatsappBtn = `
+        <a href="https://wa.me/${fullPhone}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-success" style="padding:4px 10px; font-weight:700;">
+          📱 WhatsApp Bildir
+        </a>
+      `;
+    }
+
+    let finBlock = '';
+    if (canViewFinances()) {
+      finBlock = `
+        <div style="background:#f8fafc; border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h4 style="font-size:0.85rem; color:var(--navy); margin:0;">💰 Finansal Detaylar</h4>
+            ${(o.remainingBalance || 0) > 0 && canCollectPayment() ? `
+              <button class="btn btn-success" style="padding:3px 8px; font-size:0.75rem; font-weight:700;" onclick="openPaymentModal('${o.id}')">💳 Ödeme Al</button>
+            ` : ''}
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:8px; font-size:0.82rem;">
+            <div>Toplam Tutar: <strong>${Number(o.totalPrice || 0).toLocaleString('tr-TR')} ₺</strong></div>
+            <div>Peşinat: <strong>${Number(o.deposit || 0).toLocaleString('tr-TR')} ₺</strong></div>
+            <div>Kalan Bakiye: <strong style="color:${(o.remainingBalance || 0) > 0 ? 'var(--danger)' : 'var(--success)'};">${Number(o.remainingBalance || 0).toLocaleString('tr-TR')} ₺</strong></div>
+            <div>Durum: <strong>${(o.paymentStatus || 'bekliyor').toUpperCase()}</strong></div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fotoğraf & Çizim Bloğu (Buluttan on-demand yüklenir)
+    let imageBlock = '';
+    if (o.hasReceiptImage || o.receiptImage) {
+      imageBlock = `
+        <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <h4 style="font-size:0.85rem; color:var(--navy); margin:0;">📷 Sipariş Görseli & Çizim</h4>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-navy" style="padding:3px 8px; font-size:0.75rem;" onclick="openImageViewer('${o.id}', '${o.customerName}')">🔍 Büyüt</button>
+              <label class="btn btn-white" style="padding:3px 8px; font-size:0.75rem; border:1px solid var(--border); cursor:pointer; margin:0;">
+                🔄 Değiştir
+                <input type="file" accept="image/*" style="display:none;" onchange="handleDetailImageUpload(event, '${o.id}')" />
+              </label>
+              <button class="btn btn-danger" style="padding:3px 8px; font-size:0.75rem;" onclick="removeDetailImage('${o.id}')">🗑️ Sil</button>
+            </div>
+          </div>
+          <div style="text-align:center; cursor:pointer;" onclick="openImageViewer('${o.id}', '${o.customerName}')">
+            ${o.receiptImage ? 
+              `<img src="${o.receiptImage}" alt="Sipariş Görseli" style="max-height:160px; max-width:100%; border-radius:6px; border:1px solid var(--border); object-fit:contain;" />` :
+              `<div style="padding:16px; background:#f8fafc; border-radius:6px; border:1px dashed var(--border); color:var(--navy); font-weight:700; font-size:0.82rem;">📷 Görseli Görmek İçin Tıklayın (Buluttan Getir)</div>`
+            }
+          </div>
+        </div>
+      `;
+    } else {
+      imageBlock = `
+        <div style="background:#f8fafc; border:1px dashed var(--border); border-radius:8px; padding:12px; text-align:center;">
+          <label style="cursor:pointer; display:inline-flex; align-items:center; gap:6px; font-size:0.82rem; font-weight:700; color:var(--navy); padding:6px 14px; background:#fff; border:1px solid var(--border); border-radius:6px; box-shadow:var(--shadow-sm);">
+            📸 Çizim / Fotoğraf / Fiş Ekle
+            <input type="file" accept="image/*" style="display:none;" onchange="handleDetailImageUpload(event, '${o.id}')" />
+          </label>
+          <div style="font-size:0.72rem; color:var(--text-muted); margin-top:4px;">Bu siparişe CAD çizimi veya numune fotoğrafı ekleyebilirsiniz.</div>
+        </div>
+      `;
+    }
+
+    let histHtml = (o.stageHistory || []).map(h => `
+      <div style="display:flex; gap:10px; font-size:0.8rem; padding-bottom:8px; border-left:2px solid var(--border); padding-left:12px; position:relative;">
+        <div style="position:absolute; left:-5px; top:2px; width:8px; height:8px; border-radius:50%; background:var(--gold);"></div>
+        <div>
+          <div style="font-weight:700; color:var(--navy);">${h.stageName}</div>
+          <div style="font-size:0.72rem; color:var(--text-muted);">${new Date(h.timestamp).toLocaleString('tr-TR')}</div>
+          ${h.note ? '<div style="margin-top:2px;">' + h.note + '</div>' : ''}
+        </div>
+      </div>
+    `).join('');
+
+    const fireHistories = (o.stageHistory || []).filter(h => (h.stageName || '').includes('FİRE') || (h.note || '').includes('FİRE'));
+    let fireAlertBox = '';
+    if (fireHistories.length > 0) {
+      fireAlertBox = `
+        <div style="background:#fee2e2; border:2px solid #ef4444; border-radius:8px; padding:10px 14px; margin-top:8px;">
+          <div style="font-weight:800; color:#b91c1c; font-size:0.88rem; display:flex; align-items:center; gap:6px;">
+            ⚠️ BU SİPARİŞTE ${fireHistories.length} ADET FİRE / HATALI PARÇA BİLDİRİMİ VAR!
+          </div>
+          <div style="font-size:0.8rem; color:#7f1d1d; margin-top:5px; line-height:1.4;">
+            ${fireHistories.map(fh => `• <strong>${fh.note}</strong> <span style="font-size:0.72rem; color:#991b1b;">(${new Date(fh.timestamp).toLocaleString('tr-TR')})</span>`).join('<br>')}
+          </div>
+        </div>
+      `;
+    }
+
+    document.getElementById('detailModalBody').innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+        <div>
+          <span class="track-code-badge">${o.trackingCode}</span>
+          <span class="spec-pill" style="background:#dbeafe; color:#1e40af; font-weight:700;">${stageObj.icon} ${stageObj.name}</span>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+          ${whatsappBtn}
+          <button class="btn btn-navy" style="font-weight:700;" onclick="printJobOrder('${o.id}')">🏷️ İş Emri Fişi</button>
+          <button class="btn btn-danger" style="font-weight:700; background:#dc2626; color:#fff; padding:6px 12px;" onclick="openFireModal('${o.id}')">⚠️ Fire Bildir</button>
+          ${canDeleteOrders() ? `
+            <button class="btn btn-white" style="border:1px solid var(--danger); color:var(--danger);" onclick="closeModal('orderDetailsModal'); deleteOrderPermanently('${o.id}')">🗑️ Sil</button>
+          ` : ''}
+        </div>
+      </div>
+
+      ${fireAlertBox}
+
+      <div style="background:var(--bg-main); border:1px solid var(--border); border-radius:8px; padding:12px; display:grid; grid-template-columns:repeat(auto-fit, minmax(140px, 1fr)); gap:8px; font-size:0.82rem;">
+        <div><span style="color:var(--text-muted); font-size:0.7rem;">Membran Rengi:</span><div style="font-weight:700; color:#7c3aed;">${o.membraneColor || '-'}</div></div>
+        <div><span style="color:var(--text-muted); font-size:0.7rem;">Model / Desen:</span><div style="font-weight:700;">${o.modelPattern || '-'}</div></div>
+        <div><span style="color:var(--text-muted); font-size:0.7rem;">MDF Kalınlığı:</span><div style="font-weight:700;">${o.mdfThickness || '18mm'}</div></div>
+        <div><span style="color:var(--text-muted); font-size:0.7rem;">Adet & Alan:</span><div style="font-weight:700;">${o.partCount} Adet / ${o.totalAreaM2} m²</div></div>
+      </div>
+
+      ${imageBlock}
+
+      ${finBlock}
+
+      ${o.productDetails ? `
+        <div style="background:#fff; border:1px solid var(--border); border-radius:8px; padding:10px; font-size:0.8rem;">
+          <strong>Sipariş Notları:</strong> ${o.productDetails}
+        </div>
+      ` : ''}
+
+      <div>
+        <h4 style="font-size:0.85rem; color:var(--navy); margin-bottom:8px;">⏱️ Aşama Tarihçesi</h4>
+        <div style="padding-left:4px;">${histHtml}</div>
+      </div>
+    `;
+
+    openModal('orderDetailsModal');
+  }
+
+  function openFireModal(orderId) {
+    document.getElementById('fireOrderId').value = orderId;
+    openModal('fireModal');
+  }
+
+  function submitFireReport() {
+    const id = document.getElementById('fireOrderId').value;
+    const count = document.getElementById('fireCountInput').value || '1';
+    const reason = (document.getElementById('fireReasonInput').value || '').trim();
+    const o = orders.find(x => x.id === id);
+
+    if (!reason) {
+      showToast('Lütfen fire nedenini yazınız!', '#EF4444');
+      return;
+    }
+
+    if (o) {
+      if (!o.stageHistory) o.stageHistory = [];
+      o.stageHistory.push({
+        stageName: 'FİRE BİLDİRİMİ ⚠️',
+        timestamp: new Date().toISOString(),
+        note: `FİRE: ${count} adet parça hasar gördü (${reason}). Yeniden kesim gerek!`
+      });
+      saveOrderSingle(o, {
+        stageHistory: o.stageHistory,
+        updatedAt: new Date().toISOString()
+      });
+      closeModal('fireModal');
+      closeModal('orderDetailsModal');
+      document.getElementById('fireReasonInput').value = '';
+      renderView();
+      renderStats();
+      showToast(`⚠️ Fire bildirimi kaydedildi: ${count} adet parça (${o.trackingCode})`, '#EF4444');
+    }
+  }
+
+  async function printJobOrder(orderId) {
+    const o = orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    if (o.hasReceiptImage && !o.receiptImage) {
+      await loadOrderImage(orderId);
+    }
+
+    const printArea = document.getElementById('printArea');
+    printArea.innerHTML = `
+      <div style="max-width:800px; margin:0 auto; padding:20px; font-family:Arial, sans-serif; border:2px solid #000; background:#fff; color:#000;">
+        <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:12px; margin-bottom:14px;">
+          <div>
+            <h1 style="font-size:22px; margin:0 0 4px 0; letter-spacing:0.5px;">GLOBAL KAPAK MOBİLYA</h1>
+            <div style="font-size:14px; font-weight:bold; color:#222;">ATÖLYE İŞ EMRİ & İMALAT FİŞİ</div>
+          </div>
+          <div style="text-align:right; font-family:monospace; font-weight:bold; font-size:16px; border:1px solid #000; padding:6px 12px; border-radius:4px;">
+            ${o.trackingCode}
+          </div>
+        </div>
+
+        <table style="width:100%; border-collapse:collapse; margin-bottom:14px; font-size:13px;">
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; width:25%; background:#f2f2f2;">Müşteri:</td>
+            <td style="padding:6px 10px; border:1px solid #000; width:75%; font-size:15px; font-weight:bold;">${o.customerName}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Telefon:</td>
+            <td style="padding:6px 10px; border:1px solid #000;">${o.customerPhone || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Sipariş Başlığı:</td>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold;">${o.productTitle || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Membran Rengi:</td>
+            <td style="padding:6px 10px; border:1px solid #000; font-size:15px; font-weight:bold;">${o.membraneColor || 'Standart'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Model / Desen:</td>
+            <td style="padding:6px 10px; border:1px solid #000;">${o.modelPattern || 'Düz'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">MDF Kalınlığı:</td>
+            <td style="padding:6px 10px; border:1px solid #000;">${o.mdfThickness || '18mm'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Freze / Kulp:</td>
+            <td style="padding:6px 10px; border:1px solid #000;">${o.millingProfile || '-'}</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Adet & Alan:</td>
+            <td style="padding:6px 10px; border:1px solid #000; font-size:15px; font-weight:bold;">${o.partCount} Adet (${o.totalAreaM2} m²)</td>
+          </tr>
+          <tr>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; background:#f2f2f2;">Termin Tarihi:</td>
+            <td style="padding:6px 10px; border:1px solid #000; font-weight:bold; color:#b91c1c;">${o.estimatedDelivery || o.orderDate} (${(o.priority || 'NORMAL').toUpperCase()})</td>
+          </tr>
+        </table>
+
+        ${o.productDetails ? `
+          <div style="border:1px solid #000; padding:10px 12px; margin-bottom:14px; font-size:12px; background:#fafafa;">
+            <strong style="display:block; margin-bottom:4px;">Sipariş & İmalat Notları:</strong>
+            ${o.productDetails.replace(/\n/g, '<br>')}
+          </div>
+        ` : ''}
+
+        ${o.receiptImage ? `
+          <div style="border:1px solid #000; padding:10px; margin-bottom:14px; text-align:center;">
+            <div style="font-weight:bold; font-size:12px; margin-bottom:6px; text-align:left;">Ekli Çizim / Numune Görseli:</div>
+            <img src="${o.receiptImage}" alt="Çizim Görseli" style="max-height:280px; max-width:100%; object-fit:contain;" />
+          </div>
+        ` : ''}
+
+        <div style="margin-top:20px; border-top:2px solid #000; padding-top:10px; display:flex; justify-content:space-between; font-size:12px;">
+          <div>Global Kapak Mobilya - İmalat Takip Kodu: <strong>${o.trackingCode}</strong></div>
+          <div>Yazdırma: ${new Date().toLocaleDateString('tr-TR')} ${new Date().toLocaleTimeString('tr-TR')}</div>
+        </div>
+      </div>
+    `;
+
+    window.print();
+  }
+
+  // USER MANAGEMENT
+  function openUsersModal() {
+    if (userRole !== 'admin') { showToast('Sadece yönetici kullanıcı yönetebilir.', '#EF4444'); return; }
+    loadUsersList();
+    openModal('usersModal');
+  }
+
+    function loadUsersList() {
+    const box = document.getElementById('usersListContainer');
+    const customPass = localStorage.getItem('global_admin_pass') || '123';
+    const label = document.getElementById('currentAdminPassLabel');
+    if (label) label.innerText = 'Aktif Şifre: ' + customPass;
+
+    box.innerHTML = users.map(u => {
+      let roleBadgeText = '👁️ İzleyici';
+      let roleBadgeClass = 'role-viewer';
+      if (u.role === 'admin') {
+        roleBadgeText = '👑 Yönetici';
+        roleBadgeClass = 'role-admin';
+      } else if (u.role === 'staff_authorized') {
+        roleBadgeText = '⭐ Yetkili Personel';
+        roleBadgeClass = 'role-authorized';
+      }
+
+      return `
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:8px 12px; background:#fff; border:1px solid var(--border); border-radius:6px; font-size:0.85rem;">
+          <div>
+            <strong>${u.displayName}</strong> <span style="color:var(--text-muted); font-size:0.75rem;">(@${u.username})</span>
+            <span class="role-badge ${roleBadgeClass}" style="margin-left:6px;">
+              ${roleBadgeText}
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <button class="btn btn-white" style="padding:3px 8px; font-size:0.75rem; border:1px solid var(--border);" onclick="promptChangeUserPassword('${u.id}')">🔑 Şifre Değiştir</button>
+            ${u.username !== 'yonetici' ? `
+              <button class="btn btn-danger" style="padding:3px 8px; font-size:0.75rem;" onclick="deleteUser('${u.id}')">Sil</button>
+            ` : '<span style="font-size:0.75rem; color:var(--text-muted); padding:3px 6px;">(Ana Yönetici)</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function handleChangeAdminPassword(e) {
+    e.preventDefault();
+    const newPass = document.getElementById('newAdminPasswordInput').value.trim();
+    const confirmPass = document.getElementById('confirmAdminPasswordInput').value.trim();
+
+    if (!newPass) {
+      showToast('Lütfen geçerli bir şifre girin!', '#EF4444');
+      return;
+    }
+    if (newPass !== confirmPass) {
+      showToast('Şifreler uyuşmuyor! Lütfen iki kutuya da aynı şifreyi yazın.', '#EF4444');
+      return;
+    }
+
+    localStorage.setItem('global_admin_pass', newPass);
+
+    let adminU = users.find(u => u.username === 'yonetici' || u.role === 'admin');
+    if (adminU) {
+      adminU.password = newPass;
+    } else {
+      users.push({ id: 'u_1', username: 'yonetici', displayName: 'Ana Yönetici', role: 'admin', password: newPass });
+    }
+    saveUsers(true);
+
+    document.getElementById('newAdminPasswordInput').value = '';
+    document.getElementById('confirmAdminPasswordInput').value = '';
+    loadUsersList();
+    showToast('Ana yönetici şifreniz başarıyla kaydedildi! Yeni şifre: ' + newPass, '#10B981');
+  }
+
+  function promptChangeUserPassword(userId) {
+    const u = users.find(x => x.id === userId);
+    if (!u) return;
+    const currentP = (u.username === 'yonetici' && localStorage.getItem('global_admin_pass')) ? localStorage.getItem('global_admin_pass') : (u.password || '');
+    const newP = prompt(`${u.displayName} (@${u.username}) için yeni şifreyi giriniz:`, currentP);
+    if (newP !== null && newP.trim() !== '') {
+      const cleanP = newP.trim();
+      u.password = cleanP;
+      if (u.username === 'yonetici' || u.role === 'admin') {
+        localStorage.setItem('global_admin_pass', cleanP);
+      }
+      saveUsers(true);
+      loadUsersList();
+      showToast(`${u.displayName} şifresi güncellendi: ${cleanP}`, '#10B981');
+    }
+  }
+
+  function handleCreateUser(e) {
+    e.preventDefault();
+    const username = normalizeLoginStr(document.getElementById('nu_username').value);
+    const displayName = document.getElementById('nu_displayName').value.trim();
+    const role = document.getElementById('nu_role').value;
+    const password = String(document.getElementById('nu_password').value || '').trim();
+
+    if (!username || !password) {
+      showToast('Kullanıcı adı ve şifre zorunludur!', '#EF4444');
+      return;
+    }
+
+    if (users.some(u => normalizeLoginStr(u.username) === username)) {
+      showToast('Bu kullanıcı adı zaten mevcut!', '#EF4444');
+      return;
+    }
+
+    const newUser = {
+      id: 'u_' + Date.now(),
+      username,
+      displayName: displayName || username,
+      role,
+      password
+    };
+
+    users.push(newUser);
+    saveUsers(true);
+    document.getElementById('newUserForm').reset();
+    loadUsersList();
+    showToast(`✅ Yeni kullanıcı kaydedildi ve buluta eşitlendi: ${displayName || username}`, '#10B981');
+  }
+
+  function deleteUser(id) {
+    if (!confirm('Kullanıcıyı silmek istediğinize emin misiniz?')) return;
+    users = users.filter(u => u.id !== id);
+    saveUsers(true);
+    loadUsersList();
+    showToast('Kullanıcı silindi ve buluttan kaldırıldı.', 'info');
+  }
+
+  // CLOUD STORAGE MODAL
+  function openCloudModal() {
+    document.getElementById('cloudEndpointInput').value = cloudEndpoint;
+    const statusEl = document.getElementById('cloudSyncStatus');
+    if (statusEl) {
+      statusEl.innerHTML = `🟢 <strong>Canlı Bulut Veritabanı Bağlı:</strong><br><code style="word-break:break-all; font-size:0.75rem;">${cloudEndpoint}</code>`;
+    }
+    openModal('cloudModal');
+  }
+
+  function saveCloudConfig() {
+    cloudEndpoint = document.getElementById('cloudEndpointInput').value.trim();
+    localStorage.setItem('global_cloud_endpoint', cloudEndpoint);
+    document.getElementById('cloudSyncStatus').innerText = cloudEndpoint ? 'Bulut URL bağlandı: ' + cloudEndpoint : 'Cihaz hafızası aktif.';
+    showToast('Bulut ayarı kaydedildi!', '#10B981');
+    if (cloudEndpoint) syncWithCloud();
+  }
+
+  async function syncWithCloud(silent = false) {
+    if (!cloudEndpoint) {
+      if (!silent) showToast('Lütfen geçerli bir bulut URL girin.', '#EF4444');
+      return;
+    }
+    try {
+      if (!silent) showToast('Bulut veritabanına bağlanılıyor...', 'info');
+      const res = await fetch(cloudEndpoint);
+      if (res.ok) {
+        const remoteData = await res.json();
+        const remoteList = normalizeOrdersData(remoteData);
+        orders = remoteList;
+        saveLocalOrders();
+        renderView();
+        renderStats();
+        if (!silent) showToast(`Canlı bulut verileri eşitlendi: ${orders.length} sipariş`, '#10B981');
+      }
+    } catch (e) {
+      if (!silent) showToast('Bulut bağlantı hatası: ' + e.message, '#EF4444');
+    }
+  }
+
+  function exportBackup() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify({ orders, users, date: new Date().toISOString() }, null, 2));
+    const dl = document.createElement('a');
+    dl.setAttribute("href", dataStr);
+    dl.setAttribute("download", "global_kapak_siparisler_" + new Date().toISOString().split('T')[0] + ".json");
+    dl.click();
+    showToast('Yedek dosyası indirildi!', '#10B981');
+  }
+
+  function openModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'flex';
+      el.classList.add('open');
+    }
+  }
+  function closeModal(id) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.style.display = 'none';
+      el.classList.remove('open');
+    }
+  }
+
+  function showToast(msg, color = 'var(--navy)') {
+    const w = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = 'toast';
+    t.style.background = color;
+    t.innerText = msg;
+    w.appendChild(t);
+    setTimeout(() => {
+      t.style.opacity = '0';
+      setTimeout(() => t.remove(), 300);
+    }, 3200);
+  }
+
+  // INIT
+  window.addEventListener('DOMContentLoaded', async () => {
+    updateRoleUI();
+    renderView();
+    renderStats();
+
+    // Sayfa açılır açılmaz Firebase bulut veritabanından kullanıcıları ve siparişleri çek
+    if (usersCloudEndpoint) {
+      await syncUsersFromCloud();
+    }
+    if (cloudEndpoint) {
+      await syncWithCloud(true);
+      setupCloudStream();
+    }
+
+    // Kullanıcı listesini de 30 saniyede bir buluttan tazele
+    setInterval(syncUsersFromCloud, 30000);
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const codeParam = urlParams.get('kod') || urlParams.get('code');
+    if (codeParam) {
+      setTab('track');
+      setTimeout(() => {
+        const input = document.getElementById('custTrackCode');
+        if (input) { input.value = codeParam; queryCustomerTrack(); }
+      }, 100);
+    }
+  });
+
+  // BACKUP IMPORT
+  function triggerImportBackup() {
+    const input = document.getElementById('backupFileInput');
+    if (input) { input.value = ''; input.click(); }
+  }
+
+  function importBackup(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        const data = JSON.parse(e.target.result);
+        if (data.orders && (Array.isArray(data.orders) || typeof data.orders === 'object')) {
+          orders = normalizeOrdersData(data.orders);
+          if (data.users && Array.isArray(data.users)) {
+            users = data.users;
+            saveUsers(true);
+          }
+          saveAllOrdersToCloud(orders);
+          renderView();
+          showToast('Yedek başarıyla yüklendi: ' + orders.length + ' adet sipariş!', '#10B981');
+        } else if (Array.isArray(data) || typeof data === 'object') {
+          orders = normalizeOrdersData(data);
+          saveAllOrdersToCloud(orders);
+          renderView();
+          showToast('Siparişler yüklendi: ' + orders.length + ' adet!', '#10B981');
+        } else {
+          showToast('Geçersiz yedek dosyası yapısı!', '#EF4444');
+        }
+      } catch (err) {
+        showToast('Yedek dosyası okunamadı: ' + err.message, '#EF4444');
+      }
+    };
+    reader.readAsText(file);
+  }
+
+  // REALTIME CLOUD STREAM LISTENER (Firebase SSE: PUT + PATCH Canlı Dinleyici)
+  let cloudEventSource = null;
+  function setupCloudStream() {
+    if (!cloudEndpoint) return;
+    try {
+      if (cloudEventSource) {
+        cloudEventSource.close();
+        cloudEventSource = null;
+      }
+      if (cloudEndpoint.includes('firebaseio.com') || cloudEndpoint.includes('firebasedatabase.app')) {
+        cloudEventSource = new EventSource(cloudEndpoint);
+
+        const handleStreamUpdate = (e) => {
+          try {
+            const parsed = JSON.parse(e.data);
+            if (!parsed) return;
+            const path = parsed.path || '/';
+            const data = parsed.data;
+
+            if (path === '/') {
+              // Kök güncelleme
+              if (data && typeof data === 'object') {
+                orders = normalizeOrdersData(data);
+                saveLocalOrders();
+                renderView();
+                renderStats();
+              }
+            } else {
+              // Belirli bir sipariş veya alan güncellemesi (örn: "/ord_123" veya "/ord_123/currentStage")
+              const parts = path.replace(/^\//, '').split('/');
+              const targetId = parts[0];
+              if (!targetId) return;
+
+              if (parts.length === 1) {
+                if (data === null) {
+                  // Silindi
+                  orders = orders.filter(o => o.id !== targetId);
+                } else if (typeof data === 'object') {
+                  const idx = orders.findIndex(o => o.id === targetId);
+                  if (idx !== -1) {
+                    orders[idx] = { ...orders[idx], ...data, id: targetId };
+                  } else if (data.customerName || data.orderNumber) {
+                    orders.unshift({ id: targetId, ...data });
+                  }
+                }
+              } else if (parts.length === 2) {
+                const field = parts[1];
+                const o = orders.find(x => x.id === targetId);
+                if (o) {
+                  o[field] = data;
+                }
+              }
+              saveLocalOrders();
+              renderView();
+              renderStats();
+            }
+          } catch(err) {
+            console.warn('Canlı akış verisi işlenemedi:', err);
+          }
+        };
+
+        cloudEventSource.addEventListener('put', handleStreamUpdate);
+        cloudEventSource.addEventListener('patch', handleStreamUpdate);
+      }
+    } catch(err) {
+      console.warn('Bulut akış dinleyicisi başlatılamadı:', err);
+    }
+  }
+
+  // Sekme arka plandan ön plana geldiğinde (bilgisayar uyandıysa veya sekmeye dönüldüyse) anında sessizce tazele
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && cloudEndpoint) {
+      syncWithCloud(true);
+    }
+  });
+
+  // Her 15 saniyede bir sessiz kontrol (SADECE okuma, ASLA buluttaki veriyi ezmez!)
+  setInterval(() => {
+    if (cloudEndpoint && document.visibilityState === 'visible') {
+      fetch(cloudEndpoint)
+        .then(res => res.json())
+        .then(remoteData => {
+          const remoteList = normalizeOrdersData(remoteData);
+          const remoteSignature = remoteList.map(o => o.id + (o.currentStage || '') + (o.remainingBalance || '') + (o.stageHistory?.length || 0)).join('|');
+          const localSignature = orders.map(o => o.id + (o.currentStage || '') + (o.remainingBalance || '') + (o.stageHistory?.length || 0)).join('|');
+          if (remoteSignature !== localSignature) {
+            orders = remoteList;
+            saveLocalOrders();
+            renderView();
+            renderStats();
+          }
+        })
+        .catch(() => {});
+    }
+  }, 15000);</script>
+  <!-- MODAL: GÖRSEL BÜYÜTÜCÜ / ÇİZİM & FİŞ İNCELEME -->
+  <div id="imageViewerModal" class="modal-overlay" style="display:none;">
+    <div class="modal-card" style="max-width:850px; background:#0b1f4b; color:#fff;">
+      <div class="modal-header" style="background:#0b1f4b; border-bottom:1px solid rgba(255,255,255,0.15);">
+        <h3 id="imageViewerTitle" style="font-size:1.1rem; color:#fff;">📷 Sipariş Görseli & Çizim</h3>
+        <button class="btn btn-white" style="padding:2px 8px;" onclick="closeModal('imageViewerModal')">✕</button>
+      </div>
+      <div class="modal-body" style="text-align:center; padding:16px; background:#07122b; max-height:75vh; overflow:auto;">
+        <img id="imageViewerImg" src="" alt="Tam Boyut Görsel" style="max-width:100%; max-height:70vh; object-fit:contain; border-radius:6px; box-shadow:0 4px 20px rgba(0,0,0,0.5);" />
+      </div>
+      <div class="modal-footer" style="background:#0b1f4b; border-top:1px solid rgba(255,255,255,0.15); display:flex; justify-content:space-between; align-items:center;">
+        <a id="imageDownloadBtn" href="#" download="siparis-cizim.jpg" class="btn btn-white" style="font-size:0.8rem;">💾 Görseli İndir</a>
+        <button class="btn btn-gold" onclick="closeModal('imageViewerModal')">Kapat</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
