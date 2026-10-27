@@ -721,7 +721,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
       ⛶ Tam Ekran
     </button>
-    <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-header" id="liveWebsiteLink" onclick="updateLiveSiteLinkWithSupabase(this)">
+    <a href="https://globalmobilyaweb.vercel.app" target="_blank" class="btn-header" id="liveWebsiteLink" onclick="updateLiveSiteLinkWithSupabase(this)">
       🌐 Canlı Siteyi Aç ↗
     </a>
   </div>
@@ -1402,7 +1402,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
       <div style="margin-top:20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <button class="btn-gold" id="btnSaveHome" onclick="saveHomeSettings()">💾 Ana Sayfa & Video Ayarlarını Kaydet ve Yayınla</button>
-        <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-secondary" style="text-decoration:none;" onclick="updateLiveSiteLinkWithSupabase(this)">🌐 Canlı Ana Sayfayı Önizle ↗</a>
+        <a href="https://globalmobilyaweb.vercel.app" target="_blank" class="btn-secondary" style="text-decoration:none;" onclick="updateLiveSiteLinkWithSupabase(this)">🌐 Canlı Ana Sayfayı Önizle ↗</a>
       </div>
     </div>
   </div>
@@ -1923,7 +1923,7 @@ function checkSupabaseStatus() {
 
 function updateLiveSiteLinkWithSupabase(anchorEl) {
   if (!anchorEl) return;
-  const baseUrl = 'https://global-mobilya-web.vercel.app';
+  const baseUrl = 'https://globalmobilyaweb.vercel.app';
   if (SUPABASE_URL && SUPABASE_KEY) {
     anchorEl.href = `${baseUrl}/?sb_url=${encodeURIComponent(SUPABASE_URL)}&sb_key=${encodeURIComponent(SUPABASE_KEY)}`;
   } else {
