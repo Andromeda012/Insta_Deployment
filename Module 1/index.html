@@ -711,13 +711,6 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
   </div>
   <div class="header-right">
-    <div class="status-pill" id="statusPill" onclick="openSupabaseModal()" title="Supabase Bulut Veritabanı & Storage Durumu (Tıklayıp Yapılandırın)">
-      <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">Supabase Bağlantısı Yok</span>
-    </div>
-    <button class="btn-header btn-header-outline" onclick="openSupabaseModal()">
-      ⚡ Supabase Bulut Ayarları
-    </button>
     <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
       ⛶ Tam Ekran
     </button>
@@ -728,14 +721,6 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 </header>
 
 <div class="main-wrapper">
-
-  <!-- SUPABASE NOTIFICATION BANNER -->
-  <div class="token-banner" id="tokenBanner" style="display:none;">
-    <div>
-      <strong>⚡ Supabase Bulut Veritabanı & Storage Gerekli:</strong> Ürünler, tedarikçiler, galeri, blog ve videoların doğrudan Supabase üzerinde tutulması için lütfen Supabase Project URL ve Anon Key bilgilerinizi tanımlayın.
-    </div>
-    <button class="btn-gold btn-sm" onclick="openSupabaseModal()">🔌 Supabase'i Şimdi Bağla</button>
-  </div>
 
   <!-- EXECUTIVE LIVE WEBSITE STATUS & TELEMETRY STRIP -->
   <div class="exec-kpi-strip">
@@ -1761,50 +1746,6 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
   </div>
 
-</div>
-
-<!-- SUPABASE CLOUD DATABASE & STORAGE MODAL -->
-<div class="modal-overlay" id="tokenModal">
-  <div class="modal-box" style="max-width:620px;">
-    <button class="modal-close" onclick="closeSupabaseModal()">✕</button>
-    <div class="admin-card-title" style="margin-bottom:6px;">⚡ Supabase Cloud Database & Storage Bağlantısı</div>
-    <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-      Ürünler, tedarikçiler, galeri, blog ve videolar doğrudan Supabase veritabanı ve medya alanında tutulur.
-    </p>
-
-    <div class="form-group">
-      <label>Supabase Project URL</label>
-      <input type="url" class="form-control" id="supabaseUrlInput" placeholder="https://xxxxxxxxxxxx.supabase.co">
-    </div>
-
-    <div class="form-group">
-      <label>Supabase API Key (anon / public key)</label>
-      <input type="password" class="form-control" id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... veya sb_publishable_...">
-    </div>
-
-    <div style="background:#F8FAFC; border:1px solid var(--border); padding:14px; border-radius:8px; font-size:12px; margin-bottom:16px; line-height:1.6;">
-      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
-        <strong style="color:var(--navy);">🛠️ 1. Adım: Tablo ve Storage Kurulumu (SQL Editor)</strong>
-        <button type="button" class="btn-primary btn-sm" onclick="copySupabaseSetupSql()">📋 Kurulum SQL Kodunu Kopyala</button>
-      </div>
-      <div>
-        Supabase پنelinizde sol menüden <strong>SQL Editor → New Query</strong> ekranını açın, yukarıdaki butonla kopyaladığınız SQL kodunu yapıştırıp <strong>Run</strong> tuşuna basın. Bu işlem <code>products</code>, <code>suppliers</code>, <code>gallery</code>, <code>blogs</code>, <code>site_settings</code> tablolarını ve fotoğraf/video için <code>media</code> Storage alanını otomatik oluşturur.
-      </div>
-    </div>
-
-    <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px 14px; border-radius:8px; font-size:12px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
-      <div>
-        <strong style="color:#166534;">📦 2. Adım: Mevcut Ürün & Tedarikçileri Aktar</strong>
-        <div style="color:#15803D; font-size:11.5px;">Sitedeki mevcut ürünleri, tedarikçileri, galeriyi ve ayarları tek tıkla Supabase'e yükleyin.</div>
-      </div>
-      <button type="button" class="btn-sm" id="btnSeedSupabase" style="background:#16A34A; color:#fff; border:none; border-radius:6px; padding:8px 12px; font-weight:700; cursor:pointer;" onclick="seedExistingDataToSupabase()">🔄 Verileri Supabase'e Aktar</button>
-    </div>
-
-    <div style="display:flex; gap:10px;">
-      <button class="btn-gold" onclick="saveSupabaseConfig()" style="flex:1;">💾 Kaydet & Supabase'e Bağlan</button>
-      <button class="btn-secondary" onclick="closeSupabaseModal()">Kapat</button>
-    </div>
-  </div>
 </div>
 
 <!-- TOAST NOTIFICATION -->
@@ -3972,9 +3913,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 // SUPABASE CONNECTION MODAL & DATA SEEDING
 // ══════════════════════════════════════════════════════════
 function openSupabaseModal() {
+  const modal = document.getElementById('tokenModal');
+  if (!modal) return;
   document.getElementById('supabaseUrlInput').value = localStorage.getItem('gkm_supabase_url') || SUPABASE_URL || '';
   document.getElementById('supabaseKeyInput').value = localStorage.getItem('gkm_supabase_key') || SUPABASE_KEY || '';
-  document.getElementById('tokenModal').classList.add('open');
+  modal.classList.add('open');
 }
 
 // Backward-compatible alias if parent frame calls openTokenModal
@@ -3983,7 +3926,8 @@ function openTokenModal() {
 }
 
 function closeSupabaseModal() {
-  document.getElementById('tokenModal').classList.remove('open');
+  const modal = document.getElementById('tokenModal');
+  if (modal) modal.classList.remove('open');
 }
 
 function closeTokenModal() {
