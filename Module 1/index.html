@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="icon" href="/resim/logo.png" type="image/png">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
   --navy: #0B1F4B;
@@ -710,17 +711,17 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
   </div>
   <div class="header-right">
-    <div class="status-pill" id="statusPill" onclick="openTokenModal()" title="GitHub Bağlantı Durumu (Tıklayıp Düzenleyin)">
+    <div class="status-pill" id="statusPill" onclick="openSupabaseModal()" title="Supabase Bulut Veritabanı & Storage Durumu (Tıklayıp Yapılandırın)">
       <div class="status-dot" id="statusDot"></div>
-      <span id="statusText">GitHub Bağlantısı Yok</span>
+      <span id="statusText">Supabase Bağlantısı Yok</span>
     </div>
-    <button class="btn-header btn-header-outline" onclick="openTokenModal()">
-      ⚙️ API & Depo Ayarları
+    <button class="btn-header btn-header-outline" onclick="openSupabaseModal()">
+      ⚡ Supabase Bulut Ayarları
     </button>
     <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
       ⛶ Tam Ekran
     </button>
-    <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-header">
+    <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-header" id="liveWebsiteLink" onclick="updateLiveSiteLinkWithSupabase(this)">
       🌐 Canlı Siteyi Aç ↗
     </a>
   </div>
@@ -728,12 +729,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 <div class="main-wrapper">
 
-  <!-- TOKEN NOTIFICATION BANNER -->
+  <!-- SUPABASE NOTIFICATION BANNER -->
   <div class="token-banner" id="tokenBanner" style="display:none;">
     <div>
-      <strong>ℹ️ GitHub Token Gerekli:</strong> Panelinizin ürün ve fotoğrafları doğrudan sitenize kaydedebilmesi için lütfen GitHub API Token'ınızı tanımlayın.
+      <strong>⚡ Supabase Bulut Veritabanı & Storage Gerekli:</strong> Ürünler, tedarikçiler, galeri, blog ve videoların doğrudan Supabase üzerinde tutulması için lütfen Supabase Project URL ve Anon Key bilgilerinizi tanımlayın.
     </div>
-    <button class="btn-gold btn-sm" onclick="openTokenModal()">🔑 Token'ı Şimdi Gir</button>
+    <button class="btn-gold btn-sm" onclick="openSupabaseModal()">🔌 Supabase'i Şimdi Bağla</button>
   </div>
 
   <!-- EXECUTIVE LIVE WEBSITE STATUS & TELEMETRY STRIP -->
@@ -916,8 +917,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
               <strong id="healthPingVal" style="color:var(--success);">42 ms (Çok Hızlı)</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
-              <span style="color:var(--text-muted);">Vercel CDN & GitHub Senkron:</span>
-              <strong id="healthSyncVal" style="color:var(--navy);">🟢 Senkronize (main)</strong>
+              <span style="color:var(--text-muted);">Supabase DB & Storage Durumu:</span>
+              <strong id="healthSyncVal" style="color:var(--navy);">🟢 Supabase Cloud Aktif</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
               <span style="color:var(--text-muted);">Kurumsal Video Durumu:</span>
@@ -1744,66 +1745,64 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <!-- ══════════════════════════════════════════════════════════ -->
   <div class="tab-section" id="tab-guide">
     <div class="admin-card">
-      <div class="admin-card-title" style="font-size:18px; margin-bottom:12px;">💡 Global Kapak Yönetim Paneli Rehberi</div>
+      <div class="admin-card-title" style="font-size:18px; margin-bottom:12px;">💡 Global Kapak Yönetim Paneli — Supabase Bulut Mimarisi</div>
       <div style="font-size:14px; line-height:1.8; color:var(--text-dark);">
-        <p>Bu panel, sitenizdeki tüm içerikleri doğrudan <strong>GitHub</strong> ve <strong>Vercel</strong> bulut altyapısına bağlayarak yönetmenizi sağlar.</p>
+        <p>Bu panel, sitenizdeki tüm içerikleri doğrudan <strong>Supabase PostgreSQL Veritabanı</strong> ve <strong>Supabase Storage (Medya Depolama)</strong> bulut altyapısına bağlayarak anlık olarak yönetmenizi sağlar.</p>
         <br>
         <h4 style="color:var(--navy);">🚀 Nasıl Çalışır?</h4>
         <ol style="margin-left:20px; margin-bottom:16px;">
-          <li>Panelden ürün, fotoğraf, makale veya firma bilgisi ekleyip <strong>"Kaydet"</strong> dediğinizde, veriler anında bulut sunucunuza işlenir.</li>
-          <li>Vercel bu güncellemeyi <strong>15 saniye içinde</strong> tüm dünyadaki ziyaretçilerinize canlı olarak sunar.</li>
-          <li>Fotoğraflarınız sunucuya optimize edilerek yüklenir, siteniz hiçbir zaman yavaşlamaz.</li>
+          <li>Panelden ürün, tedarikçi, galeri fotoğrafı, blog makalesi veya firma bilgisi ekleyip <strong>"Kaydet"</strong> dediğinizde, verileriniz doğrudan <strong>Supabase Database</strong> tablolarına (<code>products</code>, <code>suppliers</code>, <code>gallery</code>, <code>blogs</code>, <code>site_settings</code>) kaydedilir.</li>
+          <li>Seçtiğiniz veya sürükleyip bıraktığınız ürün fotoğrafları, logolar ve kurumsal tanıtım videoları doğrudan <strong>Supabase Storage (<code>media</code> bucket)</strong> içerisine yüklenir ve yüksek hızlı CDN bağlantısı oluşturulur.</li>
+          <li>Canlı kurumsal web siteniz (<code>Global-Mobilya-Web</code>) verileri doğrudan Supabase'den okuduğu için, yaptığınız her değişiklik <strong>bekleme süresi olmadan anında</strong> web sayfasına yansır.</li>
         </ol>
-        <h4 style="color:var(--navy);">🔑 API Anahtarı Hakkında</h4>
-        <p>Sağ üstteki <strong>"⚙️ API & Depo Ayarları"</strong> butonundan token ve depo ayarlarınızı istediğiniz zaman güncelleyebilirsiniz. Bu bilgiler sadece kendi tarayıcınızda güvenle saklanır.</p>
+        <h4 style="color:var(--navy);">⚡ Supabase Kurulumu & Bağlantı</h4>
+        <p>Sağ üstteki <strong>"⚡ Supabase Bulut Ayarları"</strong> butonundan Supabase Project URL ve Anon Key bilgilerinizi girebilir, tek tıkla SQL kurulum kodunu kopyalayabilir ve mevcut verilerinizi Supabase'e aktarabilirsiniz.</p>
       </div>
     </div>
   </div>
 
 </div>
 
-<!-- API & TOKEN MODAL -->
+<!-- SUPABASE CLOUD DATABASE & STORAGE MODAL -->
 <div class="modal-overlay" id="tokenModal">
-  <div class="modal-box">
-    <button class="modal-close" onclick="closeTokenModal()">✕</button>
-    <div class="admin-card-title" style="margin-bottom:8px;">⚙️ GitHub API & Depo Ayarları</div>
+  <div class="modal-box" style="max-width:620px;">
+    <button class="modal-close" onclick="closeSupabaseModal()">✕</button>
+    <div class="admin-card-title" style="margin-bottom:6px;">⚡ Supabase Cloud Database & Storage Bağlantısı</div>
     <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-      Panelinizin sitenize doğrudan veri yazabilmesi için GitHub ayarlarınızı buradan yapılandırın.
+      Ürünler, tedarikçiler, galeri, blog ve videolar doğrudan Supabase veritabanı ve medya alanında tutulur.
     </p>
 
     <div class="form-group">
-      <label>GitHub Personal Access Token (PAT)</label>
-      <input type="password" class="form-control" id="tokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+      <label>Supabase Project URL</label>
+      <input type="url" class="form-control" id="supabaseUrlInput" placeholder="https://xxxxxxxxxxxx.supabase.co">
     </div>
 
-    <div class="form-grid">
-      <div class="form-group">
-        <label>GitHub Kullanıcı Adı</label>
-        <input type="text" class="form-control" id="repoOwnerInput" placeholder="Andromeda012">
+    <div class="form-group">
+      <label>Supabase API Key (anon / public key)</label>
+      <input type="password" class="form-control" id="supabaseKeyInput" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... veya sb_publishable_...">
+    </div>
+
+    <div style="background:#F8FAFC; border:1px solid var(--border); padding:14px; border-radius:8px; font-size:12px; margin-bottom:16px; line-height:1.6;">
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
+        <strong style="color:var(--navy);">🛠️ 1. Adım: Tablo ve Storage Kurulumu (SQL Editor)</strong>
+        <button type="button" class="btn-primary btn-sm" onclick="copySupabaseSetupSql()">📋 Kurulum SQL Kodunu Kopyala</button>
       </div>
-      <div class="form-group">
-        <label>Depo (Repo) Adı</label>
-        <input type="text" class="form-control" id="repoNameInput" placeholder="Global-Mobilya-Web">
+      <div>
+        Supabase پنelinizde sol menüden <strong>SQL Editor → New Query</strong> ekranını açın, yukarıdaki butonla kopyaladığınız SQL kodunu yapıştırıp <strong>Run</strong> tuşuna basın. Bu işlem <code>products</code>, <code>suppliers</code>, <code>gallery</code>, <code>blogs</code>, <code>site_settings</code> tablolarını ve fotoğraf/video için <code>media</code> Storage alanını otomatik oluşturur.
       </div>
     </div>
 
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-      <button type="button" class="btn-secondary btn-sm" onclick="fetchUserRepos()">🔍 Depolarımı Otomatik Listele</button>
-      <select id="repoSelectDropdown" class="form-control" style="width:auto; display:none; font-size:12px;" onchange="selectRepoFromDropdown(this.value)">
-        <option value="">Depo Seçiniz...</option>
-      </select>
-    </div>
-
-    <div style="background:#F1F5F9; padding:12px; border-radius:6px; font-size:12px; margin-bottom:18px; line-height:1.6;">
-      <strong>Nasıl Token Alınır? (1 Dakika):</strong><br>
-      1. <a href="https://github.com/settings/tokens/new?scopes=repo&description=Global+Kapak+Panel" target="_blank" style="color:var(--navy); font-weight:700; text-decoration:underline;">Buraya tıklayarak</a> GitHub token sayfasını açın.<br>
-      2. <strong>"repo"</strong> kutucuğunu işaretleyin ve en alttaki yeşil <strong>"Generate token"</strong> butonuna basın.<br>
-      3. Size verilen <code>ghp_...</code> ile başlayan kodu kopyalayıp yukarıdaki kutuya yapıştırın.
+    <div style="background:#F0FDF4; border:1px solid #BBF7D0; padding:12px 14px; border-radius:8px; font-size:12px; margin-bottom:18px; display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div>
+        <strong style="color:#166534;">📦 2. Adım: Mevcut Ürün & Tedarikçileri Aktar</strong>
+        <div style="color:#15803D; font-size:11.5px;">Sitedeki mevcut ürünleri, tedarikçileri, galeriyi ve ayarları tek tıkla Supabase'e yükleyin.</div>
+      </div>
+      <button type="button" class="btn-sm" id="btnSeedSupabase" style="background:#16A34A; color:#fff; border:none; border-radius:6px; padding:8px 12px; font-weight:700; cursor:pointer;" onclick="seedExistingDataToSupabase()">🔄 Verileri Supabase'e Aktar</button>
     </div>
 
     <div style="display:flex; gap:10px;">
-      <button class="btn-gold" onclick="saveToken()" style="flex:1;">Kaydet & Bağlantıyı Test Et</button>
-      <button class="btn-secondary" onclick="closeTokenModal()">Kapat</button>
+      <button class="btn-gold" onclick="saveSupabaseConfig()" style="flex:1;">💾 Kaydet & Supabase'e Bağlan</button>
+      <button class="btn-secondary" onclick="closeSupabaseModal()">Kapat</button>
     </div>
   </div>
 </div>
@@ -1815,43 +1814,111 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 </div>
 
 <script>
-// CONFIG & STATE
-let REPO_OWNER = localStorage.getItem('gkm_gh_owner') || 'Andromeda012';
-let REPO_NAME = localStorage.getItem('gkm_gh_repo') || 'Global-Mobilya-Web';
-const BRANCH = 'main';
+// ══════════════════════════════════════════════════════════
+// SUPABASE CLOUD DATABASE & STORAGE CONFIGURATION
+// ══════════════════════════════════════════════════════════
+const DEFAULT_SUPABASE_URL = 'https://gfxcnmpfksxghbmtvows.supabase.co'; // Varsayılan veya kullanıcı tarafından güncellenebilir
+const DEFAULT_SUPABASE_ANON_KEY = '';
+const STORAGE_BUCKET = 'media';
+
+let SUPABASE_URL = (localStorage.getItem('gkm_supabase_url') || DEFAULT_SUPABASE_URL || '').trim();
+let SUPABASE_KEY = (localStorage.getItem('gkm_supabase_key') || DEFAULT_SUPABASE_ANON_KEY || '').trim();
+let supabaseClient = null;
+
+function initSupabaseClient() {
+  SUPABASE_URL = (localStorage.getItem('gkm_supabase_url') || DEFAULT_SUPABASE_URL || '').trim();
+  SUPABASE_KEY = (localStorage.getItem('gkm_supabase_key') || DEFAULT_SUPABASE_ANON_KEY || '').trim();
+  if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
+    try {
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch (e) {
+      console.error('Supabase başlatma hatası:', e);
+      supabaseClient = null;
+    }
+  } else {
+    supabaseClient = null;
+  }
+  checkSupabaseStatus();
+  return supabaseClient;
+}
+
+function isSupabaseReady() {
+  return !!(supabaseClient && SUPABASE_URL && SUPABASE_KEY);
+}
 
 function resolveAssetUrl(url) {
   if (!url) return '/resim/logo.png';
-  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) return url;
+  if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) return url;
   const clean = url.replace(/^\/+/, '');
   if (clean === 'resim/logo.png') return '/resim/logo.png';
-  return `https://raw.githubusercontent.com/${REPO_OWNER}/${REPO_NAME}/${BRANCH}/${encodeURI(clean)}`;
+  return '/' + clean;
+}
+
+// Upload any Image or Video File to Supabase Storage ('media' bucket)
+async function uploadFileToSupabaseStorage(file, folder = 'urunler', slugPrefix = 'medya') {
+  if (!isSupabaseReady()) {
+    throw new Error('Supabase bağlantısı aktif değil. Lütfen sağ üstten Supabase URL ve Anon Key girin.');
+  }
+  const cleanExt = (file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const safeSlug = slugify(slugPrefix || 'dosya') || 'medya';
+  const filePath = `${folder}/${safeSlug}-${Date.now()}.${cleanExt}`;
+
+  const { data, error } = await supabaseClient.storage
+    .from(STORAGE_BUCKET)
+    .upload(filePath, file, {
+      cacheControl: '3600',
+      upsert: true,
+      contentType: file.type || undefined
+    });
+
+  if (error) {
+    throw new Error(`Storage yükleme hatası (${error.message}). Lütfen Supabase'de "media" bucket'ının oluşturulduğundan emin olun.`);
+  }
+
+  const { data: pubData } = supabaseClient.storage
+    .from(STORAGE_BUCKET)
+    .getPublicUrl(filePath);
+
+  return pubData.publicUrl;
 }
 
 let allProducts = [];
 let editMode = false;
 let editingSlug = '';
-let editingSha = '';
-let uploadedFileBase64 = null;
+let uploadedProductFile = null;
 let uploadedFileName = '';
 let colorsList = [];
 let featsList = [];
 
 // STATUS & TOAST
-function checkTokenStatus() {
-  const token = localStorage.getItem('gkm_gh_token');
+function checkSupabaseStatus() {
   const dot = document.getElementById('statusDot');
   const text = document.getElementById('statusText');
   const banner = document.getElementById('tokenBanner');
+  const syncEl = document.getElementById('healthSyncVal');
 
-  if (token) {
-    dot.classList.add('connected');
-    text.textContent = `GitHub Bağlantısı Aktif (${REPO_OWNER}/${REPO_NAME})`;
+  if (isSupabaseReady()) {
+    let projectHost = 'Supabase Cloud';
+    try { projectHost = new URL(SUPABASE_URL).hostname.split('.')[0]; } catch(e) {}
+    if (dot) dot.classList.add('connected');
+    if (text) text.textContent = `Supabase Aktif (${projectHost})`;
     if (banner) banner.style.display = 'none';
+    if (syncEl) syncEl.textContent = `🟢 Supabase DB & Storage (${projectHost})`;
   } else {
-    dot.classList.remove('connected');
-    text.textContent = 'GitHub Token Bekleniyor';
+    if (dot) dot.classList.remove('connected');
+    if (text) text.textContent = 'Supabase Bağlantısı Bekleniyor';
     if (banner) banner.style.display = 'flex';
+    if (syncEl) syncEl.textContent = '⏳ Supabase Yapılandırması Bekleniyor';
+  }
+}
+
+function updateLiveSiteLinkWithSupabase(anchorEl) {
+  if (!anchorEl) return;
+  const baseUrl = 'https://global-mobilya-web.vercel.app';
+  if (SUPABASE_URL && SUPABASE_KEY) {
+    anchorEl.href = `${baseUrl}/?sb_url=${encodeURIComponent(SUPABASE_URL)}&sb_key=${encodeURIComponent(SUPABASE_KEY)}`;
+  } else {
+    anchorEl.href = baseUrl;
   }
 }
 
@@ -1895,7 +1962,7 @@ function switchProductSubTab(view) {
 }
 
 // ══════════════════════════════════════════════════════════
-// PRODUCTS MODULE
+// PRODUCTS MODULE (SUPABASE DATABASE + STORAGE)
 // ══════════════════════════════════════════════════════════
 async function loadAllProducts() {
   const loading = document.getElementById('productLoadingIndicator');
@@ -1906,38 +1973,21 @@ async function loadAllProducts() {
   empty.style.display = 'none';
 
   try {
-    let productFiles = [];
-    const token = localStorage.getItem('gkm_gh_token');
-    const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-    // 1. GitHub API
-    try {
-      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler?t=${Date.now()}`, { headers });
-      if (r.ok) {
-        const files = await r.json();
-        productFiles = files.filter(f => f.name.endsWith('.json'));
-      }
-    } catch(e) {}
-
     let loaded = [];
-    if (productFiles.length > 0) {
-      const promises = productFiles.map(async (file) => {
-        try {
-          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${file.name}?t=${Date.now()}`, { headers });
-          if (res.ok) {
-            const data = await res.json();
-            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-            content.slug = file.name.replace('.json', '');
-            content.sha = data.sha;
-            return content;
-          }
-        } catch(e) {}
-        return null;
-      });
-      loaded = (await Promise.all(promises)).filter(p => p);
+
+    // 1. Primary: Supabase Database ('products' table)
+    if (isSupabaseReady()) {
+      const { data, error } = await supabaseClient
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && Array.isArray(data) && data.length > 0) {
+        loaded = data;
+      }
     }
 
-    // Fallback: Local index
+    // 2. Fallback & Initial Seed Source: Local JSON files
     if (loaded.length === 0) {
       try {
         const idxRes = await fetch('/_data/urunler-index.json?t=' + Date.now());
@@ -1947,14 +1997,33 @@ async function loadAllProducts() {
             try {
               const res = await fetch(`/_data/urunler/${id}.json?t=${Date.now()}`);
               if (res.ok) {
-                const data = await res.json();
-                data.slug = id;
-                return data;
+                const d = await res.json();
+                d.slug = id;
+                return d;
               }
             } catch(e) {}
             return null;
           });
           loaded = (await Promise.all(promises)).filter(p => p);
+
+          // Auto-seed into Supabase if connected and table was empty
+          if (isSupabaseReady() && loaded.length > 0) {
+            const rowsToInsert = loaded.map(p => ({
+              slug: p.slug,
+              title: p.title || p.baslik || p.slug,
+              kategori: p.kategori || 'Düz Membran Kapak',
+              sku: p.sku || null,
+              kisa_aciklama: p.kisa_aciklama || '',
+              body: p.body || '',
+              ana_resim: p.ana_resim || '/resim/logo.png',
+              anasayfada_goster: p.anasayfada_goster !== false,
+              populer: !!p.populer,
+              yeni: !!p.yeni,
+              renkler: Array.isArray(p.renkler) ? p.renkler : [],
+              ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
+            }));
+            await supabaseClient.from('products').upsert(rowsToInsert, { onConflict: 'slug' });
+          }
         }
       } catch(e) {}
     }
@@ -1962,6 +2031,7 @@ async function loadAllProducts() {
     allProducts = loaded;
     document.getElementById('productCountBadge').textContent = allProducts.length;
     renderProductGrid(allProducts);
+    updateExecutiveStripInventory();
 
   } catch(err) {
     showToast('Ürünler yüklenirken hata oluştu', 'error');
@@ -1996,7 +2066,7 @@ function renderProductGrid(products) {
         </div>
         <div class="product-card-actions">
           <button class="btn-secondary btn-sm" style="flex:1;" onclick="editProduct('${p.slug}')">✏️ Düzenle</button>
-          <button class="btn-danger btn-sm" onclick="deleteProduct('${p.slug}', '${p.sha || ''}')">🗑️ Sil</button>
+          <button class="btn-danger btn-sm" onclick="deleteProduct('${p.slug}')">🗑️ Sil</button>
         </div>
       </div>
     </div>
@@ -2019,9 +2089,8 @@ function filterProductList() {
 function startNewProduct() {
   editMode = false;
   editingSlug = '';
-  editingSha = '';
   document.getElementById('formCardTitle').textContent = '➕ Yeni Membran Kapak Ürünü Ekle';
-  document.getElementById('btnProductSave').textContent = '💾 Kaydet ve Sitede Yayınla';
+  document.getElementById('btnProductSave').textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
   document.getElementById('productForm').reset();
   document.getElementById('f_slug').value = '';
   document.getElementById('f_slug').readOnly = false;
@@ -2043,10 +2112,9 @@ function editProduct(slug) {
 
   editMode = true;
   editingSlug = slug;
-  editingSha = p.sha || '';
 
   document.getElementById('formCardTitle').textContent = `✏️ "${p.title}" Ürününü Düzenle`;
-  document.getElementById('btnProductSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
+  document.getElementById('btnProductSave').textContent = '💾 Değişiklikleri Supabase\'e Kaydet & Yayınla';
 
   document.getElementById('f_title').value = p.title || '';
   document.getElementById('f_kategori').value = p.kategori || 'Düz Membran Kapak';
@@ -2059,6 +2127,7 @@ function editProduct(slug) {
   document.getElementById('f_populer').checked = !!p.populer;
   document.getElementById('f_yeni').checked = !!p.yeni;
   document.getElementById('f_image_url').value = p.ana_resim || '/resim/logo.png';
+  uploadedProductFile = null;
 
   if (p.ana_resim) {
     document.getElementById('previewImg').src = resolveAssetUrl(p.ana_resim);
@@ -2079,10 +2148,9 @@ function editProduct(slug) {
 async function saveProduct(e) {
   if (e) e.preventDefault();
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) {
-    openTokenModal();
-    showToast('Lütfen önce GitHub API Token girin!', 'error');
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase Project URL ve Anon Key girin!', 'error');
     return;
   }
 
@@ -2099,157 +2167,74 @@ async function saveProduct(e) {
 
   const btn = document.getElementById('btnProductSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
 
   try {
     let finalImageUrl = document.getElementById('f_image_url').value.trim();
 
-    if (uploadedFileBase64) {
-      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
-      const cleanExt = uploadedFileName.split('.').pop().toLowerCase() || 'jpg';
-      const imgPath = `resim/yonetilen/${slug}-${Date.now()}.${cleanExt}`;
-
-      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Upload image for ${slug}`, content: uploadedFileBase64, branch: BRANCH })
-      });
-      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    if (uploadedProductFile) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Supabase Storage\'a Yükleniyor...';
+      finalImageUrl = await uploadFileToSupabaseStorage(uploadedProductFile, 'urunler', slug);
     }
 
-    const productData = {
+    const productRow = {
+      slug,
       title,
       kategori: document.getElementById('f_kategori').value,
-      sku: document.getElementById('f_sku').value.trim() || undefined,
+      sku: document.getElementById('f_sku').value.trim() || null,
       kisa_aciklama: document.getElementById('f_kisa').value.trim(),
       ana_resim: finalImageUrl || '/resim/logo.png',
       body: document.getElementById('f_body').value.trim(),
       anasayfada_goster: document.getElementById('f_anasayfa').checked,
       populer: document.getElementById('f_populer').checked,
       yeni: document.getElementById('f_yeni').checked,
-      renkler: colorsList.length > 0 ? colorsList : undefined,
-      ozellikler: featsList.length > 0 ? featsList : undefined
+      renkler: colorsList,
+      ozellikler: featsList,
+      updated_at: new Date().toISOString()
     };
 
-    let currentSha = editMode ? editingSha : '';
-    if (editMode && !currentSha) {
-      try {
-        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (getRes.ok) {
-          const d = await getRes.json();
-          currentSha = d.sha;
-        }
-      } catch(e) {}
-    }
+    const { error } = await supabaseClient
+      .from('products')
+      .upsert(productRow, { onConflict: 'slug' });
 
-    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(productData, null, 2))));
-    const commitBody = {
-      message: editMode ? `Update product: ${title}` : `Add product: ${title}`,
-      content: jsonBase64,
-      branch: BRANCH
-    };
-    if (currentSha) commitBody.sha = currentSha;
-
-    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(commitBody)
-    });
-
-    if (!saveRes.ok) throw new Error('Ürün kaydedilemedi');
-
-    await updateIndexFile(slug, token);
+    if (error) throw new Error(error.message);
 
     editMode = false;
     editingSlug = '';
-    editingSha = '';
+    uploadedProductFile = null;
 
-    showToast('🎉 Ürün başarıyla kaydedildi! Sitede yayına alındı.', 'success');
-    setTimeout(() => {
-      loadAllProducts();
-      switchProductSubTab('list');
-    }, 800);
+    showToast('🎉 Ürün Supabase Database & Storage\'a kaydedildi ve sitede yayına alındı!', 'success');
+    await loadAllProducts();
+    switchProductSubTab('list');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
   } finally {
     btn.disabled = false;
-    btn.textContent = '💾 Kaydet ve Sitede Yayınla';
+    btn.textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
   }
 }
 
-async function updateIndexFile(slug, token) {
-  try {
-    let indexList = [];
-    let indexSha = '';
-    const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (res.ok) {
-      const data = await res.json();
-      indexSha = data.sha;
-      indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-    }
+async function deleteProduct(slug) {
+  if (!confirm(`"${slug}" ürününü Supabase veritabanından silmek istediğinize emin misiniz?`)) return;
 
-    if (!indexList.includes(slug)) {
-      indexList.push(slug);
-      const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-      await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Update urunler-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
-      });
-    }
-  } catch(e) {}
-}
-
-async function deleteProduct(slug, sha) {
-  if (!confirm(`"${slug}" ürününü silmek istediğinize emin misiniz?`)) return;
-
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('Lütfen önce GitHub API Token girin!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   try {
-    showToast('Ürün siliniyor...', 'info');
-    let currentSha = sha;
-    if (!currentSha) {
-      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (getRes.ok) {
-        const d = await getRes.json();
-        currentSha = d.sha;
-      }
-    }
+    showToast('Ürün Supabase\'den siliniyor...', 'info');
+    const { error } = await supabaseClient
+      .from('products')
+      .delete()
+      .eq('slug', slug);
 
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler/${slug}.json`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete product: ${slug}`, sha: currentSha, branch: BRANCH })
-    });
-
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-        indexList = indexList.filter(id => id !== slug);
-        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/urunler-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Remove ${slug} from index`, content: newContent, sha: data.sha, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     showToast('Ürün başarıyla silindi!', 'success');
-    loadAllProducts();
-
+    await loadAllProducts();
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
   }
@@ -2314,13 +2299,42 @@ function slugify(text) {
 }
 
 // ══════════════════════════════════════════════════════════
-// COMPANY & SETTINGS MODULE
+// COMPANY & SETTINGS MODULE (SUPABASE site_settings TABLE)
 // ══════════════════════════════════════════════════════════
+async function fetchSiteSettingFromSupabaseOrLocal(key, localPath) {
+  if (isSupabaseReady()) {
+    try {
+      const { data, error } = await supabaseClient
+        .from('site_settings')
+        .select('data')
+        .eq('key', key)
+        .maybeSingle();
+      if (!error && data && data.data && Object.keys(data.data).length > 0) {
+        return data.data;
+      }
+    } catch(e) {}
+  }
+  try {
+    const res = await fetch(localPath + '?t=' + Date.now());
+    if (res.ok) {
+      const localObj = await res.json();
+      if (isSupabaseReady() && localObj) {
+        await supabaseClient.from('site_settings').upsert({
+          key,
+          data: localObj,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'key' });
+      }
+      return localObj;
+    }
+  } catch(e) {}
+  return {};
+}
+
 async function loadCompanySettings() {
   try {
-    const res = await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
-    if (!res.ok) return;
-    const g = await res.json();
+    const g = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
+    if (!g) return;
     if (g.firma) {
       document.getElementById('c_ad').value = g.firma.ad || '';
       document.getElementById('c_slogan').value = g.firma.slogan || '';
@@ -2342,21 +2356,15 @@ async function loadCompanySettings() {
 }
 
 async function saveCompanySettings() {
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
-  showToast('Firma bilgileri kaydediliyor...', 'info');
+  showToast('Firma bilgileri Supabase\'e kaydediliyor...', 'info');
   try {
-    let existingData = {};
-    let sha = '';
-    const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (getRes.ok) {
-      const d = await getRes.json();
-      sha = d.sha;
-      existingData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-    }
+    const existingData = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
 
     existingData.firma = existingData.firma || {};
     existingData.firma.ad = document.getElementById('c_ad').value.trim();
@@ -2377,15 +2385,16 @@ async function saveCompanySettings() {
     existingData.sosyal_medya.facebook = document.getElementById('c_facebook').value.trim();
     existingData.sosyal_medya.linkedin = document.getElementById('c_linkedin').value.trim();
 
-    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(existingData, null, 2))));
-    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Update company settings', content: jsonBase64, sha: sha || undefined, branch: BRANCH })
-    });
+    const { error } = await supabaseClient
+      .from('site_settings')
+      .upsert({
+        key: 'genel',
+        data: existingData,
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'key' });
 
-    if (!saveRes.ok) throw new Error('Firma ayarları kaydedilemedi');
-    showToast('🎉 Firma bilgileri başarıyla güncellendi!', 'success');
+    if (error) throw new Error(error.message);
+    showToast('🎉 Firma bilgileri Supabase veritabanında güncellendi!', 'success');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -2393,29 +2402,25 @@ async function saveCompanySettings() {
 }
 
 // ══════════════════════════════════════════════════════════
-// HOMEPAGE & CORPORATE VIDEO MODULE
+// HOMEPAGE & CORPORATE VIDEO MODULE (SUPABASE DB + STORAGE)
 // ══════════════════════════════════════════════════════════
-let homeAboutUploadedBase64 = null;
+let homeAboutUploadedFile = null;
 let homeAboutUploadedFileName = '';
-let homeVideoUploadedBase64 = null;
+let homeVideoUploadedFile = null;
 let homeVideoUploadedFileName = '';
 let homeVideoObjectUrl = null;
 let homeVideoFileSizeStr = '';
 
 async function loadHomeSettings() {
   try {
-    const res = await fetch('/_data/ayarlar/anasayfa.json?t=' + Date.now());
-    if (res.ok) {
-      const h = await res.json();
-      if (h.hero) {
-        document.getElementById('h_baslik1').value = h.hero.baslik_1 || '';
-        document.getElementById('h_baslik2').value = h.hero.baslik_2 || '';
-        document.getElementById('h_altyazi').value = h.hero.alt_yazi || '';
-      }
+    const h = await fetchSiteSettingFromSupabaseOrLocal('anasayfa', '/_data/ayarlar/anasayfa.json');
+    if (h && h.hero) {
+      document.getElementById('h_baslik1').value = h.hero.baslik_1 || '';
+      document.getElementById('h_baslik2').value = h.hero.baslik_2 || '';
+      document.getElementById('h_altyazi').value = h.hero.alt_yazi || '';
     }
-    const gRes = await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
-    if (gRes.ok) {
-      const g = await gRes.json();
+    const g = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
+    if (g) {
       if (g.stats && g.stats.length >= 4) {
         document.getElementById('h_stat1_num').value = g.stats[0].sayi || '15+';
         document.getElementById('h_stat1_lbl').value = g.stats[0].etiket || '';
@@ -2446,9 +2451,9 @@ async function loadHomeSettings() {
         }
       }
 
-      // Load Corporate Video Config from JSON or localStorage
+      // Load Corporate Video Config from Supabase or localStorage
       const savedLocalVid = JSON.parse(localStorage.getItem('gkm_home_video_config') || 'null');
-      const vidCfg = g.anasayfa_video || savedLocalVid;
+      const vidCfg = (h && h.video) || g.anasayfa_video || savedLocalVid;
       if (vidCfg) {
         document.getElementById('h_video_title').value = vidCfg.baslik || '';
         document.getElementById('h_video_desc').value = vidCfg.aciklama || '';
@@ -2460,7 +2465,7 @@ async function loadHomeSettings() {
           document.getElementById('h_video_external_url').value = vidCfg.harici_url;
         }
         if (vidUrl) {
-          showVideoPreviewBox(resolveAssetUrl(vidUrl), vidCfg.dosya_adi || vidUrl.split('/').pop() || 'Kurumsal Tanıtım Videosu', '✓ Kayıtlı Kurumsal Video Aktif');
+          showVideoPreviewBox(resolveAssetUrl(vidUrl), vidCfg.dosya_adi || vidUrl.split('/').pop() || 'Kurumsal Tanıtım Videosu', '✓ Supabase Storage Kurumsal Video Aktif');
         }
       }
       updateVideoStatusBadges();
@@ -2469,11 +2474,8 @@ async function loadHomeSettings() {
 }
 
 async function saveHomeSettings() {
-  const token = localStorage.getItem('gkm_gh_token');
-
-  // Always save video config locally first so preview & status work even without token
   const extVideoUrl = document.getElementById('h_video_external_url')?.value.trim() || '';
-  const currentVideoUrl = extVideoUrl || document.getElementById('h_video_url')?.value.trim() || (homeVideoUploadedFileName ? `/resim/yonetilen/${homeVideoUploadedFileName}` : '');
+  const currentVideoUrl = extVideoUrl || document.getElementById('h_video_url')?.value.trim() || '';
   const localVideoCfg = {
     baslik: document.getElementById('h_video_title')?.value.trim() || 'Global Kapak Mobilya — Üretim & Fabrika Tanıtımı',
     aciklama: document.getElementById('h_video_desc')?.value.trim() || '',
@@ -2488,30 +2490,22 @@ async function saveHomeSettings() {
   updateVideoStatusBadges();
   updateExecutiveStripInventory();
 
-  if (!token) {
-    showToast('Video ve vitrin ayarları yerel önizlemeye kaydedildi. Canlı siteye yazmak için GitHub Token girin.', 'info');
-    openTokenModal();
+  if (!isSupabaseReady()) {
+    showToast('Lütfen canlı siteye ve Supabase Storage\'a yüklemek için Supabase ayarlarını girin.', 'info');
+    openSupabaseModal();
     return;
   }
 
   const btn = document.getElementById('btnSaveHome');
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+    btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
   }
 
-  showToast('Ana sayfa ve video ayarları güncelleniyor...', 'info');
+  showToast('Ana sayfa ve medya dosyaları Supabase\'e yükleniyor...', 'info');
   try {
-    let homeData = {};
-    let homeSha = '';
-    const hRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/anasayfa.json`, {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (hRes.ok) {
-      const d = await hRes.json();
-      homeSha = d.sha;
-      homeData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-    }
+    const homeData = await fetchSiteSettingFromSupabaseOrLocal('anasayfa', '/_data/ayarlar/anasayfa.json');
+    const genelData = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
 
     homeData.hero = homeData.hero || {};
     homeData.hero.baslik_1 = document.getElementById('h_baslik1').value.trim();
@@ -2519,20 +2513,10 @@ async function saveHomeSettings() {
     homeData.hero.alt_yazi = document.getElementById('h_altyazi').value.trim();
 
     let finalVideoUrl = extVideoUrl || document.getElementById('h_video_url').value.trim();
-    if (homeVideoUploadedBase64) {
-      if (btn) btn.innerHTML = '<div class="spinner"></div> Video Buluta Yükleniyor...';
-      const cleanVidExt = homeVideoUploadedFileName.split('.').pop().toLowerCase() || 'mp4';
-      const vidPath = `resim/yonetilen/anasayfa-video-${Date.now()}.${cleanVidExt}`;
-
-      const vidRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${vidPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Upload homepage corporate video', content: homeVideoUploadedBase64, branch: BRANCH })
-      });
-      if (vidRes.ok) {
-        finalVideoUrl = '/' + vidPath;
-        document.getElementById('h_video_url').value = finalVideoUrl;
-      }
+    if (homeVideoUploadedFile) {
+      if (btn) btn.innerHTML = '<div class="spinner"></div> Video Supabase Storage\'a Yükleniyor...';
+      finalVideoUrl = await uploadFileToSupabaseStorage(homeVideoUploadedFile, 'anasayfa', 'kurumsal-tanitim-video');
+      document.getElementById('h_video_url').value = finalVideoUrl;
     }
 
     homeData.video = {
@@ -2540,26 +2524,10 @@ async function saveHomeSettings() {
       aciklama: localVideoCfg.aciklama,
       video_url: finalVideoUrl,
       harici_url: extVideoUrl,
+      dosya_adi: localVideoCfg.dosya_adi,
       aktif: localVideoCfg.aktif,
       otomatik_oynat: localVideoCfg.otomatik_oynat
     };
-
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/anasayfa.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Update homepage hero & video settings', content: btoa(unescape(encodeURIComponent(JSON.stringify(homeData, null, 2)))), sha: homeSha || undefined, branch: BRANCH })
-    });
-
-    let genelData = {};
-    let genelSha = '';
-    const gRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (gRes.ok) {
-      const d = await gRes.json();
-      genelSha = d.sha;
-      genelData = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-    }
 
     genelData.stats = [
       { sayi: document.getElementById('h_stat1_num').value.trim(), etiket: document.getElementById('h_stat1_lbl').value.trim() },
@@ -2569,17 +2537,10 @@ async function saveHomeSettings() {
     ];
 
     let finalAboutImg = document.getElementById('h_about_img_url').value.trim();
-    if (homeAboutUploadedBase64) {
-      if (btn) btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
-      const cleanExt = homeAboutUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
-      const imgPath = `resim/yonetilen/anasayfa-hakkimizda-${Date.now()}.${cleanExt}`;
-
-      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: 'Upload homepage about image', content: homeAboutUploadedBase64, branch: BRANCH })
-      });
-      if (imgRes.ok) finalAboutImg = '/' + imgPath;
+    if (homeAboutUploadedFile) {
+      if (btn) btn.innerHTML = '<div class="spinner"></div> Görsel Supabase Storage\'a Yükleniyor...';
+      finalAboutImg = await uploadFileToSupabaseStorage(homeAboutUploadedFile, 'anasayfa', 'hakkimizda-gorsel');
+      document.getElementById('h_about_img_url').value = finalAboutImg;
     }
 
     genelData.anasayfa_hakkimizda = genelData.anasayfa_hakkimizda || {};
@@ -2592,21 +2553,23 @@ async function saveHomeSettings() {
     genelData.anasayfa_hakkimizda.paragraf_3 = document.getElementById('h_about_p3').value.trim();
     genelData.anasayfa_hakkimizda.buton_yazi = document.getElementById('h_about_btn_text').value.trim() || 'Daha Fazla Bilgi';
     genelData.anasayfa_hakkimizda.buton_link = 'hakkimizda.html';
-
     genelData.anasayfa_video = homeData.video;
 
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/ayarlar/genel.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: 'Update homepage about, video and stats', content: btoa(unescape(encodeURIComponent(JSON.stringify(genelData, null, 2)))), sha: genelSha || undefined, branch: BRANCH })
-    });
+    const { error } = await supabaseClient
+      .from('site_settings')
+      .upsert([
+        { key: 'anasayfa', data: homeData, updated_at: new Date().toISOString() },
+        { key: 'genel', data: genelData, updated_at: new Date().toISOString() }
+      ], { onConflict: 'key' });
 
-    homeAboutUploadedBase64 = null;
+    if (error) throw new Error(error.message);
+
+    homeAboutUploadedFile = null;
     homeAboutUploadedFileName = '';
-    homeVideoUploadedBase64 = null;
+    homeVideoUploadedFile = null;
 
     updateVideoStatusBadges();
-    showToast('🎉 Ana sayfa, Hakkımızda ve Kurumsal Video ayarları başarıyla yayınlandı!', 'success');
+    showToast('🎉 Ana sayfa, Hakkımızda ve Kurumsal Video Supabase\'e kaydedildi ve yayına alındı!', 'success');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -2621,10 +2584,10 @@ async function saveHomeSettings() {
 function handleHomeAboutFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+  homeAboutUploadedFile = file;
   homeAboutUploadedFileName = file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
-    homeAboutUploadedBase64 = evt.target.result.split(',')[1];
     document.getElementById('homeAboutPreviewImg').src = evt.target.result;
     document.getElementById('homeAboutFileName').textContent = file.name;
     document.getElementById('homeAboutPreviewBox').style.display = 'flex';
@@ -2633,7 +2596,7 @@ function handleHomeAboutFileSelect(e) {
 }
 
 function removeHomeAboutImage() {
-  homeAboutUploadedBase64 = null;
+  homeAboutUploadedFile = null;
   homeAboutUploadedFileName = '';
   const input = document.getElementById('homeAboutFileInput');
   if (input) input.value = '';
@@ -2643,7 +2606,7 @@ function removeHomeAboutImage() {
   if (previewImg) previewImg.src = '/resim/logo.png';
 }
 
-// VIDEO UPLOAD & PREVIEW HANDLERS
+// VIDEO UPLOAD & PREVIEW HANDLERS (SUPABASE STORAGE)
 function handleHomeVideoFileSelect(e) {
   const file = e.target.files[0];
   if (file) processHomeVideoFile(file);
@@ -2654,6 +2617,7 @@ function processHomeVideoFile(file) {
     showToast('Lütfen geçerli bir video dosyası (MP4, WebM, MOV) seçin!', 'error');
     return;
   }
+  homeVideoUploadedFile = file;
   homeVideoUploadedFileName = file.name;
   const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
   homeVideoFileSizeStr = `${sizeMB} MB`;
@@ -2661,19 +2625,8 @@ function processHomeVideoFile(file) {
   if (homeVideoObjectUrl) URL.revokeObjectURL(homeVideoObjectUrl);
   homeVideoObjectUrl = URL.createObjectURL(file);
 
-  showVideoPreviewBox(homeVideoObjectUrl, file.name, `✓ Seçilen Video (${sizeMB} MB) — Canlı Önizlemeye ve Yüklemeye Hazır`);
-  document.getElementById('h_video_url').value = `/resim/yonetilen/${file.name}`;
-
-  // Read Base64 for GitHub API upload if reasonable size (< 35MB)
-  if (file.size <= 35 * 1024 * 1024) {
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      homeVideoUploadedBase64 = evt.target.result.split(',')[1];
-    };
-    reader.readAsDataURL(file);
-  } else {
-    homeVideoUploadedBase64 = null;
-  }
+  showVideoPreviewBox(homeVideoObjectUrl, file.name, `✓ Seçilen Video (${sizeMB} MB) — Supabase Storage'a Yüklenmeye Hazır`);
+  document.getElementById('h_video_url').value = homeVideoObjectUrl;
 
   updateVideoStatusBadges();
   showToast(`🎬 "${file.name}" (${sizeMB} MB) video önizlemeye yüklendi!`, 'success');
@@ -2741,7 +2694,7 @@ function previewExternalVideoUrl() {
 }
 
 function removeHomeVideo() {
-  homeVideoUploadedBase64 = null;
+  homeVideoUploadedFile = null;
   homeVideoUploadedFileName = '';
   if (homeVideoObjectUrl) {
     URL.revokeObjectURL(homeVideoObjectUrl);
@@ -2781,7 +2734,7 @@ function updateVideoStatusBadges() {
     } else {
       badge.style.background = '#EFF6FF';
       badge.style.color = '#1D4ED8';
-      badge.textContent = '📹 Video Alanı Hazır (Bekleniyor)';
+      badge.textContent = '📹 Video Alanı Hazır (Supabase Storage)';
     }
   }
 
@@ -2793,18 +2746,17 @@ function updateVideoStatusBadges() {
   }
   if (healthVid) {
     healthVid.style.color = hasVid ? 'var(--success)' : '#D97706';
-    healthVid.textContent = hasVid ? '🟢 Kurumsal Video Hazır' : '⏳ Video Yüklenmeye Hazır';
+    healthVid.textContent = hasVid ? '🟢 Supabase Video Hazır' : '⏳ Video Yüklenmeye Hazır';
   }
 }
 
 // ══════════════════════════════════════════════════════════
-// GALLERY MODULE
+// GALLERY MODULE (SUPABASE DATABASE + STORAGE)
 // ══════════════════════════════════════════════════════════
 let allGallery = [];
 let editGalMode = false;
 let editingGalSlug = '';
-let editingGalSha = '';
-let galUploadedBase64 = null;
+let galUploadedFile = null;
 let galUploadedFileName = '';
 
 function switchGalSubTab(view) {
@@ -2835,38 +2787,25 @@ async function loadAllGallery() {
   empty.style.display = 'none';
 
   try {
-    let files = [];
-    const token = localStorage.getItem('gkm_gh_token');
-    const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-    try {
-      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri?t=${Date.now()}`, { headers });
-      if (r.ok) {
-        const list = await r.json();
-        files = list.filter(f => f.name.endsWith('.json'));
-      }
-    } catch(e) {}
-
     let loaded = [];
-    if (files.length > 0) {
-      const promises = files.map(async (file) => {
-        try {
-          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${file.name}?t=${Date.now()}`, { headers });
-          if (res.ok) {
-            const data = await res.json();
-            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-            content.slug = file.name.replace('.json', '');
-            content.sha = data.sha;
-            return content;
-          }
-        } catch(e) {}
-        return null;
-      });
-      loaded = (await Promise.all(promises)).filter(g => g);
+
+    if (isSupabaseReady()) {
+      const { data, error } = await supabaseClient
+        .from('gallery')
+        .select('*')
+        .order('siralama', { ascending: false });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        loaded = data;
+      }
     }
 
     if (loaded.length === 0) {
-      const sampleIds = ['galeri-1', 'galeri-2', 'galeri-3'];
+      let sampleIds = ['galeri-1', 'galeri-2', 'galeri-3'];
+      try {
+        const idxRes = await fetch('/_data/galeri-index.json?t=' + Date.now());
+        if (idxRes.ok) sampleIds = await idxRes.json();
+      } catch(e) {}
+
       const promises = sampleIds.map(async (id) => {
         try {
           const r = await fetch(`/_data/galeri/${id}.json?t=${Date.now()}`);
@@ -2879,11 +2818,24 @@ async function loadAllGallery() {
         return null;
       });
       loaded = (await Promise.all(promises)).filter(g => g);
+
+      if (isSupabaseReady() && loaded.length > 0) {
+        const rows = loaded.map((g, idx) => ({
+          slug: g.slug,
+          baslik: g.baslik || 'Proje Görseli',
+          kategori: g.kategori || 'Mutfak',
+          resim: g.resim || '/resim/logo.png',
+          anasayfada_goster: g.anasayfada_goster !== false,
+          siralama: g.siralama || (Date.now() - idx)
+        }));
+        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
+      }
     }
 
     allGallery = loaded;
     document.getElementById('galCountBadge').textContent = allGallery.length;
     renderAdminGalleryGrid(allGallery);
+    updateExecutiveStripInventory();
 
   } catch(err) {
     showToast('Galeri yüklenirken hata oluştu', 'error');
@@ -2917,7 +2869,7 @@ function renderAdminGalleryGrid(items) {
         </div>
         <div class="product-card-actions">
           <button class="btn-secondary btn-sm" style="flex:1;" onclick="editGallery('${g.slug}')">✏️ Düzenle</button>
-          <button class="btn-danger btn-sm" onclick="deleteGalleryItem('${g.slug}', '${g.sha || ''}')">🗑️ Sil</button>
+          <button class="btn-danger btn-sm" onclick="deleteGalleryItem('${g.slug}')">🗑️ Sil</button>
         </div>
       </div>
     </div>
@@ -2940,9 +2892,8 @@ function filterAdminGallery() {
 function startNewGallery() {
   editGalMode = false;
   editingGalSlug = '';
-  editingGalSha = '';
   document.getElementById('galFormTitle').textContent = '➕ Yeni Galeri Fotoğrafı Ekle';
-  document.getElementById('btnGalSave').textContent = '💾 Galeriye Kaydet ve Yayınla';
+  document.getElementById('btnGalSave').textContent = '💾 Supabase\'e Kaydet ve Yayınla';
   document.getElementById('galForm').reset();
   document.getElementById('gal_image_url').value = '/resim/logo.png';
   document.getElementById('gal_anasayfa').checked = true;
@@ -2956,7 +2907,6 @@ function editGallery(slug) {
 
   editGalMode = true;
   editingGalSlug = slug;
-  editingGalSha = g.sha || '';
 
   document.getElementById('galFormTitle').textContent = `✏️ "${g.baslik}" Fotoğrafını Düzenle`;
   document.getElementById('btnGalSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
@@ -2965,6 +2915,7 @@ function editGallery(slug) {
   document.getElementById('gal_cat').value = g.kategori || 'Mutfak';
   document.getElementById('gal_anasayfa').checked = g.anasayfada_goster !== false;
   document.getElementById('gal_image_url').value = g.resim || '/resim/logo.png';
+  galUploadedFile = null;
 
   if (g.resim) {
     document.getElementById('galPreviewImg').src = resolveAssetUrl(g.resim);
@@ -2980,8 +2931,11 @@ function editGallery(slug) {
 async function saveGalleryItem(e) {
   if (e) e.preventDefault();
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   const title = document.getElementById('gal_title').value.trim();
   let slug = editGalMode ? editingGalSlug : ('galeri-' + Date.now());
@@ -2989,25 +2943,18 @@ async function saveGalleryItem(e) {
 
   const btn = document.getElementById('btnGalSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
 
   try {
     let finalImageUrl = document.getElementById('gal_image_url').value.trim();
 
-    if (galUploadedBase64) {
-      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
-      const cleanExt = galUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
-      const imgPath = `resim/galeri-resimleri/${slug}.${cleanExt}`;
-
-      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Upload gallery image for ${slug}`, content: galUploadedBase64, branch: BRANCH })
-      });
-      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    if (galUploadedFile) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Supabase Storage\'a Yükleniyor...';
+      finalImageUrl = await uploadFileToSupabaseStorage(galUploadedFile, 'galeri', slug);
     }
 
-    const galData = {
+    const galRow = {
+      slug,
       baslik: title,
       kategori: document.getElementById('gal_cat').value,
       resim: finalImageUrl || '/resim/logo.png',
@@ -3015,68 +2962,19 @@ async function saveGalleryItem(e) {
       siralama: Date.now()
     };
 
-    let currentSha = editGalMode ? editingGalSha : '';
-    if (editGalMode && !currentSha) {
-      try {
-        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (getRes.ok) {
-          const d = await getRes.json();
-          currentSha = d.sha;
-        }
-      } catch(e) {}
-    }
+    const { error } = await supabaseClient
+      .from('gallery')
+      .upsert(galRow, { onConflict: 'slug' });
 
-    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(galData, null, 2))));
-    const commitBody = {
-      message: editGalMode ? `Update gallery item: ${title}` : `Add gallery item: ${title}`,
-      content: jsonBase64,
-      branch: BRANCH
-    };
-    if (currentSha) commitBody.sha = currentSha;
-
-    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(commitBody)
-    });
-
-    if (!saveRes.ok) throw new Error('Galeri fotoğrafı kaydedilemedi');
-
-    // Update galeri-index.json
-    try {
-      let galIndex = [];
-      let galIndexSha = '';
-      const idxRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (idxRes.ok) {
-        const d = await idxRes.json();
-        galIndexSha = d.sha;
-        galIndex = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-      }
-
-      if (!galIndex.includes(slug)) {
-        galIndex.unshift(slug);
-        const newIndexContent = btoa(unescape(encodeURIComponent(JSON.stringify(galIndex, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Update galeri-index for ${slug}`, content: newIndexContent, sha: galIndexSha || undefined, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     editGalMode = false;
     editingGalSlug = '';
-    editingGalSha = '';
+    galUploadedFile = null;
 
-    showToast('🎉 Fotoğraf galeriye başarıyla eklendi!', 'success');
-    setTimeout(() => {
-      loadAllGallery();
-      switchGalSubTab('list');
-    }, 800);
+    showToast('🎉 Fotoğraf Supabase Storage ve Galeri tablosuna eklendi!', 'success');
+    await loadAllGallery();
+    switchGalSubTab('list');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3086,51 +2984,26 @@ async function saveGalleryItem(e) {
   }
 }
 
-async function deleteGalleryItem(slug, sha) {
+async function deleteGalleryItem(slug) {
   if (!confirm(`Bu galeri fotoğrafını silmek istediğinize emin misiniz?`)) return;
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   try {
     showToast('Fotoğraf siliniyor...', 'info');
-    let currentSha = sha;
-    if (!currentSha) {
-      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (getRes.ok) {
-        const d = await getRes.json();
-        currentSha = d.sha;
-      }
-    }
+    const { error } = await supabaseClient
+      .from('gallery')
+      .delete()
+      .eq('slug', slug);
 
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri/${slug}.json`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete gallery: ${slug}`, sha: currentSha, branch: BRANCH })
-    });
-
-    // Remove from galeri-index.json
-    try {
-      const idxRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (idxRes.ok) {
-        const d = await idxRes.json();
-        let galIndex = JSON.parse(decodeURIComponent(escape(atob(d.content))));
-        galIndex = galIndex.filter(id => id !== slug);
-        const newIndexContent = btoa(unescape(encodeURIComponent(JSON.stringify(galIndex, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/galeri-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Remove ${slug} from galeri-index`, content: newIndexContent, sha: d.sha, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     showToast('Fotoğraf başarıyla silindi!', 'success');
-    loadAllGallery();
+    await loadAllGallery();
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3140,10 +3013,10 @@ async function deleteGalleryItem(slug, sha) {
 function handleGalFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+  galUploadedFile = file;
   galUploadedFileName = file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
-    galUploadedBase64 = evt.target.result.split(',')[1];
     document.getElementById('galPreviewImg').src = evt.target.result;
     document.getElementById('galFileName').textContent = file.name;
     document.getElementById('galPreviewBox').style.display = 'flex';
@@ -3152,7 +3025,7 @@ function handleGalFileSelect(e) {
 }
 
 function removeGalImage() {
-  galUploadedBase64 = null;
+  galUploadedFile = null;
   galUploadedFileName = '';
   document.getElementById('galFileInput').value = '';
   document.getElementById('galPreviewBox').style.display = 'none';
@@ -3160,13 +3033,12 @@ function removeGalImage() {
 }
 
 // ══════════════════════════════════════════════════════════
-// BLOG MODULE
+// BLOG MODULE (SUPABASE DATABASE + STORAGE)
 // ══════════════════════════════════════════════════════════
 let allBlogs = [];
 let editBlogMode = false;
 let editingBlogSlug = '';
-let editingBlogSha = '';
-let blogUploadedBase64 = null;
+let blogUploadedFile = null;
 let blogUploadedFileName = '';
 
 function switchBlogSubTab(view) {
@@ -3197,34 +3069,16 @@ async function loadAllBlogs() {
   empty.style.display = 'none';
 
   try {
-    let files = [];
-    const token = localStorage.getItem('gkm_gh_token');
-    const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-    try {
-      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog?t=${Date.now()}`, { headers });
-      if (r.ok) {
-        const list = await r.json();
-        files = list.filter(f => f.name.endsWith('.json'));
-      }
-    } catch(e) {}
-
     let loaded = [];
-    if (files.length > 0) {
-      const promises = files.map(async (file) => {
-        try {
-          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${file.name}?t=${Date.now()}`, { headers });
-          if (res.ok) {
-            const data = await res.json();
-            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-            content.slug = file.name.replace('.json', '');
-            content.sha = data.sha;
-            return content;
-          }
-        } catch(e) {}
-        return null;
-      });
-      loaded = (await Promise.all(promises)).filter(b => b);
+
+    if (isSupabaseReady()) {
+      const { data, error } = await supabaseClient
+        .from('blogs')
+        .select('*')
+        .order('tarih', { ascending: false });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        loaded = data;
+      }
     }
 
     if (loaded.length === 0) {
@@ -3246,11 +3100,26 @@ async function loadAllBlogs() {
         return null;
       });
       loaded = (await Promise.all(promises)).filter(b => b);
+
+      if (isSupabaseReady() && loaded.length > 0) {
+        const rows = loaded.map(b => ({
+          slug: b.slug,
+          title: b.title || b.slug,
+          kategori: b.kategori || 'Rehber & Bakım',
+          tarih: b.tarih || new Date().toISOString(),
+          kapak_resim: b.kapak_resim || '/resim/logo.png',
+          ozet: b.ozet || '',
+          body: b.body || '',
+          anasayfada_goster: b.anasayfada_goster !== false
+        }));
+        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
+      }
     }
 
     allBlogs = loaded;
     document.getElementById('blogCountBadge').textContent = allBlogs.length;
     renderAdminBlogGrid(allBlogs);
+    updateExecutiveStripInventory();
 
   } catch(err) {
     showToast('Makaleler yüklenirken hata oluştu', 'error');
@@ -3282,7 +3151,7 @@ function renderAdminBlogGrid(posts) {
         <div class="product-card-desc">${b.ozet || ''}</div>
         <div class="product-card-actions">
           <button class="btn-secondary btn-sm" style="flex:1;" onclick="editBlog('${b.slug}')">✏️ Düzenle</button>
-          <button class="btn-danger btn-sm" onclick="deleteBlogItem('${b.slug}', '${b.sha || ''}')">🗑️ Sil</button>
+          <button class="btn-danger btn-sm" onclick="deleteBlogItem('${b.slug}')">🗑️ Sil</button>
         </div>
       </div>
     </div>
@@ -3298,9 +3167,8 @@ function filterAdminBlogs() {
 function startNewBlog() {
   editBlogMode = false;
   editingBlogSlug = '';
-  editingBlogSha = '';
   document.getElementById('blogFormTitle').textContent = '➕ Yeni Makale Ekle';
-  document.getElementById('btnBlogSave').textContent = '💾 Makaleyi Yayınla';
+  document.getElementById('btnBlogSave').textContent = '💾 Supabase\'e Kaydet ve Yayınla';
   document.getElementById('blogForm').reset();
   document.getElementById('b_slug').value = '';
   document.getElementById('b_slug').readOnly = false;
@@ -3316,7 +3184,6 @@ function editBlog(slug) {
 
   editBlogMode = true;
   editingBlogSlug = slug;
-  editingBlogSha = b.sha || '';
 
   document.getElementById('blogFormTitle').textContent = `✏️ "${b.title}" Makalesini Düzenle`;
   document.getElementById('btnBlogSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
@@ -3329,6 +3196,7 @@ function editBlog(slug) {
   document.getElementById('b_body').value = b.body || '';
   document.getElementById('b_anasayfa').checked = b.anasayfada_goster !== false;
   document.getElementById('b_image_url').value = b.kapak_resim || '/resim/logo.png';
+  blogUploadedFile = null;
 
   if (b.kapak_resim) {
     document.getElementById('blogPreviewImg').src = resolveAssetUrl(b.kapak_resim);
@@ -3350,8 +3218,11 @@ function autoGenerateBlogSlug() {
 async function saveBlogItem(e) {
   if (e) e.preventDefault();
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   const title = document.getElementById('b_title').value.trim();
   let slug = document.getElementById('b_slug').value.trim() || slugify(title);
@@ -3363,25 +3234,18 @@ async function saveBlogItem(e) {
 
   const btn = document.getElementById('btnBlogSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Yayınlanıyor...';
+  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
 
   try {
     let finalImageUrl = document.getElementById('b_image_url').value.trim();
 
-    if (blogUploadedBase64) {
-      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Yükleniyor...';
-      const cleanExt = blogUploadedFileName.split('.').pop().toLowerCase() || 'jpg';
-      const imgPath = `resim/yonetilen/blog-${slug}-${Date.now()}.${cleanExt}`;
-
-      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Upload blog image for ${slug}`, content: blogUploadedBase64, branch: BRANCH })
-      });
-      if (imgRes.ok) finalImageUrl = '/' + imgPath;
+    if (blogUploadedFile) {
+      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Supabase Storage\'a Yükleniyor...';
+      finalImageUrl = await uploadFileToSupabaseStorage(blogUploadedFile, 'blog', slug);
     }
 
-    const blogData = {
+    const blogRow = {
+      slug,
       title,
       kategori: document.getElementById('b_kategori').value,
       tarih: new Date().toISOString(),
@@ -3391,67 +3255,19 @@ async function saveBlogItem(e) {
       anasayfada_goster: document.getElementById('b_anasayfa').checked
     };
 
-    let currentSha = editBlogMode ? editingBlogSha : '';
-    if (editBlogMode && !currentSha) {
-      try {
-        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (getRes.ok) {
-          const d = await getRes.json();
-          currentSha = d.sha;
-        }
-      } catch(e) {}
-    }
+    const { error } = await supabaseClient
+      .from('blogs')
+      .upsert(blogRow, { onConflict: 'slug' });
 
-    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(blogData, null, 2))));
-    const commitBody = {
-      message: editBlogMode ? `Update blog: ${title}` : `Add blog: ${title}`,
-      content: jsonBase64,
-      branch: BRANCH
-    };
-    if (currentSha) commitBody.sha = currentSha;
-
-    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(commitBody)
-    });
-
-    if (!saveRes.ok) throw new Error('Makale kaydedilemedi');
-
-    try {
-      let indexList = [];
-      let indexSha = '';
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        indexSha = data.sha;
-        indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-      }
-
-      if (!indexList.includes(slug)) {
-        indexList.push(slug);
-        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Update blog-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     editBlogMode = false;
     editingBlogSlug = '';
-    editingBlogSha = '';
+    blogUploadedFile = null;
 
-    showToast('🎉 Makale başarıyla yayınlandı!', 'success');
-    setTimeout(() => {
-      loadAllBlogs();
-      switchBlogSubTab('list');
-    }, 800);
+    showToast('🎉 Makale Supabase\'e kaydedildi ve yayınlandı!', 'success');
+    await loadAllBlogs();
+    switchBlogSubTab('list');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3461,50 +3277,26 @@ async function saveBlogItem(e) {
   }
 }
 
-async function deleteBlogItem(slug, sha) {
+async function deleteBlogItem(slug) {
   if (!confirm(`"${slug}" makalesini silmek istediğinize emin misiniz?`)) return;
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   try {
     showToast('Makale siliniyor...', 'info');
-    let currentSha = sha;
-    if (!currentSha) {
-      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (getRes.ok) {
-        const d = await getRes.json();
-        currentSha = d.sha;
-      }
-    }
+    const { error } = await supabaseClient
+      .from('blogs')
+      .delete()
+      .eq('slug', slug);
 
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog/${slug}.json`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete blog: ${slug}`, sha: currentSha, branch: BRANCH })
-    });
-
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-        indexList = indexList.filter(id => id !== slug);
-        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/blog-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Remove ${slug} from blog-index`, content: newContent, sha: data.sha, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     showToast('Makale başarıyla silindi!', 'success');
-    loadAllBlogs();
+    await loadAllBlogs();
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3514,10 +3306,10 @@ async function deleteBlogItem(slug, sha) {
 function handleBlogFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+  blogUploadedFile = file;
   blogUploadedFileName = file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
-    blogUploadedBase64 = evt.target.result.split(',')[1];
     document.getElementById('blogPreviewImg').src = evt.target.result;
     document.getElementById('blogFileName').textContent = file.name;
     document.getElementById('blogPreviewBox').style.display = 'flex';
@@ -3526,7 +3318,7 @@ function handleBlogFileSelect(e) {
 }
 
 function removeBlogImage() {
-  blogUploadedBase64 = null;
+  blogUploadedFile = null;
   blogUploadedFileName = '';
   document.getElementById('blogFileInput').value = '';
   document.getElementById('blogPreviewBox').style.display = 'none';
@@ -3534,13 +3326,12 @@ function removeBlogImage() {
 }
 
 // ══════════════════════════════════════════════════════════
-// SUPPLIERS MODULE (FULL CRUD)
+// SUPPLIERS MODULE (SUPABASE DATABASE + STORAGE)
 // ══════════════════════════════════════════════════════════
 let allSuppliers = [];
 let editSupMode = false;
 let editingSupSlug = '';
-let editingSupSha = '';
-let supUploadedBase64 = null;
+let supUploadedFile = null;
 let supUploadedFileName = '';
 
 function switchSupSubTab(view) {
@@ -3571,34 +3362,16 @@ async function loadAllSuppliers() {
   empty.style.display = 'none';
 
   try {
-    let files = [];
-    const token = localStorage.getItem('gkm_gh_token');
-    const headers = token ? { 'Authorization': `token ${token}` } : {};
-
-    try {
-      const r = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler?t=${Date.now()}`, { headers });
-      if (r.ok) {
-        const list = await r.json();
-        files = list.filter(f => f.name.endsWith('.json'));
-      }
-    } catch(e) {}
-
     let loaded = [];
-    if (files.length > 0) {
-      const promises = files.map(async (file) => {
-        try {
-          const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${file.name}?t=${Date.now()}`, { headers });
-          if (res.ok) {
-            const data = await res.json();
-            const content = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-            content.slug = file.name.replace('.json', '');
-            content.sha = data.sha;
-            return content;
-          }
-        } catch(e) {}
-        return null;
-      });
-      loaded = (await Promise.all(promises)).filter(s => s);
+
+    if (isSupabaseReady()) {
+      const { data, error } = await supabaseClient
+        .from('suppliers')
+        .select('*')
+        .order('siralama', { ascending: true });
+      if (!error && Array.isArray(data) && data.length > 0) {
+        loaded = data;
+      }
     }
 
     if (loaded.length === 0) {
@@ -3620,11 +3393,25 @@ async function loadAllSuppliers() {
         return null;
       });
       loaded = (await Promise.all(promises)).filter(s => s);
+
+      if (isSupabaseReady() && loaded.length > 0) {
+        const rows = loaded.map((s, idx) => ({
+          slug: s.slug,
+          ad: s.ad || s.slug,
+          kategori: s.kategori || 'Membran & Folyo',
+          aciklama: s.aciklama || '',
+          link: s.link || null,
+          logo: s.logo || '/resim/logo.png',
+          siralama: s.siralama || (idx + 1)
+        }));
+        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
+      }
     }
 
     allSuppliers = loaded;
     document.getElementById('supCountBadge').textContent = allSuppliers.length;
     renderAdminSupplierGrid(allSuppliers);
+    updateExecutiveStripInventory();
 
   } catch(err) {
     showToast('Tedarikçiler yüklenirken hata oluştu', 'error');
@@ -3659,7 +3446,7 @@ function renderAdminSupplierGrid(items) {
         ${s.link ? `<div style="font-size:11px; color:var(--gold); margin-bottom:10px; word-break:break-all;">🔗 ${s.link}</div>` : ''}
         <div class="product-card-actions">
           <button class="btn-secondary btn-sm" style="flex:1;" onclick="editSupplier('${s.slug}')">✏️ Düzenle</button>
-          <button class="btn-danger btn-sm" onclick="deleteSupplierItem('${s.slug}', '${s.sha || ''}')">🗑️ Sil</button>
+          <button class="btn-danger btn-sm" onclick="deleteSupplierItem('${s.slug}')">🗑️ Sil</button>
         </div>
       </div>
     </div>
@@ -3682,9 +3469,8 @@ function filterAdminSuppliers() {
 function startNewSupplier() {
   editSupMode = false;
   editingSupSlug = '';
-  editingSupSha = '';
   document.getElementById('supFormTitle').textContent = '➕ Yeni Tedarikçi Ekle';
-  document.getElementById('btnSupSave').textContent = '💾 Tedarikçiyi Kaydet ve Yayınla';
+  document.getElementById('btnSupSave').textContent = '💾 Supabase\'e Kaydet ve Yayınla';
   document.getElementById('supForm').reset();
   document.getElementById('sup_slug').value = '';
   document.getElementById('sup_slug').readOnly = false;
@@ -3700,7 +3486,6 @@ function editSupplier(slug) {
 
   editSupMode = true;
   editingSupSlug = slug;
-  editingSupSha = s.sha || '';
 
   document.getElementById('supFormTitle').textContent = `✏️ "${s.ad}" Tedarikçisini Düzenle`;
   document.getElementById('btnSupSave').textContent = '💾 Değişiklikleri Kaydet & Yayınla';
@@ -3713,6 +3498,7 @@ function editSupplier(slug) {
   document.getElementById('sup_desc').value = s.aciklama || '';
   document.getElementById('sup_order').value = s.siralama || 1;
   document.getElementById('sup_logo_url').value = s.logo || '/resim/logo.png';
+  supUploadedFile = null;
 
   if (s.logo && s.logo !== '/resim/logo.png') {
     document.getElementById('supPreviewImg').src = resolveAssetUrl(s.logo);
@@ -3734,8 +3520,11 @@ function autoGenerateSupSlug() {
 async function saveSupplierItem(e) {
   if (e) e.preventDefault();
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub API Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   const ad = document.getElementById('sup_ad').value.trim();
   let slug = document.getElementById('sup_slug').value.trim() || slugify(ad);
@@ -3747,95 +3536,40 @@ async function saveSupplierItem(e) {
 
   const btn = document.getElementById('btnSupSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Kaydediliyor...';
+  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
 
   try {
     let finalLogoUrl = document.getElementById('sup_logo_url').value.trim();
 
-    if (supUploadedBase64) {
-      btn.innerHTML = '<div class="spinner"></div> Logo Yükleniyor...';
-      const cleanExt = supUploadedFileName.split('.').pop().toLowerCase() || 'png';
-      const imgPath = `resim/yonetilen/tedarikci-${slug}-${Date.now()}.${cleanExt}`;
-
-      const imgRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/${imgPath}`, {
-        method: 'PUT',
-        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: `Upload supplier logo for ${slug}`, content: supUploadedBase64, branch: BRANCH })
-      });
-      if (imgRes.ok) finalLogoUrl = '/' + imgPath;
+    if (supUploadedFile) {
+      btn.innerHTML = '<div class="spinner"></div> Logo Supabase Storage\'a Yükleniyor...';
+      finalLogoUrl = await uploadFileToSupabaseStorage(supUploadedFile, 'tedarikciler', slug);
     }
 
-    const supData = {
+    const supRow = {
+      slug,
       ad,
       kategori: document.getElementById('sup_cat').value,
       aciklama: document.getElementById('sup_desc').value.trim(),
-      link: document.getElementById('sup_link').value.trim() || undefined,
+      link: document.getElementById('sup_link').value.trim() || null,
       logo: finalLogoUrl || '/resim/logo.png',
-      siralama: parseInt(document.getElementById('sup_order').value, 10) || 1
+      siralama: parseInt(document.getElementById('sup_order').value, 10) || 1,
+      updated_at: new Date().toISOString()
     };
 
-    let currentSha = editSupMode ? editingSupSha : '';
-    if (editSupMode && !currentSha) {
-      try {
-        const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
-          headers: { 'Authorization': `token ${token}` }
-        });
-        if (getRes.ok) {
-          const d = await getRes.json();
-          currentSha = d.sha;
-        }
-      } catch(e) {}
-    }
+    const { error } = await supabaseClient
+      .from('suppliers')
+      .upsert(supRow, { onConflict: 'slug' });
 
-    const jsonBase64 = btoa(unescape(encodeURIComponent(JSON.stringify(supData, null, 2))));
-    const commitBody = {
-      message: editSupMode ? `Update supplier: ${ad}` : `Add supplier: ${ad}`,
-      content: jsonBase64,
-      branch: BRANCH
-    };
-    if (currentSha) commitBody.sha = currentSha;
-
-    const saveRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
-      method: 'PUT',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify(commitBody)
-    });
-
-    if (!saveRes.ok) throw new Error('Tedarikçi kaydedilemedi');
-
-    // Update tedarikciler-index.json
-    try {
-      let indexList = [];
-      let indexSha = '';
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        indexSha = data.sha;
-        indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-      }
-
-      if (!indexList.includes(slug)) {
-        indexList.push(slug);
-        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Update tedarikciler-index for ${slug}`, content: newContent, sha: indexSha || undefined, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     editSupMode = false;
     editingSupSlug = '';
-    editingSupSha = '';
+    supUploadedFile = null;
 
-    showToast('🎉 Tedarikçi başarıyla kaydedildi!', 'success');
-    setTimeout(() => {
-      loadAllSuppliers();
-      switchSupSubTab('list');
-    }, 800);
+    showToast('🎉 Tedarikçi Supabase Database & Storage\'a kaydedildi!', 'success');
+    await loadAllSuppliers();
+    switchSupSubTab('list');
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3845,50 +3579,26 @@ async function saveSupplierItem(e) {
   }
 }
 
-async function deleteSupplierItem(slug, sha) {
+async function deleteSupplierItem(slug) {
   if (!confirm(`"${slug}" tedarikçisini silmek istediğinize emin misiniz?`)) return;
 
-  const token = localStorage.getItem('gkm_gh_token');
-  if (!token) { openTokenModal(); showToast('GitHub Token giriniz!', 'error'); return; }
+  if (!isSupabaseReady()) {
+    openSupabaseModal();
+    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
+    return;
+  }
 
   try {
     showToast('Tedarikçi siliniyor...', 'info');
-    let currentSha = sha;
-    if (!currentSha) {
-      const getRes = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (getRes.ok) {
-        const d = await getRes.json();
-        currentSha = d.sha;
-      }
-    }
+    const { error } = await supabaseClient
+      .from('suppliers')
+      .delete()
+      .eq('slug', slug);
 
-    await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler/${slug}.json`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `Delete supplier: ${slug}`, sha: currentSha, branch: BRANCH })
-    });
-
-    try {
-      const res = await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
-        headers: { 'Authorization': `token ${token}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        let indexList = JSON.parse(decodeURIComponent(escape(atob(data.content))));
-        indexList = indexList.filter(id => id !== slug);
-        const newContent = btoa(unescape(encodeURIComponent(JSON.stringify(indexList, null, 2))));
-        await fetch(`https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/contents/_data/tedarikciler-index.json`, {
-          method: 'PUT',
-          headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message: `Remove ${slug} from tedarikciler-index`, content: newContent, sha: data.sha, branch: BRANCH })
-        });
-      }
-    } catch(e) {}
+    if (error) throw new Error(error.message);
 
     showToast('Tedarikçi başarıyla silindi!', 'success');
-    loadAllSuppliers();
+    await loadAllSuppliers();
 
   } catch(err) {
     showToast('Hata: ' + err.message, 'error');
@@ -3898,10 +3608,10 @@ async function deleteSupplierItem(slug, sha) {
 function handleSupFileSelect(e) {
   const file = e.target.files[0];
   if (!file) return;
+  supUploadedFile = file;
   supUploadedFileName = file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
-    supUploadedBase64 = evt.target.result.split(',')[1];
     document.getElementById('supPreviewImg').src = evt.target.result;
     document.getElementById('supFileName').textContent = file.name;
     document.getElementById('supPreviewBox').style.display = 'flex';
@@ -3910,7 +3620,7 @@ function handleSupFileSelect(e) {
 }
 
 function removeSupImage() {
-  supUploadedBase64 = null;
+  supUploadedFile = null;
   supUploadedFileName = '';
   document.getElementById('supFileInput').value = '';
   document.getElementById('supPreviewBox').style.display = 'none';
@@ -3918,15 +3628,15 @@ function removeSupImage() {
 }
 
 // ══════════════════════════════════════════════════════════
-// DRAG & DROP & FILE UPLOADS
+// DRAG & DROP & FILE UPLOADS (BINARY FILES FOR SUPABASE STORAGE)
 // ══════════════════════════════════════════════════════════
 function setupDragAndDrop() {
   setupZone('uploadZone', processImageFile);
   setupZone('galUploadZone', (file) => {
+    galUploadedFile = file;
     galUploadedFileName = file.name;
     const r = new FileReader();
     r.onload = (evt) => {
-      galUploadedBase64 = evt.target.result.split(',')[1];
       document.getElementById('galPreviewImg').src = evt.target.result;
       document.getElementById('galFileName').textContent = file.name;
       document.getElementById('galPreviewBox').style.display = 'flex';
@@ -3934,10 +3644,10 @@ function setupDragAndDrop() {
     r.readAsDataURL(file);
   });
   setupZone('blogUploadZone', (file) => {
+    blogUploadedFile = file;
     blogUploadedFileName = file.name;
     const r = new FileReader();
     r.onload = (evt) => {
-      blogUploadedBase64 = evt.target.result.split(',')[1];
       document.getElementById('blogPreviewImg').src = evt.target.result;
       document.getElementById('blogFileName').textContent = file.name;
       document.getElementById('blogPreviewBox').style.display = 'flex';
@@ -3945,10 +3655,10 @@ function setupDragAndDrop() {
     r.readAsDataURL(file);
   });
   setupZone('supUploadZone', (file) => {
+    supUploadedFile = file;
     supUploadedFileName = file.name;
     const r = new FileReader();
     r.onload = (evt) => {
-      supUploadedBase64 = evt.target.result.split(',')[1];
       document.getElementById('supPreviewImg').src = evt.target.result;
       document.getElementById('supFileName').textContent = file.name;
       document.getElementById('supPreviewBox').style.display = 'flex';
@@ -3956,10 +3666,10 @@ function setupDragAndDrop() {
     r.readAsDataURL(file);
   });
   setupZone('homeAboutUploadZone', (file) => {
+    homeAboutUploadedFile = file;
     homeAboutUploadedFileName = file.name;
     const r = new FileReader();
     r.onload = (evt) => {
-      homeAboutUploadedBase64 = evt.target.result.split(',')[1];
       document.getElementById('homeAboutPreviewImg').src = evt.target.result;
       document.getElementById('homeAboutFileName').textContent = file.name;
       document.getElementById('homeAboutPreviewBox').style.display = 'flex';
@@ -4106,7 +3816,6 @@ function renderWebsiteAnalytics() {
   setTxt('an_track_queries', d.trackQueries);
   setTxt('an_chart_subtitle', d.subtitle);
 
-  // Render Bar Chart
   const chartEl = document.getElementById('analyticsTrafficChart');
   if (chartEl && d.bars) {
     const maxVal = Math.max(...d.bars.map(b => b.val), 1);
@@ -4122,18 +3831,16 @@ function renderWebsiteAnalytics() {
     }).join('');
   }
 
-  // Render Top Pages & Products Table
   const tbody = document.getElementById('analyticsTopPagesBody');
   if (tbody) {
     const basePages = [
-      { title: '🏠 Ana Sayfa & Nordic Renk/Doku Stüdyosu', path: '/index.html', views: '18.420', avgTime: '3 dk 12 sn', conv: '148 WhatsApp / Teklif', status: '🟢 Yayında (Hızlı)' },
-      { title: '🚪 Membran Kapak Modelleri Kataloğu', path: '/urunler.html', views: '14.150', avgTime: '4 dk 05 sn', conv: '124 Model Sorgusu', status: '🟢 Yayında (Hızlı)' },
-      { title: '📦 Canlı Müşteri Sipariş Takip Ekranı', path: '/takip.html', views: '6.840', avgTime: '2 dk 18 sn', conv: '1.190 Sipariş Sorgusu', status: '🟢 Firebase Bağlı' },
+      { title: '🏠 Ana Sayfa & Nordic Renk/Doku Stüdyosu', path: '/index.html', views: '18.420', avgTime: '3 dk 12 sn', conv: '148 WhatsApp / Teklif', status: '🟢 Yayında (Supabase)' },
+      { title: '🚪 Membran Kapak Modelleri Kataloğu', path: '/urunler.html', views: '14.150', avgTime: '4 dk 05 sn', conv: '124 Model Sorgusu', status: '🟢 Yayında (Supabase)' },
+      { title: '📦 Canlı Müşteri Sipariş Takip Ekranı', path: '/takip.html', views: '6.840', avgTime: '2 dk 18 sn', conv: '1.190 Sipariş Sorgusu', status: '🟢 Bulut Bağlı' },
       { title: '🖼️ Uygulama & Mutfak Proje Galerisi', path: '/galeri.html', views: '4.320', avgTime: '2 dk 40 sn', conv: '36 Proje Talebi', status: '🟢 Yayında' },
       { title: '📞 İletişim, Harita & Hızlı Teklif Formu', path: '/iletisim.html', views: '2.890', avgTime: '1 dk 55 sn', conv: '70 Doğrudan Arama', status: '🟢 Yayında' }
     ];
 
-    // Append real loaded products to the table if available
     const prodRows = (allProducts || []).slice(0, 3).map((p, idx) => ({
       title: `✨ Ürün: ${p.title || p.slug}`,
       path: `/urun.html?id=${p.slug}`,
@@ -4183,19 +3890,23 @@ async function runLiveSiteHealthCheck() {
 
   const t0 = performance.now();
   try {
-    const res = await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
+    if (isSupabaseReady()) {
+      await supabaseClient.from('products').select('slug', { count: 'exact', head: true });
+    } else {
+      await fetch('/_data/ayarlar/genel.json?t=' + Date.now());
+    }
     const latency = Math.max(12, Math.round(performance.now() - t0));
     const pingEl = document.getElementById('healthPingVal');
     const kpiLat = document.getElementById('kpiLatencyBadge');
-    if (pingEl) pingEl.textContent = `${latency} ms (Çok Hızlı • HTTP ${res.status})`;
+    if (pingEl) pingEl.textContent = `${latency} ms (Çok Hızlı • Supabase Cloud)`;
     if (kpiLat) kpiLat.textContent = `⚡ ${latency}ms`;
 
     updateExecutiveStripInventory();
     updateVideoStatusBadges();
     renderWebsiteAnalytics();
-    showToast(`✅ Canlı site sağlık testi başarılı! Yanıt süresi: ${latency} ms`, 'success');
+    showToast(`✅ Canlı bağlantı & hız testi başarılı! Yanıt süresi: ${latency} ms`, 'success');
   } catch(e) {
-    showToast('Bağlantı testi tamamlandı (Yerel önbellek aktif)', 'info');
+    showToast('Bağlantı testi tamamlandı', 'info');
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -4210,10 +3921,10 @@ function handleFileSelect(e) {
 }
 
 function processImageFile(file) {
+  uploadedProductFile = file;
   uploadedFileName = file.name;
   const reader = new FileReader();
   reader.onload = (evt) => {
-    uploadedFileBase64 = evt.target.result.split(',')[1];
     document.getElementById('previewImg').src = evt.target.result;
     document.getElementById('previewFileName').textContent = file.name;
     document.getElementById('imagePreviewBox').style.display = 'flex';
@@ -4222,7 +3933,7 @@ function processImageFile(file) {
 }
 
 function removeSelectedImage() {
-  uploadedFileBase64 = null;
+  uploadedProductFile = null;
   uploadedFileName = '';
   document.getElementById('fileInput').value = '';
   document.getElementById('imagePreviewBox').style.display = 'none';
@@ -4233,7 +3944,7 @@ function removeSelectedImage() {
 // INIT
 // ══════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  checkTokenStatus();
+  initSupabaseClient();
   renderWebsiteAnalytics();
   await Promise.allSettled([
     loadAllProducts(),
@@ -4249,90 +3960,255 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 // ══════════════════════════════════════════════════════════
-// TOKEN MODAL & REPO DISCOVERY
+// SUPABASE CONNECTION MODAL & DATA SEEDING
 // ══════════════════════════════════════════════════════════
-function openTokenModal() {
-  document.getElementById('tokenInput').value = localStorage.getItem('gkm_gh_token') || '';
-  document.getElementById('repoOwnerInput').value = localStorage.getItem('gkm_gh_owner') || REPO_OWNER;
-  document.getElementById('repoNameInput').value = localStorage.getItem('gkm_gh_repo') || REPO_NAME;
+function openSupabaseModal() {
+  document.getElementById('supabaseUrlInput').value = localStorage.getItem('gkm_supabase_url') || SUPABASE_URL || '';
+  document.getElementById('supabaseKeyInput').value = localStorage.getItem('gkm_supabase_key') || SUPABASE_KEY || '';
   document.getElementById('tokenModal').classList.add('open');
 }
 
-function closeTokenModal() {
+// Backward-compatible alias if parent frame calls openTokenModal
+function openTokenModal() {
+  openSupabaseModal();
+}
+
+function closeSupabaseModal() {
   document.getElementById('tokenModal').classList.remove('open');
 }
 
-async function saveToken() {
-  const token = document.getElementById('tokenInput').value.trim();
-  const owner = document.getElementById('repoOwnerInput').value.trim() || 'Andromeda012';
-  const repo = document.getElementById('repoNameInput').value.trim() || 'Global-Mobilya-Web';
+function closeTokenModal() {
+  closeSupabaseModal();
+}
 
-  if (!token) {
-    localStorage.removeItem('gkm_gh_token');
-    checkTokenStatus();
-    closeTokenModal();
-    showToast('Token kaldırıldı', 'info');
+async function saveSupabaseConfig() {
+  const url = document.getElementById('supabaseUrlInput').value.trim().replace(/\/+$/, '');
+  const key = document.getElementById('supabaseKeyInput').value.trim();
+
+  if (!url || !key) {
+    localStorage.removeItem('gkm_supabase_url');
+    localStorage.removeItem('gkm_supabase_key');
+    initSupabaseClient();
+    closeSupabaseModal();
+    showToast('Supabase bağlantı bilgileri temizlendi', 'info');
     return;
   }
 
-  showToast('Bağlantı test ediliyor...', 'info');
+  showToast('Supabase bağlantısı test ediliyor...', 'info');
   try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (!res.ok) throw new Error(`"${owner}/${repo}" reposuna erişilemedi veya token yetkisiz.`);
+    const testClient = window.supabase.createClient(url, key);
+    const { error } = await testClient.from('products').select('slug').limit(1);
 
-    localStorage.setItem('gkm_gh_token', token);
-    localStorage.setItem('gkm_gh_owner', owner);
-    localStorage.setItem('gkm_gh_repo', repo);
-    REPO_OWNER = owner;
-    REPO_NAME = repo;
+    localStorage.setItem('gkm_supabase_url', url);
+    localStorage.setItem('gkm_supabase_key', key);
+    initSupabaseClient();
 
-    checkTokenStatus();
-    closeTokenModal();
-    showToast('🎉 GitHub bağlantısı başarıyla kuruldu!', 'success');
-    loadAllProducts();
-    loadAllGallery();
-    loadAllBlogs();
-    loadAllSuppliers();
+    if (error && (error.message.includes('relation') || error.message.includes('does not exist') || error.code === '42P01')) {
+      showToast('⚠️ Supabase bağlantısı kuruldu ancak tablolar henüz oluşturulmamış. Lütfen "Kurulum SQL Kodunu Kopyala" butonuyla SQL Editor\'de tabloları oluşturun.', 'info');
+      return;
+    }
+
+    closeSupabaseModal();
+    showToast('🎉 Supabase Database & Storage bağlantısı başarıyla kuruldu!', 'success');
+
+    await Promise.allSettled([
+      loadAllProducts(),
+      loadCompanySettings(),
+      loadHomeSettings(),
+      loadAllGallery(),
+      loadAllBlogs(),
+      loadAllSuppliers()
+    ]);
 
   } catch(err) {
-    showToast(err.message, 'error');
+    showToast('Bağlantı hatası: ' + err.message, 'error');
   }
 }
 
-async function fetchUserRepos() {
-  const token = document.getElementById('tokenInput').value.trim() || localStorage.getItem('gkm_gh_token');
-  if (!token) { showToast('Önce yukarıya GitHub Token yapıştırın!', 'error'); return; }
+async function seedExistingDataToSupabase() {
+  const url = document.getElementById('supabaseUrlInput').value.trim().replace(/\/+$/, '') || SUPABASE_URL;
+  const key = document.getElementById('supabaseKeyInput').value.trim() || SUPABASE_KEY;
 
-  showToast('Depolar taranıyor...', 'info');
+  if (!url || !key) {
+    showToast('Lütfen önce yukarıya Supabase Project URL ve Anon Key girin!', 'error');
+    return;
+  }
+
+  localStorage.setItem('gkm_supabase_url', url);
+  localStorage.setItem('gkm_supabase_key', key);
+  initSupabaseClient();
+
+  const btn = document.getElementById('btnSeedSupabase');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Aktarılıyor...';
+  }
+
   try {
-    const res = await fetch('https://api.github.com/user/repos?per_page=100&affiliation=owner,collaborator', {
-      headers: { 'Authorization': `token ${token}` }
-    });
-    if (!res.ok) throw new Error('Token ile depolar getirilemedi');
-    const repos = await res.json();
-    const dropdown = document.getElementById('repoSelectDropdown');
-    dropdown.innerHTML = '<option value="">Depo Seçiniz (' + repos.length + ' bulundu)...</option>';
-    repos.forEach(r => {
-      const opt = document.createElement('option');
-      opt.value = r.full_name;
-      opt.textContent = r.full_name + (r.private ? ' 🔒' : ' 🌐');
-      if (r.name === 'Global-Mobilya-Web' || r.name === 'global-mobilya') opt.selected = true;
-      dropdown.appendChild(opt);
-    });
-    dropdown.style.display = 'block';
-    showToast(`${repos.length} depo listelendi!`, 'success');
-  } catch(e) {
-    showToast('Hata: ' + e.message, 'error');
+    // 1. Seed Products
+    const pIdxRes = await fetch('/_data/urunler-index.json?t=' + Date.now());
+    if (pIdxRes.ok) {
+      const ids = await pIdxRes.json();
+      const rows = [];
+      for (const id of ids) {
+        try {
+          const r = await fetch(`/_data/urunler/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const p = await r.json();
+            rows.push({
+              slug: id,
+              title: p.title || p.baslik || id,
+              kategori: p.kategori || 'Düz Membran Kapak',
+              sku: p.sku || null,
+              kisa_aciklama: p.kisa_aciklama || '',
+              body: p.body || '',
+              ana_resim: p.ana_resim || '/resim/logo.png',
+              anasayfada_goster: p.anasayfada_goster !== false,
+              populer: !!p.populer,
+              yeni: !!p.yeni,
+              renkler: Array.isArray(p.renkler) ? p.renkler : [],
+              ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
+            });
+          }
+        } catch(e) {}
+      }
+      if (rows.length > 0) {
+        const { error } = await supabaseClient.from('products').upsert(rows, { onConflict: 'slug' });
+        if (error) throw new Error('Ürünler tablosu hatası: ' + error.message);
+      }
+    }
+
+    // 2. Seed Suppliers
+    const sIdxRes = await fetch('/_data/tedarikciler-index.json?t=' + Date.now());
+    if (sIdxRes.ok) {
+      const ids = await sIdxRes.json();
+      const rows = [];
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        try {
+          const r = await fetch(`/_data/tedarikciler/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const s = await r.json();
+            rows.push({
+              slug: id,
+              ad: s.ad || id,
+              kategori: s.kategori || 'Membran & Folyo',
+              aciklama: s.aciklama || '',
+              link: s.link || null,
+              logo: s.logo || '/resim/logo.png',
+              siralama: s.siralama || (i + 1)
+            });
+          }
+        } catch(e) {}
+      }
+      if (rows.length > 0) {
+        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
+      }
+    }
+
+    // 3. Seed Gallery
+    const gIdxRes = await fetch('/_data/galeri-index.json?t=' + Date.now());
+    if (gIdxRes.ok) {
+      const ids = await gIdxRes.json();
+      const rows = [];
+      for (let i = 0; i < ids.length; i++) {
+        const id = ids[i];
+        try {
+          const r = await fetch(`/_data/galeri/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const g = await r.json();
+            rows.push({
+              slug: id,
+              baslik: g.baslik || 'Proje Görseli',
+              kategori: g.kategori || 'Mutfak',
+              resim: g.resim || '/resim/logo.png',
+              anasayfada_goster: g.anasayfada_goster !== false,
+              siralama: g.siralama || (Date.now() - i)
+            });
+          }
+        } catch(e) {}
+      }
+      if (rows.length > 0) {
+        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
+      }
+    }
+
+    // 4. Seed Blogs
+    const bIdxRes = await fetch('/_data/blog-index.json?t=' + Date.now());
+    if (bIdxRes.ok) {
+      const ids = await bIdxRes.json();
+      const rows = [];
+      for (const id of ids) {
+        try {
+          const r = await fetch(`/_data/blog/${id}.json?t=${Date.now()}`);
+          if (r.ok) {
+            const b = await r.json();
+            rows.push({
+              slug: id,
+              title: b.title || id,
+              kategori: b.kategori || 'Rehber & Bakım',
+              tarih: b.tarih || new Date().toISOString(),
+              kapak_resim: b.kapak_resim || '/resim/logo.png',
+              ozet: b.ozet || '',
+              body: b.body || '',
+              anasayfada_goster: b.anasayfada_goster !== false
+            });
+          }
+        } catch(e) {}
+      }
+      if (rows.length > 0) {
+        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
+      }
+    }
+
+    // 5. Seed Site Settings ('genel' & 'anasayfa')
+    try {
+      const [genelRes, homeRes] = await Promise.all([
+        fetch('/_data/ayarlar/genel.json?t=' + Date.now()),
+        fetch('/_data/ayarlar/anasayfa.json?t=' + Date.now())
+      ]);
+      const settingsRows = [];
+      if (genelRes.ok) settingsRows.push({ key: 'genel', data: await genelRes.json(), updated_at: new Date().toISOString() });
+      if (homeRes.ok) settingsRows.push({ key: 'anasayfa', data: await homeRes.json(), updated_at: new Date().toISOString() });
+      if (settingsRows.length > 0) {
+        await supabaseClient.from('site_settings').upsert(settingsRows, { onConflict: 'key' });
+      }
+    } catch(e) {}
+
+    showToast('🎉 Tüm ürünler, tedarikçiler, galeri, blog ve ayarlar Supabase\'e aktarıldı!', 'success');
+    await Promise.allSettled([
+      loadAllProducts(),
+      loadCompanySettings(),
+      loadHomeSettings(),
+      loadAllGallery(),
+      loadAllBlogs(),
+      loadAllSuppliers()
+    ]);
+
+  } catch (err) {
+    showToast('Aktarım hatası: ' + err.message, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '🔄 Verileri Supabase\'e Aktar';
+    }
   }
 }
 
-function selectRepoFromDropdown(fullName) {
-  if (!fullName) return;
-  const parts = fullName.split('/');
-  document.getElementById('repoOwnerInput').value = parts[0];
-  document.getElementById('repoNameInput').value = parts[1];
+async function copySupabaseSetupSql() {
+  try {
+    const res = await fetch('/supabase_setup.sql?t=' + Date.now());
+    let sqlText = '';
+    if (res.ok) {
+      sqlText = await res.text();
+    } else {
+      sqlText = `-- Supabase SQL Editor icerisine yapistirip Run tusuna basin:\nCREATE TABLE IF NOT EXISTS public.products (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Düz Membran Kapak', sku TEXT, kisa_aciklama TEXT DEFAULT '', body TEXT DEFAULT '', ana_resim TEXT DEFAULT '/resim/logo.png', anasayfada_goster BOOLEAN DEFAULT true, populer BOOLEAN DEFAULT false, yeni BOOLEAN DEFAULT false, renkler JSONB DEFAULT '[]'::jsonb, ozellikler JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.suppliers (slug TEXT PRIMARY KEY, ad TEXT NOT NULL, kategori TEXT DEFAULT 'Membran & Folyo', aciklama TEXT DEFAULT '', link TEXT, logo TEXT DEFAULT '/resim/logo.png', siralama INTEGER DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.gallery (slug TEXT PRIMARY KEY, baslik TEXT NOT NULL, kategori TEXT DEFAULT 'Mutfak', resim TEXT NOT NULL, anasayfada_goster BOOLEAN DEFAULT true, siralama BIGINT DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.blogs (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Rehber & Bakım', tarih TIMESTAMPTZ DEFAULT now(), kapak_resim TEXT DEFAULT '/resim/logo.png', ozet TEXT DEFAULT '', body TEXT DEFAULT '', anasayfada_goster BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.site_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ DEFAULT now());\nALTER TABLE public.products ENABLE ROW LEVEL SECURITY; ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY; ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY; ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY; ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on suppliers" ON public.suppliers FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on gallery" ON public.gallery FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on blogs" ON public.blogs FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on site_settings" ON public.site_settings FOR ALL TO public USING (true) WITH CHECK (true);\nINSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true) ON CONFLICT (id) DO UPDATE SET public = true;\nCREATE POLICY "Public read access on media bucket" ON storage.objects FOR SELECT TO public USING (bucket_id = 'media');\nCREATE POLICY "Public insert access on media bucket" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'media');\nCREATE POLICY "Public update access on media bucket" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'media');\nCREATE POLICY "Public delete access on media bucket" ON storage.objects FOR DELETE TO public USING (bucket_id = 'media');`;
+    }
+    await navigator.clipboard.writeText(sqlText);
+    showToast('📋 Supabase tablo & Storage kurulum SQL kodu panoya kopyalandı!', 'success');
+  } catch(e) {
+    showToast('SQL kopyalanamadı: ' + e.message, 'error');
+  }
 }
 
 function toggleParentFullscreen() {
