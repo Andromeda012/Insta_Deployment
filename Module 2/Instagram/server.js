@@ -5,7 +5,8 @@
  * 7/24 hiçbir bilgisayara bağımlı olmadan çalışır.
  *
  * Görevleri:
- * 1. Belirli saat aralıklarında (Gönderi, Story, Reels) Supabase kuyruğunu kontrol eder
+ * 1. Belirli saat aralıklarında (Gönderi, Story, Reels) herhangi bir fotoğraf/video
+ *    girişine ihtiyaç duymadan kendi içeriğini KENDİSİ TASARLAR (`generateAutonomousInstagramContent`)
  *    ve ONAY İSTEMEDEN otomatik olarak Instagram'da paylaşır.
  * 2. Meta Webhook (/webhook/instagram) üzerinden gelen DM ve yorumları anlık karşılar:
  *    - 1. Aşama: Basit sorulara sabit kural tabanlı anlık cevap verir.
@@ -18,6 +19,7 @@ import { URL } from 'node:url';
 import {
   DEFAULT_TIER1_RULES,
   evaluateThreeTierCommunication,
+  generateAutonomousInstagramContent,
   publishToInstagramGraphApi,
   supabaseRequest
 } from './bot-engine.js';
@@ -26,73 +28,103 @@ const PORT = process.env.PORT || 8080;
 const VERIFY_TOKEN = process.env.IG_WEBHOOK_VERIFY_TOKEN || 'global_kapak_insta_verify_2026';
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 
-// ── BULUT ZAMANLAYICI: BELİRLİ SAAT ARALIKLARINDA ONAYSIZ REELS / STORY / GÖNDERİ YAYINLA ──
-async function checkAndPublishScheduledPosts() {
+// Son tetiklenen slot anahtarlarını hafızada tut (aynı dakikada iki kez atmasın)
+const triggeredSlotsMemory = new Set();
+
+// ── BULUT ZAMANLAYICI: KENDİ GÖNDERİSİNİ / STORY / REELS'İNİ KENDİ TASARLAR VE ONAYSIZ YAYINLAR ──
+async function checkAndPublishScheduledPosts(forceGenerate = false) {
   try {
-    const nowIso = new Date().toISOString();
-    const duePosts = await supabaseRequest(
-      `insta_scheduled_posts?select=*&status=eq.scheduled&scheduled_for=lte.${encodeURIComponent(nowIso)}&order=scheduled_for.asc&limit=5`
-    );
+    const rows = await supabaseRequest('site_settings?select=data&key=eq.insta_bot_state&limit=1').catch(() => []);
+    const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], rules: DEFAULT_TIER1_RULES, conversations: [] };
+    const config = state.config || {};
 
-    if (!Array.isArray(duePosts) || duePosts.length === 0) return { publishedCount: 0 };
+    if (config.auto_publish_enabled === false) {
+      return { publishedCount: 0, reason: 'auto_publish_disabled' };
+    }
 
-    const cfgRows = await supabaseRequest('insta_bot_config?select=*&id=eq.default&limit=1').catch(() => []);
-    const config = (Array.isArray(cfgRows) && cfgRows[0]) || {};
+    state.scheduled_posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
+    const productsCatalog = await supabaseRequest('products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler&limit=20').catch(() => []);
 
-    // Eğer otomatik yayın kapalıysa çık
-    if (config.auto_publish_enabled === false) return { publishedCount: 0, reason: 'auto_publish_disabled' };
+    // 1. Saat Aralığı (Posting Slot) Kontrolü:
+    // Belirlenen saat geldiğinde kuyrukta hazır içerik olmasa bile bot KENDİSİ TASARLAR ve kuyruğa ekler!
+    const now = new Date();
+    const hhmm = now.toTimeString().slice(0, 5); // "10:00", "14:30", "19:30"
+    const todayKey = now.toISOString().slice(0, 10);
 
-    let publishedCount = 0;
-    for (const post of duePosts) {
-      try {
-        await supabaseRequest(`insta_scheduled_posts?id=eq.${post.id}`, {
-          method: 'PATCH',
-          body: { status: 'publishing' }
+    const activeSlots = (config.posting_slots || []).filter(s => s.active !== false);
+    for (const slot of activeSlots) {
+      const slotMemKey = `${todayKey}_${slot.time}_${slot.type}`;
+      if (slot.time === hhmm && !triggeredSlotsMemory.has(slotMemKey)) {
+        triggeredSlotsMemory.add(slotMemKey);
+        const autoItem = await generateAutonomousInstagramContent({
+          mediaType: slot.type || 'POST',
+          productsCatalog,
+          config,
+          slotLabel: slot.label
         });
-
-        const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
-        const pubResult = await publishToInstagramGraphApi({
-          igUserId: config.ig_user_id || process.env.IG_USER_ID,
-          accessToken: config.access_token || process.env.IG_ACCESS_TOKEN,
-          mediaType: post.media_type || 'POST',
-          mediaUrl: post.media_url,
-          caption: fullCaption
+        state.scheduled_posts.unshift({
+          ...autoItem,
+          scheduled_for: new Date().toISOString(),
+          status: 'scheduled'
         });
-
-        await supabaseRequest(`insta_scheduled_posts?id=eq.${post.id}`, {
-          method: 'PATCH',
-          body: {
-            status: 'published',
-            ig_container_id: pubResult.containerId || '',
-            ig_media_id: pubResult.mediaId || '',
-            published_at: pubResult.publishedAt
-          }
-        });
-
-        await supabaseRequest('insta_bot_logs', {
-          method: 'POST',
-          body: {
-            event_type: 'CRON_PUBLISH',
-            summary: `[Otonom Yayın] ${post.media_type} paylaşıldı: "${post.title}"`,
-            details: { post_id: post.id, media_type: post.media_type, ig_media_id: pubResult.mediaId }
-          }
-        }).catch(() => {});
-
-        publishedCount++;
-      } catch (pubErr) {
-        await supabaseRequest(`insta_scheduled_posts?id=eq.${post.id}`, {
-          method: 'PATCH',
-          body: {
-            status: 'failed',
-            error_message: pubErr.message
-          }
-        }).catch(() => {});
       }
     }
 
-    return { publishedCount };
+    // Eğer manuel tetikleme geldiyse ve bekleyen gönderi yoksa anında 1 adet otonom tasarım üret
+    const nowMs = Date.now();
+    let duePosts = state.scheduled_posts.filter(
+      p => p.status === 'scheduled' && new Date(p.scheduled_for).getTime() <= nowMs
+    );
+
+    if (forceGenerate && duePosts.length === 0) {
+      const types = ['REELS', 'STORIES', 'POST'];
+      const pickedType = types[Math.floor(Math.random() * types.length)];
+      const autoItem = await generateAutonomousInstagramContent({
+        mediaType: pickedType,
+        productsCatalog,
+        config
+      });
+      const record = {
+        ...autoItem,
+        scheduled_for: new Date().toISOString(),
+        status: 'scheduled'
+      };
+      state.scheduled_posts.unshift(record);
+      duePosts = [record];
+    }
+
+    if (duePosts.length === 0) return { publishedCount: 0 };
+
+    let publishedCount = 0;
+    for (const post of duePosts) {
+      const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
+      const pubResult = await publishToInstagramGraphApi({
+        igUserId: config.ig_user_id || process.env.IG_USER_ID,
+        accessToken: config.access_token || process.env.IG_ACCESS_TOKEN,
+        mediaType: post.media_type || 'POST',
+        mediaUrl: post.media_url,
+        caption: fullCaption
+      });
+
+      post.status = 'published';
+      post.published_at = pubResult.publishedAt;
+      post.ig_media_id = pubResult.mediaId;
+      publishedCount++;
+    }
+
+    state.scheduled_posts = state.scheduled_posts.slice(0, 60);
+    await supabaseRequest('site_settings', {
+      method: 'POST',
+      body: {
+        key: 'insta_bot_state',
+        data: state,
+        updated_at: new Date().toISOString()
+      }
+    }).catch(() => {});
+
+    return { publishedCount, autonomousDesign: true };
   } catch (err) {
-    console.error('[Cloud Scheduler] Kontrol hatası:', err.message);
+    console.error('[Cloud Autonomous Designer & Scheduler] Hata:', err.message);
     return { publishedCount: 0, error: err.message };
   }
 }
@@ -107,7 +139,6 @@ async function sendInstagramReply({ igUserId, accessToken, recipientId, commentI
     const res = await fetch(`${GRAPH_API_BASE}/${commentId}/replies`, { method: 'POST', body: params });
     return await res.json();
   }
-  // Instagram DM (Messenger API for Instagram)
   const res = await fetch(`${GRAPH_API_BASE}/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -121,14 +152,14 @@ async function sendInstagramReply({ igUserId, accessToken, recipientId, commentI
 
 // ── GELEN MESAJ VEYA YORUMU 3 AŞAMALI İLETİŞİM MOTORUYLA İŞLE ───────────────
 async function handleIncomingMessageEvent({ senderId, senderUsername, channel = 'DM', text, commentId = null }) {
-  const [cfgRows, rulesRows, productsRows] = await Promise.all([
-    supabaseRequest('insta_bot_config?select=*&id=eq.default&limit=1').catch(() => []),
-    supabaseRequest('insta_keyword_rules?select=*&active=eq.true&order=priority.asc').catch(() => DEFAULT_TIER1_RULES),
+  const [stateRows, productsRows] = await Promise.all([
+    supabaseRequest('site_settings?select=data&key=eq.insta_bot_state&limit=1').catch(() => []),
     supabaseRequest('products?select=slug,title,kategori,kisa_aciklama&limit=15').catch(() => [])
   ]);
 
-  const config = (Array.isArray(cfgRows) && cfgRows[0]) || {};
-  const rules = Array.isArray(rulesRows) && rulesRows.length > 0 ? rulesRows : DEFAULT_TIER1_RULES;
+  const state = stateRows?.[0]?.data || { config: {}, rules: DEFAULT_TIER1_RULES, conversations: [] };
+  const config = state.config || {};
+  const rules = Array.isArray(state.rules) && state.rules.length > 0 ? state.rules : DEFAULT_TIER1_RULES;
 
   const decision = await evaluateThreeTierCommunication({
     incomingText: text,
@@ -139,7 +170,6 @@ async function handleIncomingMessageEvent({ senderId, senderUsername, channel = 
     productsCatalog: productsRows || []
   });
 
-  // Instagram Graph API üzerinden cevabı gönder
   await sendInstagramReply({
     igUserId: config.ig_user_id || process.env.IG_USER_ID,
     accessToken: config.access_token || process.env.IG_ACCESS_TOKEN,
@@ -149,19 +179,28 @@ async function handleIncomingMessageEvent({ senderId, senderUsername, channel = 
     messageText: decision.bot_reply
   });
 
-  // Supabase konuşma geçmişine kaydet
-  await supabaseRequest('insta_conversations', {
+  state.conversations = Array.isArray(state.conversations) ? state.conversations : [];
+  state.conversations.unshift({
+    id: 'conv-' + Date.now(),
+    sender_id: senderId || 'anon',
+    sender_username: senderUsername || '@instagram_kullanicisi',
+    channel,
+    incoming_text: text,
+    resolved_tier: decision.resolved_tier,
+    tier_label: decision.tier_label,
+    bot_reply: decision.bot_reply,
+    handoff_status: decision.handoff_status,
+    whatsapp_link: decision.whatsapp_link || '',
+    created_at: new Date().toISOString()
+  });
+  state.conversations = state.conversations.slice(0, 60);
+
+  await supabaseRequest('site_settings', {
     method: 'POST',
     body: {
-      sender_id: senderId || 'anon',
-      sender_username: senderUsername || '@instagram_kullanicisi',
-      channel,
-      incoming_text: text,
-      resolved_tier: decision.resolved_tier,
-      tier_label: decision.tier_label,
-      bot_reply: decision.bot_reply,
-      handoff_status: decision.handoff_status,
-      whatsapp_link: decision.whatsapp_link || ''
+      key: 'insta_bot_state',
+      data: state,
+      updated_at: new Date().toISOString()
     }
   }).catch(() => {});
 
@@ -181,18 +220,16 @@ const server = http.createServer(async (req, res) => {
 
   const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
 
-  // 1. Sağlık Kontrolü (Bulut Uptime Monitor)
   if (parsedUrl.pathname === '/health' || parsedUrl.pathname === '/') {
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     return res.end(JSON.stringify({
-      service: 'Global Kapak Mobilya — Instagram Cloud Bot v1.0',
-      cloud_mode: '24/7 Autonomous (Zero-Approval Publishing + 3-Tier AI/Human Comms)',
+      service: 'Global Kapak Mobilya — Instagram Cloud Bot v2.0',
+      cloud_mode: '24/7 Autonomous (Zero-Input Self-Designing Reels/Story/Post + Zero-Approval Publishing + 3-Tier Comms)',
       status: 'online',
       timestamp: new Date().toISOString()
     }));
   }
 
-  // 2. Meta Webhook Doğrulaması (GET /webhook/instagram)
   if (parsedUrl.pathname === '/webhook/instagram' && req.method === 'GET') {
     const mode = parsedUrl.searchParams.get('hub.mode');
     const token = parsedUrl.searchParams.get('hub.verify_token');
@@ -206,7 +243,6 @@ const server = http.createServer(async (req, res) => {
     return res.end('Forbidden');
   }
 
-  // 3. Meta Webhook Mesaj & Yorum Alıcı (POST /webhook/instagram)
   if (parsedUrl.pathname === '/webhook/instagram' && req.method === 'POST') {
     let rawBody = '';
     req.on('data', chunk => { rawBody += chunk; });
@@ -217,7 +253,6 @@ const server = http.createServer(async (req, res) => {
       try {
         const payload = JSON.parse(rawBody || '{}');
         for (const entry of payload.entry || []) {
-          // Instagram DM Olayları
           for (const msgEvent of entry.messaging || []) {
             if (msgEvent.message && msgEvent.message.text && !msgEvent.message.is_echo) {
               await handleIncomingMessageEvent({
@@ -228,7 +263,6 @@ const server = http.createServer(async (req, res) => {
               });
             }
           }
-          // Instagram Yorum Olayları
           for (const change of entry.changes || []) {
             if (change.field === 'comments' && change.value?.text) {
               await handleIncomingMessageEvent({
@@ -248,14 +282,12 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 4. Bulut Cron Tetikleyici (GET/POST /api/cron/publish)
   if (parsedUrl.pathname === '/api/cron/publish') {
-    const result = await checkAndPublishScheduledPosts();
+    const result = await checkAndPublishScheduledPosts(true);
     res.writeHead(200, { 'Content-Type': 'application/json; charset=utf-8' });
     return res.end(JSON.stringify({ ok: true, ...result }));
   }
 
-  // 5. Canlı 3 Aşamalı İletişim Simülasyon Uç Noktası (POST /api/simulate-message)
   if (parsedUrl.pathname === '/api/simulate-message' && req.method === 'POST') {
     let rawBody = '';
     req.on('data', chunk => { rawBody += chunk; });
@@ -284,6 +316,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Global Kapak Instagram Cloud Bot Sunucusu aktif: Port ${PORT}`);
-  // Her 60 saniyede bir zamanlanmış Reels, Story ve Gönderileri kontrol et ve onaysız yayınla
-  setInterval(checkAndPublishScheduledPosts, 60 * 1000);
+  setInterval(() => checkAndPublishScheduledPosts(false), 60 * 1000);
 });

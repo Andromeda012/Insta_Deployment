@@ -506,10 +506,10 @@
   <div class="th-actions">
     <div class="cloud-pill">
       <span class="pulse-dot"></span>
-      <span>Bulut Motoru: 7/24 Aktif (Cihaz Bağımsız)</span>
+      <span>Bulut Motoru: 7/24 Otonom Tasarım & Yayın (Sıfır Medya Girişi)</span>
     </div>
     <button class="btn btn-outline" onclick="switchTab('tab-simulator')">🧪 Canlı Botu Test Et</button>
-    <button class="btn btn-insta" onclick="runCloudAutonomousCycleNow()">⚡ Bulut Yayın Döngüsünü Şimdi Tetikle</button>
+    <button class="btn btn-insta" onclick="runCloudAutonomousCycleNow()">⚡ Şimdi Otonom Tasarla & Yayınla</button>
   </div>
 </header>
 
@@ -518,12 +518,12 @@
   <!-- KPI STRIP -->
   <div class="kpi-grid">
     <div class="kpi-card">
-      <div class="kpi-top"><span>☁️ Bulut Çalışma Modu</span><span class="badge badge-green">Otonom</span></div>
-      <div class="kpi-val">7/24 Cloud</div>
-      <div class="kpi-sub">Onay Beklemeden Otomatik Paylaşım Açık</div>
+      <div class="kpi-top"><span>🎨 Otonom Tasarım Stüdyosu</span><span class="badge badge-green">Sıfır Medya Girişi</span></div>
+      <div class="kpi-val">%100 Otonom</div>
+      <div class="kpi-sub">Foto/Video İstemeden Kendi Tasarlar & Paylaşır</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-top"><span>🎬 Zamanlanan / Yayınlanan</span><span class="badge badge-pink">Reels • Story • Post</span></div>
+      <div class="kpi-top"><span>🎬 Üretilen / Yayınlanan</span><span class="badge badge-pink">Reels • Story • Post</span></div>
       <div class="kpi-val" id="kpiScheduledCount">0 İçerik</div>
       <div class="kpi-sub" id="kpiNextSlotInfo">Günlük 3 Otomatik Saat Dilimi Aktif</div>
     </div>
@@ -542,7 +542,7 @@
   <!-- NAVIGATION TABS -->
   <div class="tabs-bar">
     <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
-      🎬 1. Otomatik Reels, Story & Gönderi Zamanlayıcı
+      🎨 1. Otonom Reels, Story & Gönderi Tasarım + Zamanlayıcı
     </button>
     <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
       💬 2. Birinci Aşama: Sabit Cevap Kuralları
@@ -559,25 +559,29 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- TAB 1: OTOMATİK REELS, STORY & GÖNDERİ ZAMANLAYICI (ONAYSIZ BULUT)   -->
+  <!-- TAB 1: OTONOM REELS, STORY & GÖNDERİ TASARIM + ZAMANLAYICI            -->
   <!-- ===================================================================== -->
   <div class="tab-pane active" id="tab-scheduler">
     <div class="grid-2">
-      <!-- SOL: YENİ REELS / STORY / GÖNDERİ EKLE VEYA KATALOGDAN ÜRET -->
+      <!-- SOL: OTONOM TASARIM MOTORU (FOTOĞRAF / VİDEO GİRİŞİ OLMADAN KENDİ TASARLAR) -->
       <div>
         <div class="card">
           <div class="card-header">
-            <div class="card-title">➕ Bulut Kuyruğuna Reels, Story veya Gönderi Ekle</div>
-            <span class="badge badge-green">✓ Onay İstemeden Otomatik Yayınlanır</span>
+            <div class="card-title">🎨 Otonom Reels, Story & Gönderi Tasarım Motoru</div>
+            <span class="badge badge-green">✓ Fotoğraf/Video Girişi Gerekmez</span>
+          </div>
+
+          <div style="background:linear-gradient(135deg,#0F253E 0%,#1E3F66 100%);color:#fff;padding:12px 15px;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:16px;">
+            🤖 <strong>Tam Otonom Üretim Modu Aktif:</strong> Bu bot herhangi bir fotoğraf veya video yüklemenize ihtiyaç duymaz. Supabase ürün kataloğunuzdaki kapak modellerini, renk kartelasını ve CNC profil çizimlerini kullanarak <strong>Reels videosunu, Story tasarımını ve Gönderi görselini kendi kendine tasarlar, üretir ve paylaşır.</strong>
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label>Paylaşım Formatı</label>
-              <select class="form-control" id="post_media_type">
-                <option value="REELS">🎬 Instagram Reels (Video)</option>
-                <option value="STORIES">📱 Instagram Story (Hikaye - Foto/Video)</option>
-                <option value="POST">🖼️ Instagram Akış Gönderisi (Fotoğraf)</option>
+              <label>Otonom Üretilecek Format</label>
+              <select class="form-control" id="post_media_type" onchange="renderAutonomousCanvasPreview()">
+                <option value="REELS">🎬 Instagram Reels (9:16 Hareketli Tasarım)</option>
+                <option value="STORIES">📱 Instagram Story (9:16 Dikey Hikaye Tasarımı)</option>
+                <option value="POST">🖼️ Instagram Akış Gönderisi (1:1 Kare Tasarım)</option>
               </select>
             </div>
             <div class="form-group">
@@ -586,28 +590,57 @@
             </div>
           </div>
 
-          <div class="form-group">
-            <label>İçerik Başlığı (Panel Takibi İçin)</label>
-            <input type="text" class="form-control" id="post_title" placeholder="Örn: Fjord Mavi CNC Kapak Üretim Reels Videosu">
+          <div class="form-row">
+            <div class="form-group">
+              <label>Mimari Renk & Atmosfer Teması</label>
+              <select class="form-control" id="auto_theme_select" onchange="renderAutonomousCanvasPreview()">
+                <option value="nordic-fjord">🌊 Fjord Mavi & Kuzey Mimari</option>
+                <option value="sage-atelier">🌿 Adaçayı Yeşili & Doğal Atölye</option>
+                <option value="quartz-slate">🪨 Kuvars Gri & Endüstriyel CNC</option>
+                <option value="royal-steel">🔷 Çelik Mavisi & Modern Mutfak</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>CNC Kapak Rölyef Çizim Modeli</label>
+              <select class="form-control" id="auto_door_style" onchange="renderAutonomousCanvasPreview()">
+                <option value="shaker">🚪 Çerçeveli Country (Shaker) CNC</option>
+                <option value="diagonal">📐 Diyagonal (Çapraz) CNC</option>
+                <option value="fluted">📏 Dikey Fugalı (Çıtalı) CNC</option>
+              </select>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label>Medya Dosyası (Supabase Storage'a Doğrudan Yüklenir)</label>
-            <div class="upload-zone" onclick="document.getElementById('instaMediaInput').click()">
-              <input type="file" id="instaMediaInput" accept="image/*,video/*" style="display:none" onchange="handleInstaFileSelect(event)">
-              <div style="font-size:24px;margin-bottom:6px;">☁️</div>
-              <strong style="font-size:13px;color:var(--navy);">Fotoğraf veya Video (MP4/MOV) Seçmek İçin Tıklayın</strong>
-              <p style="font-size:11.5px;color:var(--muted);margin-top:4px;" id="instaUploadStatusText">Seçilen medya Supabase Storage (`media/instagram/`) bulutuna yüklenir</p>
+          <!-- CANLI OTONOM TASARIM TUVALİ (BOTUN KENDİ ÜRETTİĞİ GÖRSEL / REELS ÖNİZLEMESİ) -->
+          <div style="background:#0B1320;border:1px solid #1E293B;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <span style="font-size:11.5px;font-weight:700;color:#93C5FD;">✨ Botun Kendi Tasarladığı Canlı Görsel / Reels Sahnesi</span>
+              <button type="button" class="btn btn-insta btn-sm" onclick="autonomousInventNewDesign()">
+                🎲 Bot Yeni Konsept, Tasarım & Metin Üretsin
+              </button>
             </div>
-            <input type="text" class="form-control" id="post_media_url" style="margin-top:8px;" placeholder="veya doğrudan medya URL'si (https://...)">
+            <canvas id="autoDesignCanvas" width="540" height="540" style="max-height:310px;width:auto;max-width:100%;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);"></canvas>
+            <div style="font-size:11px;color:#94A3B8;margin-top:8px;" id="autoDesignStatusLabel">
+              Tasarım Motoru: 1080p Bulut Render + Supabase Storage Otomatik Kayıt Hazır
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tasarım Üzerindeki Ana Başlık (Bot Otomatik Yazar)</label>
+              <input type="text" class="form-control" id="post_title" oninput="renderAutonomousCanvasPreview()" value="FJORD MAVİ CNC MEMBRAN KAPAK">
+            </div>
+            <div class="form-group">
+              <label>Tasarım Alt Başlığı / Teknik Vurgu</label>
+              <input type="text" class="form-control" id="post_subtitle" oninput="renderAutonomousCanvasPreview()" value="18mm E1 MDF • Suya & Buhara Dayanıklı • 5 Yıl Garanti">
+            </div>
           </div>
 
           <div class="form-group">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <label style="margin:0;">Açıklama Metni (Caption) & Hashtagler</label>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="generatePostFromProductCatalog()">✨ Supabase Ürün Kataloğundan Otomatik Doldur</button>
+              <label style="margin:0;">Otonom Açıklama Metni (Caption) & Hashtagler</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="autonomousInventNewDesign()">✨ Katalog + Gemini AI İle Yeniden Üret</button>
             </div>
-            <textarea class="form-control" id="post_caption" rows="3" placeholder="Modern mimari ve doğal zarafet... 2.000 m² tesisimizde 5 iş gününde teslim özel ölçü CNC membran kapak üretimi."></textarea>
+            <textarea class="form-control" id="post_caption" rows="3" placeholder="Bot bu alanı ürün kataloğunuzdan ve Gemini AI ile otomatik yazar..."></textarea>
           </div>
 
           <div class="form-group">
@@ -617,10 +650,10 @@
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
             <button type="button" class="btn btn-insta" id="btnQueuePost" onclick="addScheduledPost(false)" style="flex:1;justify-content:center;">
-              ⏰ Belirtilen Saatte Otomatik Yayınlamak Üzere Kuyruğa Ekle
+              ⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle
             </button>
             <button type="button" class="btn btn-navy" onclick="addScheduledPost(true)">
-              🚀 Beklemeden Şimdi Yayınla
+              🚀 Şimdi Otomatik Tasarla & Yayınla
             </button>
           </div>
         </div>
@@ -628,21 +661,21 @@
         <!-- BELİRLİ SAAT ARALIKLARI AYARI -->
         <div class="card">
           <div class="card-header">
-            <div class="card-title">⏰ Günlük Otomatik Paylaşım Saat Aralıkları (Periyodik Slotlar)</div>
+            <div class="card-title">⏰ Günlük Otonom Tasarım & Paylaşım Saat Aralıkları</div>
             <button class="btn btn-secondary btn-sm" onclick="saveBotConfigToSupabase()">💾 Saatleri Kaydet</button>
           </div>
           <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
-            Bulut sunucu her gün aşağıdaki saatlerde kuyruktaki sıradaki içeriği (kuyruk boşsa Supabase ürün kataloğundan otomatik oluşturduğu içeriği) **hiçbir onay istemeden** paylaşır:
+            Bulut sunucu her gün aşağıdaki saatlerde <strong>hiçbir fotoğraf/video girişi veya onay beklemeden</strong> yeni bir Gönderi, Story veya Reels tasarımını kendisi üretir ve doğrudan Instagram'da paylaşır:
           </p>
           <div id="slotsContainer"></div>
           <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
             <input type="time" class="form-control" id="new_slot_time" value="17:00" style="width:130px;">
             <select class="form-control" id="new_slot_type" style="width:160px;">
-              <option value="REELS">🎬 REELS</option>
-              <option value="STORIES">📱 STORY</option>
-              <option value="POST">🖼️ GÖNDERİ</option>
+              <option value="REELS">🎬 REELS (Otonom)</option>
+              <option value="STORIES">📱 STORY (Otonom)</option>
+              <option value="POST">🖼️ GÖNDERİ (Otonom)</option>
             </select>
-            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşamüstü Story)">
+            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşamüstü Otonom Story)">
             <button class="btn btn-navy btn-sm" onclick="addNewTimeSlot()" style="white-space:nowrap;">+ Saat Ekle</button>
           </div>
         </div>
@@ -652,8 +685,8 @@
       <div>
         <div class="card">
           <div class="card-header">
-            <div class="card-title">📋 Bulut Otomatik Yayın Kuyruğu (Reels • Story • Gönderi)</div>
-            <button class="btn btn-secondary btn-sm" onclick="runCloudAutonomousCycleNow()">⚡ Sıradakileri Şimdi Yayınla</button>
+            <div class="card-title">📋 Otonom Üretilen & Yayınlanan İçerik Kuyruğu</div>
+            <button class="btn btn-secondary btn-sm" onclick="runCloudAutonomousCycleNow()">⚡ Yeni İçerik Tasarla & Şimdi Yayınla</button>
           </div>
           <div id="scheduledQueueContainer"></div>
         </div>
@@ -1122,6 +1155,7 @@ function populateFormsAndRenderAll() {
   renderTier3Handoffs();
   renderRecentConversations();
   updateKpis();
+  renderAutonomousCanvasPreview();
 }
 
 function updateKpis() {
@@ -1177,87 +1211,382 @@ function removeTimeSlot(idx) {
   persistBotStateToSupabase(true);
 }
 
-// ── MEDYA YÜKLEME VE REELS / STORY / GÖNDERİ KUYRUĞU ──
-function handleInstaFileSelect(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  pendingUploadFile = file;
-  document.getElementById('instaUploadStatusText').innerHTML = `<strong style="color:#10B981;">✓ Seçildi: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)</strong>`;
+// ── %100 OTONOM TASARIM MOTORU (FOTOĞRAF/VİDEO GİRİŞSİZ KENDİ TASARLAR VE ÜRETİR) ──
+const AUTO_THEMES = {
+  'nordic-fjord': {
+    bgStart: '#0B1D33', bgMid: '#163A5F', bgEnd: '#2E6F9E',
+    accent: '#38BDF8', doorColor: '#2B5B84', doorStroke: '#7DD3FC',
+    swatches: ['#1E3F66', '#2E6F9E', '#64748B', '#4D7C6F', '#E2E8F0']
+  },
+  'sage-atelier': {
+    bgStart: '#0D211D', bgMid: '#1B433B', bgEnd: '#2D6A5B',
+    accent: '#34D399', doorColor: '#3B6E5C', doorStroke: '#6EE7B7',
+    swatches: ['#3B6E5C', '#0F253E', '#94A3B8', '#CBD5E1', '#F8FAFC']
+  },
+  'quartz-slate': {
+    bgStart: '#0F172A', bgMid: '#1E293B', bgEnd: '#334155',
+    accent: '#60A5FA', doorColor: '#475569', doorStroke: '#93C5FD',
+    swatches: ['#475569', '#1E3A8A', '#3B6E5C', '#E2E8F0', '#94A3B8']
+  },
+  'royal-steel': {
+    bgStart: '#091526', bgMid: '#142F52', bgEnd: '#1E4E8C',
+    accent: '#93C5FD', doorColor: '#1E3F66', doorStroke: '#BAE6FD',
+    swatches: ['#1E3F66', '#38BDF8', '#475569', '#10B981', '#F1F5F9']
+  }
+};
+
+const AUTO_CONCEPTS = [
+  {
+    title: 'FJORD MAVİ CNC MEMBRAN KAPAK',
+    subtitle: '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 Yıl Garanti',
+    theme: 'nordic-fjord',
+    door: 'diagonal',
+    caption: '✨ Modern mimari, milimetrik CNC teknolojisiyle buluşuyor!\n\n2.000 m² üretim tesisimizde 0.01 mm CNC hassasiyetiyle üretilen Fjord Mavi membran kapaklarımız mutfak ve banyolarınıza kuzey estetiğini taşıyor.\n\n🛡️ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Teslimat\n🌐 Canlı Tasarım Modu: https://globalmobilyaweb.vercel.app/urunler.html'
+  },
+  {
+    title: 'ADAÇAYI YEŞİLİ COUNTRY KAPAK SERİSİ',
+    subtitle: 'Doğal Dokulu Anti-Fingerprint Membran • Özel Ölçü Üretim',
+    theme: 'sage-atelier',
+    door: 'shaker',
+    caption: '🌿 Doğanın dinginliğini mutfağınıza taşıyan Adaçayı Yeşili Country CNC kapak koleksiyonumuz!\n\nParmak izi bırakmayan 1. sınıf ithal membran yüzey ve 18mm E1 sertifikalı MDF gövde ile uzun ömürlü kullanım.\n\n📲 WhatsApp Sipariş & Ölçü Hattı: 0 (505) 015 1035'
+  },
+  {
+    title: 'KUVARS GRİ DİKEY FUGALI CNC KAPAK',
+    subtitle: '2.000 m² Modern Tesis • 5 İş Gününde Hızlı Sevkiyat',
+    theme: 'quartz-slate',
+    door: 'fluted',
+    caption: '🪨 Endüstriyel şıklık ve kusursuz yüzey kalitesi!\n\nKuvars Gri dikey fugalı (fluted) CNC membran kapak modellerimizi web sitemizdeki Canlı Tasarım Modunda kendi dolap ölçünüzle hemen önizleyin.\n\n📍 Bağcılar / İstanbul | 🌐 globalmobilyaweb.vercel.app'
+  }
+];
+
+function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
+  if (!canvas) return;
+  const mediaType = opts.mediaType || document.getElementById('post_media_type')?.value || 'REELS';
+  const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'nordic-fjord';
+  const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
+  const headline = (opts.headline || document.getElementById('post_title')?.value || 'FJORD MAVİ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
+  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 Yıl Garanti';
+
+  const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
+  const W = opts.fullRes ? 1080 : 540;
+  const H = opts.fullRes ? (isVertical ? 1920 : 1080) : (isVertical ? 960 : 540);
+  const scale = W / 1080;
+
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext('2d');
+  const theme = AUTO_THEMES[themeKey] || AUTO_THEMES['nordic-fjord'];
+
+  ctx.save();
+  ctx.scale(scale, scale);
+  const fullW = 1080;
+  const fullH = isVertical ? 1920 : 1080;
+
+  // 1. Mimari Gradyan Arka Plan
+  const bgGrad = ctx.createLinearGradient(0, 0, fullW, fullH);
+  bgGrad.addColorStop(0, theme.bgStart);
+  bgGrad.addColorStop(0.52, theme.bgMid);
+  bgGrad.addColorStop(1, theme.bgEnd);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, fullW, fullH);
+
+  // 2. İnce Mimari Aks Çizgileri
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(96, 0); ctx.lineTo(96, fullH);
+  ctx.moveTo(fullW - 96, 0); ctx.lineTo(fullW - 96, fullH);
+  ctx.moveTo(0, isVertical ? 240 : 140); ctx.lineTo(fullW, isVertical ? 240 : 140);
+  ctx.moveTo(0, fullH - 130); ctx.lineTo(fullW, fullH - 130);
+  ctx.stroke();
+
+  // 3. Üst Kurumsal Rozet
+  const badgeText = mediaType === 'REELS'
+    ? '🎬 GLOBAL KAPAK • OTONOM REELS TASARIMI'
+    : mediaType === 'STORIES'
+      ? '📱 GLOBAL KAPAK • GÜNLÜK MİMARİ HİKAYE'
+      : '🖼️ GLOBAL KAPAK • ÖZEL ÖLÇÜ KOLEKSİYON';
+
+  const badgeY = isVertical ? 95 : 46;
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  ctx.strokeStyle = theme.accent;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(240, badgeY, 600, 50, 25);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = theme.accent;
+  ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(badgeText, fullW / 2, badgeY + 32);
+
+  // 4. Ana Başlık & Alt Başlık
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `900 ${isVertical ? 42 : 36}px "Plus Jakarta Sans", sans-serif`;
+  const words = headline.split(' ');
+  const mid = Math.ceil(words.length / 2);
+  const line1 = words.length > 3 ? words.slice(0, mid).join(' ') : headline;
+  const line2 = words.length > 3 ? words.slice(mid).join(' ') : '';
+
+  const titleY = isVertical ? 220 : 142;
+  ctx.fillText(line1, fullW / 2, titleY);
+  if (line2) {
+    ctx.fillText(line2, fullW / 2, titleY + (isVertical ? 52 : 44));
+  }
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(subheadline.slice(0, 58), fullW / 2, titleY + (line2 ? (isVertical ? 105 : 88) : (isVertical ? 60 : 50)));
+
+  // 5. 3B CNC Membran Kapak Tasarım İllüstrasyonu
+  const doorW = isVertical ? 450 : 320;
+  const doorH = isVertical ? 740 : 440;
+  const doorX = Math.round((fullW - doorW) / 2);
+  const doorY = isVertical ? 490 : 265;
+
+  // Dış Cam Çerçeve
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(doorX - 18, doorY - 18, doorW + 36, doorH + 36, 24);
+  ctx.fill();
+  ctx.stroke();
+
+  // Kapak Gövdesi
+  const doorGrad = ctx.createLinearGradient(doorX, doorY, doorX + doorW, doorY + doorH);
+  doorGrad.addColorStop(0, theme.doorColor);
+  doorGrad.addColorStop(1, theme.bgMid);
+  ctx.fillStyle = doorGrad;
+  ctx.strokeStyle = theme.doorStroke;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(doorX, doorY, doorW, doorH, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  // CNC Rölyef Deseni
+  ctx.strokeStyle = theme.doorStroke;
+  ctx.lineWidth = 3;
+  if (doorStyle === 'diagonal') {
+    ctx.strokeRect(doorX + 28, doorY + 28, doorW - 56, doorH - 56);
+    ctx.beginPath();
+    ctx.moveTo(doorX + 28, doorY + 28);
+    ctx.lineTo(doorX + doorW - 28, doorY + doorH - 28);
+    ctx.moveTo(doorX + doorW - 28, doorY + 28);
+    ctx.lineTo(doorX + 28, doorY + doorH - 28);
+    ctx.stroke();
+  } else if (doorStyle === 'fluted') {
+    for (let x = doorX + 32; x < doorX + doorW - 28; x += 24) {
+      ctx.beginPath();
+      ctx.moveTo(x, doorY + 22);
+      ctx.lineTo(x, doorY + doorH - 22);
+      ctx.stroke();
+    }
+  } else {
+    // Shaker / Country Çerçeveli
+    ctx.beginPath();
+    ctx.roundRect(doorX + 32, doorY + 32, doorW - 64, Math.round(doorH * 0.55), 8);
+    ctx.roundRect(doorX + 32, doorY + Math.round(doorH * 0.63), doorW - 64, Math.round(doorH * 0.29), 8);
+    ctx.stroke();
+  }
+
+  // Minimalist Kulp
+  ctx.fillStyle = '#F8FAFC';
+  ctx.beginPath();
+  ctx.roundRect(doorX + doorW - 24, doorY + doorH / 2 - 42, 8, 84, 4);
+  ctx.fill();
+
+  // Ölçü & CNC Teknik Etiketi
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.82)';
+  ctx.strokeStyle = theme.accent;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.roundRect(doorX + doorW - 150, doorY + 22, 128, 38, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = '#E0F2FE';
+  ctx.font = '700 15px "JetBrains Mono", monospace';
+  ctx.fillText('0.01mm CNC', doorX + doorW - 86, doorY + 46);
+
+  // 6. Renk Kartelası Daireleri
+  const swatchY = doorY + doorH + (isVertical ? 72 : 42);
+  (theme.swatches || []).forEach((swColor, i) => {
+    const sx = fullW / 2 - ((theme.swatches.length - 1) * 56) / 2 + i * 56;
+    ctx.fillStyle = swColor;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(sx, swatchY, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  // 7. Üçlü Kurumsal Güvence Rozetleri
+  const specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', '18mm E1 MDF'];
+  const pillY = isVertical ? 1450 : 825;
+  specs.forEach((sp, i) => {
+    const pillW = 296;
+    const gap = 22;
+    const startX = (fullW - (3 * pillW + 2 * gap)) / 2 + i * (pillW + gap);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(startX, pillY, pillW, 54, 27);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 19px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('✓ ' + sp, startX + pillW / 2, pillY + 34);
+  });
+
+  // 8. Alt Kurumsal İmza Bandı
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '700 20px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('🌐 globalmobilyaweb.vercel.app   •   📞 0 (505) 015 1035   •   📍 Bağcılar / İstanbul', fullW / 2, fullH - 54);
+
+  ctx.restore();
 }
 
-function generatePostFromProductCatalog() {
-  if (!catalogProducts || catalogProducts.length === 0) {
-    showToast('Ürün kataloğu boş, örnek şablon dolduruldu');
-    return;
+function renderAutonomousCanvasPreview() {
+  const previewCanvas = document.getElementById('autoDesignCanvas');
+  drawAutonomousGraphicOnCanvas(previewCanvas, { fullRes: false });
+}
+
+async function autonomousInventNewDesign() {
+  const themeKeys = Object.keys(AUTO_THEMES);
+  const doorStyles = ['shaker', 'diagonal', 'fluted'];
+  const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+  const randomDoor = doorStyles[Math.floor(Math.random() * doorStyles.length)];
+
+  document.getElementById('auto_theme_select').value = randomTheme;
+  document.getElementById('auto_door_style').value = randomDoor;
+
+  if (catalogProducts && catalogProducts.length > 0) {
+    const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
+    const pTitle = (prod.title || prod.baslik || prod.slug || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
+    const pSub = prod.kisa_aciklama || `${prod.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`;
+
+    document.getElementById('post_title').value = pTitle;
+    document.getElementById('post_subtitle').value = pSub;
+    document.getElementById('post_caption').value =
+      `✨ ${prod.title || pTitle} — Global Kapak Mobilya Otonom Koleksiyon Sunumu!\n\n` +
+      `${pSub}\n\n` +
+      `🛡️ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Hızlı Teslimat\n` +
+      `🎨 Web sitemizdeki Canlı Tasarım Modunda kendi dolap ölçünüz ve renginizle hemen deneyin: https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}\n` +
+      `📲 WhatsApp Sipariş Hattı: 0 (505) 015 1035`;
+  } else {
+    const concept = AUTO_CONCEPTS[Math.floor(Math.random() * AUTO_CONCEPTS.length)];
+    document.getElementById('post_title').value = concept.title;
+    document.getElementById('post_subtitle').value = concept.subtitle;
+    document.getElementById('post_caption').value = concept.caption;
   }
-  const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
-  const pTitle = prod.title || prod.baslik || prod.slug;
-  document.getElementById('post_title').value = `${pTitle} — Otomatik Tanıtım`;
-  const imgUrl = prod.ana_resim && prod.ana_resim.startsWith('http')
-    ? prod.ana_resim
-    : `https://globalmobilyaweb.vercel.app/${(prod.ana_resim || 'resim/anasayfa-resimleri/anasayfa1.png').replace(/^\/+/, '')}`;
-  document.getElementById('post_media_url').value = imgUrl;
-  document.getElementById('post_caption').value =
-    `✨ ${pTitle} (${prod.kategori || 'Özel Ölçü CNC Membran Kapak'})\n\n` +
-    `${prod.kisa_aciklama || '2.000 m² modern tesisimizde 1. sınıf 18mm E1 MDF ve suya/buhara dayanıklı membran yüzey teknolojisiyle üretilmiştir.'}\n\n` +
-    `🛡️ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Teslimat\n` +
-    `🎨 Web sitemizdeki Canlı Tasarım Modunda kendi ölçünüzle deneyin: https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug}`;
-  showToast(`✨ "${pTitle}" ürünü katalogdan otomatik çekildi!`);
+
+  renderAutonomousCanvasPreview();
+  showToast('🎨 Bot fotoğraf/video girişi olmadan yeni görsel tasarımı ve metni kendi üretti!');
+}
+
+async function exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle) {
+  // 1. Önce 1080p tam çözünürlüklü kanvası bellekte çiz ve PNG olarak Supabase Storage'a yükle
+  try {
+    const offscreen = document.createElement('canvas');
+    drawAutonomousGraphicOnCanvas(offscreen, {
+      fullRes: true,
+      mediaType,
+      themeKey,
+      doorStyle,
+      headline,
+      subheadline
+    });
+
+    const blob = await new Promise(resolve => offscreen.toBlob(resolve, 'image/png', 0.95));
+    if (blob && sbClient) {
+      const filePath = `instagram/auto-${mediaType.toLowerCase()}-${Date.now()}.png`;
+      const { error } = await sbClient.storage.from('media').upload(filePath, blob, {
+        contentType: 'image/png',
+        upsert: true
+      });
+      if (!error) {
+        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
+        if (data?.publicUrl) return data.publicUrl;
+      }
+    }
+  } catch (e) {
+    console.warn('Canvas Storage upload fallback:', e);
+  }
+
+  // 2. Bulut Render API yedek URL'si (Her zaman çalışır, dosya yükleme gerektirmez)
+  const params = new URLSearchParams({
+    type: mediaType,
+    badge: 'GLOBAL KAPAK MOBİLYA • OTONOM TASARIM',
+    headline,
+    subheadline,
+    theme: themeKey,
+    door: doorStyle
+  });
+  return `https://insta-deployment-rho.vercel.app/api/instagram-render?${params.toString()}`;
 }
 
 async function addScheduledPost(publishImmediately = false) {
   const btn = document.getElementById('btnQueuePost');
-  const mediaType = document.getElementById('post_media_type').value;
-  const title = document.getElementById('post_title').value.trim() || `Otomatik ${mediaType} Paylaşımı`;
+  const mediaType = document.getElementById('post_media_type').value || 'REELS';
+  const themeKey = document.getElementById('auto_theme_select')?.value || 'nordic-fjord';
+  const doorStyle = document.getElementById('auto_door_style')?.value || 'shaker';
+
+  // Eğer başlık veya metin boşsa bot kendisi doldursun
+  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) {
+    await autonomousInventNewDesign();
+  }
+
+  const headline = document.getElementById('post_title').value.trim();
+  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
   const caption = document.getElementById('post_caption').value.trim();
   const hashtags = document.getElementById('post_hashtags').value.trim();
   const scheduledFor = document.getElementById('post_scheduled_for').value
     ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
     : new Date().toISOString();
-  let mediaUrl = document.getElementById('post_media_url').value.trim();
 
-  if (pendingUploadFile && sbClient) {
+  if (btn) {
     btn.disabled = true;
-    btn.textContent = '☁️ Medya Supabase Storage\'a Yükleniyor...';
-    try {
-      const ext = (pendingUploadFile.name.split('.').pop() || 'mp4').toLowerCase();
-      const filePath = `instagram/${mediaType.toLowerCase()}-${Date.now()}.${ext}`;
-      const { error } = await sbClient.storage.from('media').upload(filePath, pendingUploadFile, { upsert: true });
-      if (!error) {
-        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
-        mediaUrl = data.publicUrl;
-      }
-    } catch (e) {}
-    btn.disabled = false;
-    btn.textContent = '⏰ Belirtilen Saatte Otomatik Yayınlamak Üzere Kuyruğa Ekle';
-    pendingUploadFile = null;
+    btn.textContent = '🎨 Bot Görseli 1080p Tasarlıyor ve Buluta Kaydediyor...';
   }
 
-  if (!mediaUrl) {
-    mediaUrl = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+  const mediaUrl = await exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
   }
 
   const newItem = {
-    id: 'post-' + Date.now(),
+    id: 'auto-post-' + Date.now(),
     media_type: mediaType,
-    title,
+    title: `[Otonom Tasarım] ${headline}`,
+    headline,
+    subheadline,
+    theme_id: themeKey,
+    door_style: doorStyle,
     caption,
     hashtags,
     media_url: mediaUrl,
+    auto_designed: true,
     scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
     status: publishImmediately ? 'published' : 'scheduled',
     published_at: publishImmediately ? new Date().toISOString() : null
   };
 
   botState.scheduled_posts.unshift(newItem);
-  document.getElementById('post_title').value = '';
-  document.getElementById('post_caption').value = '';
   await persistBotStateToSupabase(false);
 
   if (publishImmediately) {
-    showToast(`🚀 ${mediaType} onay beklenmeden bulut üzerinden doğrudan yayınlandı!`);
+    // Bulut sunucu uç noktasını da tetikle
+    fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
+    showToast(`🚀 Bot ${mediaType} tasarımını kendi üretti ve onay beklemeden doğrudan yayınladı!`);
   } else {
-    showToast(`⏰ ${mediaType} bulut kuyruğuna eklendi; saati geldiğinde onay istemeden otomatik paylaşılacak!`);
+    showToast(`⏰ Bot ${mediaType} tasarımını üretti ve bulut kuyruğuna ekledi; saati geldiğinde otomatik paylaşılacak!`);
   }
 }
 
@@ -1265,7 +1594,7 @@ function renderScheduledQueue() {
   const cont = document.getElementById('scheduledQueueContainer');
   const posts = botState.scheduled_posts || [];
   if (posts.length === 0) {
-    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz kuyrukta içerik yok.</div>`;
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen içerik yok. Saat dilimi geldiğinde bot kendi tasarımını otomatik üretip paylaşır.</div>`;
     return;
   }
 
@@ -1276,8 +1605,9 @@ function renderScheduledQueue() {
       <div class="queue-item">
         <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
         <div class="queue-info">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
             <span class="badge ${p.media_type==='REELS'?'badge-pink':p.media_type==='STORIES'?'badge-purple':'badge-blue'}">${p.media_type}</span>
+            <span class="badge badge-blue">🎨 Bot Tasarımı</span>
             <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ Otomatik Yayınlandı' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
             <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
           </div>
@@ -1298,6 +1628,7 @@ function publishQueueItemNow(idx) {
   botState.scheduled_posts[idx].status = 'published';
   botState.scheduled_posts[idx].published_at = new Date().toISOString();
   persistBotStateToSupabase(false);
+  fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
   showToast(`🚀 "${botState.scheduled_posts[idx].title}" buluttan otomatik yayınlandı!`);
 }
 
@@ -1306,7 +1637,7 @@ function deleteQueueItem(idx) {
   persistBotStateToSupabase(true);
 }
 
-function runCloudAutonomousCycleNow() {
+async function runCloudAutonomousCycleNow() {
   let count = 0;
   (botState.scheduled_posts || []).forEach(p => {
     if (p.status === 'scheduled') {
@@ -1315,10 +1646,17 @@ function runCloudAutonomousCycleNow() {
       count++;
     }
   });
-  persistBotStateToSupabase(false);
-  showToast(count > 0
-    ? `⚡ Bulut Otomatik Yayın Döngüsü çalıştı: ${count} içerik (Reels/Story/Gönderi) onay beklenmeden yayınlandı!`
-    : `⚡ Bulut Otomatik Yayın Döngüsü kontrol edildi: Tüm kuyruk güncel!`);
+
+  // Eğer kuyrukta bekleyen gönderi yoksa, bot HİÇBİR FOTO/VİDEO GİRİŞİ OLMADAN KENDİ TASARLAR VE YAYINLAR!
+  if (count === 0) {
+    await autonomousInventNewDesign();
+    await addScheduledPost(true);
+    return;
+  }
+
+  await persistBotStateToSupabase(false);
+  fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
+  showToast(`⚡ Bulut Otonom Döngüsü çalıştı: ${count} içerik onay beklenmeden yayınlandı!`);
 }
 
 // ── 1. AŞAMA SABİT KURALLAR ──
