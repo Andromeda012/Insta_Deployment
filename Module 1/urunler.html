@@ -1402,7 +1402,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
       <div style="margin-top:20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
         <button class="btn-gold" id="btnSaveHome" onclick="saveHomeSettings()">💾 Ana Sayfa & Video Ayarlarını Kaydet ve Yayınla</button>
-        <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-secondary" style="text-decoration:none;">🌐 Canlı Ana Sayfayı Önizle ↗</a>
+        <a href="https://global-mobilya-web.vercel.app" target="_blank" class="btn-secondary" style="text-decoration:none;" onclick="updateLiveSiteLinkWithSupabase(this)">🌐 Canlı Ana Sayfayı Önizle ↗</a>
       </div>
     </div>
   </div>
@@ -1817,9 +1817,18 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 // ══════════════════════════════════════════════════════════
 // SUPABASE CLOUD DATABASE & STORAGE CONFIGURATION
 // ══════════════════════════════════════════════════════════
-const DEFAULT_SUPABASE_URL = 'https://gfxcnmpfksxghbmtvows.supabase.co'; // Varsayılan veya kullanıcı tarafından güncellenebilir
-const DEFAULT_SUPABASE_ANON_KEY = '';
+const DEFAULT_SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 const STORAGE_BUCKET = 'media';
+
+try {
+  const existingUrl = (localStorage.getItem('gkm_supabase_url') || '').trim();
+  const existingKey = (localStorage.getItem('gkm_supabase_key') || '').trim();
+  if (!existingUrl || !existingKey || existingUrl.includes('gfxcnmpfksxghbmtvows')) {
+    localStorage.setItem('gkm_supabase_url', DEFAULT_SUPABASE_URL);
+    localStorage.setItem('gkm_supabase_key', DEFAULT_SUPABASE_ANON_KEY);
+  }
+} catch(e) {}
 
 let SUPABASE_URL = (localStorage.getItem('gkm_supabase_url') || DEFAULT_SUPABASE_URL || '').trim();
 let SUPABASE_KEY = (localStorage.getItem('gkm_supabase_key') || DEFAULT_SUPABASE_ANON_KEY || '').trim();
