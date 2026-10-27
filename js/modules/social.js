@@ -1,138 +1,58 @@
-// Module 2: Social Media Bot Control Panel
+// Module 2: Social Media & Cloud Bot Control Panel (Multi-Platform Hub)
+// Currently active: Module 2 / Instagram Cloud Bot (Reels/Story/Post Auto-Publisher + 3-Stage Hybrid Communication)
 export function renderSocialModule(data) {
-    const sc = data.social;
-
     return `
-        <div class="page-header">
-            <div class="page-title-group">
-                <div class="breadcrumbs">
-                    <span onclick="window.navigateTo('dashboard')">Ana Sayfa</span> / 
-                    <span>Modül 2: Sosyal Medya & Bot Paneli</span>
+        <div class="module-embed-shell" style="display:flex; flex-direction:column; height:100%;">
+            <!-- Compact Multi-Bot Selector Bar for Module 2 Subfolders -->
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; background:#0f172a; border-bottom:1px solid rgba(148,163,184,0.18); flex-shrink:0; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#94a3b8; margin-right:4px;">Modül 2 Bot Ağı:</span>
+                    <button
+                        class="embed-tab-chip active"
+                        onclick="window.switchSocialBotChannel(this, 'instagram')"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:8px; border:1px solid rgba(225,48,108,0.45); background:linear-gradient(135deg, rgba(225,48,108,0.22), rgba(131,58,180,0.22)); color:#fff; font-size:12px; font-weight:700; cursor:pointer;"
+                    >
+                        📸 Instagram Bot <span style="background:#10b981; color:#052e16; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:800;">AKTİF • 7/24 BULUT</span>
+                    </button>
+                    <button
+                        class="embed-tab-chip"
+                        onclick="window.switchSocialBotChannel(this, 'facebook')"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid rgba(148,163,184,0.2); background:rgba(30,41,59,0.7); color:#cbd5e1; font-size:12px; font-weight:600; cursor:pointer;"
+                    >
+                        📘 Facebook Bot <span style="font-size:10px; color:#94a3b8;">(Hazırlanıyor)</span>
+                    </button>
+                    <button
+                        class="embed-tab-chip"
+                        onclick="window.switchSocialBotChannel(this, 'tiktok')"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid rgba(148,163,184,0.2); background:rgba(30,41,59,0.7); color:#cbd5e1; font-size:12px; font-weight:600; cursor:pointer;"
+                    >
+                        🎵 TikTok Bot <span style="font-size:10px; color:#94a3b8;">(Hazırlanıyor)</span>
+                    </button>
+                    <button
+                        class="embed-tab-chip"
+                        onclick="window.switchSocialBotChannel(this, 'youtube')"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid rgba(148,163,184,0.2); background:rgba(30,41,59,0.7); color:#cbd5e1; font-size:12px; font-weight:600; cursor:pointer;"
+                    >
+                        ▶️ YouTube Shorts Bot <span style="font-size:10px; color:#94a3b8;">(Hazırlanıyor)</span>
+                    </button>
                 </div>
-                <h1>Sosyal Medya Bot & Otomasyon Kontrol Paneli</h1>
-                <p class="subtitle">Çok kanallı sosyal medya hesapları, otomatik içerik takvimi, akıllı DM botu ve etkileşim izleme.</p>
-            </div>
-            <div class="page-actions">
-                <button class="btn btn-secondary" onclick="window.showToast('Tüm bot servisleri bağlantı testi yapıldı: 4 kanal aktif')">
-                    ⚡ Bağlantıları Test Et
-                </button>
-                <button class="btn btn-primary" onclick="window.showModal('Yeni İçerik Planla', 'Sosyal medya içerik planlayıcı simülasyonu. Görsel, metin ve hedef platform seçimi yapılır.')">
-                    + Yeni Gönderi Planla
-                </button>
-            </div>
-        </div>
-
-        <!-- Channel Cards Grid -->
-        <div class="section-title-row">
-            <h3>Bağlı Sosyal Medya Kanalları & Bot Durumları</h3>
-            <span class="badge badge-success">Tüm Webhooklar Aktif</span>
-        </div>
-
-        <div class="channel-grid">
-            ${sc.accounts.map(acc => `
-                <div class="card channel-card">
-                    <div class="channel-header">
-                        <div class="channel-brand">
-                            <span class="channel-icon">${acc.platform === 'Instagram' ? '📸' : acc.platform === 'TikTok' ? '🎵' : acc.platform === 'YouTube' ? '▶️' : '📘'}</span>
-                            <div>
-                                <h4>${acc.platform}</h4>
-                                <small class="text-muted">${acc.handle}</small>
-                            </div>
-                        </div>
-                        <span class="badge badge-success">${acc.status}</span>
-                    </div>
-                    <div class="channel-stats">
-                        <div class="channel-stat-item">
-                            <span>Takipçi:</span>
-                            <strong>${acc.followers}</strong>
-                        </div>
-                        <div class="channel-stat-item">
-                            <span>Planlanan:</span>
-                            <strong>${acc.postsScheduled} Gönderi</strong>
-                        </div>
-                    </div>
-                    <div class="channel-bot-info">
-                        <span class="status-dot online"></span>
-                        <span>${acc.botStatus}</span>
-                    </div>
-                    <div class="channel-footer">
-                        <small>API Gecikmesi: ${acc.ping}</small>
-                        <button class="btn-text" onclick="window.showToast('${acc.platform} bot parametreleri penceresi simüle edildi.')">Ayarlar</button>
-                    </div>
-                </div>
-            `).join('')}
-        </div>
-
-        <!-- Split Content: Scheduled Queue & Live Comments -->
-        <div class="content-split" style="margin-top: 24px;">
-            <!-- Scheduled Queue -->
-            <div class="card panel">
-                <div class="panel-header">
-                    <div class="panel-title-wrap">
-                        <h3>Yayın Takvimi & Otomatik Kuyruk</h3>
-                        <span class="tag">Sıradaki 4 Gönderi</span>
-                    </div>
-                    <button class="btn btn-secondary" onclick="window.showToast('Yayın kuyruğu yeniden düzenleme modu')">Sırala</button>
-                </div>
-                <div class="queue-list">
-                    ${sc.scheduledQueue.map(item => `
-                        <div class="queue-item">
-                            <div class="queue-thumb">🎬</div>
-                            <div class="queue-info">
-                                <strong>${item.title}</strong>
-                                <div class="queue-meta">
-                                    <span>Hedef: ${item.platform}</span> • 
-                                    <span>Tarih: ${item.date}</span>
-                                </div>
-                            </div>
-                            <span class="badge ${item.status === 'Onaylandı' ? 'badge-success' : item.status === 'Kuyrukta' ? 'badge-primary' : 'badge-secondary'}">
-                                ${item.status}
-                            </span>
-                        </div>
-                    `).join('')}
+                <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
+                    <span style="display:inline-flex; align-items:center; gap:5px; color:#34d399; font-weight:600;">
+                        <span style="width:7px; height:7px; border-radius:50%; background:#10b981; display:inline-block;"></span>
+                        Onaysız Otomatik Paylaşım & 3 Aşamalı Hibrit İletişim
+                    </span>
                 </div>
             </div>
 
-            <!-- Live Bot Logs & Comments -->
-            <div class="card panel">
-                <div class="panel-header">
-                    <div class="panel-title-wrap">
-                        <h3>Gelen Yorumlar & Akıllı DM Yanıtları</h3>
-                        <span class="badge badge-accent">Son Yorumlar</span>
-                    </div>
-                </div>
-                <div class="comments-stream">
-                    ${sc.recentComments.map(c => `
-                        <div class="comment-item">
-                            <div class="comment-user">
-                                <strong>${c.user}</strong>
-                                <span class="badge badge-secondary">${c.platform}</span>
-                                <small class="text-muted">${c.time}</small>
-                            </div>
-                            <p class="comment-text">"${c.comment}"</p>
-                            <div class="bot-reply-bubble">
-                                <span class="bot-badge">🤖 Bot:</span>
-                                <span>${c.botReply}</span>
-                            </div>
-                        </div>
-                    `).join('')}
-                </div>
-            </div>
-        </div>
-
-        <!-- Bot Activity Terminal -->
-        <div class="card panel" style="margin-top: 24px;">
-            <div class="panel-header">
-                <h3>Bot Servis Logları & Olay Kayıtları</h3>
-                <span class="tag">Graph Webhook v19.0</span>
-            </div>
-            <div class="terminal-window">
-                ${sc.botLogs.map(log => `
-                    <div class="log-line ${log.level}">
-                        [${log.time}] [${log.service}] ${log.message}
-                    </div>
-                `).join('')}
-            </div>
+            <!-- Active Bot Iframe Container -->
+            <iframe
+                id="module2-frame"
+                class="module-embed-frame"
+                style="flex:1; width:100%; border:none;"
+                src="Module%202/Instagram/index.html"
+                title="Modül 2 — Instagram Bulut Bot & 3 Aşamalı İletişim Kontrol Merkezi"
+                allow="clipboard-read; clipboard-write; fullscreen"
+            ></iframe>
         </div>
     `;
 }

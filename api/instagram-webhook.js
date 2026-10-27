@@ -1,0 +1,220 @@
+// ============================================================================
+// Global Kapak Mobilya — Modül 2: Instagram Cloud Bot Webhook Endpoint (Vercel Serverless)
+// Endpoint: https://insta-deployment-rho.vercel.app/api/instagram-webhook
+// ============================================================================
+import {
+    evaluateThreeTierCommunication,
+    sendInstagramDmReply,
+    sendInstagramCommentReply
+} from '../Module 2/Instagram/bot-engine.js';
+
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+
+async function loadCloudBotState() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=value`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        if (res.ok) {
+            const rows = await res.json();
+            if (rows && rows.length > 0 && rows[0].value) {
+                return rows[0].value;
+            }
+        }
+    } catch (_) {}
+    return null;
+}
+
+async function saveCloudBotState(stateObj) {
+    try {
+        await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json',
+                'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+                key: 'insta_bot_state',
+                value: stateObj,
+                updated_at: new Date().toISOString()
+            })
+        });
+    } catch (_) {}
+}
+
+async function loadProductsCatalog() {
+    try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=name,category,price_num,price,specs`, {
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+        });
+        if (res.ok) return await res.json();
+    } catch (_) {}
+    return [];
+}
+
+export default async function handler(req, res) {
+    // Allow CORS for testing from control panel
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    // 1. Meta Webhook Verification (GET)
+    if (req.method === 'GET') {
+        const mode = req.query['hub.mode'];
+        const token = req.query['hub.verify_token'];
+        const challenge = req.query['hub.challenge'];
+
+        const state = await loadCloudBotState();
+        const verifyToken = state?.config?.webhook_verify_token || process.env.WEBHOOK_VERIFY_TOKEN || 'global_mobilya_insta_verify_2026';
+
+        if (mode === 'subscribe' && token === verifyToken) {
+            return res.status(200).send(challenge);
+        }
+
+        return res.status(200).json({
+            status: 'online',
+            service: 'Global Kapak Mobilya — Instagram Cloud Webhook (7/24 Serverless)',
+            mode: '3-Stage Hybrid Communication Engine (Stage 1: Fixed -> Stage 2: Gemini AI -> Stage 3: Human/WhatsApp)',
+            webhook_ready: true
+        });
+    }
+
+    // 2. Meta Webhook Event Processing or Direct Simulation (POST)
+    if (req.method === 'POST') {
+        try {
+            const payload = req.body || {};
+            const state = await loadCloudBotState();
+            const config = state?.config || {};
+            const rules = state?.keyword_rules || [];
+            const catalog = await loadProductsCatalog();
+
+            const geminiKey = config.gemini_api_key || process.env.GEMINI_API_KEY || '';
+            const igUserId = config.ig_user_id || process.env.IG_USER_ID || '';
+            const igAccessToken = config.ig_access_token || process.env.IG_ACCESS_TOKEN || '';
+
+            // Direct simulation test call from panel
+            if (payload.simulate_message) {
+                const decision = await evaluateThreeTierCommunication({
+                    messageText: payload.simulate_message,
+                    channel: payload.channel || 'DM',
+                    senderUsername: payload.sender_username || '@ziyaretci',
+                    config,
+                    keywordRules: rules,
+                    productsCatalog: catalog,
+                    geminiApiKey: geminiKey
+                });
+                return res.status(200).json({ ok: true, decision });
+            }
+
+            // Standard Meta Instagram Webhook payload
+            const results = [];
+            if (payload.object === 'instagram' && Array.isArray(payload.entry)) {
+                for (const entry of payload.entry) {
+                    // Direct Messages
+                    if (Array.isArray(entry.messaging)) {
+                        for (const event of entry.messaging) {
+                            if (event.message && event.message.text && !event.message.is_echo) {
+                                const senderId = event.sender?.id;
+                                const messageText = event.message.text;
+
+                                const decision = await evaluateThreeTierCommunication({
+                                    messageText,
+                                    channel: 'DM',
+                                    senderUsername: senderId,
+                                    config,
+                                    keywordRules: rules,
+                                    productsCatalog: catalog,
+                                    geminiApiKey: geminiKey
+                                });
+
+                                if (igUserId && igAccessToken && senderId) {
+                                    await sendInstagramDmReply({
+                                        igUserId,
+                                        accessToken: igAccessToken,
+                                        recipientId: senderId,
+                                        replyText: decision.replyText
+                                    });
+                                }
+
+                                results.push({ channel: 'DM', senderId, decision });
+                            }
+                        }
+                    }
+
+                    // Feed / Reels Comments
+                    if (Array.isArray(entry.changes)) {
+                        for (const change of entry.changes) {
+                            if (change.field === 'comments' && change.value?.text) {
+                                const commentId = change.value.id;
+                                const fromUsername = change.value.from?.username || 'instagram_user';
+                                const commentText = change.value.text;
+
+                                if (fromUsername === 'globalkapak' || fromUsername === 'globalmobilya') continue;
+
+                                const decision = await evaluateThreeTierCommunication({
+                                    messageText: commentText,
+                                    channel: 'COMMENT',
+                                    senderUsername: fromUsername,
+                                    config,
+                                    keywordRules: rules,
+                                    productsCatalog: catalog,
+                                    geminiApiKey: geminiKey
+                                });
+
+                                if (igAccessToken && commentId) {
+                                    await sendInstagramCommentReply({
+                                        accessToken: igAccessToken,
+                                        commentId,
+                                        replyText: decision.replyText
+                                    });
+                                }
+
+                                results.push({ channel: 'COMMENT', commentId, fromUsername, decision });
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Append conversation logs to cloud state if events occurred
+            if (results.length > 0 && state) {
+                state.conversations = state.conversations || [];
+                for (const r of results) {
+                    state.conversations.unshift({
+                        id: 'CONV-' + Date.now(),
+                        channel: r.channel,
+                        sender_username: r.fromUsername || r.senderId || '@instagram_kullanicisi',
+                        incoming_message: 'Instagram Webhook Mesajı',
+                        resolved_stage: r.decision.stage,
+                        stage_label: r.decision.stageLabel,
+                        bot_reply: r.decision.replyText,
+                        handoff_triggered: r.decision.handoffTriggered,
+                        whatsapp_link: r.decision.whatsappLink || null,
+                        created_at: new Date().toISOString()
+                    });
+                }
+                state.conversations = state.conversations.slice(0, 60);
+                await saveCloudBotState(state);
+            }
+
+            return res.status(200).json({ status: 'EVENT_RECEIVED', processed: results.length, results });
+        } catch (err) {
+            return res.status(200).json({ status: 'EVENT_HANDLED_WITH_WARNING', error: err.message });
+        }
+    }
+
+    return res.status(405).json({ error: 'Method Not Allowed' });
+}

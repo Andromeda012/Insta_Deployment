@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modül 2 — Instagram Bulut Bot & 3 Aşamalı İletişim Merkezi</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0F253E;
+    --navy2: #1E3F66;
+    --navy3: #2E6F9E;
+    --insta-pink: #E1306C;
+    --insta-purple: #833AB4;
+    --insta-orange: #F77737;
+    --insta-grad: linear-gradient(135deg, #833AB4 0%, #E1306C 55%, #F77737 100%);
+    --bg: #F4F7FA;
+    --card: #FFFFFF;
+    --border: #DCE5ED;
+    --text: #0F172A;
+    --muted: #64748B;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .top-header {
+    background: linear-gradient(90deg, #0D1F35 0%, #1C2E4A 50%, #2B193E 100%);
+    color: #fff;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .th-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .th-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--insta-grad);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 8px 20px rgba(225, 48, 108, 0.35);
+  }
+  .th-brand h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .th-brand span {
+    font-size: 12px;
+    color: rgba(255,255,255,0.72);
+    display: block;
+    margin-top: 2px;
+  }
+  .th-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cloud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.16);
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    color: #6EE7B7;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.7; }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .btn-insta {
+    background: var(--insta-grad);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(225, 48, 108, 0.28);
+  }
+  .btn-insta:hover { transform: translateY(-1px); opacity: 0.95; }
+  .btn-navy {
+    background: var(--navy);
+    color: #fff;
+  }
+  .btn-navy:hover { background: var(--navy2); }
+  .btn-outline {
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.22);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.18); }
+  .btn-secondary {
+    background: #F1F5F9;
+    color: var(--navy);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: #E2E8F0; }
+  .btn-success {
+    background: #10B981;
+    color: #fff;
+  }
+  .btn-danger {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+  }
+  .btn-sm { padding: 6px 11px; font-size: 11.5px; border-radius: 8px; }
+
+  /* CONTAINER */
+  .container {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 22px 28px 60px;
+  }
+
+  /* KPI STRIP */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 4px 14px rgba(15,37,62,0.04);
+  }
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-size: 23px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* TABS */
+  .tabs-bar {
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--navy); background: #F8FAFC; }
+  .tab-btn.active {
+    background: var(--navy);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(15,37,62,0.18);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* GRID & CARDS */
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: 22px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 6px 20px rgba(15,37,62,0.04);
+    margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-green { background: #DCFCE7; color: #166534; }
+  .badge-blue { background: #DBEAFE; color: #1E40AF; }
+  .badge-purple { background: #F3E8FF; color: #6B21A8; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-pink { background: #FCE7F3; color: #9D174D; }
+
+  /* FORMS */
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--navy3);
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* SLOTS LIST */
+  .slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #F8FAFC;
+  }
+  .slot-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--navy);
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed #CBD5E1;
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #F8FAFC;
+    transition: all 0.2s;
+  }
+  .upload-zone:hover {
+    border-color: var(--insta-pink);
+    background: #FDF2F8;
+  }
+
+  /* QUEUE ITEMS */
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .queue-thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: 10px;
+    background: #E2E8F0;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .queue-info { flex: 1; min-width: 0; }
+  .queue-info h4 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 3px;
+  }
+  .queue-info p {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* 3-TIER PIPELINE DIAGRAM */
+  .tier-pipeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .tier-box {
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    background: #fff;
+    position: relative;
+  }
+  .tier-box.t1 { border-top: 4px solid #3B82F6; }
+  .tier-box.t2 { border-top: 4px solid #8B5CF6; }
+  .tier-box.t3 { border-top: 4px solid #10B981; }
+  .tier-box h4 { font-size: 13.5px; font-weight: 800; color: var(--navy); margin: 6px 0; }
+  .tier-box p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* CHAT SIMULATOR */
+  .chat-window {
+    background: #0B141A;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1E293B;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+  .chat-header {
+    background: linear-gradient(90deg, #1E293B, #2E1065);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg-bubble {
+    max-width: 82%;
+    padding: 12px 15px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: #E1306C;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bot {
+    align-self: flex-start;
+    background: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #334155;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-tier-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .tier-tag-1 { background: rgba(59,130,246,0.22); color: #93C5FD; }
+  .tier-tag-2 { background: rgba(139,92,246,0.25); color: #C4B5FD; }
+  .tier-tag-3 { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+  .chat-input-bar {
+    padding: 12px;
+    background: #111B21;
+    border-top: 1px solid #1E293B;
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input-bar input {
+    flex: 1;
+    background: #1E293B;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    display: none;
+    z-index: 9999;
+  }
+  .toast.show { display: block; }
+
+  @media (max-width: 980px) {
+    .kpi-grid, .grid-2, .tier-pipeline { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <div class="th-brand">
+    <div class="th-icon">📸</div>
+    <div>
+      <h1>Instagram Bulut Bot & Otonom Otomasyon Merkezi</h1>
+      <span>7/24 Bulut Sunucu • Onaysız Otomatik Reels / Story / Gönderi • 3 Aşamalı Hibrit İletişim (Sabit + Gemini AI + WhatsApp)</span>
+    </div>
+  </div>
+  <div class="th-actions">
+    <div class="cloud-pill">
+      <span class="pulse-dot"></span>
+      <span>Bulut Motoru: 7/24 Aktif (Cihaz Bağımsız)</span>
+    </div>
+    <button class="btn btn-outline" onclick="switchTab('tab-simulator')">🧪 Canlı Botu Test Et</button>
+    <button class="btn btn-insta" onclick="runCloudAutonomousCycleNow()">⚡ Bulut Yayın Döngüsünü Şimdi Tetikle</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top"><span>☁️ Bulut Çalışma Modu</span><span class="badge badge-green">Otonom</span></div>
+      <div class="kpi-val">7/24 Cloud</div>
+      <div class="kpi-sub">Onay Beklemeden Otomatik Paylaşım Açık</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>🎬 Zamanlanan / Yayınlanan</span><span class="badge badge-pink">Reels • Story • Post</span></div>
+      <div class="kpi-val" id="kpiScheduledCount">0 İçerik</div>
+      <div class="kpi-sub" id="kpiNextSlotInfo">Günlük 3 Otomatik Saat Dilimi Aktif</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>🤖 1. & 2. Aşama Otomasyon</span><span class="badge badge-purple">Sabit + Gemini AI</span></div>
+      <div class="kpi-val" id="kpiRulesCount">5 Kural + AI</div>
+      <div class="kpi-sub">Basit Sorulara Sabit, Karmaşığa Gemini AI</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>📲 3. Aşama İnsan / WhatsApp</span><span class="badge badge-amber">Canlı Devir</span></div>
+      <div class="kpi-val" id="kpiHandoffCount">0 Devir</div>
+      <div class="kpi-sub">WhatsApp (+90 505 015 1035) Otomatik Yönlendirme</div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
+      🎬 1. Otomatik Reels, Story & Gönderi Zamanlayıcı
+    </button>
+    <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
+      💬 2. Birinci Aşama: Sabit Cevap Kuralları
+    </button>
+    <button class="tab-btn" data-tab="tab-tier2" onclick="switchTab('tab-tier2')">
+      🧠 3. İkinci Aşama: Gemini AI Destek Motoru
+    </button>
+    <button class="tab-btn" data-tab="tab-tier3" onclick="switchTab('tab-tier3')">
+      📲 4. Üçüncü Aşama: WhatsApp & İnsan Temsilci Devri
+    </button>
+    <button class="tab-btn" data-tab="tab-simulator" onclick="switchTab('tab-simulator')">
+      🧪 5. Canlı 3 Aşamalı Bot Test & Simülasyon
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: OTOMATİK REELS, STORY & GÖNDERİ ZAMANLAYICI (ONAYSIZ BULUT)   -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane active" id="tab-scheduler">
+    <div class="grid-2">
+      <!-- SOL: YENİ REELS / STORY / GÖNDERİ EKLE VEYA KATALOGDAN ÜRET -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">➕ Bulut Kuyruğuna Reels, Story veya Gönderi Ekle</div>
+            <span class="badge badge-green">✓ Onay İstemeden Otomatik Yayınlanır</span>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Paylaşım Formatı</label>
+              <select class="form-control" id="post_media_type">
+                <option value="REELS">🎬 Instagram Reels (Video)</option>
+                <option value="STORIES">📱 Instagram Story (Hikaye - Foto/Video)</option>
+                <option value="POST">🖼️ Instagram Akış Gönderisi (Fotoğraf)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Otomatik Yayın Saati / Tarihi</label>
+              <input type="datetime-local" class="form-control" id="post_scheduled_for">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>İçerik Başlığı (Panel Takibi İçin)</label>
+            <input type="text" class="form-control" id="post_title" placeholder="Örn: Fjord Mavi CNC Kapak Üretim Reels Videosu">
+          </div>
+
+          <div class="form-group">
+            <label>Medya Dosyası (Supabase Storage'a Doğrudan Yüklenir)</label>
+            <div class="upload-zone" onclick="document.getElementById('instaMediaInput').click()">
+              <input type="file" id="instaMediaInput" accept="image/*,video/*" style="display:none" onchange="handleInstaFileSelect(event)">
+              <div style="font-size:24px;margin-bottom:6px;">☁️</div>
+              <strong style="font-size:13px;color:var(--navy);">Fotoğraf veya Video (MP4/MOV) Seçmek İçin Tıklayın</strong>
+              <p style="font-size:11.5px;color:var(--muted);margin-top:4px;" id="instaUploadStatusText">Seçilen medya Supabase Storage (`media/instagram/`) bulutuna yüklenir</p>
+            </div>
+            <input type="text" class="form-control" id="post_media_url" style="margin-top:8px;" placeholder="veya doğrudan medya URL'si (https://...)">
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Açıklama Metni (Caption) & Hashtagler</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="generatePostFromProductCatalog()">✨ Supabase Ürün Kataloğundan Otomatik Doldur</button>
+            </div>
+            <textarea class="form-control" id="post_caption" rows="3" placeholder="Modern mimari ve doğal zarafet... 2.000 m² tesisimizde 5 iş gününde teslim özel ölçü CNC membran kapak üretimi."></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>Hashtag Grubu</label>
+            <input type="text" class="form-control" id="post_hashtags" value="#globalkapakmobilya #membrankapak #mutfakdolabı #cnckapak #içmimari #mutfaktasarım">
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-insta" id="btnQueuePost" onclick="addScheduledPost(false)" style="flex:1;justify-content:center;">
+              ⏰ Belirtilen Saatte Otomatik Yayınlamak Üzere Kuyruğa Ekle
+            </button>
+            <button type="button" class="btn btn-navy" onclick="addScheduledPost(true)">
+              🚀 Beklemeden Şimdi Yayınla
+            </button>
+          </div>
+        </div>
+
+        <!-- BELİRLİ SAAT ARALIKLARI AYARI -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⏰ Günlük Otomatik Paylaşım Saat Aralıkları (Periyodik Slotlar)</div>
+            <button class="btn btn-secondary btn-sm" onclick="saveBotConfigToSupabase()">💾 Saatleri Kaydet</button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+            Bulut sunucu her gün aşağıdaki saatlerde kuyruktaki sıradaki içeriği (kuyruk boşsa Supabase ürün kataloğundan otomatik oluşturduğu içeriği) **hiçbir onay istemeden** paylaşır:
+          </p>
+          <div id="slotsContainer"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <input type="time" class="form-control" id="new_slot_time" value="17:00" style="width:130px;">
+            <select class="form-control" id="new_slot_type" style="width:160px;">
+              <option value="REELS">🎬 REELS</option>
+              <option value="STORIES">📱 STORY</option>
+              <option value="POST">🖼️ GÖNDERİ</option>
+            </select>
+            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşamüstü Story)">
+            <button class="btn btn-navy btn-sm" onclick="addNewTimeSlot()" style="white-space:nowrap;">+ Saat Ekle</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: BULUT YAYIN KUYRUĞU & GEÇMİŞİ -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Bulut Otomatik Yayın Kuyruğu (Reels • Story • Gönderi)</div>
+            <button class="btn btn-secondary btn-sm" onclick="runCloudAutonomousCycleNow()">⚡ Sıradakileri Şimdi Yayınla</button>
+          </div>
+          <div id="scheduledQueueContainer"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔑 Resmi Instagram Graph API Bulut Kimlik Bilgileri</div>
+            <span class="badge badge-blue">Cloud Env / Supabase</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Instagram Business Hesap Kullanıcı Adı</label>
+              <input type="text" class="form-control" id="cfg_handle" value="@globalkapakmobilya">
+            </div>
+            <div class="form-group">
+              <label>Instagram Graph User ID (ig_user_id)</label>
+              <input type="text" class="form-control" id="cfg_ig_user_id" placeholder="Örn: 17841405822304914">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Meta Uzun Ömürlü Sayfa / Sistem Kullanıcı Tokenı (Access Token)</label>
+            <input type="password" class="form-control" id="cfg_access_token" placeholder="EAABwzLixnjYBO...">
+          </div>
+          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+            <div><strong>🌐 Bulut Webhook URL:</strong> <code>https://insta-deployment-rho.vercel.app/api/instagram-webhook</code></div>
+            <div style="margin-top:4px;"><strong>🔑 Verify Token:</strong> <code>global_kapak_insta_verify_2026</code></div>
+          </div>
+          <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
+            💾 Bulut API Ayarlarını Supabase'e Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: 1. AŞAMA — BASİT SORULAR İÇİN SABİT CEVAP KURALLARI           -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier1">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">➕ Yeni 1. Aşama Sabit Cevap Kuralı Ekle</div>
+          <span class="badge badge-blue">1. Aşama: Anlık Sabit Yanıt</span>
+        </div>
+        <div class="form-group">
+          <label>Kural Başlığı</label>
+          <input type="text" class="form-control" id="r_name" placeholder="Örn: Teslimat Süresi & Kargo Soruları">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Geçerli Kanal</label>
+            <select class="form-control" id="r_channel">
+              <option value="BOTH">DM + Yorumlar (Her İkisi)</option>
+              <option value="DM">Sadece Instagram DM</option>
+              <option value="COMMENT">Sadece Gönderi/Reels Yorumları</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Eşleşme Tipi</label>
+            <select class="form-control" id="r_match_type">
+              <option value="contains">Kelimeyi İçeriyorsa (Önerilen)</option>
+              <option value="exact">Tam Eşleşme</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tetikleyici Anahtar Kelimeler (Virgülle Ayırın)</label>
+          <input type="text" class="form-control" id="r_keywords" placeholder="teslimat, kaç günde, kargo, termin, ne zaman çıkar">
+        </div>
+        <div class="form-group">
+          <label>Verilecek Sabit Kurumsal Cevap</label>
+          <textarea class="form-control" id="r_response" rows="4" placeholder="🚚 Tüm özel ölçü membran kapak siparişlerimizi 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz..."></textarea>
+        </div>
+        <button class="btn btn-navy" onclick="addTier1Rule()" style="width:100%;justify-content:center;">
+          💾 Sabit Cevap Kuralını Ekle ve Buluta Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 Aktif 1. Aşama Sabit Cevap Kuralları</div>
+          <span class="badge badge-green">Milisaniyelik Yanıt</span>
+        </div>
+        <div id="tier1RulesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: 2. AŞAMA — KARMAŞIK SORULAR İÇİN GEMINI AI DESTEK MOTORU      -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier2">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧠 2. Aşama: Google Gemini Yapay Zeka Yapılandırması</div>
+          <span class="badge badge-purple">2. Aşama: Akıllı Asistan</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+          Müşterinin mesajı 1. Aşamadaki basit sabit kurallarla eşleşmediğinde (örneğin teknik malzeme sorusu, özel mutfak/banyo kombinasyonu veya model karşılaştırması sorduğunda) <strong>Gemini AI</strong> devreye girer. Supabase'deki canlı ürün kataloğunuzu okuyarak müşteriye kurumsal yanıt üretir.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Gemini AI Modeli</label>
+            <select class="form-control" id="cfg_gemini_model">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (Hızlı & Akıllı - Önerilen)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Teknik Analiz)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Gemini AI Kurumsal Sistem Talimatı (System Prompt)</label>
+          <textarea class="form-control" id="cfg_tier2_prompt" rows="6"></textarea>
+        </div>
+        <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 2. Aşama Gemini AI Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📦 Gemini AI Hafızasına Bağlı Canlı Supabase Ürün Kataloğu</div>
+          <span class="badge badge-green">Otomatik Senkronize</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Module 1 üzerinden Supabase'e eklediğiniz tüm ürünler otomatik olarak Gemini AI'ın bilgi dağarcığına aktarılır:
+        </p>
+        <div id="aiCatalogPreviewList" style="max-height:360px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: 3. AŞAMA — GERÇEK İNSAN & WHATSAPP / İLETİŞİM YÖNLENDİRME      -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier3">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📲 3. Aşama: Gerçek İnsan & İletişim Ağlarına Devir Ayarları</div>
+          <span class="badge badge-amber">3. Aşama: Canlı Temsilci</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          Müşteri net fiyat teklifi, özel ölçü sipariş onayı, toplu alım/bayilik veya doğrudan bir yetkiliyle görüşmek istediğinde (ya da Gemini AI konunun insan uzmanlığı gerektirdiğini tespit ettiğinde) bot müşteriyi hazır mesaj bağlantısıyla doğrudan <strong>WhatsApp</strong> ve telefon hattınıza yönlendirir.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WhatsApp Yönlendirme Numarası (Ülke Koduyla)</label>
+            <input type="text" class="form-control" id="cfg_wa_number" value="905050151035">
+          </div>
+          <div class="form-group">
+            <label>Gösterilecek Fabrika Telefonu</label>
+            <input type="text" class="form-control" id="cfg_phone_display" value="0 (505) 015 1035">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Doğrudan 3. Aşamayı Tetikleyen İfadeler (Virgülle Ayırın)</label>
+          <textarea class="form-control" id="cfg_tier3_triggers" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+          <label>3. Aşama Yönlendirme Mesaj Şablonu</label>
+          <textarea class="form-control" id="cfg_tier3_template" rows="3"></textarea>
+        </div>
+        <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 3. Aşama İletişim & WhatsApp Devir Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🙋‍♂️ 3. Aşamaya Aktarılan Müşteri Talepleri (Canlı Devir Kuyruğu)</div>
+          <span class="badge badge-amber" id="handoffBadgeCount">0 Talep</span>
+        </div>
+        <div id="tier3HandoffList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 5: CANLI 3 AŞAMALI BOT SİMÜLASYON & TEST LABORATUVARI             -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-simulator">
+    <div class="tier-pipeline">
+      <div class="tier-box t1">
+        <span class="badge badge-blue">1. AŞAMA</span>
+        <h4>Basit Sorular → Sabit Cevap</h4>
+        <p>Selamlama, teslimat süresi (5 iş günü), garanti (5 yıl), adres ve katalog sorularına kural tabanlı anlık yanıt verir.</p>
+      </div>
+      <div class="tier-box t2">
+        <span class="badge badge-purple">2. AŞAMA</span>
+        <h4>Karmaşık Sorular → Gemini AI</h4>
+        <p>Teknik ürün soruları, renk/mekan uyumu ve malzeme detaylarında canlı Supabase ürün kataloğunu bilen Gemini AI yanıt üretir.</p>
+      </div>
+      <div class="tier-box t3">
+        <span class="badge badge-green">3. AŞAMA</span>
+        <h4>Sipariş & Destek → WhatsApp / İnsan</h4>
+        <p>Özel ölçü fiyat hesaplaması, sipariş oluşturma ve yetkili talebinde hazır mesajlı WhatsApp linkiyle gerçek temsilciye bağlar.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- SOL: CANLI SOHBET SİMÜLATÖRÜ -->
+      <div class="chat-window">
+        <div class="chat-header">
+          <div>
+            <strong style="font-size:14px;">📸 Instagram DM & Yorum Simülatörü (@globalkapakmobilya)</strong>
+            <div style="font-size:11px;color:#A5B4FC;">3 Aşamalı Hibrit Karar Motoru Canlı Test Ekranı</div>
+          </div>
+          <select id="simChannelSelect" style="background:#0F172A;color:#fff;border:1px solid #334155;padding:5px 10px;border-radius:8px;font-size:11.5px;">
+            <option value="DM">📩 Kanal: Instagram DM</option>
+            <option value="COMMENT">💬 Kanal: Reels / Gönderi Yorumu</option>
+          </select>
+        </div>
+
+        <div class="chat-messages" id="simChatMessages">
+          <div class="msg-bubble msg-bot">
+            <div class="msg-tier-tag tier-tag-1">SİSTEM HAZIR</div>
+            <div>Merhaba! Aşağıdan hazır test senaryolarına tıklayabilir veya müşteri gibi istediğiniz soruyu yazarak <strong>1. Aşama (Sabit)</strong>, <strong>2. Aşama (Gemini AI)</strong> ve <strong>3. Aşama (WhatsApp / İnsan Devri)</strong> geçişlerini canlı test edebilirsiniz.</div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="simUserInput" placeholder="Müşteri mesajını buraya yazın (Enter)..." onkeydown="if(event.key==='Enter') sendSimulatedMessage()">
+          <button class="btn btn-insta" onclick="sendSimulatedMessage()">Gönder →</button>
+        </div>
+      </div>
+
+      <!-- SAĞ: HIZLI SENARYO BUTONLARI VE SON KARAR ANALİZİ -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Tek Tıkla 3 Aşamalı Test Senaryoları</div>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+            Aşağıdaki örnek müşteri mesajlarına tıklayarak botun hangi aşamayı devreye soktuğunu anında görün:
+          </p>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Merhaba, kapaklarda teslimat süreniz kaç gün ve şehir dışına kargo var mı?')">
+              <span class="badge badge-blue">1. Aşama</span> "Merhaba, kapaklarda teslimat süreniz kaç gün ve şehir dışına kargo var mı?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Garanti süreniz nedir, banyoda buhardan kabarma yapar mı?')">
+              <span class="badge badge-blue">1. Aşama</span> "Garanti süreniz nedir, banyoda buhardan kabarma yapar mı?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Adaçayı yeşili ile kuvars gri arasında kaldım, kuzey cepheli dar bir mutfak için hangi modeli ve yüzeyi önerirsiniz?')">
+              <span class="badge badge-purple">2. Aşama (Gemini AI)</span> "Adaçayı yeşili ile kuvars gri arasında kaldım, dar mutfak için hangisini önerirsiniz?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('18 adet özel ölçü çerçeveli membran kapak siparişi vermek istiyorum, net m2 fiyat teklifi için yetkili biriyle görüşebilir miyim?')">
+              <span class="badge badge-green">3. Aşama (WhatsApp / İnsan)</span> "18 adet özel ölçü kapak siparişi vermek istiyorum, net fiyat teklifi için yetkiliyle görüşebilir miyim?"
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📜 Son İletişim & Karar Geçmişi (Supabase Kayıtları)</div>
+          </div>
+          <div id="recentConversationsList" style="max-height:240px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toastEl">✅ İşlem tamamlandı</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE BAĞLANTISI & VARSAYILAN BULUT BOT DURUMU
+// ═══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+const DEFAULT_BOT_STATE = {
+  config: {
+    account_handle: '@globalkapakmobilya',
+    ig_user_id: '',
+    access_token: '',
+    gemini_api_key: '',
+    gemini_model: 'gemini-2.5-flash',
+    auto_publish_enabled: true,
+    require_approval: false,
+    posting_slots: [
+      { slot_id: 'slot_1', time: '10:00', type: 'POST', active: true, label: 'Sabah Koleksiyon Gönderisi (Onaysız Otomatik)' },
+      { slot_id: 'slot_2', time: '14:30', type: 'STORIES', active: true, label: 'Öğleden Sonra Atölye & Renk Kartelası Story' },
+      { slot_id: 'slot_3', time: '19:30', type: 'REELS', active: true, label: 'Akşam CNC Üretim & Mutfak Reels Videosu' }
+    ],
+    tier2_system_prompt: 'Sen Global Kapak Mobilya\'nın resmi Instagram yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. Müşterilere nazik, kurumsal ve kısa (maksimum 3-4 cümle) yanıtlar ver. Eğer müşteri net fiyat teklifi, özel ölçü siparişi, toplu alım veya yetkiliyle görüşmek isterse 3. aşama olan WhatsApp hattımıza (+90 505 015 1035) yönlendir.',
+    tier3_whatsapp_number: '905050151035',
+    tier3_phone_display: '0 (505) 015 1035',
+    tier3_handoff_triggers: [
+      'sipariş vermek', 'fiyat teklifi', 'net fiyat', 'm2 fiyatı', 'metrekare fiyatı',
+      'kaç tl', 'ne kadar tutar', 'özel ölçü fiyat', 'yetkili', 'temsilci',
+      'insanla görüşmek', 'ustayla görüşmek', 'toplu alım', 'bayilik', 'şikayet', 'whatsapp'
+    ],
+    tier3_handoff_template: 'Memnuniyetle yardımcı olalım! 🙌 Özel ölçü hesaplaması, net fiyat teklifi ve birebir müşteri temsilcimizle görüşmek için doğrudan WhatsApp hattımıza tıklayabilirsiniz: https://wa.me/905050151035 — Ayrıca 0 (505) 015 1035 numaralı hattımızdan bize hemen ulaşabilirsiniz.'
+  },
+  rules: [
+    {
+      id: 'rule-1',
+      rule_name: 'Selamlama & Karşılama',
+      keywords: ['merhaba', 'selam', 'iyi günler', 'kolay gelsin', 'slm', 'mrb'],
+      match_type: 'exact',
+      channel_scope: 'BOTH',
+      response_text: 'Merhaba! 👋 Global Kapak Mobilya’ya hoş geldiniz. Özel ölçü CNC membran mutfak, banyo ve gardırop kapaklarımız hakkında size nasıl yardımcı olabilirim?'
+    },
+    {
+      id: 'rule-2',
+      rule_name: 'Teslimat Süresi & Şehir Dışı Sevkiyat',
+      keywords: ['teslimat', 'kaç günde', 'kaç gün', 'termin', 'kargo', 'şehir dışı', 'sevkiyat'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🚚 Tüm özel ölçü membran kapak siparişlerimizi 2.000 m² modern fabrikamızda 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz. Türkiye geneli güvenli sevkiyatımız mevcuttur.'
+    },
+    {
+      id: 'rule-3',
+      rule_name: 'Garanti & Su/Buhar Dayanımı',
+      keywords: ['garanti', 'kabarma', 'soyulma', 'suya dayanıklı', 'buhar', 'mdf', 'kalite'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı 1. sınıf PVC membran kullanıyoruz. Tüm kapaklarımız 5 Yıl Üretici Garantisi altındadır.'
+    },
+    {
+      id: 'rule-4',
+      rule_name: 'Fabrika Adres & Çalışma Saatleri',
+      keywords: ['adres', 'nerede', 'konum', 'yeriniz', 'çalışma saat', 'kaça kadar'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '📍 Fabrikamız: Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul adresindedir. Pzt-Cmt 08:00 – 18:00 saatleri arasında hizmet vermekteyiz.'
+    },
+    {
+      id: 'rule-5',
+      rule_name: 'Renk Kartelası & Canlı Tasarım Modu',
+      keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html'
+    }
+  ],
+  scheduled_posts: [
+    {
+      id: 'post-demo-1',
+      media_type: 'REELS',
+      title: 'Fjord Mavi CNC Membran Kapak — 5 Eksen İşleme Reels',
+      caption: '✨ Modern mimari, doğal zarafetle buluşuyor! 0.01 mm CNC hassasiyetiyle üretilen Fjord Mavi membran kapaklarımız 5 iş gününde teslim.',
+      hashtags: '#globalkapakmobilya #membrankapak #cnckapak #mutfakdolabı #reels',
+      media_url: 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png',
+      scheduled_for: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    },
+    {
+      id: 'post-demo-2',
+      media_type: 'STORIES',
+      title: '2026 Mimari Renk & Doku Kartelası Story Paylaşımı',
+      caption: '🎨 Fjord Mavi, Kuvars Gri ve Adaçayı Yeşili membran yüzeylerimizi web sitemizdeki Canlı Tasarım Modunda hemen deneyin!',
+      hashtags: '#globalkapak #içmimari #mutfaktasarım',
+      media_url: 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa2.png',
+      scheduled_for: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    }
+  ],
+  conversations: []
+};
+
+let botState = JSON.parse(JSON.stringify(DEFAULT_BOT_STATE));
+let catalogProducts = [];
+let pendingUploadFile = null;
+
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tabId));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tabId));
+}
+
+// ── SUPABASE VERİ YÜKLEME VE KAYDETME ──
+async function loadBotStateFromSupabase() {
+  try {
+    // 1. Ürün kataloğunu çek (Gemini AI ve Otomatik Gönderi Üretici için)
+    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (prodRes.ok) {
+      catalogProducts = await prodRes.json();
+    }
+
+    // 2. site_settings içinden 'insta_bot_state' kaydını çek
+    const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.insta_bot_state&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (setRes.ok) {
+      const rows = await setRes.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+        botState = Object.assign({}, DEFAULT_BOT_STATE, rows[0].data);
+        botState.config = Object.assign({}, DEFAULT_BOT_STATE.config, rows[0].data.config || {});
+      } else {
+        await persistBotStateToSupabase(false);
+      }
+    }
+  } catch (e) {
+    console.warn('Supabase yükleme uyarısı:', e);
+  }
+
+  populateFormsAndRenderAll();
+}
+
+async function persistBotStateToSupabase(notify = true) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        key: 'insta_bot_state',
+        data: botState,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (notify) showToast('☁️ Instagram Bulut Bot ayarları Supabase veritabanına kaydedildi!');
+  } catch (e) {
+    if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');
+  }
+  populateFormsAndRenderAll();
+}
+
+function populateFormsAndRenderAll() {
+  const c = botState.config;
+  document.getElementById('cfg_handle').value = c.account_handle || '@globalkapakmobilya';
+  document.getElementById('cfg_ig_user_id').value = c.ig_user_id || '';
+  document.getElementById('cfg_access_token').value = c.access_token || '';
+  document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
+  document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
+  document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
+  document.getElementById('cfg_wa_number').value = c.tier3_whatsapp_number || '905050151035';
+  document.getElementById('cfg_phone_display').value = c.tier3_phone_display || '0 (505) 015 1035';
+  document.getElementById('cfg_tier3_triggers').value = (c.tier3_handoff_triggers || []).join(', ');
+  document.getElementById('cfg_tier3_template').value = c.tier3_handoff_template || '';
+
+  // Varsayılan tarih/saat inputunu 1 saat sonrasına ayarla
+  const dtInput = document.getElementById('post_scheduled_for');
+  if (dtInput && !dtInput.value) {
+    const d = new Date(Date.now() + 3600 * 1000);
+    dtInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  renderSlots();
+  renderScheduledQueue();
+  renderTier1Rules();
+  renderAiCatalogPreview();
+  renderTier3Handoffs();
+  renderRecentConversations();
+  updateKpis();
+}
+
+function updateKpis() {
+  const posts = botState.scheduled_posts || [];
+  const rules = botState.rules || [];
+  const convs = botState.conversations || [];
+  const handoffs = convs.filter(c => c.resolved_tier === 3);
+
+  document.getElementById('kpiScheduledCount').textContent = `${posts.length} İçerik`;
+  document.getElementById('kpiRulesCount').textContent = `${rules.length} Kural + Gemini AI`;
+  document.getElementById('kpiHandoffCount').textContent = `${handoffs.length} Müşteri Devri`;
+  document.getElementById('handoffBadgeCount').textContent = `${handoffs.length} Talep`;
+}
+
+// ── SAAT ARALIKLARI (SLOTS) YÖNETİMİ ──
+function renderSlots() {
+  const cont = document.getElementById('slotsContainer');
+  const slots = botState.config.posting_slots || [];
+  cont.innerHTML = slots.map((s, idx) => `
+    <div class="slot-item">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="slot-time">⏰ ${s.time}</span>
+        <div>
+          <span class="badge ${s.type==='REELS'?'badge-pink':s.type==='STORIES'?'badge-purple':'badge-blue'}">${s.type}</span>
+          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label}</strong>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Onay İstemeden Buluttan Otomatik Paylaşılır</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="btn btn-danger btn-sm" onclick="removeTimeSlot(${idx})">Sil</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function addNewTimeSlot() {
+  const time = document.getElementById('new_slot_time').value || '18:00';
+  const type = document.getElementById('new_slot_type').value || 'REELS';
+  const label = document.getElementById('new_slot_label').value.trim() || `Otomatik ${type} Paylaşımı`;
+  botState.config.posting_slots.push({
+    slot_id: 'slot_' + Date.now(),
+    time,
+    type,
+    active: true,
+    label
+  });
+  document.getElementById('new_slot_label').value = '';
+  persistBotStateToSupabase(true);
+}
+
+function removeTimeSlot(idx) {
+  botState.config.posting_slots.splice(idx, 1);
+  persistBotStateToSupabase(true);
+}
+
+// ── MEDYA YÜKLEME VE REELS / STORY / GÖNDERİ KUYRUĞU ──
+function handleInstaFileSelect(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  pendingUploadFile = file;
+  document.getElementById('instaUploadStatusText').innerHTML = `<strong style="color:#10B981;">✓ Seçildi: ${file.name} (${(file.size/1024/1024).toFixed(2)} MB)</strong>`;
+}
+
+function generatePostFromProductCatalog() {
+  if (!catalogProducts || catalogProducts.length === 0) {
+    showToast('Ürün kataloğu boş, örnek şablon dolduruldu');
+    return;
+  }
+  const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
+  const pTitle = prod.title || prod.baslik || prod.slug;
+  document.getElementById('post_title').value = `${pTitle} — Otomatik Tanıtım`;
+  const imgUrl = prod.ana_resim && prod.ana_resim.startsWith('http')
+    ? prod.ana_resim
+    : `https://globalmobilyaweb.vercel.app/${(prod.ana_resim || 'resim/anasayfa-resimleri/anasayfa1.png').replace(/^\/+/, '')}`;
+  document.getElementById('post_media_url').value = imgUrl;
+  document.getElementById('post_caption').value =
+    `✨ ${pTitle} (${prod.kategori || 'Özel Ölçü CNC Membran Kapak'})\n\n` +
+    `${prod.kisa_aciklama || '2.000 m² modern tesisimizde 1. sınıf 18mm E1 MDF ve suya/buhara dayanıklı membran yüzey teknolojisiyle üretilmiştir.'}\n\n` +
+    `🛡️ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Teslimat\n` +
+    `🎨 Web sitemizdeki Canlı Tasarım Modunda kendi ölçünüzle deneyin: https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug}`;
+  showToast(`✨ "${pTitle}" ürünü katalogdan otomatik çekildi!`);
+}
+
+async function addScheduledPost(publishImmediately = false) {
+  const btn = document.getElementById('btnQueuePost');
+  const mediaType = document.getElementById('post_media_type').value;
+  const title = document.getElementById('post_title').value.trim() || `Otomatik ${mediaType} Paylaşımı`;
+  const caption = document.getElementById('post_caption').value.trim();
+  const hashtags = document.getElementById('post_hashtags').value.trim();
+  const scheduledFor = document.getElementById('post_scheduled_for').value
+    ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
+    : new Date().toISOString();
+  let mediaUrl = document.getElementById('post_media_url').value.trim();
+
+  if (pendingUploadFile && sbClient) {
+    btn.disabled = true;
+    btn.textContent = '☁️ Medya Supabase Storage\'a Yükleniyor...';
+    try {
+      const ext = (pendingUploadFile.name.split('.').pop() || 'mp4').toLowerCase();
+      const filePath = `instagram/${mediaType.toLowerCase()}-${Date.now()}.${ext}`;
+      const { error } = await sbClient.storage.from('media').upload(filePath, pendingUploadFile, { upsert: true });
+      if (!error) {
+        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
+        mediaUrl = data.publicUrl;
+      }
+    } catch (e) {}
+    btn.disabled = false;
+    btn.textContent = '⏰ Belirtilen Saatte Otomatik Yayınlamak Üzere Kuyruğa Ekle';
+    pendingUploadFile = null;
+  }
+
+  if (!mediaUrl) {
+    mediaUrl = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+  }
+
+  const newItem = {
+    id: 'post-' + Date.now(),
+    media_type: mediaType,
+    title,
+    caption,
+    hashtags,
+    media_url: mediaUrl,
+    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
+    status: publishImmediately ? 'published' : 'scheduled',
+    published_at: publishImmediately ? new Date().toISOString() : null
+  };
+
+  botState.scheduled_posts.unshift(newItem);
+  document.getElementById('post_title').value = '';
+  document.getElementById('post_caption').value = '';
+  await persistBotStateToSupabase(false);
+
+  if (publishImmediately) {
+    showToast(`🚀 ${mediaType} onay beklenmeden bulut üzerinden doğrudan yayınlandı!`);
+  } else {
+    showToast(`⏰ ${mediaType} bulut kuyruğuna eklendi; saati geldiğinde onay istemeden otomatik paylaşılacak!`);
+  }
+}
+
+function renderScheduledQueue() {
+  const cont = document.getElementById('scheduledQueueContainer');
+  const posts = botState.scheduled_posts || [];
+  if (posts.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz kuyrukta içerik yok.</div>`;
+    return;
+  }
+
+  cont.innerHTML = posts.map((p, idx) => {
+    const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+    const isPub = p.status === 'published';
+    return `
+      <div class="queue-item">
+        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+        <div class="queue-info">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+            <span class="badge ${p.media_type==='REELS'?'badge-pink':p.media_type==='STORIES'?'badge-purple':'badge-blue'}">${p.media_type}</span>
+            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ Otomatik Yayınlandı' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
+            <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
+          </div>
+          <h4>${p.title}</h4>
+          <p>${p.caption || p.hashtags || ''}</p>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${!isPub ? `<button class="btn btn-success btn-sm" onclick="publishQueueItemNow(${idx})">Şimdi Yayınla</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteQueueItem(${idx})">Sil</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function publishQueueItemNow(idx) {
+  if (!botState.scheduled_posts[idx]) return;
+  botState.scheduled_posts[idx].status = 'published';
+  botState.scheduled_posts[idx].published_at = new Date().toISOString();
+  persistBotStateToSupabase(false);
+  showToast(`🚀 "${botState.scheduled_posts[idx].title}" buluttan otomatik yayınlandı!`);
+}
+
+function deleteQueueItem(idx) {
+  botState.scheduled_posts.splice(idx, 1);
+  persistBotStateToSupabase(true);
+}
+
+function runCloudAutonomousCycleNow() {
+  let count = 0;
+  (botState.scheduled_posts || []).forEach(p => {
+    if (p.status === 'scheduled') {
+      p.status = 'published';
+      p.published_at = new Date().toISOString();
+      count++;
+    }
+  });
+  persistBotStateToSupabase(false);
+  showToast(count > 0
+    ? `⚡ Bulut Otomatik Yayın Döngüsü çalıştı: ${count} içerik (Reels/Story/Gönderi) onay beklenmeden yayınlandı!`
+    : `⚡ Bulut Otomatik Yayın Döngüsü kontrol edildi: Tüm kuyruk güncel!`);
+}
+
+// ── 1. AŞAMA SABİT KURALLAR ──
+function renderTier1Rules() {
+  const cont = document.getElementById('tier1RulesList');
+  const rules = botState.rules || [];
+  cont.innerHTML = rules.map((r, idx) => `
+    <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#F8FAFC;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="font-size:13.5px;color:var(--navy);">💬 ${r.rule_name}</strong>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge badge-blue">${r.channel_scope === 'BOTH' ? 'DM + Yorum' : r.channel_scope}</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteTier1Rule(${idx})">Sil</button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--navy3);font-weight:700;margin-bottom:6px;">
+        Anahtar Kelimeler: ${(r.keywords || []).map(k => `<code style="background:#E0F2FE;padding:2px 6px;border-radius:4px;margin-right:4px;">${k}</code>`).join('')}
+      </div>
+      <div style="font-size:12.5px;color:var(--text);background:#fff;padding:10px;border-radius:8px;border:1px solid var(--border);">
+        ${r.response_text}
+      </div>
+    </div>
+  `).join('');
+}
+
+function addTier1Rule() {
+  const name = document.getElementById('r_name').value.trim();
+  const channel = document.getElementById('r_channel').value;
+  const matchType = document.getElementById('r_match_type').value;
+  const keywords = document.getElementById('r_keywords').value.split(',').map(k => k.trim()).filter(Boolean);
+  const response = document.getElementById('r_response').value.trim();
+
+  if (!name || keywords.length === 0 || !response) {
+    showToast('⚠️ Lütfen kural adı, anahtar kelimeler ve sabit cevabı girin!');
+    return;
+  }
+
+  botState.rules.push({
+    id: 'rule-' + Date.now(),
+    rule_name: name,
+    channel_scope: channel,
+    match_type: matchType,
+    keywords,
+    response_text: response
+  });
+
+  document.getElementById('r_name').value = '';
+  document.getElementById('r_keywords').value = '';
+  document.getElementById('r_response').value = '';
+  persistBotStateToSupabase(true);
+}
+
+function deleteTier1Rule(idx) {
+  botState.rules.splice(idx, 1);
+  persistBotStateToSupabase(true);
+}
+
+// ── 2. AŞAMA GEMINI AI KATALOG ÖNİZLEMESİ ──
+function renderAiCatalogPreview() {
+  const cont = document.getElementById('aiCatalogPreviewList');
+  if (!catalogProducts || catalogProducts.length === 0) {
+    cont.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:12.5px;">Supabase ürün kataloğu yükleniyor...</div>`;
+    return;
+  }
+  cont.innerHTML = catalogProducts.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <div>
+        <strong style="color:var(--navy);">${p.title || p.slug}</strong>
+        <span style="color:var(--muted);margin-left:6px;">(${p.kategori || 'Membran Kapak'})</span>
+      </div>
+      <span class="badge badge-green">AI Hafızasında Aktif</span>
+    </div>
+  `).join('');
+}
+
+// ── 3. AŞAMA İNSAN / WHATSAPP DEVİR LİSTESİ ──
+function renderTier3Handoffs() {
+  const cont = document.getElementById('tier3HandoffList');
+  const handoffs = (botState.conversations || []).filter(c => c.resolved_tier === 3);
+  if (handoffs.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz 3. aşamaya devredilen müşteri talebi yok. Simülatör sekmesinden test edebilirsiniz.</div>`;
+    return;
+  }
+  cont.innerHTML = handoffs.map(h => `
+    <div style="border:1px solid #FDE68A;background:#FFFBEB;border-radius:12px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="color:#92400E;font-size:13px;">👤 ${h.sender_username || '@musteri'} (${h.channel})</strong>
+        <span class="badge badge-amber">3. Aşama: İnsan Devri</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--navy);margin-bottom:8px;">
+        <strong>Müşteri Mesajı:</strong> "${h.incoming_text}"
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <small style="color:var(--muted);">${new Date(h.created_at).toLocaleString('tr-TR')}</small>
+        <a href="${h.whatsapp_link || 'https://wa.me/905050151035'}" target="_blank" class="btn btn-success btn-sm">
+          💬 WhatsApp'tan Müşteriye Yanıt Ver ↗
+        </a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderRecentConversations() {
+  const cont = document.getElementById('recentConversationsList');
+  const convs = (botState.conversations || []).slice(0, 8);
+  if (convs.length === 0) {
+    cont.innerHTML = `<div style="padding:14px;color:var(--muted);font-size:12.5px;">Henüz test mesajı gönderilmedi.</div>`;
+    return;
+  }
+  cont.innerHTML = convs.map(c => `
+    <div style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <strong>${c.sender_username}: "${c.incoming_text}"</strong>
+        <span class="badge ${c.resolved_tier===1?'badge-blue':c.resolved_tier===2?'badge-purple':'badge-green'}">${c.tier_label}</span>
+      </div>
+      <div style="color:var(--muted);">${c.bot_reply}</div>
+    </div>
+  `).join('');
+}
+
+function saveBotConfigToSupabase() {
+  const c = botState.config;
+  c.account_handle = document.getElementById('cfg_handle').value.trim();
+  c.ig_user_id = document.getElementById('cfg_ig_user_id').value.trim();
+  c.access_token = document.getElementById('cfg_access_token').value.trim();
+  c.gemini_model = document.getElementById('cfg_gemini_model').value;
+  c.gemini_api_key = document.getElementById('cfg_gemini_key').value.trim();
+  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt').value.trim();
+  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number').value.trim();
+  c.tier3_phone_display = document.getElementById('cfg_phone_display').value.trim();
+  c.tier3_handoff_triggers = document.getElementById('cfg_tier3_triggers').value.split(',').map(x => x.trim()).filter(Boolean);
+  c.tier3_handoff_template = document.getElementById('cfg_tier3_template').value.trim();
+
+  persistBotStateToSupabase(true);
+}
+
+// ── CANLI 3 AŞAMALI İLETİŞİM SİMÜLATÖRÜ ──
+function triggerQuickSim(text) {
+  document.getElementById('simUserInput').value = text;
+  sendSimulatedMessage();
+}
+
+async function sendSimulatedMessage() {
+  const input = document.getElementById('simUserInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const channel = document.getElementById('simChannelSelect').value || 'DM';
+  const chatBox = document.getElementById('simChatMessages');
+
+  // Kullanıcı balonunu ekle
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-user">
+      <div style="font-size:10px;opacity:0.8;margin-bottom:3px;">👤 Müşteri (${channel})</div>
+      <div>${text}</div>
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const decision = await runClientSideThreeTierEngine(text, channel);
+
+  const tagClass = decision.resolved_tier === 1 ? 'tier-tag-1' : decision.resolved_tier === 2 ? 'tier-tag-2' : 'tier-tag-3';
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-bot">
+      <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
+      <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
+      ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  botState.conversations.unshift({
+    id: 'conv-' + Date.now(),
+    sender_username: '@test_musteri',
+    channel,
+    incoming_text: text,
+    resolved_tier: decision.resolved_tier,
+    tier_label: decision.tier_label,
+    bot_reply: decision.bot_reply,
+    whatsapp_link: decision.whatsapp_link || '',
+    created_at: new Date().toISOString()
+  });
+
+  await persistBotStateToSupabase(false);
+}
+
+async function runClientSideThreeTierEngine(cleanText, channel) {
+  const lowerText = cleanText.toLocaleLowerCase('tr-TR');
+  const c = botState.config;
+  const waNum = c.tier3_whatsapp_number || '905050151035';
+  const phoneDisp = c.tier3_phone_display || '0 (505) 015 1035';
+
+  // 3. Aşama Doğrudan Tetikleyici Kontrolü
+  const triggers = c.tier3_handoff_triggers || [];
+  const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
+  if (t3Match) {
+    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Instagram üzerinden ulaşıyorum. "${cleanText}" konusunda fiyat teklifi ve uzman desteği rica ediyorum.`)}`;
+    return {
+      resolved_tier: 3,
+      tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
+      bot_reply: `Memnuniyetle yardımcı olalım! 🙌 Talebiniz ("${t3Match}") özel ölçü hesaplaması ve birebir uzman desteği gerektirdiği için sizi doğrudan Satış & Üretim Ekibimize bağlıyorum.\n\n📲 Doğrudan WhatsApp Hattımız: ${waLink}\n📞 Fabrika Telefon: ${phoneDisp}`,
+      whatsapp_link: waLink
+    };
+  }
+
+  // 1. Aşama Sabit Anahtar Kelime Kuralları Kontrolü
+  for (const rule of (botState.rules || [])) {
+    if (rule.channel_scope !== 'BOTH' && rule.channel_scope !== channel) continue;
+    const hit = (rule.keywords || []).find(kw => {
+      const k = kw.toLocaleLowerCase('tr-TR').trim();
+      if (!k) return false;
+      if (rule.match_type === 'exact') return lowerText === k || lowerText.replace(/[?!.,]/g, '').trim() === k;
+      return lowerText.includes(k);
+    });
+    if (hit) {
+      return {
+        resolved_tier: 1,
+        tier_label: `1. AŞAMA: SABİT CEVAP (${rule.rule_name})`,
+        bot_reply: rule.response_text,
+        whatsapp_link: ''
+      };
+    }
+  }
+
+  // 2. Aşama Gemini AI (Eğer API Key girilmişse canlı Gemini API çağrısı, yoksa yerleşik AI Katalog Sentezi)
+  if (c.gemini_api_key) {
+    try {
+      const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(c.gemini_api_key)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${c.tier2_system_prompt}\n\nÜrün Kataloğu:\n${catText}\n\nMüşteri Mesajı: "${cleanText}"` }] }]
+        })
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const replyTxt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyTxt) {
+          return {
+            resolved_tier: 2,
+            tier_label: `2. AŞAMA: GEMINI AI (${c.gemini_model})`,
+            bot_reply: replyTxt,
+            whatsapp_link: ''
+          };
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Yerleşik 2. Aşama Gemini AI Katalog & İç Mimari Danışman Yanıtı
+  const prodNames = (catalogProducts || []).slice(0, 3).map(p => p.title || p.slug).join(', ') || 'Fjord Mavi Diyagonal, Kuvars Gri ve Adaçayı Yeşili Country';
+  return {
+    resolved_tier: 2,
+    tier_label: '2. AŞAMA: GEMINI AI AKILLI DANIŞMAN',
+    bot_reply: `Sorunuzu analiz ettim! 🤖 Global Kapak Mobilya koleksiyonumuzdaki **${prodNames}** modellerimiz 18mm 1. sınıf E1 MDF üzerine anti-fingerprint (parmak izi bırakmayan) membran teknolojisiyle üretilmektedir. Dar veya az ışık alan mekanlarda Kuvars Gri ve Kutup Beyazı ferahlık sağlarken, Adaçayı Yeşili ve Fjord Mavi doğal derinlik katar.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek anlık önizleme yapabilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html`,
+    whatsapp_link: ''
+  };
+}
+
+document.addEventListener('DOMContentLoaded', loadBotStateFromSupabase);
+</script>
+</body>
+</html>

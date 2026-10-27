@@ -52,7 +52,7 @@ export function navigateTo(route) {
 function renderCurrentView() {
     if (!contentContainer) return;
 
-    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'production';
+    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'social' || state.currentRoute === 'production';
     contentContainer.classList.toggle('full-bleed-module', isEmbeddedModule);
     document.body.classList.toggle('module-immersive-view', isEmbeddedModule);
 
@@ -417,7 +417,7 @@ export function toggleInAppFullscreen(forceState) {
         : document.body.classList.toggle('in-app-fullscreen');
 
     // Sync button labels inside embedded module frames if present
-    ['module1-frame', 'module4-frame'].forEach(id => {
+    ['module1-frame', 'module2-frame', 'module4-frame'].forEach(id => {
         const frame = document.getElementById(id);
         const doc = frame?.contentDocument || frame?.contentWindow?.document;
         const btn = doc?.getElementById('inAppFsBtn');
@@ -427,6 +427,24 @@ export function toggleInAppFullscreen(forceState) {
     });
 
     return isNowFullscreen;
+}
+
+// Module 2 Multi-Bot Channel Switcher
+export function switchSocialBotChannel(btnEl, channel) {
+    if (channel === 'instagram') {
+        const frame = document.getElementById('module2-frame');
+        if (frame && !frame.src.includes('Module%202/Instagram/index.html')) {
+            frame.src = 'Module%202/Instagram/index.html';
+        }
+        showToast('📸 Instagram Bulut Bot Kontrol Merkezi aktif.');
+        return;
+    }
+    const labelMap = {
+        facebook: 'Facebook Bot (Module 2/Facebook)',
+        tiktok: 'TikTok Bot (Module 2/Tiktok)',
+        youtube: 'YouTube Shorts Bot (Module 2/Youtube Shorts)'
+    };
+    showToast(`ℹ️ ${labelMap[channel] || channel} bir sonraki adımda kodlanacaktır. Şu an Instagram Botu aktif!`);
 }
 
 // Initialize Application
@@ -453,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.syncModule4Cloud = syncModule4Cloud;
     window.reloadModuleFrame = reloadModuleFrame;
     window.toggleInAppFullscreen = toggleInAppFullscreen;
+    window.switchSocialBotChannel = switchSocialBotChannel;
 
     // Allow Escape key to exit in-app fullscreen
     document.addEventListener('keydown', (e) => {

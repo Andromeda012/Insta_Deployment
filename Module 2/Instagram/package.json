@@ -1,0 +1,14 @@
+{
+  "name": "global-kapak-instagram-cloud-bot",
+  "version": "1.0.0",
+  "description": "Global Kapak Mobilya — 7/24 Bulut Üzerinde Çalışan Otonom Instagram Reels/Story/Gönderi Paylaşım ve 3 Aşamalı (Sabit Kural + Gemini AI + WhatsApp İnsan Devri) İletişim Botu",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
