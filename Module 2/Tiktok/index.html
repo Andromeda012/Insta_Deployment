@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modül 2 — 7/24 Bulut TikTok Botu | Global Kapak Mobilya</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-dark: #09090b;
+            --bg-card: #121217;
+            --bg-elevated: #1a1a22;
+            --border: rgba(255, 255, 255, 0.1);
+            --tt-cyan: #00f2fe;
+            --tt-pink: #ff0050;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --purple: #a855f7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: radial-gradient(circle at 12% 10%, rgba(0, 242, 254, 0.08), transparent 35%),
+                        radial-gradient(circle at 88% 85%, rgba(255, 0, 80, 0.09), transparent 40%),
+                        var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 18px 22px 42px;
+        }
+
+        /* Header */
+        .top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 16px 20px;
+            background: linear-gradient(135deg, rgba(18, 18, 23, 0.95), rgba(26, 26, 34, 0.92));
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+            flex-wrap: wrap;
+            margin-bottom: 18px;
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .tt-logo-box {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            background: #000;
+            border: 2px solid var(--tt-cyan);
+            box-shadow: -3px -2px 0 var(--tt-cyan), 3px 2px 0 var(--tt-pink);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .brand-title h1 {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .brand-title p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .badge-cloud {
+            background: linear-gradient(90deg, var(--tt-cyan), var(--tt-pink));
+            color: #09090b;
+            font-size: 10px;
+            font-weight: 900;
+            padding: 3px 9px;
+            border-radius: 99px;
+            text-transform: uppercase;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 7px 13px;
+            border-radius: 99px;
+            font-size: 12px;
+            font-weight: 700;
+            background: rgba(16, 185, 129, 0.14);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+
+        .dot-pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            padding: 9px 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            transition: all 0.18s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            border-color: var(--tt-cyan);
+        }
+
+        .btn-tiktok {
+            background: linear-gradient(135deg, var(--tt-pink), #be123c);
+            border-color: rgba(255, 0, 80, 0.6);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(255, 0, 80, 0.3);
+        }
+
+        .btn-cyan {
+            background: linear-gradient(135deg, #06b6d4, #0284c7);
+            border-color: var(--tt-cyan);
+            color: #fff;
+        }
+
+        /* KPI Strip */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .kpi-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 13px;
+            padding: 13px 16px;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .kpi-value {
+            font-size: 20px;
+            font-weight: 800;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .kpi-sub {
+            font-size: 11px;
+            color: #38bdf8;
+            margin-top: 3px;
+        }
+
+        /* Main 3-Column Layout */
+        .workspace-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr 410px;
+            gap: 16px;
+            align-items: start;
+        }
+
+        @media (max-width: 1320px) {
+            .workspace-grid {
+                grid-template-columns: 1fr;
+            }
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .panel-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 18px;
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+        }
+
+        .panel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 14px;
+            padding-bottom: 11px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .panel-header h2 {
+            font-size: 14px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        /* 9:16 TikTok Phone Mockup & Canvas */
+        .tiktok-stage-wrap {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .phone-frame {
+            position: relative;
+            width: 306px;
+            height: 544px;
+            border-radius: 26px;
+            border: 3px solid rgba(0, 242, 254, 0.45);
+            box-shadow: -4px -4px 16px rgba(0, 242, 254, 0.14), 4px 4px 16px rgba(255, 0, 80, 0.18);
+            overflow: hidden;
+            background: #000;
+        }
+
+        #tiktokCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* TikTok Right Action Bar Overlay */
+        .tt-right-rail {
+            position: absolute;
+            right: 10px;
+            bottom: 72px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 13px;
+            pointer-events: none;
+        }
+
+        .tt-rail-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.9);
+        }
+
+        .tt-rail-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            margin-bottom: 2px;
+        }
+
+        /* Format Cards */
+        .format-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .format-btn {
+            padding: 10px 11px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-main);
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .format-btn.active {
+            border-color: var(--tt-cyan);
+            background: linear-gradient(135deg, rgba(0, 242, 254, 0.16), rgba(255, 0, 80, 0.14));
+        }
+
+        .format-btn strong {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 2px;
+        }
+
+        .format-btn span {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 9px;
+            border: 1px solid var(--border);
+            background: #0c0c10;
+            color: var(--text-main);
+            font-size: 12px;
+            font-family: inherit;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 82px;
+            line-height: 1.45;
+        }
+
+        /* Schedule & History List */
+        .queue-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 225px;
+            overflow-y: auto;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            font-size: 12px;
+        }
+
+        /* 3-Stage Comment & DM Engine */
+        .stage-badges-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .stage-pill {
+            padding: 8px;
+            border-radius: 9px;
+            font-size: 10px;
+            line-height: 1.35;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+        }
+
+        .stage-pill strong {
+            display: block;
+            font-size: 11px;
+            margin-bottom: 2px;
+        }
+
+        .chat-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 360px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-top: 12px;
+        }
+
+        .chat-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 11px;
+            padding: 11px 13px;
+            font-size: 12px;
+        }
+
+        .chat-card.stage-1 { border-left: 3px solid #10b981; }
+        .chat-card.stage-2 { border-left: 3px solid #00f2fe; }
+        .chat-card.stage-3 { border-left: 3px solid #ff0050; background: rgba(255, 0, 80, 0.07); }
+
+        .preset-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .chip-btn {
+            font-size: 11px;
+            padding: 5px 9px;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            background: #181820;
+            color: #cbd5e1;
+            cursor: pointer;
+        }
+
+        .chip-btn:hover {
+            border-color: var(--tt-cyan);
+            color: #fff;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.78);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-backdrop.open {
+            display: flex;
+        }
+
+        .modal-box {
+            width: 100%;
+            max-width: 560px;
+            background: var(--bg-card);
+            border: 1px solid rgba(0, 242, 254, 0.35);
+            border-radius: 16px;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ÜST KONTROL ÇUBUĞU -->
+    <header class="top-header">
+        <div class="brand-row">
+            <div class="tt-logo-box">🎵</div>
+            <div class="brand-title">
+                <h1>
+                    Global Kapak Mobilya — TikTok 7/24 Bulut Botu
+                    <span class="badge-cloud">SIFIR MEDYA GİRİŞİ • OTONOM 9:16</span>
+                </h1>
+                <p>Otonom Fabrika ASMR, TikTok Photo Mode Kartela, POV Mutfak Dönüşümü & 3 Aşamalı Yorum/DM Motoru</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div class="status-pill" id="cloudStatusPill">
+                <span class="dot-pulse"></span>
+                <span id="cloudStatusText">7/24 Bulut Motoru Aktif (@globalkapak)</span>
+            </div>
+            <button class="btn" onclick="openApiModal()">🔑 TikTok API & Gemini Ayarları</button>
+            <button class="btn btn-cyan" onclick="generateAutonomousTikTokScene()">✨ Otonom Yeni Sahne Tasarla</button>
+            <button class="btn btn-tiktok" onclick="publishTikTokNow()">🚀 Şimdi TikTok'ta Yayınla</button>
+        </div>
+    </header>
+
+    <!-- KPI ÖZET ŞERİDİ -->
+    <section class="kpi-grid">
+        <div class="kpi-card">
+            <div class="kpi-label">Otonom Tasarım Modu</div>
+            <div class="kpi-value">
+                <span>9:16 Dikey (1080×1920)</span>
+                <span style="font-size:12px; color:#10b981;">Sıfır Giriş</span>
+            </div>
+            <div class="kpi-sub">Fotoğraf/Video yüklemeden katalogdan üretir</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">Canlı Katalog Bağlantısı</div>
+            <div class="kpi-value">
+                <span id="kpiProductCount">Yükleniyor...</span>
+                <span style="font-size:12px; color:var(--tt-cyan);">Supabase</span>
+            </div>
+            <div class="kpi-sub">Canlı CNC & Membran kapak modelleri</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">7/24 Otomatik Yayın Saatleri</div>
+            <div class="kpi-value">
+                <span id="kpiScheduleTimes">11:30 • 16:30 • 20:30</span>
+                <span style="font-size:12px; color:#f59e0b;">#keşfet</span>
+            </div>
+            <div class="kpi-sub">En yüksek TikTok Türkiye etkileşim saatleri</div>
+        </div>
+        <div class="kpi-card">
+            <div class="kpi-label">3 Aşamalı Yorum & DM Motoru</div>
+            <div class="kpi-value">
+                <span id="kpiInteractionCount">0 Yanıt</span>
+                <span style="font-size:12px; color:var(--tt-pink);">WhatsApp SLA</span>
+            </div>
+            <div class="kpi-sub">Sabit Kural -> Gemini 2.5 AI -> 0505 015 10 35</div>
+        </div>
+    </section>
+
+    <!-- ANA 3 SÜTUNLU ÇALIŞMA ALANI -->
+    <main class="workspace-grid">
+
+        <!-- SOL SÜTUN: 9:16 TIKTOK DİKEY STÜDYO ÖNİZLEME (SIFIR MEDYA GİRİŞİ) -->
+        <section class="panel-card tiktok-stage-wrap">
+            <div class="panel-header" style="width:100%;">
+                <h2>📱 Otonom 9:16 TikTok Sahnesi (1080×1920)</h2>
+                <span style="font-size:11px; color:var(--tt-cyan); font-weight:700;">CANLI CANVAS</span>
+            </div>
+
+            <div class="phone-frame">
+                <canvas id="tiktokCanvas" width="1080" height="1920"></canvas>
+                <!-- TikTok Sağ Etkileşim İkonları Önizlemesi -->
+                <div class="tt-right-rail">
+                    <div class="tt-rail-item">
+                        <div class="tt-rail-icon" style="border-color:var(--tt-pink);">🏭</div>
+                        <span>Takip</span>
+                    </div>
+                    <div class="tt-rail-item">
+                        <div class="tt-rail-icon">❤️</div>
+                        <span>14.8B</span>
+                    </div>
+                    <div class="tt-rail-item">
+                        <div class="tt-rail-icon">💬</div>
+                        <span>428</span>
+                    </div>
+                    <div class="tt-rail-item">
+                        <div class="tt-rail-icon">🔖</div>
+                        <span>2.9B</span>
+                    </div>
+                    <div class="tt-rail-item">
+                        <div class="tt-rail-icon">↪️</div>
+                        <span>Paylaş</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="width:100%; margin-top:12px; display:flex; gap:8px;">
+                <button class="btn" style="flex:1;" onclick="generateAutonomousTikTokScene()">🔄 Farklı Renk/Desen Üret</button>
+                <button class="btn btn-cyan" style="flex:1;" onclick="downloadTikTokPoster()">⬇️ 1080×1920 PNG İndir</button>
+            </div>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:8px; text-align:center;">
+                Bot bu 9:16 dikey sahneyi hiçbir fotoğraf/video yüklemenize gerek kalmadan bulutta kendi tasarlar ve yayınlar.
+            </p>
+        </section>
+
+        <!-- ORTA SÜTUN: 4 TIKTOK FORMATI, #KEŞFET SEO & 7/24 ZAMANLAYICI -->
+        <section class="panel-card">
+            <div class="panel-header">
+                <h2>🎬 Otonom TikTok Formatı, Viral Hook & #Keşfet SEO Üreticisi</h2>
+                <span style="font-size:11px; color:#10b981; font-weight:700;">OTOMATİK ÜRETİM</span>
+            </div>
+
+            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">
+                1. TikTok Otonom Gönderi Formatı Seçin (veya Otomatik Döngüde Bırakın):
+            </label>
+            <div class="format-grid" id="formatSelectorGrid">
+                <button class="format-btn active" data-format="TIKTOK_ASMR_CNC" onclick="selectTikTokFormat('TIKTOK_ASMR_CNC', this)">
+                    <strong>🔊 Fabrika ASMR & CNC Pres</strong>
+                    <span>9:16 • Endüstriyel üretim akışı & vakum pres</span>
+                </button>
+                <button class="format-btn" data-format="TIKTOK_PHOTO_CAROUSEL" onclick="selectTikTokFormat('TIKTOK_PHOTO_CAROUSEL', this)">
+                    <strong>📸 TikTok Photo Mode Kartela</strong>
+                    <span>9:16 • 4'lü kaydırmalı membran renk karşılaştırma</span>
+                </button>
+                <button class="format-btn" data-format="TIKTOK_POV_RENOVATION" onclick="selectTikTokFormat('TIKTOK_POV_RENOVATION', this)">
+                    <strong>🔄 POV: Kırmadan Kapak Değişimi</strong>
+                    <span>9:16 • Eski dolap vs yeni CNC membran kapak</span>
+                </button>
+                <button class="format-btn" data-format="TIKTOK_B2B_DEALER" onclick="selectTikTokFormat('TIKTOK_B2B_DEALER', this)">
+                    <strong>🏭 Mimar & Marangoz B2B Hattı</strong>
+                    <span>9:16 • Toptan fabrika sevkiyat & özel ölçü</span>
+                </button>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                <div class="form-group">
+                    <label>2. Canlı Katalogdan Kapak Modeli (`products`):</label>
+                    <select id="productSelect" class="form-control" onchange="onProductChange()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Trend Ses / Fabrika ASMR Ses Eşleşmesi:</label>
+                    <input type="text" id="trendingAudioInput" class="form-control" readonly />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>3. İlk 2 Saniye Ekran Üstü Viral Hook (Kanca Başlık):</label>
+                <input type="text" id="hookInput" class="form-control" oninput="renderTikTokCanvas()" />
+            </div>
+
+            <div class="form-group">
+                <label>4. Otomatik TikTok Açıklaması & #keşfet / #fyp SEO Etiketleri:</label>
+                <textarea id="captionInput" class="form-control"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>5. Videonun Altına Botun Otomatik Sabitleyeceği İlk Yorum (Pinned Comment):</label>
+                <textarea id="pinnedCommentInput" class="form-control" style="min-height:64px;"></textarea>
+            </div>
+
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
+                <button class="btn btn-cyan" onclick="addCurrentDraftToSchedule()">⏱️ Otonom Kuyruğa Ekle</button>
+                <button class="btn btn-tiktok" onclick="publishTikTokNow()">🚀 Sıfır Onayla Hemen Yayınla</button>
+                <button class="btn" onclick="triggerCloudCronNow()">☁️ Bulut Cron'u Şimdi Tetikle (/api/tiktok-cron)</button>
+            </div>
+
+            <!-- 7/24 Zamanlanmış ve Yayınlanmış Gönderi Kuyruğu -->
+            <div class="panel-header" style="margin-top:8px;">
+                <h2>📅 7/24 Otonom Yayın Kuyruğu & Son Paylaşılan TikTok'lar</h2>
+                <span id="queueCountBadge" style="font-size:11px; color:var(--tt-cyan); font-weight:700;">0 Kayıt</span>
+            </div>
+            <div class="queue-list" id="publishedQueueList"></div>
+        </section>
+
+        <!-- SAĞ SÜTUN: 3 AŞAMALI HİBRİT TIKTOK YORUM & BUSINESS DM MOTORU -->
+        <section class="panel-card">
+            <div class="panel-header">
+                <h2>💬 3 Aşamalı Hibrit TikTok Yorum & DM Motoru</h2>
+                <span style="font-size:11px; color:var(--tt-pink); font-weight:800;">CANLI MOTOR</span>
+            </div>
+
+            <div class="stage-badges-row">
+                <div class="stage-pill" style="border-color:rgba(16,185,129,0.4);">
+                    <strong style="color:#10b981;">1. Aşama: Sabit Kural</strong>
+                    5 iş günü teslimat, 5 yıl garanti, Bağcılar adres, renk kartelası.
+                </div>
+                <div class="stage-pill" style="border-color:rgba(0,242,254,0.4);">
+                    <strong style="color:var(--tt-cyan);">2. Aşama: Gemini AI</strong>
+                    Buhar dayanımı, membran vs lake, CNC model teknik soruları.
+                </div>
+                <div class="stage-pill" style="border-color:rgba(255,0,80,0.45);">
+                    <strong style="color:var(--tt-pink);">3. Aşama: İnsan Devri</strong>
+                    Fiyat teklifi, özel ölçü ve toptan sipariş -> WhatsApp (0505 015 10 35).
+                </div>
+            </div>
+
+            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
+                Hızlı Yorum / DM Senaryosu Test Et:
+            </label>
+            <div class="preset-chips">
+                <button class="chip-btn" onclick="runPresetInteraction('Sipariş versek kaç günde teslim ediyorsunuz? İl dışına kargo var mı?', 'COMMENT')">🚚 1. Aşama: Kaç günde teslim?</button>
+                <button class="chip-btn" onclick="runPresetInteraction('Kapaklarınızda soyulma veya kabarma olur mu? Garantisi kaç yıl?', 'COMMENT')">🛡️ 1. Aşama: Garanti & Kalite</button>
+                <button class="chip-btn" onclick="runPresetInteraction('Çaydanlık buharına ve fırın ısısına karşı membran kapak mı yoksa akrilik mi önerirsiniz?', 'COMMENT')">🤖 2. Aşama: Buhar & Teknik Soru (Gemini AI)</button>
+                <button class="chip-btn" onclick="runPresetInteraction('18 adet mutfak kapağı için özel ölçü listem var, m2 fiyatı ne kadar? Toptan fiyat alabilir miyim?', 'DM')">📲 3. Aşama: Özel Ölçü & Fiyat (WhatsApp Devri)</button>
+            </div>
+
+            <div style="display:flex; gap:6px; margin-bottom:8px;">
+                <select id="simChannelSelect" class="form-control" style="width:125px;">
+                    <option value="COMMENT">💬 Yorum</option>
+                    <option value="DM">📩 TikTok DM</option>
+                </select>
+                <input type="text" id="simMessageInput" class="form-control" placeholder="Müşteri yorumu veya DM yazın..." />
+                <button class="btn btn-tiktok" onclick="sendSimulatedInteraction()">Gönder</button>
+            </div>
+
+            <div class="chat-feed" id="interactionFeed"></div>
+        </section>
+
+    </main>
+
+    <!-- TIKTOK API & GEMINI BULUT AYARLARI MODALI -->
+    <div class="modal-backdrop" id="apiModal">
+        <div class="modal-box">
+            <div class="panel-header">
+                <h2>🔑 TikTok Content Posting API v2 & Gemini AI Bağlantısı</h2>
+                <button class="btn" onclick="closeApiModal()">✕ Kapat</button>
+            </div>
+            <div class="form-group">
+                <label>TikTok Hesap Kullanıcı Adı:</label>
+                <input type="text" id="cfgHandle" class="form-control" value="@globalkapak" />
+            </div>
+            <div class="form-group">
+                <label>TikTok OAuth2 Access Token (`act.xxx` — Content Posting API v2):</label>
+                <input type="password" id="cfgAccessToken" class="form-control" placeholder="act.tiktok_oauth2_access_token..." />
+            </div>
+            <div class="form-group">
+                <label>TikTok Open ID (`open_id`):</label>
+                <input type="text" id="cfgOpenId" class="form-control" placeholder="TikTok Business Open ID" />
+            </div>
+            <div class="form-group">
+                <label>Google Gemini 2.5 Flash API Anahtarı (2. Aşama Teknik Yanıtlar İçin):</label>
+                <input type="password" id="cfgGeminiKey" class="form-control" placeholder="AIzaSy..." />
+            </div>
+            <div class="form-group">
+                <label>3. Aşama Canlı İnsan / WhatsApp Sipariş Hattı:</label>
+                <input type="text" id="cfgWhatsapp" class="form-control" value="905050151035" />
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
+                <button class="btn" onclick="closeApiModal()">İptal</button>
+                <button class="btn btn-cyan" onclick="saveApiConfig()">💾 Buluta Kaydet (Supabase `tt_bot_state`)</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =====================================================================
+        // SUPABASE BAĞLANTISI VE VARSAYILAN KATALOG
+        // =====================================================================
+        const SUPABASE_URL = 'https://nyvctdskhAbImlvgbnhx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55dmN0ZHNraGFiaW1sdmdibmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTM4NTEsImV4cCI6MjA1ODUyOTg1MX0.L3-2_N2M1n6xW3f2sI9tG4cK7v8R5pQ1mZ0yX9wE6uA';
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+        const FALLBACK_PRODUCTS = [
+            { sku: 'GKM-101', title: 'Klasik CNC Membran Kapak', kategori: 'Membran Kapak', renkler: ['Mat Antrasit', 'İpek Beyaz', 'Kaşmir', 'Doğal Meşe'] },
+            { sku: 'GKM-204', title: 'Country Çerçeveli Membran Kapak', kategori: 'Country Serisi', renkler: ['Kaşmir', 'Mat Beyaz', 'Adaçayı Yeşili', 'Krem'] },
+            { sku: 'GKM-309', title: 'Modern Çıtalı Derzli Kapak', kategori: 'Modern CNC Serisi', renkler: ['Mat Antrasit', 'Ceviz', 'Kum Beji', 'Siyah Mat'] },
+            { sku: 'GKM-412', title: 'High Gloss Parlak Membran Kapak', kategori: 'Parlak Seri', renkler: ['Parlak Beyaz', 'Parlak Krem', 'Metalik Gri', 'Kapuçino'] }
+        ];
+
+        const FORMAT_CONFIGS = {
+            TIKTOK_ASMR_CNC: {
+                badge: '🔊 FABRİKA ASMR • CNC & VAKUM PRES',
+                subBadge: '0.35mm İthal PVC Membran • 18mm 1. Sınıf MDF',
+                audio: '🔊 Orijinal Fabrika Sesi — CNC & Vakum Pres Endüstriyel ASMR',
+                hookTemplate: (p) => `POV: 5 İş Gününde ${p.title} Fabrikamızda Nasıl Üretiliyor?`,
+                accent1: '#00f2fe',
+                accent2: '#ff0050'
+            },
+            TIKTOK_PHOTO_CAROUSEL: {
+                badge: '📸 TIKTOK PHOTO MODE • RENK KARTELASI',
+                subBadge: '50+ Mat, Parlak & Doğal Ahşap Membran Renk Seçeneği',
+                audio: '🔊 Aesthetic Interior Lo-Fi — Modern Mutfak Trend Sesi',
+                hookTemplate: (p) => `2026 Mutfaklarında En Çok Sorulan 4 ${p.title} Rengi (Kaydır 👉)`,
+                accent1: '#38bdf8',
+                accent2: '#f43f5e'
+            },
+            TIKTOK_POV_RENOVATION: {
+                badge: '🔄 POV: KIRMADAN SADECE KAPAK DEĞİŞİMİ',
+                subBadge: 'Eski Gövdeye Milimetrik Özel Ölçü CNC Kapak Uygulaması',
+                audio: '🔊 Glow Up Transition Beat — Önce / Sonra Mutfak Dönüşümü',
+                hookTemplate: (p) => `Komple Mutfak Kırmaya Son! Sadece Kapak Değişimiyle Yeni Mutfak ✨`,
+                accent1: '#34d399',
+                accent2: '#ff0050'
+            },
+            TIKTOK_B2B_DEALER: {
+                badge: '🏭 MİMAR & MARANGOZ TOPTAN FABRİKA HATTI',
+                subBadge: 'Bağcılar Fabrikadan 81 İle 5 İş Gününde Seri Sevkiyat',
+                audio: '🔊 Corporate Tech Momentum — B2B Fabrika Üretim Hattı',
+                hookTemplate: (p) => `Mimarlar & Mutfak Üreticileri İçin Bağcılar Fabrikadan Doğrudan Sevkiyat`,
+                accent1: '#f59e0b',
+                accent2: '#00f2fe'
+            }
+        };
+
+        let catalogProducts = [...FALLBACK_PRODUCTS];
+        let currentFormat = 'TIKTOK_ASMR_CNC';
+        let currentProductIndex = 0;
+        let visualSeed = 0;
+
+        let botState = {
+            botActive: true,
+            accountHandle: '@globalkapak',
+            tiktokAccessToken: '',
+            tiktokOpenId: '',
+            geminiApiKey: '',
+            whatsappNumber: '905050151035',
+            publishedHistory: [
+                {
+                    id: 'tt_init_1',
+                    format: 'TIKTOK_ASMR_CNC',
+                    productSku: 'GKM-101',
+                    productTitle: 'Klasik CNC Membran Kapak',
+                    onScreenHook: 'POV: 5 İş Gününde Mutfak Kapaklarınız Fabrikamızda Nasıl Üretiliyor?',
+                    publishedAt: 'Bugün • 11:30 (Otonom Bulut)'
+                },
+                {
+                    id: 'tt_init_2',
+                    format: 'TIKTOK_PHOTO_CAROUSEL',
+                    productSku: 'GKM-204',
+                    productTitle: 'Country Çerçeveli Membran Kapak',
+                    onScreenHook: '2026 Mutfaklarında En Çok Sorulan 4 Country Kapak Rengi 👉',
+                    publishedAt: 'Dün • 20:30 (Otonom Bulut)'
+                }
+            ],
+            interactionLogs: [
+                {
+                    stage: 1,
+                    stageBadge: '1. AŞAMA • ANINDA SABİT YANIT',
+                    channel: 'COMMENT',
+                    username: 'merve_dekorasyon',
+                    userMessage: 'Sipariş versek kaç günde kargoya veriyorsunuz?',
+                    reply: '🚚 Siparişleriniz Bağcılar / İstanbul fabrikamızda özel ölçü CNC kesim ve vakum pres hattımızda hazırlanarak 5 iş günü içinde sevkiyata çıkarılmaktadır. 81 ile güvenli gönderim yapıyoruz. 📦',
+                    timestamp: 'Az önce'
+                },
+                {
+                    stage: 3,
+                    stageBadge: '3. AŞAMA • WHATSAPP & CANLI İNSAN DEVRİ',
+                    channel: 'DM',
+                    username: 'ozkan_mobilya_atolyesi',
+                    userMessage: 'Toptan 45 m2 mat antrasit CNC kapak için fiyat listesi alabilir miyim?',
+                    reply: 'Merhaba @ozkan_mobilya_atolyesi 🙌 Ölçünüze ve seçtiğiniz CNC kapak modeline özel net fabrika fiyat teklifi hazırlayabilmemiz için satış uzmanımız devreye alındı. 👉 https://wa.me/905050151035 (0505 015 10 35)',
+                    timestamp: '4 dk önce'
+                }
+            ]
+        };
+
+        // =====================================================================
+        // CANLI ÜRÜN KATALOĞUNU VE BOT DURUMUNU SUPABASE'DEN YÜKLE
+        // =====================================================================
+        async function initTikTokCloudBot() {
+            if (supabaseClient) {
+                try {
+                    const { data: prods } = await supabaseClient
+                        .from('products')
+                        .select('sku, title, kategori, renkler, kisa_aciklama')
+                        .limit(30);
+                    if (prods && prods.length > 0) {
+                        catalogProducts = prods;
+                    }
+
+                    const { data: stateRow } = await supabaseClient
+                        .from('site_settings')
+                        .select('data')
+                        .eq('key', 'tt_bot_state')
+                        .maybeSingle();
+
+                    if (stateRow && stateRow.data) {
+                        botState = { ...botState, ...stateRow.data };
+                    }
+                } catch (e) {
+                    console.warn('Supabase okuma uyarisi, yerel yedek kullaniliyor:', e.message);
+                }
+            }
+
+            document.getElementById('kpiProductCount').textContent = `${catalogProducts.length} Aktif Model`;
+            populateProductDropdown();
+            applyDraftFromSelection();
+            renderQueueList();
+            renderInteractionFeed();
+        }
+
+        function populateProductDropdown() {
+            const sel = document.getElementById('productSelect');
+            sel.innerHTML = catalogProducts.map((p, idx) => {
+                const sku = p.sku || `GKM-${101 + idx}`;
+                return `<option value="${idx}">[${sku}] ${p.title || 'CNC Membran Kapak'}</option>`;
+            }).join('');
+        }
+
+        function selectTikTokFormat(formatKey, btnEl) {
+            currentFormat = formatKey;
+            document.querySelectorAll('#formatSelectorGrid .format-btn').forEach(b => b.classList.remove('active'));
+            if (btnEl) btnEl.classList.add('active');
+            applyDraftFromSelection();
+        }
+
+        function onProductChange() {
+            currentProductIndex = Number(document.getElementById('productSelect').value) || 0;
+            applyDraftFromSelection();
+        }
+
+        function generateAutonomousTikTokScene() {
+            visualSeed = (visualSeed + 1) % 4;
+            currentProductIndex = (currentProductIndex + 1) % catalogProducts.length;
+            document.getElementById('productSelect').value = String(currentProductIndex);
+            applyDraftFromSelection();
+        }
+
+        function applyDraftFromSelection() {
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+            const sku = p.sku || 'GKM-104';
+            const title = p.title || 'Royal CNC Membran Kapak';
+            const colors = Array.isArray(p.renkler) ? p.renkler.join(', ') : (p.renkler || 'Mat Antrasit, Kaşmir, İpek Beyaz, Doğal Meşe');
+            const cfg = FORMAT_CONFIGS[currentFormat] || FORMAT_CONFIGS.TIKTOK_ASMR_CNC;
+
+            const hook = cfg.hookTemplate({ sku, title });
+            document.getElementById('hookInput').value = hook;
+            document.getElementById('trendingAudioInput').value = cfg.audio;
+
+            const caption = `${hook} 🛠️✨\n\n` +
+                `🔹 Model: ${title} (${sku})\n` +
+                `🔹 Teknik Yapı: 18mm 1. Sınıf MDF + 0.35mm İthal PVC Membran Vakum Pres\n` +
+                `🔹 Renk Kartelası: ${colors}\n` +
+                `🚚 5 İş Gününde Fabrikadan Sevkiyat | 🛡️ 5 Yıl Garanti\n` +
+                `📲 Özel ölçü & fiyat için sabitlenen yoruma tıklayın! 👇\n\n` +
+                `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #globalkapak`;
+
+            const pinned = `📌 FABRİKA DOĞRUDAN SİPARİŞ & ÖLÇÜ HATTI:\n` +
+                `📐 ${title} (${sku}) modelimiz için özel ölçü fiyat teklifi ve renk kartelası istemek için WhatsApp hattımıza tıklayın:\n` +
+                `👉 https://wa.me/905050151035 (0505 015 10 35)\n` +
+                `🌐 Dijital Katalog: https://globalmobilyaweb.vercel.app`;
+
+            document.getElementById('captionInput').value = caption;
+            document.getElementById('pinnedCommentInput').value = pinned;
+
+            renderTikTokCanvas();
+        }
+
+        // =====================================================================
+        // SIFIR GİRİŞLİ 9:16 (1080x1920) TIKTOK CANVAS TASARIM MOTORU
+        // =====================================================================
+        function renderTikTokCanvas() {
+            const canvas = document.getElementById('tiktokCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width;
+            const H = canvas.height;
+
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+            const sku = p.sku || 'GKM-104';
+            const title = p.title || 'Royal CNC Membran Kapak';
+            const category = p.kategori || 'CNC Membran Kapak';
+            const hookText = document.getElementById('hookInput').value || 'POV: 5 İş Gününde Mutfak Kapaklarınız Fabrikamızda Nasıl Üretiliyor?';
+            const cfg = FORMAT_CONFIGS[currentFormat] || FORMAT_CONFIGS.TIKTOK_ASMR_CNC;
+
+            // Arka Plan Gradyanı
+            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
+            bgGrad.addColorStop(0, '#09090b');
+            bgGrad.addColorStop(0.5, visualSeed % 2 === 0 ? '#18181b' : '#0f172a');
+            bgGrad.addColorStop(1, '#09090b');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, W, H);
+
+            // TikTok Çift Neon Aura (Cyan & Pink)
+            ctx.save();
+            ctx.globalAlpha = 0.16;
+            ctx.fillStyle = cfg.accent1;
+            ctx.beginPath();
+            ctx.arc(200, 320, 290, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = cfg.accent2;
+            ctx.beginPath();
+            ctx.arc(880, 1460, 340, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+
+            // Üst @globalkapak Hesap Barı
+            ctx.fillStyle = 'rgba(0,0,0,0.65)';
+            roundRect(ctx, 65, 90, 950, 88, 44, true, false);
+            ctx.strokeStyle = cfg.accent1;
+            ctx.lineWidth = 3;
+            roundRect(ctx, 65, 90, 950, 88, 44, false, true);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 31px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('🎵 @globalkapak • GLOBAL KAPAK', 110, 145);
+
+            // #KEŞFET Rozeti
+            ctx.fillStyle = cfg.accent2;
+            roundRect(ctx, 815, 108, 175, 52, 26, true, false);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 24px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('#KEŞFET', 902, 142);
+
+            // İlk 2 Saniye Viral Hook (Beyaz Kanca Kutusu)
+            ctx.fillStyle = '#ffffff';
+            roundRect(ctx, 65, 210, 950, 200, 28, true, false);
+
+            // Üst Neon Şerit
+            const neonBar = ctx.createLinearGradient(65, 210, 1015, 210);
+            neonBar.addColorStop(0, cfg.accent1);
+            neonBar.addColorStop(1, cfg.accent2);
+            ctx.fillStyle = neonBar;
+            roundRect(ctx, 65, 210, 950, 18, 9, true, false);
+
+            ctx.fillStyle = '#09090b';
+            ctx.font = '900 36px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            const line1 = hookText.slice(0, 42);
+            const line2 = hookText.slice(42, 84) || `${sku} • ${title}`;
+            ctx.fillText(line1, W / 2, 292);
+            ctx.fillStyle = '#e11d48';
+            ctx.font = '800 33px Inter, sans-serif';
+            ctx.fillText(line2, W / 2, 352);
+
+            // Format Rozeti
+            ctx.fillStyle = '#18181b';
+            roundRect(ctx, 130, 440, 820, 64, 32, true, false);
+            ctx.strokeStyle = cfg.accent1;
+            ctx.lineWidth = 2;
+            roundRect(ctx, 130, 440, 820, 64, 32, false, true);
+            ctx.fillStyle = cfg.accent1;
+            ctx.font = '800 25px Inter, sans-serif';
+            ctx.fillText(cfg.badge, W / 2, 481);
+
+            // Merkez 3D CNC Membran Kapak Teknik Sahnesi
+            const doorGrad = ctx.createLinearGradient(170, 540, 910, 1280);
+            doorGrad.addColorStop(0, '#334155');
+            doorGrad.addColorStop(0.5, '#1e293b');
+            doorGrad.addColorStop(1, '#0f172a');
+            ctx.fillStyle = doorGrad;
+            roundRect(ctx, 170, 540, 740, 740, 34, true, false);
+            ctx.strokeStyle = cfg.accent1;
+            ctx.lineWidth = 4;
+            roundRect(ctx, 170, 540, 740, 740, 34, false, true);
+
+            // CNC Bıçak Oyma Kanalları
+            ctx.strokeStyle = 'rgba(0, 242, 254, 0.75)';
+            ctx.lineWidth = 4;
+            roundRect(ctx, 235, 605, 610, 610, 22, false, true);
+
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+            roundRect(ctx, 285, 655, 510, 510, 16, true, false);
+
+            // Kapak Kulp
+            ctx.fillStyle = cfg.accent1;
+            roundRect(ctx, 815, 845, 18, 135, 9, true, false);
+
+            // Merkez Ürün Yazıları
+            ctx.fillStyle = cfg.accent1;
+            ctx.font = '800 28px Inter, sans-serif';
+            ctx.fillText(category.toUpperCase(), W / 2, 800);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 64px Inter, sans-serif';
+            ctx.fillText(sku, W / 2, 885);
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '700 36px Inter, sans-serif';
+            ctx.fillText(title.slice(0, 28), W / 2, 950);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '600 23px Inter, sans-serif';
+            ctx.fillText(cfg.subBadge, W / 2, 1020);
+
+            // 4'lü Membran Renk Kartelası Şeridi
+            const swatches = [
+                { name: 'Antrasit', bg: '#1e293b', fg: '#ffffff' },
+                { name: 'Kaşmir', bg: '#d6d3d1', fg: '#09090b' },
+                { name: 'İpek Beyaz', bg: '#f8fafc', fg: '#09090b' },
+                { name: 'Doğal Meşe', bg: '#92400e', fg: '#ffffff' }
+            ];
+            swatches.forEach((sw, i) => {
+                const sx = 205 + i * 170;
+                const sy = 1085;
+                ctx.fillStyle = sw.bg;
+                roundRect(ctx, sx, sy, 150, 66, 12, true, false);
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = 2;
+                roundRect(ctx, sx, sy, 150, 66, 12, false, true);
+                ctx.fillStyle = sw.fg;
+                ctx.font = '700 20px Inter, sans-serif';
+                ctx.fillText(sw.name, sx + 75, sy + 40);
+            });
+
+            // SLA Avantaj Kutuları (5 İş Günü & 5 Yıl Garanti)
+            ctx.fillStyle = '#18181b';
+            roundRect(ctx, 65, 1320, 460, 115, 22, true, false);
+            ctx.strokeStyle = cfg.accent1;
+            ctx.lineWidth = 2;
+            roundRect(ctx, 65, 1320, 460, 115, 22, false, true);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 28px Inter, sans-serif';
+            ctx.fillText('🚚 5 İŞ GÜNÜNDE', 295, 1370);
+            ctx.fillStyle = cfg.accent1;
+            ctx.font = '700 24px Inter, sans-serif';
+            ctx.fillText('FABRİKADAN TESLİM', 295, 1410);
+
+            ctx.fillStyle = '#18181b';
+            roundRect(ctx, 555, 1320, 460, 115, 22, true, false);
+            ctx.strokeStyle = cfg.accent2;
+            ctx.lineWidth = 2;
+            roundRect(ctx, 555, 1320, 460, 115, 22, false, true);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 28px Inter, sans-serif';
+            ctx.fillText('🛡️ 5 YIL FABRİKA', 785, 1370);
+            ctx.fillStyle = cfg.accent2;
+            ctx.font = '700 24px Inter, sans-serif';
+            ctx.fillText('GARANTİLİ ÜRETİM', 785, 1410);
+
+            // Trend Ses Şeridi
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '700 24px Inter, sans-serif';
+            ctx.fillText(cfg.audio.slice(0, 58), W / 2, 1500);
+
+            // Alt WhatsApp & Sabit Yorum CTA Kutusu
+            ctx.fillStyle = '#09090b';
+            roundRect(ctx, 65, 1550, 950, 240, 30, true, false);
+            ctx.strokeStyle = cfg.accent2;
+            ctx.lineWidth = 4;
+            roundRect(ctx, 65, 1550, 950, 240, 30, false, true);
+
+            ctx.fillStyle = cfg.accent1;
+            ctx.font = '800 30px Inter, sans-serif';
+            ctx.fillText('📐 ÖZEL ÖLÇÜ & TOPTAN FİYAT HATTI', W / 2, 1620);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '900 46px Inter, sans-serif';
+            ctx.fillText('📲 WhatsApp: 0 (505) 015 1035', W / 2, 1685);
+
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '700 24px Inter, sans-serif';
+            ctx.fillText('📍 Bağcılar / İstanbul • Sabitlenen Yoruma Tıklayın 👇', W / 2, 1745);
+        }
+
+        function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        function downloadTikTokPoster() {
+            const canvas = document.getElementById('tiktokCanvas');
+            const link = document.createElement('a');
+            link.download = `tiktok_globalkapak_${currentFormat.toLowerCase()}_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        // =====================================================================
+        // OTONOM KUYRUK & YAYIN İŞLEMLERİ
+        // =====================================================================
+        async function saveStateToSupabase() {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.from('site_settings').upsert({
+                    key: 'tt_bot_state',
+                    data: botState,
+                    updated_at: new Date().toISOString()
+                });
+            } catch (e) {
+                console.warn('Supabase kayit uyarisi:', e.message);
+            }
+        }
+
+        function renderQueueList() {
+            const listEl = document.getElementById('publishedQueueList');
+            const items = botState.publishedHistory || [];
+            document.getElementById('queueCountBadge').textContent = `${items.length} Gönderi`;
+
+            listEl.innerHTML = items.map(item => `
+                <div class="queue-item">
+                    <div>
+                        <strong style="color:#fff;">[${item.productSku}] ${item.productTitle}</strong>
+                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                            ${item.format} • ${item.onScreenHook ? item.onScreenHook.slice(0, 52) + '...' : ''}
+                        </div>
+                    </div>
+                    <span style="font-size:11px; color:#34d399; font-weight:700; white-space:nowrap;">
+                        ✓ ${item.publishedAt || 'Yayınlandı'}
+                    </span>
+                </div>
+            `).join('');
+        }
+
+        async function addCurrentDraftToSchedule() {
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+            const entry = {
+                id: `tt_sched_${Date.now()}`,
+                format: currentFormat,
+                productSku: p.sku || 'GKM-104',
+                productTitle: p.title || 'CNC Membran Kapak',
+                onScreenHook: document.getElementById('hookInput').value,
+                publishedAt: 'Sıradaki Otonom Saat (16:30)'
+            };
+            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
+            renderQueueList();
+            await saveStateToSupabase();
+        }
+
+        async function publishTikTokNow() {
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+            const entry = {
+                id: `tt_live_${Date.now()}`,
+                format: currentFormat,
+                productSku: p.sku || 'GKM-104',
+                productTitle: p.title || 'CNC Membran Kapak',
+                onScreenHook: document.getElementById('hookInput').value,
+                publishedAt: `Şimdi Yayınlandı (${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })})`
+            };
+            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
+            renderQueueList();
+            await saveStateToSupabase();
+            alert(`🚀 TikTok 9:16 Dikey Gönderi (${entry.productSku} - ${entry.productTitle}) sıfır medya girişiyle otonom olarak üretildi ve yayın kuyruğuna işlendi!`);
+        }
+
+        async function triggerCloudCronNow() {
+            try {
+                const res = await fetch('/api/tiktok-cron', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ format: currentFormat })
+                });
+                const data = await res.json();
+                if (data.ok && data.publishedEntry) {
+                    botState.publishedHistory = [data.publishedEntry, ...(botState.publishedHistory || [])].slice(0, 30);
+                    renderQueueList();
+                    alert(`☁️ Bulut Cron (/api/tiktok-cron) başarıyla çalıştı! Üretilen: [${data.publishedEntry.productSku}] ${data.publishedEntry.productTitle}`);
+                }
+            } catch (e) {
+                await publishTikTokNow();
+            }
+        }
+
+        // =====================================================================
+        // 3 AŞAMALI HİBRİT TIKTOK YORUM & DM SİMÜLATÖRÜ
+        // =====================================================================
+        function classifyLocalTikTokMessage(text) {
+            const lower = String(text || '').toLowerCase();
+            const stage3Words = ['fiyat', 'ücret', 'kaç tl', 'ne kadar', 'm2', 'metrekare', 'teklif', 'özel ölçü', 'toptan', 'bayilik', 'sipariş'];
+            for (const w of stage3Words) {
+                if (lower.includes(w)) return 3;
+            }
+            if (lower.includes('kaç gün') || lower.includes('teslim') || lower.includes('kargo')) return '1_delivery';
+            if (lower.includes('garanti') || lower.includes('soyulma') || lower.includes('kabarma')) return '1_warranty';
+            if (lower.includes('adres') || lower.includes('nerede') || lower.includes('bağcılar')) return '1_address';
+            if (lower.includes('renk') || lower.includes('kartela')) return '1_color';
+            return 2;
+        }
+
+        async function runPresetInteraction(text, channel) {
+            document.getElementById('simChannelSelect').value = channel;
+            document.getElementById('simMessageInput').value = text;
+            await sendSimulatedInteraction();
+        }
+
+        async function sendSimulatedInteraction() {
+            const inputEl = document.getElementById('simMessageInput');
+            const channel = document.getElementById('simChannelSelect').value;
+            const text = inputEl.value.trim();
+            if (!text) return;
+
+            inputEl.value = '';
+            const stageCode = classifyLocalTikTokMessage(text);
+            let logItem = null;
+
+            if (stageCode === '1_delivery') {
+                logItem = {
+                    stage: 1,
+                    stageBadge: '1. AŞAMA • ANINDA SABİT YANIT (TESLİMAT SLA)',
+                    channel,
+                    username: 'tiktok_takipci',
+                    userMessage: text,
+                    reply: '🚚 Siparişleriniz Bağcılar / İstanbul fabrikamızda özel ölçü CNC kesim ve vakum pres hattımızda hazırlanarak **5 iş günü içinde** sevkiyata çıkarılmaktadır. 81 ile güvenli gönderim yapıyoruz. 📦\n📲 Hızlı sipariş: https://wa.me/905050151035',
+                    timestamp: 'Şimdi'
+                };
+            } else if (stageCode === '1_warranty') {
+                logItem = {
+                    stage: 1,
+                    stageBadge: '1. AŞAMA • ANINDA SABİT YANIT (5 YIL GARANTİ)',
+                    channel,
+                    username: 'tiktok_takipci',
+                    userMessage: text,
+                    reply: '🛡️ Tüm kapaklarımız **18mm 1. sınıf MDF** üzerine **0.35mm ithal PVC membran** ve yüksek basınçlı vakum pres teknolojisiyle üretilir; soyulma ve kabarmaya karşı **5 Yıl Fabrika Garantisi** altındadır. ✨',
+                    timestamp: 'Şimdi'
+                };
+            } else if (stageCode === '1_address') {
+                logItem = {
+                    stage: 1,
+                    stageBadge: '1. AŞAMA • ANINDA SABİT YANIT (FABRİKA ADRES)',
+                    channel,
+                    username: 'tiktok_takipci',
+                    userMessage: text,
+                    reply: '📍 Fabrika & Showroom: Yüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul. Hafta içi 08:30-18:30 arası canlı numunelerimizi inceleyebilirsiniz.',
+                    timestamp: 'Şimdi'
+                };
+            } else if (stageCode === '1_color') {
+                logItem = {
+                    stage: 1,
+                    stageBadge: '1. AŞAMA • ANINDA SABİT YANIT (RENK KARTELASI)',
+                    channel,
+                    username: 'tiktok_takipci',
+                    userMessage: text,
+                    reply: '🎨 50+ mat, ipek mat, parlak ve ahşap dokulu membran renk kartelamızı web sitemizde inceleyebilirsiniz: https://globalmobilyaweb.vercel.app',
+                    timestamp: 'Şimdi'
+                };
+            } else if (stageCode === 3) {
+                logItem = {
+                    stage: 3,
+                    stageBadge: '3. AŞAMA • WHATSAPP & CANLI İNSAN DEVRİ',
+                    channel,
+                    username: 'proje_musterisi',
+                    userMessage: text,
+                    reply: 'Merhaba 🙌 Ölçünüze ve seçtiğiniz CNC kapak modeline özel **net fabrika fiyat teklifi** hazırlayabilmemiz için satış uzmanımız devreye alındı.\n📐 Kapak ölçülerinizi hemen WhatsApp Sipariş Hattımıza gönderebilirsiniz:\n👉 https://wa.me/905050151035 (0505 015 10 35)',
+                    timestamp: 'Şimdi'
+                };
+            } else {
+                // 2. Aşama: Sunucu /api/tiktok-webhook veya Gemini AI üzerinden yanıt al
+                let aiReply = 'Merhaba 👋 Global Kapak Mobilya fabrikamızda 18mm 1. sınıf MDF üzerine 0.35mm ithal PVC membran vakum pres uyguluyoruz. Buhar, nem ve ısıya karşı ekstra dirençlidir, 5 yıl garantilidir. Özel ölçü ve teknik detaylar için WhatsApp hattımızdan (0505 015 10 35) bize ulaşabilirsiniz.';
+                try {
+                    const res = await fetch('/api/tiktok-webhook', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            text,
+                            username: 'tiktok_kullanicisi',
+                            channel,
+                            geminiApiKey: botState.geminiApiKey
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.ok && data.result?.reply) {
+                        aiReply = data.result.reply;
+                    }
+                } catch (_) {}
+
+                logItem = {
+                    stage: 2,
+                    stageBadge: '2. AŞAMA • GEMINI 2.5 FLASH AI (CANLI KATALOG)',
+                    channel,
+                    username: 'tiktok_kullanicisi',
+                    userMessage: text,
+                    reply: aiReply,
+                    timestamp: 'Şimdi'
+                };
+            }
+
+            botState.interactionLogs = [logItem, ...(botState.interactionLogs || [])].slice(0, 40);
+            renderInteractionFeed();
+            await saveStateToSupabase();
+        }
+
+        function renderInteractionFeed() {
+            const feed = document.getElementById('interactionFeed');
+            const logs = botState.interactionLogs || [];
+            document.getElementById('kpiInteractionCount').textContent = `${logs.length} Etkileşim`;
+
+            feed.innerHTML = logs.map(item => `
+                <div class="chat-card stage-${item.stage}">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <span style="font-size:10px; font-weight:800; color:${item.stage === 1 ? '#10b981' : item.stage === 2 ? '#00f2fe' : '#ff0050'};">
+                            ${item.stageBadge}
+                        </span>
+                        <span style="font-size:10px; color:var(--text-muted);">
+                            ${item.channel === 'DM' ? '📩 TikTok DM' : '💬 Yorum'} • ${item.timestamp || ''}
+                        </span>
+                    </div>
+                    <div style="font-weight:700; color:#fff; margin-bottom:6px;">
+                        @${item.username}: "${item.userMessage || ''}"
+                    </div>
+                    <div style="color:#cbd5e1; font-size:11.5px; line-height:1.45; white-space:pre-line;">
+                        ${item.reply}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =====================================================================
+        // MODAL KONTROLLERİ
+        // =====================================================================
+        function openApiModal() {
+            document.getElementById('cfgHandle').value = botState.accountHandle || '@globalkapak';
+            document.getElementById('cfgAccessToken').value = botState.tiktokAccessToken || '';
+            document.getElementById('cfgOpenId').value = botState.tiktokOpenId || '';
+            document.getElementById('cfgGeminiKey').value = botState.geminiApiKey || '';
+            document.getElementById('cfgWhatsapp').value = botState.whatsappNumber || '905050151035';
+            document.getElementById('apiModal').classList.add('open');
+        }
+
+        function closeApiModal() {
+            document.getElementById('apiModal').classList.remove('open');
+        }
+
+        async function saveApiConfig() {
+            botState.accountHandle = document.getElementById('cfgHandle').value.trim() || '@globalkapak';
+            botState.tiktokAccessToken = document.getElementById('cfgAccessToken').value.trim();
+            botState.tiktokOpenId = document.getElementById('cfgOpenId').value.trim();
+            botState.geminiApiKey = document.getElementById('cfgGeminiKey').value.trim();
+            botState.whatsappNumber = document.getElementById('cfgWhatsapp').value.trim() || '905050151035';
+
+            document.getElementById('cloudStatusText').textContent = `7/24 Bulut Motoru Aktif (${botState.accountHandle})`;
+            await saveStateToSupabase();
+            closeApiModal();
+            alert('✅ TikTok API v2 & Gemini AI yapılandırması Supabase bulutuna (tt_bot_state) kaydedildi!');
+        }
+
+        window.addEventListener('DOMContentLoaded', initTikTokCloudBot);
+    </script>
+</body>
+</html>

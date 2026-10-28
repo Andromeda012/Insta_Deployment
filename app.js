@@ -432,7 +432,7 @@ export function toggleInAppFullscreen(forceState) {
 // Module 2 Multi-Bot Channel Switcher
 export function switchSocialBotChannel(btnEl, channel) {
     const frame = document.getElementById('module2-frame');
-    if (channel === 'instagram' || channel === 'facebook' || channel === 'youtube') {
+    if (channel === 'instagram' || channel === 'facebook' || channel === 'youtube' || channel === 'tiktok') {
         if (btnEl) {
             btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
             btnEl.classList.add('active');
@@ -452,13 +452,14 @@ export function switchSocialBotChannel(btnEl, channel) {
                 frame.src = 'Module%202/Youtube%20Shorts/index.html';
             }
             showToast('▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.');
+        } else if (channel === 'tiktok') {
+            if (frame && !frame.src.includes('Module%202/Tiktok/index.html')) {
+                frame.src = 'Module%202/Tiktok/index.html';
+            }
+            showToast('🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.');
         }
         return;
     }
-    const labelMap = {
-        tiktok: 'TikTok Bot (Module 2/Tiktok)'
-    };
-    showToast(`ℹ️ ${labelMap[channel] || channel} bir sonraki adımda kodlanacaktır. Şu an Instagram, Facebook ve YouTube Shorts Botları aktif!`);
 }
 
 // Initialize Application

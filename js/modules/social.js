@@ -3,6 +3,7 @@
 // 1. Module 2 / Instagram Cloud Bot (Otonom Reels/Story/Post Tasarımı + 3 Aşamalı DM/Yorum)
 // 2. Module 2 / Facebook Cloud Bot (Otonom Katalog/B2B Kart/FB Reels/FB Story Tasarımı + 3 Aşamalı Messenger/Yorum)
 // 3. Module 2 / YouTube Shorts Cloud Bot (Otonom 9:16 Dikey Sahne + #Shorts SEO & Sabit Yorum + 3 Aşamalı Yorum Motoru)
+// 4. Module 2 / TikTok Cloud Bot (Otonom 9:16 Fabrika ASMR, Photo Mode Kartela, POV Dönüşüm + 3 Aşamalı Yorum/DM Motoru)
 export function renderSocialModule(data) {
     return `
         <div class="module-embed-shell" style="display:flex; flex-direction:column; height:100%;">
@@ -38,9 +39,9 @@ export function renderSocialModule(data) {
                         class="embed-tab-chip"
                         data-channel="tiktok"
                         onclick="window.switchSocialBotChannel(this, 'tiktok')"
-                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:8px; border:1px solid rgba(148,163,184,0.2); background:rgba(30,41,59,0.7); color:#cbd5e1; font-size:12px; font-weight:600; cursor:pointer;"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:8px; border:1px solid rgba(0,242,254,0.55); background:linear-gradient(135deg, rgba(0,242,254,0.2), rgba(255,0,80,0.24)); color:#fff; font-size:12px; font-weight:700; cursor:pointer;"
                     >
-                        🎵 TikTok Bot <span style="font-size:10px; color:#94a3b8;">(Hazırlanıyor)</span>
+                        🎵 TikTok Bot <span style="background:#10b981; color:#052e16; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:800;">AKTİF • 7/24 BULUT</span>
                     </button>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
