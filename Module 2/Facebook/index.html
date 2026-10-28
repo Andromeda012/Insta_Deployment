@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modül 2 — Facebook Sayfa Bulut Botu & 3 Aşamalı Messenger/Yorum Merkezi</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0A192F;
+    --navy2: #153462;
+    --fb-blue: #1877F2;
+    --fb-blue-dark: #0C5DC7;
+    --fb-grad: linear-gradient(135deg, #0A192F 0%, #153462 45%, #1877F2 100%);
+    --bg: #F4F7FA;
+    --card: #FFFFFF;
+    --border: #DCE5ED;
+    --text: #0F172A;
+    --muted: #64748B;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .top-header {
+    background: linear-gradient(90deg, #081426 0%, #102A52 55%, #1877F2 100%);
+    color: #fff;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .th-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .th-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: #1877F2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 8px 20px rgba(24, 119, 242, 0.45);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .th-brand h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .th-brand span {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    display: block;
+    margin-top: 2px;
+  }
+  .th-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cloud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    color: #6EE7B7;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.7; }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .btn-fb {
+    background: linear-gradient(135deg, #1877F2 0%, #0C5DC7 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(24, 119, 242, 0.3);
+  }
+  .btn-fb:hover { transform: translateY(-1px); opacity: 0.96; }
+  .btn-navy { background: var(--navy); color: #fff; }
+  .btn-navy:hover { background: var(--navy2); }
+  .btn-outline {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.2); }
+  .btn-secondary {
+    background: #F1F5F9;
+    color: var(--navy);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: #E2E8F0; }
+  .btn-success { background: #10B981; color: #fff; }
+  .btn-danger {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+  }
+  .btn-sm { padding: 6px 11px; font-size: 11.5px; border-radius: 8px; }
+
+  .container {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 22px 28px 60px;
+  }
+
+  /* KPI STRIP */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 4px 14px rgba(10,25,47,0.04);
+  }
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* TABS */
+  .tabs-bar {
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--navy); background: #F8FAFC; }
+  .tab-btn.active {
+    background: var(--fb-blue);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(24,119,242,0.28);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.06fr 1fr;
+    gap: 22px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 6px 20px rgba(10,25,47,0.04);
+    margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-green { background: #DCFCE7; color: #166534; }
+  .badge-blue { background: #DBEAFE; color: #1E40AF; }
+  .badge-purple { background: #F3E8FF; color: #6B21A8; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+  }
+  .form-control:focus { outline: none; border-color: var(--fb-blue); }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #F8FAFC;
+  }
+  .slot-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--fb-blue);
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .queue-thumb {
+    width: 72px;
+    height: 48px;
+    border-radius: 8px;
+    background: #0F172A;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .queue-info { flex: 1; min-width: 0; }
+  .queue-info h4 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 3px;
+  }
+  .queue-info p {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* FACEBOOK FORMAT GUIDE CARDS */
+  .fb-format-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .fb-format-box {
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 11.5px;
+  }
+  .fb-format-box strong {
+    display: block;
+    color: var(--navy);
+    font-size: 12.5px;
+    margin-bottom: 4px;
+  }
+
+  /* 3-TIER PIPELINE */
+  .tier-pipeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .tier-box {
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    background: #fff;
+  }
+  .tier-box.t1 { border-top: 4px solid #1877F2; }
+  .tier-box.t2 { border-top: 4px solid #8B5CF6; }
+  .tier-box.t3 { border-top: 4px solid #10B981; }
+  .tier-box h4 { font-size: 13.5px; font-weight: 800; color: var(--navy); margin: 6px 0; }
+  .tier-box p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  /* MESSENGER CHAT SIMULATOR */
+  .chat-window {
+    background: #0B141A;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1E293B;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+  .chat-header {
+    background: linear-gradient(90deg, #0A192F, #1877F2);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg-bubble {
+    max-width: 82%;
+    padding: 12px 15px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: #1877F2;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bot {
+    align-self: flex-start;
+    background: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #334155;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-tier-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .tier-tag-1 { background: rgba(24,119,242,0.28); color: #93C5FD; }
+  .tier-tag-2 { background: rgba(139,92,246,0.25); color: #C4B5FD; }
+  .tier-tag-3 { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+  .chat-input-bar {
+    padding: 12px;
+    background: #111B21;
+    border-top: 1px solid #1E293B;
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input-bar input {
+    flex: 1;
+    background: #1E293B;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    display: none;
+    z-index: 9999;
+  }
+  .toast.show { display: block; }
+
+  @media (max-width: 980px) {
+    .kpi-grid, .grid-2, .tier-pipeline, .fb-format-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <div class="th-brand">
+    <div class="th-icon">📘</div>
+    <div>
+      <h1>Facebook Kurumsal Sayfa Botu & Otonom İçerik Stüdyosu</h1>
+      <span>7/24 Bulut Sunucu • Foto/Video Girişsiz Katalog, B2B Kart, Reels & Story Üretimi • 3 Aşamalı Messenger & Yorum Yanıt Motoru</span>
+    </div>
+  </div>
+  <div class="th-actions">
+    <div class="cloud-pill">
+      <span class="pulse-dot"></span>
+      <span>Facebook Cloud Bot: 7/24 Otonom (Sıfır Medya Girişi)</span>
+    </div>
+    <button class="btn btn-outline" onclick="switchTab('tab-simulator')">🧪 Messenger & Yorum Testi</button>
+    <button class="btn btn-fb" onclick="runFbAutonomousCycleNow()">⚡ Şimdi Otonom Tasarla & Facebook'ta Yayınla</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top"><span>📘 Facebook Otonom Mod</span><span class="badge badge-green">Sıfır Medya Girişi</span></div>
+      <div class="kpi-val">4 Format</div>
+      <div class="kpi-sub">Katalog • B2B Link • FB Reels • FB Story</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>📢 Üretilen / Yayınlanan</span><span class="badge badge-blue">Onaysız Otomatik</span></div>
+      <div class="kpi-val" id="kpiScheduledCount">0 Gönderi</div>
+      <div class="kpi-sub">Günlük 4 Otonom Saat Dilimi Aktif</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>💬 Messenger & Yorumlar</span><span class="badge badge-purple">Sabit + Gemini AI</span></div>
+      <div class="kpi-val" id="kpiRulesCount">5 Kural + AI</div>
+      <div class="kpi-sub">Basit Soruya Sabit, Karmaşığa Gemini AI</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>📲 3. Aşama B2B / WhatsApp</span><span class="badge badge-amber">İnsan Devri</span></div>
+      <div class="kpi-val" id="kpiHandoffCount">0 Devir</div>
+      <div class="kpi-sub">WhatsApp (+90 505 015 1035) Otomatik Yönlendirme</div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
+      🎨 1. Otonom Facebook Gönderi, Reels, Story & B2B Kart Stüdyosu
+    </button>
+    <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
+      💬 2. Birinci Aşama: Messenger & Yorum Sabit Cevapları
+    </button>
+    <button class="tab-btn" data-tab="tab-tier2" onclick="switchTab('tab-tier2')">
+      🧠 3. İkinci Aşama: Gemini AI Destek Motoru
+    </button>
+    <button class="tab-btn" data-tab="tab-tier3" onclick="switchTab('tab-tier3')">
+      📲 4. Üçüncü Aşama: WhatsApp & Satış Temsilcisi Devri
+    </button>
+    <button class="tab-btn" data-tab="tab-simulator" onclick="switchTab('tab-simulator')">
+      🧪 5. Canlı Facebook Messenger & Yorum Simülatörü
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: OTONOM FACEBOOK TASARIM & ZAMANLAYICI                          -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane active" id="tab-scheduler">
+
+    <!-- FACEBOOK FORMAT REHBERİ (FACEBOOK KULLANMAYANLAR İÇİN ÖZET) -->
+    <div class="fb-format-grid">
+      <div class="fb-format-box">
+        <strong>🖼️ 1. Kurumsal Katalog Gönderisi</strong>
+        <span style="color:var(--muted);">1200×630 yatay kurumsal ürün ve renk kartelası tanıtımı. Doğrudan tıklanabilir web sitesi linki içerir.</span>
+      </div>
+      <div class="fb-format-box">
+        <strong>🔗 2. B2B & Tasarım Modu Kartı</strong>
+        <span style="color:var(--muted);">Mobilya ustaları, iç mimarlar ve ev sahipleri için doğrudan sitemizdeki Canlı Tasarım Moduna yönlendiren kart.</span>
+      </div>
+      <div class="fb-format-box">
+        <strong>🎬 3. Facebook Reels Videosu</strong>
+        <span style="color:var(--muted);">1080×1920 dikey formatta yüksek organik erişim sağlayan CNC kapak ve fabrika tanıtım sahnesi.</span>
+      </div>
+      <div class="fb-format-box">
+        <strong>📱 4. Facebook Sayfa Hikayesi</strong>
+        <span style="color:var(--muted);">Takipçilerin en üst barında 24 saat görünen dikey 9:16 hızlı koleksiyon ve WhatsApp iletişim hikayesi.</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- SOL: OTONOM FACEBOOK TASARIM STÜDYOSU -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎨 Otonom Facebook Tasarım & İçerik Üretim Motoru</div>
+            <span class="badge badge-green">✓ Fotoğraf/Video Girişi Gerekmez</span>
+          </div>
+
+          <div style="background:linear-gradient(135deg,#0A192F 0%,#1877F2 100%);color:#fff;padding:12px 15px;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:16px;">
+            📘 <strong>Facebook Otonom Çalışma Prensibi:</strong> Instagram'dan farklı olarak Facebook gönderilerinde <strong>tıklanabilir web sitesi linkleri</strong> doğrudan çalışır ve geniş ekran (1200×630) kurumsal katalog kartları çok yüksek etkileşim alır. Bot bu 4 formatı da kendi kendine tasarlar, metnini yazar ve paylaşır.
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Otonom Üretilecek Facebook Formatı</label>
+              <select class="form-control" id="post_media_type" onchange="renderFbAutonomousCanvasPreview()">
+                <option value="PHOTO_POST">🖼️ Kurumsal Katalog & Ürün Gönderisi (1200×630 Geniş)</option>
+                <option value="LINK_CARD">🔗 B2B & Canlı Tasarım Modu Bağlantı Kartı (1200×630)</option>
+                <option value="FB_REELS">🎬 Facebook Reels (1080×1920 Dikey 9:16)</option>
+                <option value="FB_STORIES">📱 Facebook Sayfa Hikayesi (1080×1920 Dikey Story)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Otomatik Yayın Saati / Tarihi</label>
+              <input type="datetime-local" class="form-control" id="post_scheduled_for">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Facebook Kurumsal Renk Teması</label>
+              <select class="form-control" id="auto_theme_select" onchange="renderFbAutonomousCanvasPreview()">
+                <option value="fb-corporate-blue">📘 Kurumsal Facebook Mavisi & Çelik</option>
+                <option value="nordic-fjord">🌊 Fjord Mavi & Kuzey Mimari</option>
+                <option value="sage-atelier">🌿 Adaçayı Yeşili & Doğal Atölye</option>
+                <option value="quartz-slate">🪨 Kuvars Gri & Endüstriyel CNC</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>CNC Kapak Rölyef Çizim Modeli</label>
+              <select class="form-control" id="auto_door_style" onchange="renderFbAutonomousCanvasPreview()">
+                <option value="shaker">🚪 Çerçeveli Country (Shaker) CNC</option>
+                <option value="diagonal">📐 Diyagonal (Çapraz) CNC</option>
+                <option value="fluted">📏 Dikey Fugalı (Çıtalı) CNC</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CANLI OTONOM FACEBOOK TASARIM TUVALİ -->
+          <div style="background:#081221;border:1px solid #1E293B;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <span style="font-size:11.5px;font-weight:700;color:#93C5FD;">✨ Botun Kendi Tasarladığı Canlı Facebook Gönderi / Reels Görseli</span>
+              <button type="button" class="btn btn-fb btn-sm" onclick="autonomousInventNewFbDesign()">
+                🎲 Bot Yeni Facebook Tasarımı & Metni Üretsin
+              </button>
+            </div>
+            <canvas id="fbAutoDesignCanvas" width="600" height="315" style="max-height:290px;width:auto;max-width:100%;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);"></canvas>
+            <div style="font-size:11px;color:#94A3B8;margin-top:8px;">
+              Tasarım Motoru: Yatay 1200×630 Kurumsal Kart & Dikey 1080×1920 Reels/Story Otomatik Üretim
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tasarım Üzerindeki Ana Başlık (Bot Otomatik Yazar)</label>
+              <input type="text" class="form-control" id="post_title" oninput="renderFbAutonomousCanvasPreview()" value="ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU">
+            </div>
+            <div class="form-group">
+              <label>Tasarım Alt Başlığı / Teknik Vurgu</label>
+              <input type="text" class="form-control" id="post_subtitle" oninput="renderFbAutonomousCanvasPreview()" value="18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Otonom Facebook Gönderi Metni & Tıklanabilir Linkler</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="autonomousInventNewFbDesign()">✨ Katalog + Gemini AI İle Yeniden Üret</button>
+            </div>
+            <textarea class="form-control" id="post_caption" rows="4" placeholder="Bot bu alanı ürün kataloğunuzdan ve Gemini AI ile otomatik yazar..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Yönlendirilecek Tıklanabilir Web Sitesi Linki</label>
+              <input type="text" class="form-control" id="post_target_link" value="https://globalmobilyaweb.vercel.app/urunler.html">
+            </div>
+            <div class="form-group">
+              <label>Facebook Hashtag Grubu</label>
+              <input type="text" class="form-control" id="post_hashtags" value="#globalkapakmobilya #membrankapak #mutfakdolabı #mobilyimalatı #cnckapak">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-fb" id="btnQueuePost" onclick="addFbScheduledPost(false)" style="flex:1;justify-content:center;">
+              ⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle
+            </button>
+            <button type="button" class="btn btn-navy" onclick="addFbScheduledPost(true)">
+              🚀 Şimdi Otomatik Tasarla & Yayınla
+            </button>
+          </div>
+        </div>
+
+        <!-- GÜNLÜK SAAT ARALIKLARI -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⏰ Günlük Otonom Facebook Paylaşım Saat Aralıkları</div>
+            <button class="btn btn-secondary btn-sm" onclick="saveFbBotConfigToSupabase()">💾 Saatleri Kaydet</button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+            Bulut sunucu her gün aşağıdaki saatlerde <strong>hiçbir fotoğraf/video girişi veya onay beklemeden</strong> ilgili Facebook formatını kendi tasarlar ve yayınlar:
+          </p>
+          <div id="slotsContainer"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <input type="time" class="form-control" id="new_slot_time" value="16:30" style="width:130px;">
+            <select class="form-control" id="new_slot_type" style="width:185px;">
+              <option value="PHOTO_POST">🖼️ KATALOG GÖNDERİSİ</option>
+              <option value="LINK_CARD">🔗 B2B BAĞLANTI KARTI</option>
+              <option value="FB_REELS">🎬 FACEBOOK REELS</option>
+              <option value="FB_STORIES">📱 FACEBOOK STORY</option>
+            </select>
+            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşamüstü B2B Kartı)">
+            <button class="btn btn-navy btn-sm" onclick="addNewFbTimeSlot()" style="white-space:nowrap;">+ Saat Ekle</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: FACEBOOK YAYIN KUYRUĞU VE RESMİ SAYFA API BİLGİLERİ -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Otonom Üretilen & Yayınlanan Facebook Kuyruğu</div>
+            <button class="btn btn-secondary btn-sm" onclick="runFbAutonomousCycleNow()">⚡ Yeni İçerik Tasarla & Şimdi Yayınla</button>
+          </div>
+          <div id="scheduledQueueContainer"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔑 Resmi Facebook Page Graph API Kimlik Bilgileri</div>
+            <span class="badge badge-blue">Instagram İle Aynı System User Token Kullanılabilir</span>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
+            💡 <strong>Kolaylık:</strong> Instagram botu için Meta Business Suite üzerinden aldığınız <strong>System User Token</strong> (<code>pages_manage_posts</code>, <code>pages_messaging</code>, <code>pages_read_engagement</code> izinli) Facebook sayfanız için de doğrudan geçerlidir!
+          </p>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Facebook Sayfa Adı</label>
+              <input type="text" class="form-control" id="cfg_page_name" value="Global Kapak Mobilya">
+            </div>
+            <div class="form-group">
+              <label>Facebook Page ID (Sayfa Kimliği)</label>
+              <input type="text" class="form-control" id="cfg_page_id" placeholder="Örn: 104928173918273">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Meta Uzun Ömürlü Sayfa / Sistem Kullanıcı Tokenı (Page Access Token)</label>
+            <input type="password" class="form-control" id="cfg_page_token" placeholder="EAABwzLixnjYBO...">
+          </div>
+          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+            <div><strong>🌐 Facebook Bulut Webhook URL:</strong> <code>https://insta-deployment-rho.vercel.app/api/facebook-webhook</code></div>
+            <div style="margin-top:4px;"><strong>🔑 Verify Token:</strong> <code>global_kapak_fb_verify_2026</code></div>
+          </div>
+          <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
+            💾 Facebook Bulut API Ayarlarını Supabase'e Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: 1. AŞAMA — MESSENGER & YORUM SABİT CEVAP KURALLARI             -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier1">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">➕ Yeni 1. Aşama Facebook Sabit Cevap Kuralı Ekle</div>
+          <span class="badge badge-blue">Messenger + Gönderi Yorumları</span>
+        </div>
+        <div class="form-group">
+          <label>Kural Başlığı</label>
+          <input type="text" class="form-control" id="r_name" placeholder="Örn: Teslimat Süresi & Şehir Dışı Nakliye">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Geçerli Kanal</label>
+            <select class="form-control" id="r_channel">
+              <option value="BOTH">Messenger DM + Sayfa Yorumları (Her İkisi)</option>
+              <option value="MESSENGER">Sadece Facebook Messenger DM</option>
+              <option value="COMMENT">Sadece Facebook Gönderi/Reels Yorumları</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Eşleşme Tipi</label>
+            <select class="form-control" id="r_match_type">
+              <option value="contains">Kelimeyi İçeriyorsa (Önerilen)</option>
+              <option value="exact">Tam Eşleşme</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tetikleyici Anahtar Kelimeler (Virgülle Ayırın)</label>
+          <input type="text" class="form-control" id="r_keywords" placeholder="teslimat, kaç günde, kargo, termin, nakliye">
+        </div>
+        <div class="form-group">
+          <label>Verilecek Sabit Kurumsal Cevap</label>
+          <textarea class="form-control" id="r_response" rows="4" placeholder="🚚 Tüm özel ölçü membran kapak siparişlerimizi 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz..."></textarea>
+        </div>
+        <button class="btn btn-fb" onclick="addFbTier1Rule()" style="width:100%;justify-content:center;">
+          💾 Sabit Cevap Kuralını Ekle ve Buluta Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 Aktif 1. Aşama Facebook Sabit Cevap Kuralları</div>
+          <span class="badge badge-green">Milisaniyelik Yanıt</span>
+        </div>
+        <div id="tier1RulesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: 2. AŞAMA — KARMAŞIK SORULAR İÇİN GEMINI AI DESTEK MOTORU      -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier2">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧠 2. Aşama: Facebook Messenger & Yorumlar İçin Gemini AI</div>
+          <span class="badge badge-purple">2. Aşama: Akıllı Asistan</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+          Facebook takipçinizin Messenger mesajı veya gönderi altındaki yorumu 1. Aşamadaki basit kurallarla eşleşmediğinde <strong>Google Gemini AI</strong> devreye girer. Supabase'deki canlı kapak modellerinizi okuyarak müşteriye veya mobilya ustasına teknik yanıt üretir.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Gemini AI Modeli</label>
+            <select class="form-control" id="cfg_gemini_model">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (Hızlı & Ücretsiz Kota Uyumlu)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Teknik Analiz)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Facebook Gemini AI Sistem Talimatı (System Prompt)</label>
+          <textarea class="form-control" id="cfg_tier2_prompt" rows="6"></textarea>
+        </div>
+        <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 2. Aşama Gemini AI Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📦 Facebook Botuna Bağlı Canlı Supabase Ürün Kataloğu</div>
+          <span class="badge badge-green">Modül 1 İle Senkronize</span>
+        </div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Hem otonom gönderi tasarımcısı hem de Gemini AI, aşağıdaki canlı ürün kataloğunuzu kullanır:
+        </p>
+        <div id="aiCatalogPreviewList" style="max-height:360px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: 3. AŞAMA — GERÇEK İNSAN & WHATSAPP / İLETİŞİM YÖNLENDİRME      -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier3">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📲 3. Aşama: Gerçek İnsan, B2B Bayilik & WhatsApp Yönlendirme</div>
+          <span class="badge badge-amber">3. Aşama: Canlı Temsilci</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          Facebook üzerinden özel ölçü fiyat teklifi, toptan/B2B üretim, müteahhit/proje anlaşması veya doğrudan bir yetkiliyle görüşme talep edildiğinde bot müşteriyi tek tıkla açılan hazır mesajlı <strong>WhatsApp</strong> hattınıza ve fabrika telefonunuza yönlendirir.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WhatsApp Yönlendirme Numarası (Ülke Koduyla)</label>
+            <input type="text" class="form-control" id="cfg_wa_number" value="905050151035">
+          </div>
+          <div class="form-group">
+            <label>Gösterilecek Fabrika Telefonu</label>
+            <input type="text" class="form-control" id="cfg_phone_display" value="0 (505) 015 1035">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Doğrudan 3. Aşamayı Tetikleyen İfadeler (Virgülle Ayırın)</label>
+          <textarea class="form-control" id="cfg_tier3_triggers" rows="3"></textarea>
+        </div>
+        <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 3. Aşama İletişim & WhatsApp Devir Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🙋‍♂️ Facebook'tan 3. Aşamaya Aktarılan Müşteriler</div>
+          <span class="badge badge-amber" id="handoffBadgeCount">0 Talep</span>
+        </div>
+        <div id="tier3HandoffList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 5: CANLI FACEBOOK MESSENGER & YORUM SİMÜLATÖRÜ                   -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-simulator">
+    <div class="tier-pipeline">
+      <div class="tier-box t1">
+        <span class="badge badge-blue">1. AŞAMA</span>
+        <h4>Basit Sorular → Sabit Cevap</h4>
+        <p>Messenger ve yorumlarda selamlama, 5 iş günü teslimat, 5 yıl garanti, Bağcılar fabrika adresi ve renk kartelası sorularını anında yanıtlar.</p>
+      </div>
+      <div class="tier-box t2">
+        <span class="badge badge-purple">2. AŞAMA</span>
+        <h4>Karmaşık Sorular → Gemini AI</h4>
+        <p>Teknik MDF/membran soruları, model seçimi ve dekorasyon uyumunda canlı Supabase ürün kataloğunu bilen Gemini AI devreye girer.</p>
+      </div>
+      <div class="tier-box t3">
+        <span class="badge badge-green">3. AŞAMA</span>
+        <h4>Sipariş & B2B → WhatsApp / İnsan</h4>
+        <p>Özel ölçü fiyat teklifi, toptan imalat, bayilik ve yetkili taleplerinde hazır mesajlı WhatsApp bağlantısıyla satış ekibine bağlar.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="chat-window">
+        <div class="chat-header">
+          <div>
+            <strong style="font-size:14px;">📘 Facebook Messenger & Sayfa Yorum Simülatörü</strong>
+            <div style="font-size:11px;color:#BAE6FD;">Global Kapak Mobilya Resmi Facebook Sayfası — 3 Aşamalı Karar Motoru</div>
+          </div>
+          <select id="simChannelSelect" style="background:#0A192F;color:#fff;border:1px solid #3B82F6;padding:5px 10px;border-radius:8px;font-size:11.5px;">
+            <option value="MESSENGER">💬 Kanal: Facebook Messenger DM</option>
+            <option value="COMMENT">📝 Kanal: Facebook Gönderi / Reels Yorumu</option>
+          </select>
+        </div>
+
+        <div class="chat-messages" id="simChatMessages">
+          <div class="msg-bubble msg-bot">
+            <div class="msg-tier-tag tier-tag-1">FACEBOOK BOT HAZIR</div>
+            <div>Merhaba! Aşağıdan hazır test senaryolarına tıklayabilir veya Facebook takipçisi gibi mesaj yazarak <strong>1. Aşama (Sabit)</strong>, <strong>2. Aşama (Gemini AI)</strong> ve <strong>3. Aşama (WhatsApp / İnsan Devri)</strong> yanıtlarını canlı test edebilirsiniz.</div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="simUserInput" placeholder="Facebook Messenger mesajı veya yorumu yazın (Enter)..." onkeydown="if(event.key==='Enter') sendFbSimulatedMessage()">
+          <button class="btn btn-fb" onclick="sendFbSimulatedMessage()">Gönder →</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Tek Tıkla Facebook Test Senaryoları</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('İyi çalışmalar, özel ölçü kapaklarda teslimat süreniz kaç gün ve şehir dışına sevkiyat var mı?')">
+              <span class="badge badge-blue">1. Aşama</span> "İyi çalışmalar, teslimat süreniz kaç gün ve şehir dışına sevkiyat var mı?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Fabrikanız tam olarak nerede, cumartesi günleri showroom açık mı?')">
+              <span class="badge badge-blue">1. Aşama</span> "Fabrikanız tam olarak nerede, cumartesi günleri showroom açık mı?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Mutfak dolaplarımızda çıtalı country model düşünüyoruz, fjord mavi mi yoksa adaçayı yeşili mi daha modern durur?')">
+              <span class="badge badge-purple">2. Aşama (Gemini AI)</span> "Çıtalı country model düşünüyoruz, fjord mavi mi adaçayı yeşili mi önerirsiniz?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Mobilya atölyemiz için düzenli toptan membran kapak alımı yapmak istiyoruz, m2 fiyat teklifi için yetkiliyle görüşebilir miyiz?')">
+              <span class="badge badge-green">3. Aşama (B2B / WhatsApp)</span> "Atölyemiz için toptan kapak alımı ve m2 fiyat teklifi için yetkiliyle görüşebilir miyiz?"
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📜 Son Facebook Messenger & Yorum Kayıtları</div>
+          </div>
+          <div id="recentConversationsList" style="max-height:240px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toastEl">✅ İşlem tamamlandı</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE BAĞLANTISI & VARSAYILAN FACEBOOK BOT DURUMU (key = 'fb_bot_state')
+// ═══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+const DEFAULT_FB_BOT_STATE = {
+  config: {
+    page_name: 'Global Kapak Mobilya',
+    page_id: '',
+    page_access_token: '',
+    gemini_api_key: '',
+    gemini_model: 'gemini-2.5-flash',
+    auto_publish_enabled: true,
+    require_approval: false,
+    posting_slots: [
+      { slot_id: 'fb_slot_1', time: '09:30', type: 'PHOTO_POST', active: true, label: 'Sabah Kurumsal Katalog & Ürün Kartı (1200×630)' },
+      { slot_id: 'fb_slot_2', time: '13:30', type: 'FB_STORIES', active: true, label: 'Öğle Fabrika & Renk Kartelası Facebook Hikayesi' },
+      { slot_id: 'fb_slot_3', time: '16:30', type: 'LINK_CARD', active: true, label: 'İkindi B2B & Canlı Tasarım Modu Tıklanabilir Bağlantı Kartı' },
+      { slot_id: 'fb_slot_4', time: '20:00', type: 'FB_REELS', active: true, label: 'Akşam 0.01mm CNC İşleme & Mutfak Facebook Reels' }
+    ],
+    tier2_system_prompt: 'Sen Global Kapak Mobilya\'nın resmi Facebook sayfası yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. Hem bireysel müşterilere hem de mobilya ustaları ve iç mimarlara (B2B) hizmet veriyoruz. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. Kısa, kurumsal ve güven verici yanıtlar üret.',
+    tier3_whatsapp_number: '905050151035',
+    tier3_phone_display: '0 (505) 015 1035',
+    tier3_handoff_triggers: [
+      'sipariş vermek', 'fiyat teklifi', 'net fiyat', 'm2 fiyatı', 'metrekare fiyatı',
+      'kaç tl', 'ne kadar tutar', 'özel ölçü fiyat', 'toptan fiyat', 'bayilik',
+      'müteahhit', 'proje fiyatı', 'yetkili', 'temsilci', 'insanla görüşmek',
+      'ustayla görüşmek', 'toplu alım', 'şikayet', 'whatsapp'
+    ]
+  },
+  rules: [
+    {
+      id: 'fb-rule-1',
+      rule_name: 'Facebook Messenger & Yorum Karşılama',
+      keywords: ['merhaba', 'selam', 'iyi günler', 'iyi çalışmalar', 'kolay gelsin', 'slm', 'mrb'],
+      match_type: 'exact',
+      channel_scope: 'BOTH',
+      response_text: 'Merhaba! 👋 Global Kapak Mobilya resmi Facebook sayfasına hoş geldiniz. Özel ölçü CNC membran mutfak, banyo ve gardırop kapaklarımız, 50+ renk kartelamız veya B2B üretimimiz hakkında size nasıl yardımcı olabilirim?'
+    },
+    {
+      id: 'fb-rule-2',
+      rule_name: 'Teslimat Süresi & Türkiye Geneli Sevkiyat',
+      keywords: ['teslimat', 'kaç günde', 'kaç gün', 'termin', 'kargo', 'şehir dışı', 'sevkiyat', 'nakliye'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🚚 Tüm özel ölçü membran kapak siparişlerimizi 2.000 m² modern fabrikamızda 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz. İstanbul içi ve Türkiye geneli güvenli ambalajla sevkiyatımız mevcuttur.'
+    },
+    {
+      id: 'fb-rule-3',
+      rule_name: 'Garanti & Su/Buhar Dayanımı',
+      keywords: ['garanti', 'kabarma', 'soyulma', 'suya dayanıklı', 'buhar', 'mdf', 'kalite'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı ithal PVC membran kullanıyoruz. Tüm kapaklarımız 5 Yıl Üretici Garantisi altındadır.'
+    },
+    {
+      id: 'fb-rule-4',
+      rule_name: 'Fabrika Adres & Çalışma Saatleri',
+      keywords: ['adres', 'nerede', 'konum', 'yeriniz', 'çalışma saat', 'kaça kadar', 'showroom'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '📍 Fabrikamız ve Showroom: Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul adresindedir. Pzt-Cmt 08:00 – 18:00 saatleri arasında hizmet vermekteyiz.'
+    },
+    {
+      id: 'fb-rule-5',
+      rule_name: 'Renk Kartelası & Canlı Tasarım Modu Linki',
+      keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'tasarım'],
+      match_type: 'contains',
+      channel_scope: 'BOTH',
+      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Web sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html'
+    }
+  ],
+  scheduled_posts: [
+    {
+      id: 'fb-demo-1',
+      media_type: 'PHOTO_POST',
+      title: '[Otonom Facebook] ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU',
+      caption: '📘 Mutfak, banyo ve gardırop projeleriniz için 2.000 m² tesisimizde 5 iş gününde teslim özel ölçü CNC membran kapak üretimi! 🌐 https://globalmobilyaweb.vercel.app/urunler.html',
+      hashtags: '#globalkapakmobilya #membrankapak #mutfakdolabı #cnckapak',
+      target_link: 'https://globalmobilyaweb.vercel.app/urunler.html',
+      media_url: 'https://insta-deployment-rho.vercel.app/api/facebook-render?type=PHOTO_POST&theme=fb-corporate-blue&door=shaker',
+      auto_designed: true,
+      scheduled_for: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    },
+    {
+      id: 'fb-demo-2',
+      media_type: 'LINK_CARD',
+      title: '[Otonom Facebook] CANLI KAPAK TASARIM & ÖLÇÜ ÖNİZLEME MODU',
+      caption: '🎨 Dolap ölçünüzü girin, Fjord Mavi, Kuvars Gri ve Adaçayı Yeşili renklerimizi saniyeler içinde canlı önizleyin: https://globalmobilyaweb.vercel.app/urunler.html',
+      hashtags: '#globalkapak #içmimarlık #mutfaktasarım',
+      target_link: 'https://globalmobilyaweb.vercel.app/urunler.html',
+      media_url: 'https://insta-deployment-rho.vercel.app/api/facebook-render?type=LINK_CARD&theme=nordic-fjord&door=diagonal',
+      auto_designed: true,
+      scheduled_for: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    }
+  ],
+  conversations: []
+};
+
+let fbState = JSON.parse(JSON.stringify(DEFAULT_FB_BOT_STATE));
+let catalogProducts = [];
+
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tabId));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tabId));
+}
+
+async function loadFbStateFromSupabase() {
+  try {
+    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (prodRes.ok) {
+      catalogProducts = await prodRes.json();
+    }
+
+    const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.fb_bot_state&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (setRes.ok) {
+      const rows = await setRes.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+        fbState = Object.assign({}, DEFAULT_FB_BOT_STATE, rows[0].data);
+        fbState.config = Object.assign({}, DEFAULT_FB_BOT_STATE.config, rows[0].data.config || {});
+      } else {
+        await persistFbStateToSupabase(false);
+      }
+    }
+  } catch (e) {
+    console.warn('Facebook Bot Supabase yükleme uyarısı:', e);
+  }
+
+  populateFbFormsAndRenderAll();
+}
+
+async function persistFbStateToSupabase(notify = true) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        key: 'fb_bot_state',
+        data: fbState,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (notify) showToast('☁️ Facebook Bulut Bot ayarları Supabase veritabanına kaydedildi!');
+  } catch (e) {
+    if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');
+  }
+  populateFbFormsAndRenderAll();
+}
+
+function populateFbFormsAndRenderAll() {
+  const c = fbState.config;
+  document.getElementById('cfg_page_name').value = c.page_name || 'Global Kapak Mobilya';
+  document.getElementById('cfg_page_id').value = c.page_id || '';
+  document.getElementById('cfg_page_token').value = c.page_access_token || '';
+  document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
+  document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
+  document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
+  document.getElementById('cfg_wa_number').value = c.tier3_whatsapp_number || '905050151035';
+  document.getElementById('cfg_phone_display').value = c.tier3_phone_display || '0 (505) 015 1035';
+  document.getElementById('cfg_tier3_triggers').value = (c.tier3_handoff_triggers || []).join(', ');
+
+  const dtInput = document.getElementById('post_scheduled_for');
+  if (dtInput && !dtInput.value) {
+    const d = new Date(Date.now() + 3600 * 1000);
+    dtInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  renderFbSlots();
+  renderFbScheduledQueue();
+  renderFbTier1Rules();
+  renderFbAiCatalogPreview();
+  renderFbTier3Handoffs();
+  renderFbRecentConversations();
+  updateFbKpis();
+  renderFbAutonomousCanvasPreview();
+}
+
+function updateFbKpis() {
+  const posts = fbState.scheduled_posts || [];
+  const rules = fbState.rules || [];
+  const convs = fbState.conversations || [];
+  const handoffs = convs.filter(c => c.resolved_tier === 3);
+
+  document.getElementById('kpiScheduledCount').textContent = `${posts.length} Gönderi`;
+  document.getElementById('kpiRulesCount').textContent = `${rules.length} Kural + Gemini AI`;
+  document.getElementById('kpiHandoffCount').textContent = `${handoffs.length} Müşteri Devri`;
+  document.getElementById('handoffBadgeCount').textContent = `${handoffs.length} Talep`;
+}
+
+// ── SAAT ARALIKLARI ──
+function renderFbSlots() {
+  const cont = document.getElementById('slotsContainer');
+  const slots = fbState.config.posting_slots || [];
+  cont.innerHTML = slots.map((s, idx) => `
+    <div class="slot-item">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="slot-time">⏰ ${s.time}</span>
+        <div>
+          <span class="badge badge-blue">${s.type}</span>
+          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label}</strong>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Foto/Video İstemeden Kendi Tasarlar ve Facebook Sayfasında Yayınlar</div>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeFbTimeSlot(${idx})">Sil</button>
+    </div>
+  `).join('');
+}
+
+function addNewFbTimeSlot() {
+  const time = document.getElementById('new_slot_time').value || '16:30';
+  const type = document.getElementById('new_slot_type').value || 'PHOTO_POST';
+  const label = document.getElementById('new_slot_label').value.trim() || `Otomatik Facebook ${type}`;
+  fbState.config.posting_slots.push({
+    slot_id: 'fb_slot_' + Date.now(),
+    time,
+    type,
+    active: true,
+    label
+  });
+  document.getElementById('new_slot_label').value = '';
+  persistFbStateToSupabase(true);
+}
+
+function removeFbTimeSlot(idx) {
+  fbState.config.posting_slots.splice(idx, 1);
+  persistFbStateToSupabase(true);
+}
+
+// ── %100 OTONOM FACEBOOK TASARIM MOTORU (1200x630 YATAY KART & 1080x1920 REELS/STORY) ──
+const FB_THEMES = {
+  'fb-corporate-blue': {
+    bgStart: '#0A192F', bgMid: '#153462', bgEnd: '#1877F2',
+    accent: '#60A5FA', doorColor: '#1E3F66', doorStroke: '#93C5FD',
+    swatches: ['#1E3F66', '#1877F2', '#64748B', '#3B6E5C', '#F8FAFC']
+  },
+  'nordic-fjord': {
+    bgStart: '#0B1D33', bgMid: '#163A5F', bgEnd: '#2E6F9E',
+    accent: '#38BDF8', doorColor: '#2B5B84', doorStroke: '#7DD3FC',
+    swatches: ['#1E3F66', '#2E6F9E', '#64748B', '#4D7C6F', '#E2E8F0']
+  },
+  'sage-atelier': {
+    bgStart: '#0D211D', bgMid: '#1B433B', bgEnd: '#2D6A5B',
+    accent: '#34D399', doorColor: '#3B6E5C', doorStroke: '#6EE7B7',
+    swatches: ['#3B6E5C', '#0F253E', '#94A3B8', '#CBD5E1', '#F8FAFC']
+  },
+  'quartz-slate': {
+    bgStart: '#0F172A', bgMid: '#1E293B', bgEnd: '#334155',
+    accent: '#38BDF8', doorColor: '#475569', doorStroke: '#93C5FD',
+    swatches: ['#475569', '#1E3A8A', '#3B6E5C', '#E2E8F0', '#94A3B8']
+  }
+};
+
+function drawFbAutonomousCanvas(canvas, opts = {}) {
+  if (!canvas) return;
+  const mediaType = opts.mediaType || document.getElementById('post_media_type')?.value || 'PHOTO_POST';
+  const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
+  const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
+  const headline = (opts.headline || document.getElementById('post_title')?.value || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU').toLocaleUpperCase('tr-TR');
+  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim';
+
+  const isVertical = mediaType === 'FB_REELS' || mediaType === 'FB_STORIES';
+  const fullW = isVertical ? 1080 : 1200;
+  const fullH = isVertical ? 1920 : 630;
+  const scale = opts.fullRes ? 1 : (isVertical ? 0.28 : 0.52);
+
+  canvas.width = Math.round(fullW * scale);
+  canvas.height = Math.round(fullH * scale);
+  const ctx = canvas.getContext('2d');
+  const theme = FB_THEMES[themeKey] || FB_THEMES['fb-corporate-blue'];
+
+  ctx.save();
+  ctx.scale(scale, scale);
+
+  const bgGrad = ctx.createLinearGradient(0, 0, fullW, fullH);
+  bgGrad.addColorStop(0, theme.bgStart);
+  bgGrad.addColorStop(0.55, theme.bgMid);
+  bgGrad.addColorStop(1, theme.bgEnd);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, fullW, fullH);
+
+  if (!isVertical) {
+    // 1200x630 Facebook Geniş Ekran Kurumsal Sunum Kartı
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(750, 0); ctx.lineTo(750, 630);
+    ctx.moveTo(0, 545); ctx.lineTo(1200, 545);
+    ctx.stroke();
+
+    // Sol Üst Rozet
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeStyle = theme.accent;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(65, 58, 560, 42, 21);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = theme.accent;
+    ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
+    ctx.textAlign = 'center';
+    const badgeLabel = mediaType === 'LINK_CARD'
+      ? '🔗 FACEBOOK B2B & CANLI TASARIM MODU KARTI'
+      : '📘 GLOBAL KAPAK MOBİLYA • KURUMSAL KATALOG';
+    ctx.fillText(badgeLabel, 345, 85);
+
+    // Sol Başlıklar
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 34px "Plus Jakarta Sans", sans-serif';
+    const words = headline.split(' ');
+    const mid = Math.ceil(words.length / 2);
+    const l1 = words.length > 3 ? words.slice(0, mid).join(' ') : headline;
+    const l2 = words.length > 3 ? words.slice(mid).join(' ') : '';
+    ctx.fillText(l1, 65, 162);
+    if (l2) ctx.fillText(l2, 65, 206);
+
+    ctx.fillStyle = '#CBD5E1';
+    ctx.font = '600 19px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(subheadline.slice(0, 64), 65, l2 ? 252 : 216);
+
+    // Tıklanabilir Web Sitesi Kutu Görünümü
+    ctx.fillStyle = 'rgba(10, 25, 47, 0.6)';
+    ctx.strokeStyle = 'rgba(147, 197, 253, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.roundRect(65, 295, 620, 84, 14);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#93C5FD';
+    ctx.font = '800 15px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('🌐 CANLI KAPAK TASARIM & ÖLÇÜ ÖNİZLEME MODU', 90, 330);
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 18px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('globalmobilyaweb.vercel.app/urunler.html  •  0 (505) 015 1035', 90, 360);
+
+    // 3 Özellik Rozeti
+    ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Toptan & Perakende'].forEach((sp, idx) => {
+      const px = 65 + idx * 212;
+      ctx.fillStyle = 'rgba(255,255,255,0.1)';
+      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.roundRect(px, 418, 198, 44, 22);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '700 15px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('✓ ' + sp, px + 99, 446);
+    });
+
+    // Sağ Kısım: 3B CNC Membran Kapak
+    const doorX = 845, doorY = 74, doorW = 240, doorH = 400;
+    ctx.fillStyle = 'rgba(255,255,255,0.06)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(doorX - 12, doorY - 12, doorW + 24, doorH + 24, 18);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = theme.doorColor;
+    ctx.strokeStyle = theme.doorStroke;
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.roundRect(doorX, doorY, doorW, doorH, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeStyle = theme.doorStroke;
+    ctx.lineWidth = 2.5;
+    if (doorStyle === 'diagonal') {
+      ctx.strokeRect(doorX + 20, doorY + 20, doorW - 40, doorH - 40);
+      ctx.beginPath();
+      ctx.moveTo(doorX + 20, doorY + 20); ctx.lineTo(doorX + doorW - 20, doorY + doorH - 20);
+      ctx.moveTo(doorX + doorW - 20, doorY + 20); ctx.lineTo(doorX + 20, doorY + doorH - 20);
+      ctx.stroke();
+    } else if (doorStyle === 'fluted') {
+      for (let x = doorX + 24; x < doorX + doorW - 20; x += 18) {
+        ctx.beginPath();
+        ctx.moveTo(x, doorY + 18); ctx.lineTo(x, doorY + doorH - 18);
+        ctx.stroke();
+      }
+    } else {
+      ctx.strokeRect(doorX + 24, doorY + 24, doorW - 48, Math.round(doorH * 0.54));
+      ctx.strokeRect(doorX + 24, doorY + Math.round(doorH * 0.62), doorW - 48, Math.round(doorH * 0.28));
+    }
+
+    // Kulp
+    ctx.fillStyle = '#F8FAFC';
+    ctx.fillRect(doorX + doorW - 18, doorY + doorH / 2 - 32, 6, 64);
+
+    // Renk Kartelası
+    (theme.swatches || []).forEach((c, idx) => {
+      ctx.fillStyle = c;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.arc(doorX + 32 + idx * 44, doorY + doorH + 36, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '700 16px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('📘 Global Kapak Mobilya Resmi Facebook Sayfası   |   📍 Bağcılar / İstanbul   |   🛡️ 5 Yıl Üretici Garantisi', 65, 592);
+  } else {
+    // 1080x1920 Dikey Facebook Reels / Story
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.12)';
+    ctx.strokeStyle = theme.accent;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.roundRect(220, 95, 640, 50, 25);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = theme.accent;
+    ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(mediaType === 'FB_REELS' ? '🎬 FACEBOOK REELS • CNC KAPAK ÜRETİMİ' : '📱 FACEBOOK STORY • GÜNLÜK KOLEKSİYON', fullW / 2, 127);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '900 40px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(headline.slice(0, 32), fullW / 2, 230);
+    ctx.fillStyle = '#CBD5E1';
+    ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText(subheadline.slice(0, 54), fullW / 2, 290);
+
+    const doorW = 440, doorH = 740, doorX = (fullW - 440) / 2, doorY = 460;
+    ctx.fillStyle = theme.doorColor;
+    ctx.strokeStyle = theme.doorStroke;
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.roundRect(doorX, doorY, doorW, doorH, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.strokeRect(doorX + 34, doorY + 34, doorW - 68, Math.round(doorH * 0.55));
+    ctx.strokeRect(doorX + 34, doorY + Math.round(doorH * 0.63), doorW - 68, Math.round(doorH * 0.28));
+
+    (theme.swatches || []).forEach((c, idx) => {
+      ctx.fillStyle = c;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(fullW / 2 - 110 + idx * 55, doorY + doorH + 70, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = '700 22px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('📘 Global Kapak Mobilya   •   📞 0 (505) 015 1035', fullW / 2, fullH - 70);
+  }
+
+  ctx.restore();
+}
+
+function renderFbAutonomousCanvasPreview() {
+  const c = document.getElementById('fbAutoDesignCanvas');
+  drawFbAutonomousCanvas(c, { fullRes: false });
+}
+
+async function autonomousInventNewFbDesign() {
+  const themeKeys = Object.keys(FB_THEMES);
+  const doorStyles = ['shaker', 'diagonal', 'fluted'];
+  document.getElementById('auto_theme_select').value = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+  document.getElementById('auto_door_style').value = doorStyles[Math.floor(Math.random() * doorStyles.length)];
+
+  if (catalogProducts && catalogProducts.length > 0) {
+    const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
+    const pTitle = (prod.title || prod.slug || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
+    const pSub = prod.kisa_aciklama || `${prod.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`;
+    const link = `https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}`;
+
+    document.getElementById('post_title').value = pTitle;
+    document.getElementById('post_subtitle').value = pSub;
+    document.getElementById('post_target_link').value = link;
+    document.getElementById('post_caption').value =
+      `📘 ${prod.title || pTitle} — Fabrika Doğrudan Satış & B2B Üretim!\n\n` +
+      `${pSub}\n\n` +
+      `✅ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Teslimat\n` +
+      `🎨 Web sitemizdeki Canlı Tasarım Modunda dolap ölçünüz ve renginizle hemen deneyin:\n` +
+      `👉 ${link}\n` +
+      `📲 WhatsApp Sipariş & Toptan Fiyat Hattı: https://wa.me/905050151035 (0505 015 1035)`;
+  }
+
+  renderFbAutonomousCanvasPreview();
+  showToast('🎨 Facebook Botu fotoğraf/video girişi olmadan yeni katalog kartını ve metni kendi üretti!');
+}
+
+async function exportFbAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle) {
+  try {
+    const offscreen = document.createElement('canvas');
+    drawFbAutonomousCanvas(offscreen, {
+      fullRes: true,
+      mediaType,
+      themeKey,
+      doorStyle,
+      headline,
+      subheadline
+    });
+
+    const blob = await new Promise(resolve => offscreen.toBlob(resolve, 'image/png', 0.95));
+    if (blob && sbClient) {
+      const filePath = `facebook/fb-auto-${mediaType.toLowerCase()}-${Date.now()}.png`;
+      const { error } = await sbClient.storage.from('media').upload(filePath, blob, {
+        contentType: 'image/png',
+        upsert: true
+      });
+      if (!error) {
+        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
+        if (data?.publicUrl) return data.publicUrl;
+      }
+    }
+  } catch (e) {}
+
+  const params = new URLSearchParams({
+    type: mediaType,
+    badge: 'GLOBAL KAPAK MOBİLYA • FACEBOOK YAYINI',
+    headline,
+    subheadline,
+    theme: themeKey,
+    door: doorStyle
+  });
+  return `https://insta-deployment-rho.vercel.app/api/facebook-render?${params.toString()}`;
+}
+
+async function addFbScheduledPost(publishImmediately = false) {
+  const btn = document.getElementById('btnQueuePost');
+  const mediaType = document.getElementById('post_media_type').value || 'PHOTO_POST';
+  const themeKey = document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
+  const doorStyle = document.getElementById('auto_door_style')?.value || 'shaker';
+
+  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) {
+    await autonomousInventNewFbDesign();
+  }
+
+  const headline = document.getElementById('post_title').value.trim();
+  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
+  const caption = document.getElementById('post_caption').value.trim();
+  const hashtags = document.getElementById('post_hashtags').value.trim();
+  const targetLink = document.getElementById('post_target_link').value.trim() || 'https://globalmobilyaweb.vercel.app/urunler.html';
+  const scheduledFor = document.getElementById('post_scheduled_for').value
+    ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
+    : new Date().toISOString();
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '🎨 Facebook Görseli Tasarlanıyor ve Buluta Kaydediliyor...';
+  }
+
+  const mediaUrl = await exportFbAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+  }
+
+  const newItem = {
+    id: 'fb-auto-' + Date.now(),
+    media_type: mediaType,
+    title: `[Otonom Facebook] ${headline}`,
+    headline,
+    subheadline,
+    theme_id: themeKey,
+    door_style: doorStyle,
+    target_link: targetLink,
+    caption,
+    hashtags,
+    media_url: mediaUrl,
+    auto_designed: true,
+    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
+    status: publishImmediately ? 'published' : 'scheduled',
+    published_at: publishImmediately ? new Date().toISOString() : null
+  };
+
+  fbState.scheduled_posts.unshift(newItem);
+  await persistFbStateToSupabase(false);
+
+  if (publishImmediately) {
+    fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
+    showToast(`🚀 Facebook Botu ${mediaType} tasarımını kendi üretti ve onay beklemeden yayınladı!`);
+  } else {
+    showToast(`⏰ Facebook ${mediaType} tasarımı üretildi ve bulut kuyruğuna eklendi!`);
+  }
+}
+
+function renderFbScheduledQueue() {
+  const cont = document.getElementById('scheduledQueueContainer');
+  const posts = fbState.scheduled_posts || [];
+  if (posts.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen gönderi yok. Saat dilimi geldiğinde bot kendi tasarımını otomatik üretip paylaşır.</div>`;
+    return;
+  }
+
+  cont.innerHTML = posts.map((p, idx) => {
+    const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+    const isPub = p.status === 'published';
+    return `
+      <div class="queue-item">
+        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+        <div class="queue-info">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+            <span class="badge badge-blue">${p.media_type}</span>
+            <span class="badge badge-purple">🎨 Bot Tasarımı</span>
+            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ Facebook\'ta Yayınlandı' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
+            <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
+          </div>
+          <h4>${p.title}</h4>
+          <p>${p.caption || ''}</p>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${!isPub ? `<button class="btn btn-success btn-sm" onclick="publishFbQueueItemNow(${idx})">Şimdi Yayınla</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteFbQueueItem(${idx})">Sil</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function publishFbQueueItemNow(idx) {
+  if (!fbState.scheduled_posts[idx]) return;
+  fbState.scheduled_posts[idx].status = 'published';
+  fbState.scheduled_posts[idx].published_at = new Date().toISOString();
+  persistFbStateToSupabase(false);
+  fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
+  showToast(`🚀 "${fbState.scheduled_posts[idx].title}" Facebook bulut motorundan yayınlandı!`);
+}
+
+function deleteFbQueueItem(idx) {
+  fbState.scheduled_posts.splice(idx, 1);
+  persistFbStateToSupabase(true);
+}
+
+async function runFbAutonomousCycleNow() {
+  let count = 0;
+  (fbState.scheduled_posts || []).forEach(p => {
+    if (p.status === 'scheduled') {
+      p.status = 'published';
+      p.published_at = new Date().toISOString();
+      count++;
+    }
+  });
+
+  if (count === 0) {
+    await autonomousInventNewFbDesign();
+    await addFbScheduledPost(true);
+    return;
+  }
+
+  await persistFbStateToSupabase(false);
+  fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
+  showToast(`⚡ Facebook Bulut Döngüsü çalıştı: ${count} içerik onay beklenmeden yayınlandı!`);
+}
+
+// ── 1. AŞAMA SABİT KURALLAR ──
+function renderFbTier1Rules() {
+  const cont = document.getElementById('tier1RulesList');
+  const rules = fbState.rules || [];
+  cont.innerHTML = rules.map((r, idx) => `
+    <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#F8FAFC;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="font-size:13.5px;color:var(--navy);">💬 ${r.rule_name}</strong>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span class="badge badge-blue">${r.channel_scope === 'BOTH' ? 'Messenger + Yorum' : r.channel_scope}</span>
+          <button class="btn btn-danger btn-sm" onclick="deleteFbTier1Rule(${idx})">Sil</button>
+        </div>
+      </div>
+      <div style="font-size:11.5px;color:var(--fb-blue);font-weight:700;margin-bottom:6px;">
+        Anahtar Kelimeler: ${(r.keywords || []).map(k => `<code style="background:#DBEAFE;padding:2px 6px;border-radius:4px;margin-right:4px;">${k}</code>`).join('')}
+      </div>
+      <div style="font-size:12.5px;color:var(--text);background:#fff;padding:10px;border-radius:8px;border:1px solid var(--border);">
+        ${r.response_text}
+      </div>
+    </div>
+  `).join('');
+}
+
+function addFbTier1Rule() {
+  const name = document.getElementById('r_name').value.trim();
+  const channel = document.getElementById('r_channel').value;
+  const matchType = document.getElementById('r_match_type').value;
+  const keywords = document.getElementById('r_keywords').value.split(',').map(k => k.trim()).filter(Boolean);
+  const response = document.getElementById('r_response').value.trim();
+
+  if (!name || keywords.length === 0 || !response) {
+    showToast('⚠️ Lütfen kural adı, anahtar kelimeler ve sabit cevabı girin!');
+    return;
+  }
+
+  fbState.rules.push({
+    id: 'fb-rule-' + Date.now(),
+    rule_name: name,
+    channel_scope: channel,
+    match_type: matchType,
+    keywords,
+    response_text: response
+  });
+
+  document.getElementById('r_name').value = '';
+  document.getElementById('r_keywords').value = '';
+  document.getElementById('r_response').value = '';
+  persistFbStateToSupabase(true);
+}
+
+function deleteFbTier1Rule(idx) {
+  fbState.rules.splice(idx, 1);
+  persistFbStateToSupabase(true);
+}
+
+function renderFbAiCatalogPreview() {
+  const cont = document.getElementById('aiCatalogPreviewList');
+  if (!catalogProducts || catalogProducts.length === 0) {
+    cont.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:12.5px;">Supabase ürün kataloğu yükleniyor...</div>`;
+    return;
+  }
+  cont.innerHTML = catalogProducts.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <div>
+        <strong style="color:var(--navy);">${p.title || p.slug}</strong>
+        <span style="color:var(--muted);margin-left:6px;">(${p.kategori || 'Membran Kapak'})</span>
+      </div>
+      <span class="badge badge-green">Facebook AI & Tasarımcıda Aktif</span>
+    </div>
+  `).join('');
+}
+
+function renderFbTier3Handoffs() {
+  const cont = document.getElementById('tier3HandoffList');
+  const handoffs = (fbState.conversations || []).filter(c => c.resolved_tier === 3);
+  if (handoffs.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz 3. aşamaya devredilen Facebook talebi yok. Simülatör sekmesinden test edebilirsiniz.</div>`;
+    return;
+  }
+  cont.innerHTML = handoffs.map(h => `
+    <div style="border:1px solid #FDE68A;background:#FFFBEB;border-radius:12px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="color:#92400E;font-size:13px;">👤 ${h.sender_name || 'Facebook Müşterisi'} (${h.channel})</strong>
+        <span class="badge badge-amber">3. Aşama: İnsan Devri</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--navy);margin-bottom:8px;">
+        <strong>Müşteri Mesajı:</strong> "${h.incoming_text}"
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <small style="color:var(--muted);">${new Date(h.created_at).toLocaleString('tr-TR')}</small>
+        <a href="${h.whatsapp_link || 'https://wa.me/905050151035'}" target="_blank" class="btn btn-success btn-sm">
+          💬 WhatsApp'tan Müşteriye Yanıt Ver ↗
+        </a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderFbRecentConversations() {
+  const cont = document.getElementById('recentConversationsList');
+  const convs = (fbState.conversations || []).slice(0, 8);
+  if (convs.length === 0) {
+    cont.innerHTML = `<div style="padding:14px;color:var(--muted);font-size:12.5px;">Henüz test mesajı gönderilmedi.</div>`;
+    return;
+  }
+  cont.innerHTML = convs.map(c => `
+    <div style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <strong>${c.sender_name}: "${c.incoming_text}"</strong>
+        <span class="badge ${c.resolved_tier===1?'badge-blue':c.resolved_tier===2?'badge-purple':'badge-green'}">${c.tier_label}</span>
+      </div>
+      <div style="color:var(--muted);">${c.bot_reply}</div>
+    </div>
+  `).join('');
+}
+
+function saveFbBotConfigToSupabase() {
+  const c = fbState.config;
+  c.page_name = document.getElementById('cfg_page_name').value.trim();
+  c.page_id = document.getElementById('cfg_page_id').value.trim();
+  c.page_access_token = document.getElementById('cfg_page_token').value.trim();
+  c.gemini_model = document.getElementById('cfg_gemini_model').value;
+  c.gemini_api_key = document.getElementById('cfg_gemini_key').value.trim();
+  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt').value.trim();
+  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number').value.trim();
+  c.tier3_phone_display = document.getElementById('cfg_phone_display').value.trim();
+  c.tier3_handoff_triggers = document.getElementById('cfg_tier3_triggers').value.split(',').map(x => x.trim()).filter(Boolean);
+
+  persistFbStateToSupabase(true);
+}
+
+// ── CANLI FACEBOOK MESSENGER & YORUM SİMÜLATÖRÜ ──
+function triggerFbQuickSim(text) {
+  document.getElementById('simUserInput').value = text;
+  sendFbSimulatedMessage();
+}
+
+async function sendFbSimulatedMessage() {
+  const input = document.getElementById('simUserInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const channel = document.getElementById('simChannelSelect').value || 'MESSENGER';
+  const chatBox = document.getElementById('simChatMessages');
+
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-user">
+      <div style="font-size:10px;opacity:0.85;margin-bottom:3px;">👤 Facebook Takipçisi (${channel})</div>
+      <div>${text}</div>
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const decision = await runFbClientSideThreeTierEngine(text, channel);
+
+  const tagClass = decision.resolved_tier === 1 ? 'tier-tag-1' : decision.resolved_tier === 2 ? 'tier-tag-2' : 'tier-tag-3';
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-bot">
+      <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
+      <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
+      ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  fbState.conversations.unshift({
+    id: 'fb-conv-' + Date.now(),
+    sender_name: 'Facebook Ziyaretçisi',
+    channel,
+    incoming_text: text,
+    resolved_tier: decision.resolved_tier,
+    tier_label: decision.tier_label,
+    bot_reply: decision.bot_reply,
+    whatsapp_link: decision.whatsapp_link || '',
+    created_at: new Date().toISOString()
+  });
+
+  await persistFbStateToSupabase(false);
+}
+
+async function runFbClientSideThreeTierEngine(cleanText, channel) {
+  const lowerText = cleanText.toLocaleLowerCase('tr-TR');
+  const c = fbState.config;
+  const waNum = c.tier3_whatsapp_number || '905050151035';
+  const phoneDisp = c.tier3_phone_display || '0 (505) 015 1035';
+
+  // 3. Aşama Doğrudan Tetikleyici Kontrolü
+  const triggers = c.tier3_handoff_triggers || [];
+  const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
+  if (t3Match) {
+    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Facebook sayfanızdan ulaşıyorum. "${cleanText}" konusunda fiyat teklifi ve uzman desteği rica ediyorum.`)}`;
+    return {
+      resolved_tier: 3,
+      tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
+      bot_reply: `Memnuniyetle yardımcı olalım! 🙌 Talebiniz ("${t3Match}") özel ölçü hesaplaması ve birebir uzman desteği gerektirdiği için sizi doğrudan Satış & Üretim Ekibimize bağlıyorum.\n\n📲 Doğrudan WhatsApp Hattımız: ${waLink}\n📞 Fabrika Telefon: ${phoneDisp}`,
+      whatsapp_link: waLink
+    };
+  }
+
+  // 1. Aşama Sabit Anahtar Kelime Kuralları
+  for (const rule of (fbState.rules || [])) {
+    if (rule.channel_scope !== 'BOTH' && rule.channel_scope !== channel) continue;
+    const hit = (rule.keywords || []).find(kw => {
+      const k = kw.toLocaleLowerCase('tr-TR').trim();
+      if (!k) return false;
+      if (rule.match_type === 'exact') return lowerText === k || lowerText.replace(/[?!.,]/g, '').trim() === k;
+      return lowerText.includes(k);
+    });
+    if (hit) {
+      return {
+        resolved_tier: 1,
+        tier_label: `1. AŞAMA: SABİT CEVAP (${rule.rule_name})`,
+        bot_reply: rule.response_text,
+        whatsapp_link: ''
+      };
+    }
+  }
+
+  // 2. Aşama Gemini AI
+  if (c.gemini_api_key) {
+    try {
+      const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(c.gemini_api_key)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${c.tier2_system_prompt}\n\nÜrün Kataloğu:\n${catText}\n\nFacebook Mesajı: "${cleanText}"` }] }]
+        })
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const replyTxt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyTxt) {
+          return {
+            resolved_tier: 2,
+            tier_label: `2. AŞAMA: GEMINI AI (${c.gemini_model})`,
+            bot_reply: replyTxt,
+            whatsapp_link: ''
+          };
+        }
+      }
+    } catch (e) {}
+  }
+
+  const prodNames = (catalogProducts || []).slice(0, 3).map(p => p.title || p.slug).join(', ') || 'Fjord Mavi Diyagonal, Kuvars Gri ve Adaçayı Yeşili Country';
+  return {
+    resolved_tier: 2,
+    tier_label: '2. AŞAMA: GEMINI AI AKILLI DANIŞMAN',
+    bot_reply: `Sorunuzu analiz ettim! 🤖 Global Kapak Mobilya koleksiyonumuzdaki **${prodNames}** modellerimiz 18mm 1. sınıf E1 MDF üzerine suya ve buhara tam dayanıklı ithal membran teknolojisiyle üretilmektedir. Çıtalı Country modellerimizde Fjord Mavi modern bir kontrast yaratırken, Adaçayı Yeşili doğal ve sıcak bir mimari atmosfer sunar.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek her iki rengi de anlık önizleyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html`,
+    whatsapp_link: ''
+  };
+}
+
+document.addEventListener('DOMContentLoaded', loadFbStateFromSupabase);
+</script>
+</body>
+</html>

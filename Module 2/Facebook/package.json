@@ -1,0 +1,13 @@
+{
+  "name": "global-kapak-facebook-cloud-bot",
+  "version": "2.0.0",
+  "description": "Global Kapak Mobilya — 7/24 Bulut Otonom Facebook Sayfa Botu (Otonom Gönderi/Reels/Story/B2B Kart Tasarımı + 3 Aşamalı Messenger & Yorum Yanıt Motoru)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

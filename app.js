@@ -431,20 +431,30 @@ export function toggleInAppFullscreen(forceState) {
 
 // Module 2 Multi-Bot Channel Switcher
 export function switchSocialBotChannel(btnEl, channel) {
-    if (channel === 'instagram') {
-        const frame = document.getElementById('module2-frame');
-        if (frame && !frame.src.includes('Module%202/Instagram/index.html')) {
-            frame.src = 'Module%202/Instagram/index.html';
+    const frame = document.getElementById('module2-frame');
+    if (channel === 'instagram' || channel === 'facebook') {
+        if (btnEl) {
+            btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
         }
-        showToast('📸 Instagram Bulut Bot Kontrol Merkezi aktif.');
+        if (channel === 'instagram') {
+            if (frame && !frame.src.includes('Module%202/Instagram/index.html')) {
+                frame.src = 'Module%202/Instagram/index.html';
+            }
+            showToast('📸 Instagram Bulut Bot Kontrol Merkezi aktif.');
+        } else if (channel === 'facebook') {
+            if (frame && !frame.src.includes('Module%202/Facebook/index.html')) {
+                frame.src = 'Module%202/Facebook/index.html';
+            }
+            showToast('📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.');
+        }
         return;
     }
     const labelMap = {
-        facebook: 'Facebook Bot (Module 2/Facebook)',
         tiktok: 'TikTok Bot (Module 2/Tiktok)',
         youtube: 'YouTube Shorts Bot (Module 2/Youtube Shorts)'
     };
-    showToast(`ℹ️ ${labelMap[channel] || channel} bir sonraki adımda kodlanacaktır. Şu an Instagram Botu aktif!`);
+    showToast(`ℹ️ ${labelMap[channel] || channel} bir sonraki adımda kodlanacaktır. Şu an Instagram ve Facebook Botları aktif!`);
 }
 
 // Initialize Application
