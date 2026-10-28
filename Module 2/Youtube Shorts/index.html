@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modül 2 — YouTube Shorts Bulut Botu & 3 Aşamalı Yorum Otomasyon Merkezi</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --navy: #0B1628;
+    --navy2: #162E52;
+    --yt-red: #E11D48;
+    --yt-red-dark: #BE123C;
+    --yt-grad: linear-gradient(135deg, #0B1628 0%, #1E293B 45%, #E11D48 100%);
+    --bg: #F4F7FA;
+    --card: #FFFFFF;
+    --border: #DCE5ED;
+    --text: #0F172A;
+    --muted: #64748B;
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  .top-header {
+    background: linear-gradient(90deg, #09111E 0%, #17253B 55%, #881337 100%);
+    color: #fff;
+    padding: 16px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+  }
+  .th-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .th-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #FF0033 0%, #BE123C 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    box-shadow: 0 8px 20px rgba(225, 29, 72, 0.45);
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .th-brand h1 {
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+  }
+  .th-brand span {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    display: block;
+    margin-top: 2px;
+  }
+  .th-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .cloud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(16, 185, 129, 0.18);
+    border: 1px solid rgba(16, 185, 129, 0.45);
+    color: #6EE7B7;
+    padding: 7px 14px;
+    border-radius: 30px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
+    animation: pulse 1.8s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.25); opacity: 0.7; }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 16px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    text-decoration: none;
+  }
+  .btn-yt {
+    background: linear-gradient(135deg, #FF0033 0%, #BE123C 100%);
+    color: #fff;
+    box-shadow: 0 6px 18px rgba(225, 29, 72, 0.32);
+  }
+  .btn-yt:hover { transform: translateY(-1px); opacity: 0.96; }
+  .btn-navy { background: var(--navy); color: #fff; }
+  .btn-navy:hover { background: var(--navy2); }
+  .btn-outline {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.25);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.2); }
+  .btn-secondary {
+    background: #F1F5F9;
+    color: var(--navy);
+    border: 1px solid var(--border);
+  }
+  .btn-secondary:hover { background: #E2E8F0; }
+  .btn-success { background: #10B981; color: #fff; }
+  .btn-danger {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FECACA;
+  }
+  .btn-sm { padding: 6px 11px; font-size: 11.5px; border-radius: 8px; }
+
+  .container {
+    max-width: 1380px;
+    margin: 0 auto;
+    padding: 22px 28px 60px;
+  }
+
+  /* KPI STRIP */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 18px;
+    box-shadow: 0 4px 14px rgba(11,22,40,0.04);
+  }
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+  .kpi-val {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--navy);
+  }
+  .kpi-sub {
+    font-size: 11.5px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* TABS */
+  .tabs-bar {
+    display: flex;
+    gap: 8px;
+    background: var(--card);
+    padding: 6px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    margin-bottom: 22px;
+    flex-wrap: wrap;
+  }
+  .tab-btn {
+    padding: 10px 16px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+  }
+  .tab-btn:hover { color: var(--navy); background: #F8FAFC; }
+  .tab-btn.active {
+    background: var(--yt-red);
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(225,29,72,0.28);
+  }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1.06fr 1fr;
+    gap: 22px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 6px 20px rgba(11,22,40,0.04);
+    margin-bottom: 20px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+  .card-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .badge-green { background: #DCFCE7; color: #166534; }
+  .badge-blue { background: #DBEAFE; color: #1E40AF; }
+  .badge-purple { background: #F3E8FF; color: #6B21A8; }
+  .badge-amber { background: #FEF3C7; color: #92400E; }
+  .badge-red { background: #FFE4E6; color: #9F1239; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+  .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color: var(--text);
+    background: #fff;
+  }
+  .form-control:focus { outline: none; border-color: var(--yt-red); }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .slot-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #F8FAFC;
+  }
+  .slot-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--yt-red);
+    background: #fff;
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .queue-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    background: #fff;
+  }
+  .queue-thumb {
+    width: 48px;
+    height: 76px;
+    border-radius: 8px;
+    background: #0F172A;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  .queue-info { flex: 1; min-width: 0; }
+  .queue-info h4 {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 3px;
+  }
+  .queue-info p {
+    font-size: 12px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .yt-format-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .yt-format-box {
+    background: #F8FAFC;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 11.5px;
+  }
+  .yt-format-box strong {
+    display: block;
+    color: var(--navy);
+    font-size: 12.5px;
+    margin-bottom: 4px;
+  }
+
+  .tier-pipeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 20px;
+  }
+  .tier-box {
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 16px;
+    background: #fff;
+  }
+  .tier-box.t1 { border-top: 4px solid #E11D48; }
+  .tier-box.t2 { border-top: 4px solid #8B5CF6; }
+  .tier-box.t3 { border-top: 4px solid #10B981; }
+  .tier-box h4 { font-size: 13.5px; font-weight: 800; color: var(--navy); margin: 6px 0; }
+  .tier-box p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+
+  .chat-window {
+    background: #0B141A;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #1E293B;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+  }
+  .chat-header {
+    background: linear-gradient(90deg, #0B1628, #BE123C);
+    color: #fff;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .chat-messages {
+    flex: 1;
+    padding: 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .msg-bubble {
+    max-width: 82%;
+    padding: 12px 15px;
+    border-radius: 14px;
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  .msg-user {
+    align-self: flex-end;
+    background: #E11D48;
+    color: #fff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg-bot {
+    align-self: flex-start;
+    background: #1E293B;
+    color: #F8FAFC;
+    border: 1px solid #334155;
+    border-bottom-left-radius: 4px;
+  }
+  .msg-tier-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 800;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  .tier-tag-1 { background: rgba(225,29,72,0.28); color: #FDA4AF; }
+  .tier-tag-2 { background: rgba(139,92,246,0.25); color: #C4B5FD; }
+  .tier-tag-3 { background: rgba(16,185,129,0.25); color: #6EE7B7; }
+  .chat-input-bar {
+    padding: 12px;
+    background: #111B21;
+    border-top: 1px solid #1E293B;
+    display: flex;
+    gap: 8px;
+  }
+  .chat-input-bar input {
+    flex: 1;
+    background: #1E293B;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: inherit;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--navy);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 700;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+    display: none;
+    z-index: 9999;
+  }
+  .toast.show { display: block; }
+
+  @media (max-width: 980px) {
+    .kpi-grid, .grid-2, .tier-pipeline, .yt-format-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top-header">
+  <div class="th-brand">
+    <div class="th-icon">▶️</div>
+    <div>
+      <h1>YouTube Shorts Bulut Botu & Otonom Video/SEO Stüdyosu</h1>
+      <span>7/24 Bulut Sunucu • Foto/Video Girişsiz 9:16 Shorts Üretimi • Otomatik Sabitlenen İlk Yorum • 3 Aşamalı Yorum Yanıt Motoru</span>
+    </div>
+  </div>
+  <div class="th-actions">
+    <div class="cloud-pill">
+      <span class="pulse-dot"></span>
+      <span>YouTube Cloud Bot: 7/24 Otonom (Sıfır Medya Girişi)</span>
+    </div>
+    <button class="btn btn-outline" onclick="switchTab('tab-simulator')">🧪 YouTube Yorum Simülatörü</button>
+    <button class="btn btn-yt" onclick="runYtAutonomousCycleNow()">⚡ Şimdi Otonom Shorts Tasarla & Yayınla</button>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- KPI STRIP -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-top"><span>▶️ YouTube Shorts Modu</span><span class="badge badge-green">Sıfır Video Girişi</span></div>
+      <div class="kpi-val">9:16 #Shorts</div>
+      <div class="kpi-sub">Otonom 3 Sahneli Shorts + İlk Yorum Sabitleme</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>🎬 Üretilen / Yayınlanan</span><span class="badge badge-red">Onaysız Otomatik</span></div>
+      <div class="kpi-val" id="kpiScheduledCount">0 Shorts</div>
+      <div class="kpi-sub">Günlük Otonom Yayın Saatleri Aktif</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>💬 1. & 2. Aşama Yorum Botu</span><span class="badge badge-purple">Sabit + Gemini AI</span></div>
+      <div class="kpi-val" id="kpiRulesCount">5 Kural + AI</div>
+      <div class="kpi-sub">Basit Yoruma Sabit, Teknik Yoruma Gemini AI</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-top"><span>📲 3. Aşama Sipariş / WhatsApp</span><span class="badge badge-amber">İnsan Devri</span></div>
+      <div class="kpi-val" id="kpiHandoffCount">0 Devir</div>
+      <div class="kpi-sub">WhatsApp (+90 505 015 1035) Otomatik Yönlendirme</div>
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="tabs-bar">
+    <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
+      🎬 1. Otonom YouTube Shorts Tasarım, SEO & Zamanlayıcı
+    </button>
+    <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
+      💬 2. Birinci Aşama: YouTube Yorum Sabit Cevapları
+    </button>
+    <button class="tab-btn" data-tab="tab-tier2" onclick="switchTab('tab-tier2')">
+      🧠 3. İkinci Aşama: Gemini AI Teknik Yorum Motoru
+    </button>
+    <button class="tab-btn" data-tab="tab-tier3" onclick="switchTab('tab-tier3')">
+      📲 4. Üçüncü Aşama: WhatsApp & Satış Ekibi Yönlendirme
+    </button>
+    <button class="tab-btn" data-tab="tab-simulator" onclick="switchTab('tab-simulator')">
+      🧪 5. Canlı YouTube Shorts Yorum Simülatörü
+    </button>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: OTONOM YOUTUBE SHORTS TASARIM, SEO & ZAMANLAYICI               -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane active" id="tab-scheduler">
+
+    <!-- YOUTUBE SHORTS FORMAT REHBERİ -->
+    <div class="yt-format-grid">
+      <div class="yt-format-box">
+        <strong>🛠️ 1. 5 Eksen CNC Üretim Shorts</strong>
+        <span style="color:var(--muted);">0.01 mm CNC işleme hassasiyeti, 18mm E1 MDF ve vakum membran kalitesini anlatan dikey #Shorts.</span>
+      </div>
+      <div class="yt-format-box">
+        <strong>🎨 2. Renk & Model Karşılaştırma</strong>
+        <span style="color:var(--muted);">"Fjord Mavi mi, Adaçayı Yeşili mi?" gibi izleyicileri yorum yapmaya teşvik eden yüksek etkileşimli #Shorts.</span>
+      </div>
+      <div class="yt-format-box">
+        <strong>📐 3. Canlı Tasarım Modu Rehberi</strong>
+        <span style="color:var(--muted);">İzleyicilere web sitemizde kendi dolap ölçülerini girip nasıl canlı önizleme yapacaklarını gösteren #Shorts.</span>
+      </div>
+      <div class="yt-format-box">
+        <strong>📌 4. Otomatik Sabitlenen İlk Yorum</strong>
+        <span style="color:var(--muted);">Her Shorts yayınlandığında bot videonun altına web sitesi ve WhatsApp linkini içeren ilk yorumu otomatik yazar!</span>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <!-- SOL: OTONOM YOUTUBE SHORTS STÜDYOSU -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🎬 Otonom YouTube Shorts & SEO Üretim Motoru</div>
+            <span class="badge badge-green">✓ Fotoğraf/Video Girişi Gerekmez</span>
+          </div>
+
+          <div style="background:linear-gradient(135deg,#0B1628 0%,#9F1239 100%);color:#fff;padding:12px 15px;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:16px;">
+            ▶️ <strong>YouTube Shorts Otonom Algoritma Sistemi:</strong> Bot herhangi bir video çekmenize gerek kalmadan dikey 9:16 (1080×1920) Shorts sahnelerini, <strong>#Shorts SEO başlığını</strong>, zaman damgalı açıklamasını ve <strong>videonun altına sabitlenecek ilk yorumu</strong> kendi kendine üretir ve yayınlar.
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Otonom Üretilecek YouTube Shorts Konsepti</label>
+              <select class="form-control" id="post_media_type" onchange="renderYtAutonomousCanvasPreview()">
+                <option value="SHORTS_CNC">🛠️ 5 Eksen CNC & Membran Üretim Sahnesi (#Shorts)</option>
+                <option value="SHORTS_SHOWCASE">🎨 2026 Renk & Kapak Modeli Karşılaştırma (#Shorts)</option>
+                <option value="SHORTS_GUIDE">📐 Canlı Kapak Tasarım & Ölçü Rehberi (#Shorts)</option>
+                <option value="COMMUNITY_POST">📢 YouTube Topluluk & B2B Katalog Kartı</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Otomatik Yayın Saati / Tarihi</label>
+              <input type="datetime-local" class="form-control" id="post_scheduled_for">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>YouTube Shorts Sahne & Atmosfer Teması</label>
+              <select class="form-control" id="auto_theme_select" onchange="renderYtAutonomousCanvasPreview()">
+                <option value="yt-crimson-navy">▶️ YouTube Studio Kırmızı & Kuzey Laciverti</option>
+                <option value="nordic-fjord">🌊 Fjord Mavi & Mimari Çelik</option>
+                <option value="sage-atelier">🌿 Adaçayı Yeşili & Doğal Atölye</option>
+                <option value="quartz-industrial">🪨 Kuvars Gri & 5 Eksen CNC Endüstriyel</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>CNC Kapak Rölyef Çizim Modeli</label>
+              <select class="form-control" id="auto_door_style" onchange="renderYtAutonomousCanvasPreview()">
+                <option value="diagonal">📐 Diyagonal (Çapraz) CNC</option>
+                <option value="shaker">🚪 Çerçeveli Country (Shaker) CNC</option>
+                <option value="fluted">📏 Dikey Fugalı (Çıtalı) CNC</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- CANLI 9:16 YOUTUBE SHORTS ANİMASYON & SAHNE TUVALİ -->
+          <div style="background:#08101D;border:1px solid #1E293B;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+              <span style="font-size:11.5px;font-weight:700;color:#FDA4AF;">✨ Botun Kendi Tasarladığı 9:16 YouTube Shorts Sahnesi</span>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-outline btn-sm" onclick="playShortsAnimatedPreview()">
+                  ▶️ 3 Sahneli Hareketli Önizleme
+                </button>
+                <button type="button" class="btn btn-yt btn-sm" onclick="autonomousInventNewYtShort()">
+                  🎲 Yeni Shorts Senaryosu & Tasarım Üret
+                </button>
+              </div>
+            </div>
+            <canvas id="ytAutoDesignCanvas" width="324" height="576" style="max-height:320px;width:auto;max-width:100%;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.18);"></canvas>
+            <div style="font-size:11px;color:#94A3B8;margin-top:8px;" id="ytSceneStatusText">
+              1080×1920 Dikey 9:16 Shorts Render • #Shorts SEO Başlık • Otomatik Sabitlenen İlk Yorum
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>YouTube Shorts SEO Başlığı (Bot Otomatik `#Shorts` Ekler)</label>
+            <input type="text" class="form-control" id="post_video_title" value="0.01 mm Hassasiyetle Özel Ölçü CNC Membran Kapak Nasıl Üretilir? 🛠️ #Shorts">
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>Video Sahnesi Üzerindeki Büyük Başlık</label>
+              <input type="text" class="form-control" id="post_title" oninput="renderYtAutonomousCanvasPreview()" value="0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ">
+            </div>
+            <div class="form-group">
+              <label>Sahne Alt Başlığı / Teknik Vurgu</label>
+              <input type="text" class="form-control" id="post_subtitle" oninput="renderYtAutonomousCanvasPreview()" value="18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <label style="margin:0;">Zaman Damgalı YouTube Açıklaması (Description) & Linkler</label>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="autonomousInventNewYtShort()">✨ Katalog + Gemini AI İle Yeniden Üret</button>
+            </div>
+            <textarea class="form-control" id="post_description" rows="4"></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>📌 Otomatik Sabitlenecek İlk Yorum (Pinned Comment)</label>
+              <input type="text" class="form-control" id="post_pinned_comment" value="📌 Kendi dolap ölçünüz ve renginizle canlı denemek için tıklayın: https://globalmobilyaweb.vercel.app/urunler.html | 📲 WhatsApp: https://wa.me/905050151035">
+            </div>
+            <div class="form-group">
+              <label>YouTube SEO Etiketleri (Tags)</label>
+              <input type="text" class="form-control" id="post_tags" value="Shorts, membran kapak, mutfak dolabı, cnc kapak, global kapak mobilya, mutfak tasarımı">
+            </div>
+          </div>
+
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-yt" id="btnQueuePost" onclick="addYtScheduledPost(false)" style="flex:1;justify-content:center;">
+              ⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle
+            </button>
+            <button type="button" class="btn btn-navy" onclick="addYtScheduledPost(true)">
+              🚀 Şimdi Otomatik Tasarla & YouTube'da Yayınla
+            </button>
+          </div>
+        </div>
+
+        <!-- GÜNLÜK SAAT ARALIKLARI -->
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⏰ Günlük Otonom YouTube Shorts Paylaşım Saatleri</div>
+            <button class="btn btn-secondary btn-sm" onclick="saveYtBotConfigToSupabase()">💾 Saatleri Kaydet</button>
+          </div>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
+            Bulut sunucu her gün aşağıdaki saatlerde <strong>hiçbir video girişi veya onay beklemeden</strong> yeni bir YouTube Shorts içeriğini kendi tasarlar, yayınlar ve ilk yorumu sabitler:
+          </p>
+          <div id="slotsContainer"></div>
+          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+            <input type="time" class="form-control" id="new_slot_time" value="18:30" style="width:130px;">
+            <select class="form-control" id="new_slot_type" style="width:190px;">
+              <option value="SHORTS_CNC">🛠️ CNC ÜRETİM SHORTS</option>
+              <option value="SHORTS_SHOWCASE">🎨 RENK KARTELASI SHORTS</option>
+              <option value="SHORTS_GUIDE">📐 TASARIM MODU SHORTS</option>
+            </select>
+            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşam Prime-Time Shorts)">
+            <button class="btn btn-navy btn-sm" onclick="addNewYtTimeSlot()" style="white-space:nowrap;">+ Saat Ekle</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: YOUTUBE YAYIN KUYRUĞU & GOOGLE CLOUD OAUTH2 BİLGİLERİ -->
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Otonom Üretilen & Yayınlanan YouTube Shorts Kuyruğu</div>
+            <button class="btn btn-secondary btn-sm" onclick="runYtAutonomousCycleNow()">⚡ Yeni Shorts Tasarla & Şimdi Yayınla</button>
+          </div>
+          <div id="scheduledQueueContainer"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">🔑 Resmi YouTube Data API v3 (Google Cloud OAuth2) Bilgileri</div>
+            <span class="badge badge-red">Süresiz Refresh Token</span>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>YouTube Kanal Adı / Handle</label>
+              <input type="text" class="form-control" id="cfg_channel_handle" value="@GlobalKapakMobilya">
+            </div>
+            <div class="form-group">
+              <label>YouTube Channel ID (Kanal Kimliği)</label>
+              <input type="text" class="form-control" id="cfg_channel_id" placeholder="Örn: UCx928173918273...">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Google Cloud OAuth Client ID</label>
+              <input type="text" class="form-control" id="cfg_client_id" placeholder="...apps.googleusercontent.com">
+            </div>
+            <div class="form-group">
+              <label>Google Cloud OAuth Client Secret</label>
+              <input type="password" class="form-control" id="cfg_client_secret" placeholder="GOCSPX-...">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Kalıcı OAuth2 Refresh Token (Süresi Dolmadan Otomatik Yenilenir)</label>
+            <input type="password" class="form-control" id="cfg_refresh_token" placeholder="1//04d...">
+          </div>
+          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
+            <div><strong>🌐 YouTube Bulut Yorum & Cron URL:</strong> <code>https://insta-deployment-rho.vercel.app/api/youtube-webhook</code></div>
+            <div style="margin-top:4px;"><strong>🎬 Otonom Shorts Yayın Cron:</strong> <code>https://insta-deployment-rho.vercel.app/api/youtube-cron</code></div>
+          </div>
+          <button class="btn btn-yt" onclick="saveYtBotConfigToSupabase()" style="width:100%;justify-content:center;">
+            💾 YouTube Bulut API Ayarlarını Supabase'e Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: 1. AŞAMA — YOUTUBE YORUM SABİT CEVAP KURALLARI                 -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier1">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">➕ Yeni 1. Aşama YouTube Yorum Sabit Cevap Kuralı Ekle</div>
+          <span class="badge badge-red">Shorts & Video Yorumları</span>
+        </div>
+        <div class="form-group">
+          <label>Kural Başlığı</label>
+          <input type="text" class="form-control" id="r_name" placeholder="Örn: Teslimat Süresi & 81 İle Kargo">
+        </div>
+        <div class="form-group">
+          <label>Tetikleyici Anahtar Kelimeler (Virgülle Ayırın)</label>
+          <input type="text" class="form-control" id="r_keywords" placeholder="teslimat, kaç günde, kargo, şehir dışı, hangi iller">
+        </div>
+        <div class="form-group">
+          <label>Verilecek Sabit Kurumsal Yorum Yanıtı</label>
+          <textarea class="form-control" id="r_response" rows="4" placeholder="🚚 Tüm özel ölçü membran kapak siparişlerimizi 5 iş günü içinde üretip Türkiye'nin 81 iline sevk ediyoruz..."></textarea>
+        </div>
+        <button class="btn btn-yt" onclick="addYtTier1Rule()" style="width:100%;justify-content:center;">
+          💾 Sabit Yorum Kuralını Ekle ve Buluta Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📚 Aktif 1. Aşama YouTube Sabit Yorum Kuralları</div>
+          <span class="badge badge-green">Otomatik Yorum Yanıtı</span>
+        </div>
+        <div id="tier1RulesList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: 2. AŞAMA — KARMAŞIK YORUMLAR İÇİN GEMINI AI DESTEK MOTORU      -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier2">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧠 2. Aşama: YouTube Yorumları & SEO İçin Gemini AI</div>
+          <span class="badge badge-purple">2. Aşama: Akıllı Asistan</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
+          YouTube Shorts videolarınızın altına gelen teknik sorular (örneğin MDF kalınlığı, membran folyo dayanımı, renk/model uyumu) 1. aşamadaki sabit kurallarla eşleşmediğinde <strong>Google Gemini AI</strong> devreye girer ve canlı Supabase ürün kataloğunuzu kullanarak izleyiciye uzman yanıtı yazar.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Gemini AI Modeli</label>
+            <select class="form-control" id="cfg_gemini_model">
+              <option value="gemini-2.5-flash">gemini-2.5-flash (Hızlı & Ücretsiz Kota Uyumlu)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Teknik Analiz)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Google Gemini API Key</label>
+            <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>YouTube Gemini AI Sistem Talimatı (System Prompt)</label>
+          <textarea class="form-control" id="cfg_tier2_prompt" rows="6"></textarea>
+        </div>
+        <button class="btn btn-yt" onclick="saveYtBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 2. Aşama Gemini AI Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📦 YouTube Shorts Botuna Bağlı Canlı Supabase Ürün Kataloğu</div>
+          <span class="badge badge-green">Modül 1 İle Senkronize</span>
+        </div>
+        <div id="aiCatalogPreviewList" style="max-height:360px;overflow-y:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: 3. AŞAMA — GERÇEK İNSAN & WHATSAPP YÖNLENDİRME                 -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-tier3">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📲 3. Aşama: YouTube Yorumlarından WhatsApp & Satış Ekibine Devir</div>
+          <span class="badge badge-amber">3. Aşama: Canlı Temsilci</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
+          YouTube üzerinde özel mesaj (DM) bulunmadığı için, izleyiciler yorumlarda fiyat, özel ölçü siparişi veya toptan bayilik sorduğunda bot yoruma anında yanıt vererek müşteriyi tek tıkla açılan hazır mesajlı <strong>WhatsApp</strong> hattınıza ve telefonunuza yönlendirir.
+        </p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>WhatsApp Yönlendirme Numarası (Ülke Koduyla)</label>
+            <input type="text" class="form-control" id="cfg_wa_number" value="905050151035">
+          </div>
+          <div class="form-group">
+            <label>Gösterilecek Fabrika Telefonu</label>
+            <input type="text" class="form-control" id="cfg_phone_display" value="0 (505) 015 1035">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Doğrudan 3. Aşamayı Tetikleyen İfadeler (Virgülle Ayırın)</label>
+          <textarea class="form-control" id="cfg_tier3_triggers" rows="3"></textarea>
+        </div>
+        <button class="btn btn-yt" onclick="saveYtBotConfigToSupabase()" style="width:100%;justify-content:center;">
+          💾 3. Aşama İletişim & WhatsApp Devir Ayarlarını Kaydet
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🙋‍♂️ YouTube Shorts Yorumlarından Gelen Sipariş & Fiyat Talepleri</div>
+          <span class="badge badge-amber" id="handoffBadgeCount">0 Talep</span>
+        </div>
+        <div id="tier3HandoffList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 5: CANLI YOUTUBE SHORTS YORUM SİMÜLATÖRÜ                          -->
+  <!-- ===================================================================== -->
+  <div class="tab-pane" id="tab-simulator">
+    <div class="tier-pipeline">
+      <div class="tier-box t1">
+        <span class="badge badge-red">1. AŞAMA</span>
+        <h4>Basit Yorumlar → Sabit Cevap</h4>
+        <p>Beğeni/teşekkür yorumları, 5 iş günü teslimat, 5 yıl garanti, Bağcılar fabrika adresi ve renk kartelası sorularını anında yanıtlar.</p>
+      </div>
+      <div class="tier-box t2">
+        <span class="badge badge-purple">2. AŞAMA</span>
+        <h4>Teknik Yorumlar → Gemini AI</h4>
+        <p>CNC işleme detayları, MDF/membran kalitesi ve mutfak renk uyumu sorularında canlı Supabase ürün kataloğunu bilen Gemini AI yanıt üretir.</p>
+      </div>
+      <div class="tier-box t3">
+        <span class="badge badge-green">3. AŞAMA</span>
+        <h4>Fiyat & Sipariş → WhatsApp / İnsan</h4>
+        <p>m² fiyatı, özel ölçü sipariş ve toptan imalat sorularında izleyiciyi doğrudan hazır mesajlı WhatsApp hattına ve satış temsilcisine bağlar.</p>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="chat-window">
+        <div class="chat-header">
+          <div>
+            <strong style="font-size:14px;">▶️ YouTube Shorts Yorum & Yanıt Simülatörü (@GlobalKapakMobilya)</strong>
+            <div style="font-size:11px;color:#FECDD3;">3 Aşamalı Hibrit Yorum Yanıt Motoru Canlı Test Ekranı</div>
+          </div>
+          <span class="badge badge-red">#Shorts Yorumları</span>
+        </div>
+
+        <div class="chat-messages" id="simChatMessages">
+          <div class="msg-bubble msg-bot">
+            <div class="msg-tier-tag tier-tag-1">YOUTUBE BOT HAZIR</div>
+            <div>Merhaba! Aşağıdan hazır izleyici yorumlarına tıklayabilir veya kendi yorumunuzu yazarak <strong>1. Aşama (Sabit)</strong>, <strong>2. Aşama (Gemini AI)</strong> ve <strong>3. Aşama (WhatsApp / İnsan Devri)</strong> yanıtlarını canlı test edebilirsiniz.</div>
+          </div>
+        </div>
+
+        <div class="chat-input-bar">
+          <input type="text" id="simUserInput" placeholder="YouTube Shorts altına izleyici yorumu yazın (Enter)..." onkeydown="if(event.key==='Enter') sendYtSimulatedComment()">
+          <button class="btn btn-yt" onclick="sendYtSimulatedComment()">Yorum Yap →</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">⚡ Tek Tıkla YouTube İzleyici Yorum Senaryoları</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerYtQuickSim('Elinize sağlık işçilik çok güzel görünüyor, Ankara\'ya kargo yapıyor musunuz ve kaç günde teslim olur?')">
+              <span class="badge badge-red">1. Aşama</span> "Elinize sağlık, Ankara'ya kargo yapıyor musunuz ve kaç günde teslim olur?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerYtQuickSim('Membran kapaklar ankastre fırın yanında veya banyoda buhardan dolayı kabarma yapar mı, garantisi var mı?')">
+              <span class="badge badge-red">1. Aşama</span> "Ankastre fırın yanında veya banyoda kabarma yapar mı, garantisi var mı?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerYtQuickSim('Videodaki dikey fugalı model ile çerçeveli country model aynı dolapta kombinlenebilir mi, hangi rengi önerirsiniz?')">
+              <span class="badge badge-purple">2. Aşama (Gemini AI)</span> "Dikey fugalı model ile country model kombinlenebilir mi, hangi rengi önerirsiniz?"
+            </button>
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerYtQuickSim('Mutfağım için 22 adet özel ölçü kapak yaptırmak istiyorum, güncel m2 fiyatlarınız nedir ve nasıl sipariş verebilirim?')">
+              <span class="badge badge-green">3. Aşama (WhatsApp / Sipariş)</span> "22 adet özel ölçü kapak yaptırmak istiyorum, m2 fiyatlarınız nedir ve nasıl sipariş verebilirim?"
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📜 Son Yanıtlanan YouTube Yorumları (Supabase Kayıtları)</div>
+          </div>
+          <div id="recentConversationsList" style="max-height:240px;overflow-y:auto;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toastEl">✅ İşlem tamamlandı</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// SUPABASE BAĞLANTISI & VARSAYILAN YOUTUBE SHORTS BOT DURUMU (key = 'yt_bot_state')
+// ═══════════════════════════════════════════════════════════════════════════
+const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+const DEFAULT_YT_BOT_STATE = {
+  config: {
+    channel_handle: '@GlobalKapakMobilya',
+    channel_id: '',
+    client_id: '',
+    client_secret: '',
+    refresh_token: '',
+    gemini_api_key: '',
+    gemini_model: 'gemini-2.5-flash',
+    auto_publish_enabled: true,
+    require_approval: false,
+    posting_slots: [
+      { slot_id: 'yt_slot_1', time: '11:30', type: 'SHORTS_CNC', active: true, label: 'Öğle 5 Eksen CNC & Membran Üretim #Shorts' },
+      { slot_id: 'yt_slot_2', time: '16:00', type: 'SHORTS_SHOWCASE', active: true, label: 'İkindi 2026 Renk & Kapak Modeli Karşılaştırma #Shorts' },
+      { slot_id: 'yt_slot_3', time: '20:30', type: 'SHORTS_GUIDE', active: true, label: 'Akşam Prime-Time Canlı Tasarım Modu Rehberi #Shorts' }
+    ],
+    tier2_system_prompt: 'Sen Global Kapak Mobilya\'nın resmi YouTube kanalı yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. YouTube Shorts izleyicilerinin yorumlarına samimi, kurumsal ve bilgilendirici yanıtlar ver.',
+    tier3_whatsapp_number: '905050151035',
+    tier3_phone_display: '0 (505) 015 1035',
+    tier3_handoff_triggers: [
+      'fiyat', 'kaç tl', 'm2 fiyatı', 'metrekare', 'ne kadar', 'sipariş',
+      'teklif', 'toptan', 'bayilik', 'özel ölçü fiyat', 'yetkili', 'numaranız', 'whatsapp', 'iletişim'
+    ]
+  },
+  rules: [
+    {
+      id: 'yt-rule-1',
+      rule_name: 'Teşekkür & Beğeni Yorumları',
+      keywords: ['merhaba', 'selam', 'elinize sağlık', 'çok güzel', 'harika', 'başarılar', 'kolay gelsin'],
+      match_type: 'contains',
+      response_text: 'Çok teşekkür ederiz! 🙏✨ Global Kapak Mobilya olarak 2.000 m² tesisimizde 5 yıl garantili özel ölçü CNC membran kapak üretiyoruz. Tüm modellerimizi kendi ölçünüzle denemek için: https://globalmobilyaweb.vercel.app/urunler.html'
+    },
+    {
+      id: 'yt-rule-2',
+      rule_name: 'Teslimat Süresi & 81 İle Kargo',
+      keywords: ['teslimat', 'kaç günde', 'kaç gün', 'termin', 'kargo', 'şehir dışı', 'sevkiyat', 'ankara', 'izmir'],
+      match_type: 'contains',
+      response_text: '🚚 Tüm özel ölçü membran kapak siparişlerimizi fabrikamızda 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz. İstanbul içi ve Türkiye’nin 81 iline korumalı ambalajla sevkiyatımız mevcuttur.'
+    },
+    {
+      id: 'yt-rule-3',
+      rule_name: 'Garanti, Isı & Buhar Dayanımı',
+      keywords: ['garanti', 'kabarma', 'soyulma', 'suya dayanıklı', 'buhar', 'fırın', 'mdf', 'kalite'],
+      match_type: 'contains',
+      response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı ithal PVC membran folyo kullanıyoruz. Tüm kapaklarımız kabarma ve soyulmaya karşı 5 Yıl Üretici Garantisi altındadır.'
+    },
+    {
+      id: 'yt-rule-4',
+      rule_name: 'Fabrika Adres & Showroom',
+      keywords: ['adres', 'nerede', 'konum', 'yeriniz', 'çalışma saat', 'showroom'],
+      match_type: 'contains',
+      response_text: '📍 Fabrikamız ve Showroom: Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul adresindedir. Pzt-Cmt 08:00 – 18:00 saatleri arasında bekleriz.'
+    },
+    {
+      id: 'yt-rule-5',
+      rule_name: 'Renk Kartelası & Canlı Tasarım Modu',
+      keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'tasarım'],
+      match_type: 'contains',
+      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html'
+    }
+  ],
+  scheduled_posts: [
+    {
+      id: 'yt-demo-1',
+      media_type: 'SHORTS_CNC',
+      title: '0.01 mm Hassasiyetle Özel Ölçü CNC Membran Kapak Nasıl Üretilir? 🛠️ #Shorts',
+      headline: '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ',
+      subheadline: '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim',
+      description: '✨ 2.000 m² tesisimizde 0.01 mm CNC hassasiyetiyle özel ölçü membran kapak üretimi! 🌐 https://globalmobilyaweb.vercel.app/urunler.html #Shorts',
+      pinned_comment: '📌 Kendi dolap ölçünüz ve renginizle canlı denemek için: https://globalmobilyaweb.vercel.app/urunler.html | 📲 WhatsApp: https://wa.me/905050151035',
+      tags: ['Shorts', 'membran kapak', 'mutfak dolabı', 'cnc kapak', 'global kapak mobilya'],
+      media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_CNC&theme=yt-crimson-navy&door=diagonal',
+      auto_designed: true,
+      scheduled_for: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    },
+    {
+      id: 'yt-demo-2',
+      media_type: 'SHORTS_SHOWCASE',
+      title: 'Mutfakta Fjord Mavi mi, Adaçayı Yeşili mi? 2026 Membran Kapak Trendleri 🎨 #Shorts',
+      headline: 'FJORD MAVİ VS ADAÇAYI YEŞİLİ KAPAKLAR',
+      subheadline: 'Parmak İzi Bırakmayan Anti-Fingerprint Mat Membran Yüzeyler',
+      description: '🎨 2026 Mutfak ve Banyo Mimarisinde En Çok Tercih Edilen CNC Membran Kapak Renkleri! #Shorts',
+      pinned_comment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Canlı denemek için: https://globalmobilyaweb.vercel.app/urunler.html',
+      tags: ['Shorts', 'mutfak renkleri', 'country mutfak kapağı', 'fjord mavi', 'adaçayı yeşili'],
+      media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_SHOWCASE&theme=nordic-fjord&door=shaker',
+      auto_designed: true,
+      scheduled_for: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
+      status: 'scheduled'
+    }
+  ],
+  conversations: []
+};
+
+let ytState = JSON.parse(JSON.stringify(DEFAULT_YT_BOT_STATE));
+let catalogProducts = [];
+let shortsAnimTimer = null;
+
+function showToast(msg) {
+  const el = document.getElementById('toastEl');
+  if (!el) return;
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tabId));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tabId));
+}
+
+async function loadYtStateFromSupabase() {
+  try {
+    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (prodRes.ok) {
+      catalogProducts = await prodRes.json();
+    }
+
+    const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.yt_bot_state&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (setRes.ok) {
+      const rows = await setRes.json();
+      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
+        ytState = Object.assign({}, DEFAULT_YT_BOT_STATE, rows[0].data);
+        ytState.config = Object.assign({}, DEFAULT_YT_BOT_STATE.config, rows[0].data.config || {});
+      } else {
+        await persistYtStateToSupabase(false);
+      }
+    }
+  } catch (e) {
+    console.warn('YouTube Bot Supabase yükleme uyarısı:', e);
+  }
+
+  populateYtFormsAndRenderAll();
+}
+
+async function persistYtStateToSupabase(notify = true) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'resolution=merge-duplicates'
+      },
+      body: JSON.stringify({
+        key: 'yt_bot_state',
+        data: ytState,
+        updated_at: new Date().toISOString()
+      })
+    });
+    if (notify) showToast('☁️ YouTube Shorts Bulut Bot ayarları Supabase veritabanına kaydedildi!');
+  } catch (e) {
+    if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');
+  }
+  populateYtFormsAndRenderAll();
+}
+
+function populateYtFormsAndRenderAll() {
+  const c = ytState.config;
+  document.getElementById('cfg_channel_handle').value = c.channel_handle || '@GlobalKapakMobilya';
+  document.getElementById('cfg_channel_id').value = c.channel_id || '';
+  document.getElementById('cfg_client_id').value = c.client_id || '';
+  document.getElementById('cfg_client_secret').value = c.client_secret || '';
+  document.getElementById('cfg_refresh_token').value = c.refresh_token || '';
+  document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
+  document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
+  document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
+  document.getElementById('cfg_wa_number').value = c.tier3_whatsapp_number || '905050151035';
+  document.getElementById('cfg_phone_display').value = c.tier3_phone_display || '0 (505) 015 1035';
+  document.getElementById('cfg_tier3_triggers').value = (c.tier3_handoff_triggers || []).join(', ');
+
+  const dtInput = document.getElementById('post_scheduled_for');
+  if (dtInput && !dtInput.value) {
+    const d = new Date(Date.now() + 3600 * 1000);
+    dtInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  }
+
+  if (!document.getElementById('post_description').value) {
+    document.getElementById('post_description').value =
+      `✨ Global Kapak Mobilya — 2.000 m² Modern Üretim Tesisimizde Özel Ölçü CNC Membran Kapak Üretimi! #Shorts\n\n` +
+      `⏱️ Video Bölümleri:\n00:00 0.01mm 5 Eksen CNC İşleme Hassasiyeti\n00:08 18mm E1 Sertifikalı MDF & İthal PVC Membran Kalitesi\n00:25 Canlı Kapak Tasarım Modu & 5 İş Gününde Teslimat\n\n` +
+      `🎨 Kendi dolap ölçünüzü girip renkleri anında denemek için tıklayın:\n👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+      `📲 WhatsApp Hızlı Fiyat Teklifi: https://wa.me/905050151035 (0505 015 1035)`;
+  }
+
+  renderYtSlots();
+  renderYtScheduledQueue();
+  renderYtTier1Rules();
+  renderYtAiCatalogPreview();
+  renderYtTier3Handoffs();
+  renderYtRecentConversations();
+  updateYtKpis();
+  renderYtAutonomousCanvasPreview();
+}
+
+function updateYtKpis() {
+  const posts = ytState.scheduled_posts || [];
+  const rules = ytState.rules || [];
+  const convs = ytState.conversations || [];
+  const handoffs = convs.filter(c => c.resolved_tier === 3);
+
+  document.getElementById('kpiScheduledCount').textContent = `${posts.length} Shorts`;
+  document.getElementById('kpiRulesCount').textContent = `${rules.length} Kural + Gemini AI`;
+  document.getElementById('kpiHandoffCount').textContent = `${handoffs.length} Müşteri Devri`;
+  document.getElementById('handoffBadgeCount').textContent = `${handoffs.length} Talep`;
+}
+
+// ── SAAT ARALIKLARI ──
+function renderYtSlots() {
+  const cont = document.getElementById('slotsContainer');
+  const slots = ytState.config.posting_slots || [];
+  cont.innerHTML = slots.map((s, idx) => `
+    <div class="slot-item">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="slot-time">⏰ ${s.time}</span>
+        <div>
+          <span class="badge badge-red">${s.type}</span>
+          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label}</strong>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Video İstemeden Kendi Tasarlar, Yayınlar ve İlk Yorumu Sabitler</div>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="removeYtTimeSlot(${idx})">Sil</button>
+    </div>
+  `).join('');
+}
+
+function addNewYtTimeSlot() {
+  const time = document.getElementById('new_slot_time').value || '18:30';
+  const type = document.getElementById('new_slot_type').value || 'SHORTS_CNC';
+  const label = document.getElementById('new_slot_label').value.trim() || `Otomatik YouTube ${type}`;
+  ytState.config.posting_slots.push({
+    slot_id: 'yt_slot_' + Date.now(),
+    time,
+    type,
+    active: true,
+    label
+  });
+  document.getElementById('new_slot_label').value = '';
+  persistYtStateToSupabase(true);
+}
+
+function removeYtTimeSlot(idx) {
+  ytState.config.posting_slots.splice(idx, 1);
+  persistYtStateToSupabase(true);
+}
+
+// ── %100 OTONOM YOUTUBE SHORTS 9:16 SAHNE & ANİMASYON MOTORU ──
+const YT_THEMES = {
+  'yt-crimson-navy': {
+    bgStart: '#091322', bgMid: '#152C4E', bgEnd: '#2B1628',
+    accent: '#FF3B5C', doorColor: '#1E3F66', doorStroke: '#7DD3FC',
+    swatches: ['#1E3F66', '#2E6F9E', '#3B6E5C', '#475569', '#F8FAFC']
+  },
+  'nordic-fjord': {
+    bgStart: '#0B1D33', bgMid: '#163A5F', bgEnd: '#2E6F9E',
+    accent: '#38BDF8', doorColor: '#2B5B84', doorStroke: '#BAE6FD',
+    swatches: ['#1E3F66', '#2E6F9E', '#64748B', '#4D7C6F', '#E2E8F0']
+  },
+  'sage-atelier': {
+    bgStart: '#0D211D', bgMid: '#1B433B', bgEnd: '#2D6A5B',
+    accent: '#34D399', doorColor: '#3B6E5C', doorStroke: '#6EE7B7',
+    swatches: ['#3B6E5C', '#0F253E', '#94A3B8', '#CBD5E1', '#F8FAFC']
+  },
+  'quartz-industrial': {
+    bgStart: '#0F172A', bgMid: '#1E293B', bgEnd: '#334155',
+    accent: '#60A5FA', doorColor: '#475569', doorStroke: '#93C5FD',
+    swatches: ['#475569', '#1E3A8A', '#3B6E5C', '#E2E8F0', '#94A3B8']
+  }
+};
+
+function drawYtShortsCanvas(canvas, opts = {}) {
+  if (!canvas) return;
+  const format = opts.format || document.getElementById('post_media_type')?.value || 'SHORTS_CNC';
+  const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'yt-crimson-navy';
+  const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'diagonal';
+  const headline = (opts.headline || document.getElementById('post_title')?.value || '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ').toLocaleUpperCase('tr-TR');
+  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim';
+  const sceneIndex = opts.sceneIndex || 0; // 0: Normal/Sahne1, 1: Sahne2, 2: Sahne3
+
+  const fullW = 1080;
+  const fullH = 1920;
+  const scale = opts.fullRes ? 1 : 0.3;
+
+  canvas.width = Math.round(fullW * scale);
+  canvas.height = Math.round(fullH * scale);
+  const ctx = canvas.getContext('2d');
+  const theme = YT_THEMES[themeKey] || YT_THEMES['yt-crimson-navy'];
+
+  ctx.save();
+  ctx.scale(scale, scale);
+
+  const bgGrad = ctx.createLinearGradient(0, 0, fullW, fullH);
+  bgGrad.addColorStop(0, theme.bgStart);
+  bgGrad.addColorStop(0.52, theme.bgMid);
+  bgGrad.addColorStop(1, theme.bgEnd);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, fullW, fullH);
+
+  // Aks Çizgileri
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(100, 0); ctx.lineTo(100, fullH);
+  ctx.moveTo(fullW - 100, 0); ctx.lineTo(fullW - 100, fullH);
+  ctx.stroke();
+
+  // Üst YouTube Shorts Rozeti
+  ctx.fillStyle = 'rgba(225, 29, 72, 0.24)';
+  ctx.strokeStyle = theme.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(210, 90, 660, 54, 27);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 21px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  const sceneLabel = sceneIndex === 1
+    ? '▶️ SAHNE 2/3: 18MM E1 MDF & VAKUM MEMBRAN'
+    : sceneIndex === 2
+      ? '▶️ SAHNE 3/3: CANLI TASARIM MODU & 5 GÜN TESLİM'
+      : '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA';
+  ctx.fillText(sceneLabel, fullW / 2, 125);
+
+  // Ana Başlık
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '900 42px "Plus Jakarta Sans", sans-serif';
+  const words = headline.split(' ');
+  const mid = Math.ceil(words.length / 2);
+  const l1 = words.length > 3 ? words.slice(0, mid).join(' ') : headline;
+  const l2 = words.length > 3 ? words.slice(mid).join(' ') : '';
+  ctx.fillText(l1, fullW / 2, 225);
+  if (l2) ctx.fillText(l2, fullW / 2, 280);
+
+  ctx.fillStyle = '#CBD5E1';
+  ctx.font = '600 23px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(subheadline.slice(0, 56), fullW / 2, l2 ? 340 : 295);
+
+  // 3B CNC Membran Kapak Sahnesi
+  const doorW = 450, doorH = 740, doorX = (fullW - 450) / 2, doorY = 480;
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.roundRect(doorX - 16, doorY - 16, doorW + 32, doorH + 32, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  const activeDoorColor = sceneIndex === 1 ? '#2E6F9E' : sceneIndex === 2 ? '#3B6E5C' : theme.doorColor;
+  ctx.fillStyle = activeDoorColor;
+  ctx.strokeStyle = theme.doorStroke;
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.roundRect(doorX, doorY, doorW, doorH, 16);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.strokeStyle = theme.doorStroke;
+  ctx.lineWidth = 3;
+  if (doorStyle === 'diagonal') {
+    ctx.strokeRect(doorX + 28, doorY + 28, doorW - 56, doorH - 56);
+    ctx.beginPath();
+    ctx.moveTo(doorX + 28, doorY + 28); ctx.lineTo(doorX + doorW - 28, doorY + doorH - 28);
+    ctx.moveTo(doorX + doorW - 28, doorY + 28); ctx.lineTo(doorX + 28, doorY + doorH - 28);
+    ctx.stroke();
+  } else if (doorStyle === 'fluted') {
+    for (let x = doorX + 34; x < doorX + doorW - 30; x += 24) {
+      ctx.beginPath();
+      ctx.moveTo(x, doorY + 22); ctx.lineTo(x, doorY + doorH - 22);
+      ctx.stroke();
+    }
+  } else {
+    ctx.strokeRect(doorX + 34, doorY + 34, doorW - 68, Math.round(doorH * 0.55));
+    ctx.strokeRect(doorX + 34, doorY + Math.round(doorH * 0.63), doorW - 68, Math.round(doorH * 0.28));
+  }
+
+  // Kulp
+  ctx.fillStyle = '#F8FAFC';
+  ctx.fillRect(doorX + doorW - 24, doorY + doorH / 2 - 42, 8, 84);
+
+  // Renk Kartelası
+  (theme.swatches || []).forEach((c, idx) => {
+    ctx.fillStyle = c;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(fullW / 2 - 112 + idx * 56, doorY + doorH + 68, 18, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+
+  // 3 Özellik Rozeti
+  ['5 İş Gününde Teslim', '5 Yıl Garanti', '0.01mm 5 Eksen CNC'].forEach((sp, i) => {
+    const pillW = 300, gap = 20;
+    const px = (fullW - (3 * pillW + 2 * gap)) / 2 + i * (pillW + gap);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.28)';
+    ctx.beginPath();
+    ctx.roundRect(px, 1410, pillW, 56, 28);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '700 19px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('✓ ' + sp, px + pillW / 2, 1445);
+  });
+
+  // Sabitlenen Yorum / Altyazı Bandı
+  ctx.fillStyle = 'rgba(15, 23, 42, 0.84)';
+  ctx.strokeStyle = theme.accent;
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.roundRect(100, 1545, 880, 130, 22);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = '800 24px "Plus Jakarta Sans", sans-serif';
+  const subCaption = sceneIndex === 1
+    ? '🛡️ Suya, Buhara & Isıya Dayanıklı 5 Yıl Garantili Yüzey!'
+    : sceneIndex === 2
+      ? '🎨 Web Sitemizde Kendi Dolap Ölçünüzle Canlı Tasarlayın!'
+      : '📌 Sabitlenen Yorumdaki Linkten Canlı Tasarlayın!';
+  ctx.fillText(subCaption, fullW / 2, 1598);
+  ctx.fillStyle = '#93C5FD';
+  ctx.font = '700 21px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('🌐 globalmobilyaweb.vercel.app   •   📞 0 (505) 015 1035', fullW / 2, 1642);
+
+  ctx.fillStyle = '#94A3B8';
+  ctx.font = '700 21px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('▶️ @GlobalKapakMobilya   •   #Shorts #MembranKapak #MutfakTasarım', fullW / 2, 1835);
+
+  ctx.restore();
+}
+
+function renderYtAutonomousCanvasPreview(sceneIdx = 0) {
+  const c = document.getElementById('ytAutoDesignCanvas');
+  drawYtShortsCanvas(c, { fullRes: false, sceneIndex: sceneIdx });
+}
+
+function playShortsAnimatedPreview() {
+  if (shortsAnimTimer) clearInterval(shortsAnimTimer);
+  let step = 0;
+  const statusEl = document.getElementById('ytSceneStatusText');
+  renderYtAutonomousCanvasPreview(0);
+  statusEl.textContent = '▶️ Oynatılıyor — Sahne 1/3 (00:00 - 00:08): Kanca & CNC Vitrin Açılışı';
+
+  shortsAnimTimer = setInterval(() => {
+    step++;
+    if (step === 1) {
+      renderYtAutonomousCanvasPreview(1);
+      statusEl.textContent = '▶️ Oynatılıyor — Sahne 2/3 (00:08 - 00:25): 18mm E1 MDF & 5 Yıl Garanti Detayı';
+    } else if (step === 2) {
+      renderYtAutonomousCanvasPreview(2);
+      statusEl.textContent = '▶️ Oynatılıyor — Sahne 3/3 (00:25 - 00:40): Canlı Tasarım Modu & Sabitlenen Yorum Çağrısı';
+    } else {
+      clearInterval(shortsAnimTimer);
+      shortsAnimTimer = null;
+      renderYtAutonomousCanvasPreview(0);
+      statusEl.textContent = '✅ 3 Sahneli Shorts Önizlemesi Tamamlandı • Bulut Yayına Hazır';
+    }
+  }, 1600);
+}
+
+async function autonomousInventNewYtShort() {
+  const themeKeys = Object.keys(YT_THEMES);
+  const doorStyles = ['diagonal', 'shaker', 'fluted'];
+  document.getElementById('auto_theme_select').value = themeKeys[Math.floor(Math.random() * themeKeys.length)];
+  document.getElementById('auto_door_style').value = doorStyles[Math.floor(Math.random() * doorStyles.length)];
+
+  if (catalogProducts && catalogProducts.length > 0) {
+    const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
+    const pTitle = (prod.title || prod.slug || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
+    const pSub = prod.kisa_aciklama || `${prod.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`;
+    const link = `https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}`;
+
+    document.getElementById('post_video_title').value = `${prod.title || pTitle} — Özel Ölçü CNC Membran Kapak Üretimi! 🛠️ #Shorts`;
+    document.getElementById('post_title').value = pTitle;
+    document.getElementById('post_subtitle').value = pSub;
+    document.getElementById('post_pinned_comment').value = `📌 ${prod.title || 'Bu kapak modelimizi'} kendi dolap ölçünüz ve renginizle canlı denemek için tıklayın: ${link} | 📲 WhatsApp: https://wa.me/905050151035`;
+    document.getElementById('post_description').value =
+      `✨ ${prod.title || pTitle} — Global Kapak Mobilya Otonom YouTube Shorts Sunumu! #Shorts\n\n` +
+      `${pSub}\n\n` +
+      `⏱️ Video Bölümleri:\n00:00 ${prod.title || 'CNC Kapak'} Tasarım & Rölyef Detayı\n00:10 18mm E1 MDF & Suya Dayanıklı Membran Yüzey\n00:25 Canlı Ölçü & Renk Tasarım Modu\n\n` +
+      `🎨 Kendi ölçünüzle denemek için: ${link}\n` +
+      `📲 WhatsApp Sipariş Hattı: https://wa.me/905050151035 (0505 015 1035)`;
+  }
+
+  renderYtAutonomousCanvasPreview(0);
+  showToast('🎬 YouTube Shorts Botu video girişi olmadan yeni 9:16 sahneyi, #Shorts başlığını ve sabit yorumu üretti!');
+}
+
+async function exportYtAutonomousCanvasAndUpload(format, headline, subheadline, themeKey, doorStyle) {
+  try {
+    const offscreen = document.createElement('canvas');
+    drawYtShortsCanvas(offscreen, {
+      fullRes: true,
+      format,
+      themeKey,
+      doorStyle,
+      headline,
+      subheadline
+    });
+
+    const blob = await new Promise(resolve => offscreen.toBlob(resolve, 'image/png', 0.95));
+    if (blob && sbClient) {
+      const filePath = `youtube/yt-auto-${format.toLowerCase()}-${Date.now()}.png`;
+      const { error } = await sbClient.storage.from('media').upload(filePath, blob, {
+        contentType: 'image/png',
+        upsert: true
+      });
+      if (!error) {
+        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
+        if (data?.publicUrl) return data.publicUrl;
+      }
+    }
+  } catch (e) {}
+
+  const params = new URLSearchParams({
+    format,
+    badge: '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA',
+    headline,
+    subheadline,
+    theme: themeKey,
+    door: doorStyle
+  });
+  return `https://insta-deployment-rho.vercel.app/api/youtube-render?${params.toString()}`;
+}
+
+async function addYtScheduledPost(publishImmediately = false) {
+  const btn = document.getElementById('btnQueuePost');
+  const format = document.getElementById('post_media_type').value || 'SHORTS_CNC';
+  const themeKey = document.getElementById('auto_theme_select')?.value || 'yt-crimson-navy';
+  const doorStyle = document.getElementById('auto_door_style')?.value || 'diagonal';
+
+  if (!document.getElementById('post_video_title').value.trim()) {
+    await autonomousInventNewYtShort();
+  }
+
+  let videoTitle = document.getElementById('post_video_title').value.trim();
+  if (!videoTitle.includes('#Shorts')) videoTitle += ' #Shorts';
+
+  const headline = document.getElementById('post_title').value.trim();
+  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
+  const description = document.getElementById('post_description').value.trim();
+  const pinnedComment = document.getElementById('post_pinned_comment').value.trim();
+  const tags = document.getElementById('post_tags').value.split(',').map(t => t.trim()).filter(Boolean);
+  const scheduledFor = document.getElementById('post_scheduled_for').value
+    ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
+    : new Date().toISOString();
+
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '🎬 1080×1920 Shorts Sahnesi Tasarlanıyor ve Buluta Kaydediliyor...';
+  }
+
+  const mediaUrl = await exportYtAutonomousCanvasAndUpload(format, headline, subheadline, themeKey, doorStyle);
+
+  if (btn) {
+    btn.disabled = false;
+    btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+  }
+
+  const newItem = {
+    id: 'yt-auto-' + Date.now(),
+    media_type: format,
+    title: videoTitle,
+    headline,
+    subheadline,
+    theme_id: themeKey,
+    door_style: doorStyle,
+    description,
+    pinned_comment: pinnedComment,
+    tags,
+    media_url: mediaUrl,
+    auto_designed: true,
+    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
+    status: publishImmediately ? 'published' : 'scheduled',
+    published_at: publishImmediately ? new Date().toISOString() : null
+  };
+
+  ytState.scheduled_posts.unshift(newItem);
+  await persistYtStateToSupabase(false);
+
+  if (publishImmediately) {
+    fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
+    showToast(`🚀 YouTube Shorts Botu içeriği kendi üretti, yayınladı ve ilk yorumu sabitledi!`);
+  } else {
+    showToast(`⏰ YouTube Shorts içeriği üretildi ve bulut kuyruğuna eklendi!`);
+  }
+}
+
+function renderYtScheduledQueue() {
+  const cont = document.getElementById('scheduledQueueContainer');
+  const posts = ytState.scheduled_posts || [];
+  if (posts.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen Shorts yok. Saat dilimi geldiğinde bot kendi tasarımını otomatik üretip paylaşır.</div>`;
+    return;
+  }
+
+  cont.innerHTML = posts.map((p, idx) => {
+    const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+    const isPub = p.status === 'published';
+    return `
+      <div class="queue-item">
+        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+        <div class="queue-info">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+            <span class="badge badge-red">▶️ ${p.media_type}</span>
+            <span class="badge badge-purple">🎨 Otonom 9:16</span>
+            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ YouTube\'da Yayınlandı + İlk Yorum Sabitlendi' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
+            <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
+          </div>
+          <h4>${p.title}</h4>
+          <p>${p.pinned_comment || p.description || ''}</p>
+        </div>
+        <div style="display:flex;gap:6px;">
+          ${!isPub ? `<button class="btn btn-success btn-sm" onclick="publishYtQueueItemNow(${idx})">Şimdi Yayınla</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="deleteYtQueueItem(${idx})">Sil</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function publishYtQueueItemNow(idx) {
+  if (!ytState.scheduled_posts[idx]) return;
+  ytState.scheduled_posts[idx].status = 'published';
+  ytState.scheduled_posts[idx].published_at = new Date().toISOString();
+  persistYtStateToSupabase(false);
+  fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
+  showToast(`🚀 "${ytState.scheduled_posts[idx].title}" YouTube bulut motorundan yayınlandı!`);
+}
+
+function deleteYtQueueItem(idx) {
+  ytState.scheduled_posts.splice(idx, 1);
+  persistYtStateToSupabase(true);
+}
+
+async function runYtAutonomousCycleNow() {
+  let count = 0;
+  (ytState.scheduled_posts || []).forEach(p => {
+    if (p.status === 'scheduled') {
+      p.status = 'published';
+      p.published_at = new Date().toISOString();
+      count++;
+    }
+  });
+
+  if (count === 0) {
+    await autonomousInventNewYtShort();
+    await addYtScheduledPost(true);
+    return;
+  }
+
+  await persistYtStateToSupabase(false);
+  fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
+  showToast(`⚡ YouTube Shorts Bulut Döngüsü çalıştı: ${count} Shorts onay beklenmeden yayınlandı!`);
+}
+
+// ── 1. AŞAMA SABİT YORUM KURALLARI ──
+function renderYtTier1Rules() {
+  const cont = document.getElementById('tier1RulesList');
+  const rules = ytState.rules || [];
+  cont.innerHTML = rules.map((r, idx) => `
+    <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#F8FAFC;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="font-size:13.5px;color:var(--navy);">💬 ${r.rule_name}</strong>
+        <button class="btn btn-danger btn-sm" onclick="deleteYtTier1Rule(${idx})">Sil</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--yt-red);font-weight:700;margin-bottom:6px;">
+        Anahtar Kelimeler: ${(r.keywords || []).map(k => `<code style="background:#FFE4E6;padding:2px 6px;border-radius:4px;margin-right:4px;">${k}</code>`).join('')}
+      </div>
+      <div style="font-size:12.5px;color:var(--text);background:#fff;padding:10px;border-radius:8px;border:1px solid var(--border);">
+        ${r.response_text}
+      </div>
+    </div>
+  `).join('');
+}
+
+function addYtTier1Rule() {
+  const name = document.getElementById('r_name').value.trim();
+  const keywords = document.getElementById('r_keywords').value.split(',').map(k => k.trim()).filter(Boolean);
+  const response = document.getElementById('r_response').value.trim();
+
+  if (!name || keywords.length === 0 || !response) {
+    showToast('⚠️ Lütfen kural adı, anahtar kelimeler ve sabit cevabı girin!');
+    return;
+  }
+
+  ytState.rules.push({
+    id: 'yt-rule-' + Date.now(),
+    rule_name: name,
+    match_type: 'contains',
+    keywords,
+    response_text: response
+  });
+
+  document.getElementById('r_name').value = '';
+  document.getElementById('r_keywords').value = '';
+  document.getElementById('r_response').value = '';
+  persistYtStateToSupabase(true);
+}
+
+function deleteYtTier1Rule(idx) {
+  ytState.rules.splice(idx, 1);
+  persistYtStateToSupabase(true);
+}
+
+function renderYtAiCatalogPreview() {
+  const cont = document.getElementById('aiCatalogPreviewList');
+  if (!catalogProducts || catalogProducts.length === 0) {
+    cont.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:12.5px;">Supabase ürün kataloğu yükleniyor...</div>`;
+    return;
+  }
+  cont.innerHTML = catalogProducts.map(p => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px;">
+      <div>
+        <strong style="color:var(--navy);">${p.title || p.slug}</strong>
+        <span style="color:var(--muted);margin-left:6px;">(${p.kategori || 'Membran Kapak'})</span>
+      </div>
+      <span class="badge badge-green">YouTube AI & Shorts Motorunda Aktif</span>
+    </div>
+  `).join('');
+}
+
+function renderYtTier3Handoffs() {
+  const cont = document.getElementById('tier3HandoffList');
+  const handoffs = (ytState.conversations || []).filter(c => c.resolved_tier === 3);
+  if (handoffs.length === 0) {
+    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz 3. aşamaya devredilen YouTube yorum talebi yok. Simülatör sekmesinden test edebilirsiniz.</div>`;
+    return;
+  }
+  cont.innerHTML = handoffs.map(h => `
+    <div style="border:1px solid #FDE68A;background:#FFFBEB;border-radius:12px;padding:14px;margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <strong style="color:#92400E;font-size:13px;">👤 ${h.author_name || '@izleyici'} (YouTube Yorum)</strong>
+        <span class="badge badge-amber">3. Aşama: İnsan Devri</span>
+      </div>
+      <div style="font-size:12.5px;color:var(--navy);margin-bottom:8px;">
+        <strong>İzleyici Yorumu:</strong> "${h.incoming_text}"
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+        <small style="color:var(--muted);">${new Date(h.created_at).toLocaleString('tr-TR')}</small>
+        <a href="${h.whatsapp_link || 'https://wa.me/905050151035'}" target="_blank" class="btn btn-success btn-sm">
+          💬 WhatsApp Bağlantısını Aç ↗
+        </a>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderYtRecentConversations() {
+  const cont = document.getElementById('recentConversationsList');
+  const convs = (ytState.conversations || []).slice(0, 8);
+  if (convs.length === 0) {
+    cont.innerHTML = `<div style="padding:14px;color:var(--muted);font-size:12.5px;">Henüz test yorumu gönderilmedi.</div>`;
+    return;
+  }
+  cont.innerHTML = convs.map(c => `
+    <div style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <strong>${c.author_name}: "${c.incoming_text}"</strong>
+        <span class="badge ${c.resolved_tier===1?'badge-red':c.resolved_tier===2?'badge-purple':'badge-green'}">${c.tier_label}</span>
+      </div>
+      <div style="color:var(--muted);">${c.bot_reply}</div>
+    </div>
+  `).join('');
+}
+
+function saveYtBotConfigToSupabase() {
+  const c = ytState.config;
+  c.channel_handle = document.getElementById('cfg_channel_handle').value.trim();
+  c.channel_id = document.getElementById('cfg_channel_id').value.trim();
+  c.client_id = document.getElementById('cfg_client_id').value.trim();
+  c.client_secret = document.getElementById('cfg_client_secret').value.trim();
+  c.refresh_token = document.getElementById('cfg_refresh_token').value.trim();
+  c.gemini_model = document.getElementById('cfg_gemini_model').value;
+  c.gemini_api_key = document.getElementById('cfg_gemini_key').value.trim();
+  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt').value.trim();
+  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number').value.trim();
+  c.tier3_phone_display = document.getElementById('cfg_phone_display').value.trim();
+  c.tier3_handoff_triggers = document.getElementById('cfg_tier3_triggers').value.split(',').map(x => x.trim()).filter(Boolean);
+
+  persistYtStateToSupabase(true);
+}
+
+// ── CANLI YOUTUBE SHORTS YORUM SİMÜLATÖRÜ ──
+function triggerYtQuickSim(text) {
+  document.getElementById('simUserInput').value = text;
+  sendYtSimulatedComment();
+}
+
+async function sendYtSimulatedComment() {
+  const input = document.getElementById('simUserInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  const chatBox = document.getElementById('simChatMessages');
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-user">
+      <div style="font-size:10px;opacity:0.85;margin-bottom:3px;">👤 @youtube_izleyicisi (Shorts Yorumu)</div>
+      <div>${text}</div>
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  const decision = await runYtClientSideThreeTierEngine(text);
+
+  const tagClass = decision.resolved_tier === 1 ? 'tier-tag-1' : decision.resolved_tier === 2 ? 'tier-tag-2' : 'tier-tag-3';
+  chatBox.insertAdjacentHTML('beforeend', `
+    <div class="msg-bubble msg-bot">
+      <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
+      <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
+      ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
+    </div>
+  `);
+  chatBox.scrollTop = chatBox.scrollHeight;
+
+  ytState.conversations.unshift({
+    id: 'yt-conv-' + Date.now(),
+    author_name: '@youtube_izleyicisi',
+    incoming_text: text,
+    resolved_tier: decision.resolved_tier,
+    tier_label: decision.tier_label,
+    bot_reply: decision.bot_reply,
+    whatsapp_link: decision.whatsapp_link || '',
+    created_at: new Date().toISOString()
+  });
+
+  await persistYtStateToSupabase(false);
+}
+
+async function runYtClientSideThreeTierEngine(cleanText) {
+  const lowerText = cleanText.toLocaleLowerCase('tr-TR');
+  const c = ytState.config;
+  const waNum = c.tier3_whatsapp_number || '905050151035';
+  const phoneDisp = c.tier3_phone_display || '0 (505) 015 1035';
+
+  // 3. Aşama Doğrudan Tetikleyici Kontrolü
+  const triggers = c.tier3_handoff_triggers || [];
+  const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
+  if (t3Match) {
+    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube Shorts videonuzdan ulaşıyorum. "${cleanText}" konusunda fiyat teklifi almak istiyorum.`)}`;
+    return {
+      resolved_tier: 3,
+      tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
+      bot_reply: `Yorumunuz için teşekkür ederiz! 🙌 Talebiniz ("${t3Match}") dolap ölçünüze ve seçeceğiniz modele göre hesaplandığı için sizi doğrudan Satış & Üretim Ekibimize davet ediyoruz:\n\n📲 Tek Tıkla WhatsApp Fiyat Teklifi: ${waLink}\n📞 Fabrika Telefon: ${phoneDisp}`,
+      whatsapp_link: waLink
+    };
+  }
+
+  // 1. Aşama Sabit Kurallar
+  for (const rule of (ytState.rules || [])) {
+    const hit = (rule.keywords || []).find(kw => {
+      const k = kw.toLocaleLowerCase('tr-TR').trim();
+      if (!k) return false;
+      return lowerText.includes(k);
+    });
+    if (hit) {
+      return {
+        resolved_tier: 1,
+        tier_label: `1. AŞAMA: SABİT YORUM YANITI (${rule.rule_name})`,
+        bot_reply: rule.response_text,
+        whatsapp_link: ''
+      };
+    }
+  }
+
+  // 2. Aşama Gemini AI
+  if (c.gemini_api_key) {
+    try {
+      const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(c.gemini_api_key)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `${c.tier2_system_prompt}\n\nÜrün Kataloğu:\n${catText}\n\nYouTube Yorumu: "${cleanText}"` }] }]
+        })
+      });
+      if (res.ok) {
+        const d = await res.json();
+        const replyTxt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (replyTxt) {
+          return {
+            resolved_tier: 2,
+            tier_label: `2. AŞAMA: GEMINI AI (${c.gemini_model})`,
+            bot_reply: replyTxt,
+            whatsapp_link: ''
+          };
+        }
+      }
+    } catch (e) {}
+  }
+
+  const prodNames = (catalogProducts || []).slice(0, 3).map(p => p.title || p.slug).join(', ') || 'Fjord Mavi Diyagonal, Kuvars Gri ve Adaçayı Yeşili Country';
+  return {
+    resolved_tier: 2,
+    tier_label: '2. AŞAMA: GEMINI AI TEKNİK YORUM DANIŞMANI',
+    bot_reply: `Harika bir soru! 🤖 Global Kapak Mobilya koleksiyonumuzdaki **${prodNames}** modellerimiz aynı 18mm E1 MDF kalınlığında ve birebir aynı membran renk tonlarında üretildiği için alt dolaplarda Çerçeveli Country, üst dolaplarda ise Dikey Fugalı (Fluted) modeli kusursuz şekilde kombinleyebilirsiniz.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html`,
+    whatsapp_link: ''
+  };
+}
+
+document.addEventListener('DOMContentLoaded', loadYtStateFromSupabase);
+</script>
+</body>
+</html>

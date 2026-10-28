@@ -1,0 +1,13 @@
+{
+  "name": "global-kapak-youtube-shorts-cloud-bot",
+  "version": "2.0.0",
+  "description": "Global Kapak Mobilya — 7/24 Bulut Otonom YouTube Shorts Botu (Otonom 9:16 Shorts Tasarımı + SEO Başlık/Etiket + Sabitlenen İlk Yorum + 3 Aşamalı Yorum Yanıt Motoru)",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
