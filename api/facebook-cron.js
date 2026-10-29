@@ -61,6 +61,41 @@ export default async function handler(req, res) {
     const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
     const config = state.config || {};
 
+    // Doğrudan UI'dan "Şimdi Yayınla" isteği geldiyse Meta Graph API'ye anında gönder
+    if (req.method === 'POST' && req.body?.action === 'publish') {
+      const pageId = req.body.pageId || config.page_id || process.env.FB_PAGE_ID;
+      const pageAccessToken = req.body.pageAccessToken || config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN;
+      const mediaType = req.body.mediaType || 'PHOTO_POST';
+      const mediaUrl = req.body.mediaUrl;
+      const caption = req.body.caption || '';
+      const targetLink = req.body.targetLink || 'https://globalmobilyaweb.vercel.app/urunler.html';
+
+      if (!pageId || !pageAccessToken) {
+        return res.status(400).json({ ok: false, error: 'Facebook Page ID veya Page Access Token eksik!' });
+      }
+
+      try {
+        const publishResult = await publishToFacebookPageGraphApi({
+          pageId,
+          pageAccessToken,
+          mediaType,
+          mediaUrl,
+          caption,
+          targetLink
+        });
+        return res.status(200).json({
+          ok: true,
+          publishedId: publishResult.publishedId,
+          mode: publishResult.mode
+        });
+      } catch (pubErr) {
+        return res.status(200).json({
+          ok: false,
+          error: pubErr.message
+        });
+      }
+    }
+
     if (config.auto_publish_enabled === false) {
       return res.status(200).json({ ok: true, message: 'Facebook otomatik paylaşım duraklatılmış durumda.', published: [] });
     }
@@ -116,29 +151,35 @@ export default async function handler(req, res) {
     const publishedList = [];
     for (const post of duePosts) {
       const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
-      const publishResult = await publishToFacebookPageGraphApi({
-        pageId: config.page_id || process.env.FB_PAGE_ID || '',
-        pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || '',
-        mediaType: post.media_type || 'PHOTO_POST',
-        mediaUrl: post.media_url,
-        caption: fullCaption,
-        targetLink: post.target_link || 'https://globalmobilyaweb.vercel.app/urunler.html'
-      });
+      try {
+        const publishResult = await publishToFacebookPageGraphApi({
+          pageId: config.page_id || process.env.FB_PAGE_ID || '',
+          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || '',
+          mediaType: post.media_type || 'PHOTO_POST',
+          mediaUrl: post.media_url,
+          caption: fullCaption,
+          targetLink: post.target_link || 'https://globalmobilyaweb.vercel.app/urunler.html'
+        });
 
-      post.status = 'published';
-      post.published_at = new Date().toISOString();
-      post.fb_post_id = publishResult.publishedId;
-      post.auto_approved = true;
+        post.status = 'published';
+        post.published_at = new Date().toISOString();
+        post.fb_post_id = publishResult.publishedId;
+        post.auto_approved = true;
 
-      publishedList.push({
-        id: post.id,
-        title: post.title,
-        media_type: post.media_type,
-        auto_designed: !!post.auto_designed,
-        media_url: post.media_url,
-        publishedId: publishResult.publishedId,
-        mode: publishResult.mode
-      });
+        publishedList.push({
+          id: post.id,
+          title: post.title,
+          media_type: post.media_type,
+          auto_designed: !!post.auto_designed,
+          media_url: post.media_url,
+          publishedId: publishResult.publishedId,
+          mode: publishResult.mode
+        });
+      } catch (err) {
+        console.error('Facebook publish error:', err.message);
+        post.status = 'failed';
+        post.last_error = err.message;
+      }
     }
 
     state.scheduled_posts = state.scheduled_posts.slice(0, 60);

@@ -716,35 +716,33 @@
           <div id="scheduledQueueContainer"></div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🔑 Resmi Facebook Page Graph API Kimlik Bilgileri</div>
-            <span class="badge badge-blue">Instagram İle Aynı System User Token Kullanılabilir</span>
-          </div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5;">
-            💡 <strong>Kolaylık:</strong> Instagram botu için Meta Business Suite üzerinden aldığınız <strong>System User Token</strong> (<code>pages_manage_posts</code>, <code>pages_messaging</code>, <code>pages_read_engagement</code> izinli) Facebook sayfanız için de doğrudan geçerlidir!
-          </p>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Facebook Sayfa Adı</label>
-              <input type="text" class="form-control" id="cfg_page_name" value="Global Kapak Mobilya">
+        <!-- Facebook Graph API Bulut Bağlantı Durumu Kartı (Kullanıcı Talebiyle ID & Token Alanları Gizlendi) -->
+        <div style="background:linear-gradient(135deg, rgba(24,119,242,0.1), rgba(15,23,42,0.85));border:1px solid rgba(24,119,242,0.35);border-radius:14px;padding:16px 20px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#1877F2,#0d5cb6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;">
+                📘
+              </div>
+              <div>
+                <h4 style="font-size:13.5px;font-weight:800;color:#60a5fa;display:flex;align-items:center;gap:8px;">
+                  Facebook Page Graph API Bulut Bağlantısı Aktif
+                </h4>
+                <p style="font-size:11.5px;color:#94a3b8;margin-top:2px;">
+                  Sayfa: <strong style="color:#f8fafc;" id="fbActivePageNameDisplay">Global Kapak Mobilya</strong> • Sayfa ID: <code style="color:#93c5fd;background:rgba(15,23,42,0.7);padding:2px 7px;border-radius:5px;" id="fbActivePageIdDisplay">122127295833480422</code>
+                </p>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Facebook Page ID (Sayfa Kimliği)</label>
-              <input type="text" class="form-control" id="cfg_page_id" placeholder="Örn: 104928173918273">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="badge badge-green" style="font-size:11px;padding:5px 12px;font-weight:800;">7/24 BULUT AKTİF</span>
+              <button type="button" class="btn btn-fb btn-sm" id="btnFbDirectTestPost" onclick="triggerFbDirectTestPost(this)" style="font-size:11.5px;padding:6px 14px;">
+                🚀 Örnek Test Gönderisi Yayınla
+              </button>
             </div>
           </div>
-          <div class="form-group">
-            <label>Meta Uzun Ömürlü Sayfa / Sistem Kullanıcı Tokenı (Page Access Token)</label>
-            <input type="password" class="form-control" id="cfg_page_token" placeholder="EAABwzLixnjYBO...">
-          </div>
-          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
-            <div><strong>🌐 Facebook Bulut Webhook URL:</strong> <code>https://insta-deployment-rho.vercel.app/api/facebook-webhook</code></div>
-            <div style="margin-top:4px;"><strong>🔑 Verify Token:</strong> <code>global_kapak_fb_verify_2026</code></div>
-          </div>
-          <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
-            💾 Facebook Bulut API Ayarlarını Supabase'e Kaydet
-          </button>
+          <!-- Gizli girdi alanları (Arka plan bot motoru ve Supabase senkronizasyonu için korunmuştur) -->
+          <input type="hidden" id="cfg_page_name" value="Global Kapak Mobilya">
+          <input type="hidden" id="cfg_page_id" value="122127295833480422">
+          <input type="hidden" id="cfg_page_token">
         </div>
       </div>
     </div>
@@ -1157,6 +1155,11 @@ function populateFbFormsAndRenderAll() {
   document.getElementById('cfg_page_name').value = c.page_name || 'Global Kapak Mobilya';
   document.getElementById('cfg_page_id').value = c.page_id || '';
   document.getElementById('cfg_page_token').value = c.page_access_token || '';
+
+  const nameDisp = document.getElementById('fbActivePageNameDisplay');
+  if (nameDisp) nameDisp.textContent = c.page_name || 'Global Kapak Mobilya';
+  const idDisp = document.getElementById('fbActivePageIdDisplay');
+  if (idDisp) idDisp.textContent = c.page_id || '122127295833480422';
   document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
   document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
   document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
@@ -1647,12 +1650,95 @@ async function addFbScheduledPost(publishImmediately = false) {
 
   fbState.scheduled_posts.unshift(newItem);
   await persistFbStateToSupabase(false);
+  renderFbScheduledQueue();
 
   if (publishImmediately) {
-    fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
-    showToast(`🚀 Facebook Botu ${mediaType} tasarımını kendi üretti ve onay beklemeden yayınladı!`);
+    const pageId = fbState?.config?.page_id || document.getElementById('cfg_page_id')?.value?.trim();
+    const pageAccessToken = fbState?.config?.page_access_token || document.getElementById('cfg_page_token')?.value?.trim();
+    const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
+
+    try {
+      let metaPublished = false;
+      let pubId = null;
+
+      if (pageId && pageAccessToken) {
+        showToast('🚀 Meta Facebook Sayfasına doğrudan yayınlanıyor...');
+        const photoParams = new URLSearchParams({
+          url: mediaUrl,
+          caption: fullCaption,
+          access_token: pageAccessToken
+        });
+        const metaRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}/photos`, {
+          method: 'POST',
+          body: photoParams
+        });
+        const metaData = await metaRes.json();
+        if (metaRes.ok && (metaData.id || metaData.post_id)) {
+          metaPublished = true;
+          pubId = metaData.post_id || metaData.id;
+          newItem.fb_post_id = pubId;
+          newItem.status = 'published';
+          newItem.published_at = new Date().toISOString();
+          await persistFbStateToSupabase(false);
+          renderFbScheduledQueue();
+          alert(`🎉 Tebrikler! Test gönderiniz Facebook Sayfanızda canlı yayınlandı!\n\nFacebook Medya ID: ${pubId}`);
+          showToast(`✅ Facebook'ta yayınlandı! ID: ${pubId}`);
+        } else {
+          console.warn('Meta Graph API direct publish response:', metaData);
+          const errMsg = metaData?.error?.message || 'Meta yetkilendirme hatası';
+          if (metaData?.error?.code === 200 || errMsg.includes('pages_manage_posts')) {
+            alert(`⚠️ Meta Yetkilendirme Uyarısı (Sayfa Yayın İzni):\n\nFacebook Sayfanızda gönderi paylaşabilmek için token izinlerinde "pages_manage_posts" izni ve sayfa yetkisi gereklidir.\n\nMeta İşletme Ayarları -> Sistem Kullanıcıları -> İzin Oluştur (Token Al) ekranında "pages_manage_posts" kutucuğunu işaretleyip "Varlık Ata" kısmından sayfanızı ekleyiniz.\n\nMeta Mesajı: ${errMsg}`);
+          } else {
+            alert(`Facebook Paylaşım Hatası: ${errMsg}`);
+          }
+        }
+      }
+
+      if (!metaPublished) {
+        const cronRes = await fetch('/api/facebook-cron', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'publish',
+            pageId,
+            pageAccessToken,
+            mediaType,
+            mediaUrl,
+            caption: fullCaption
+          })
+        });
+        const cronData = await cronRes.json();
+        if (cronData.ok && cronData.publishedId) {
+          newItem.fb_post_id = cronData.publishedId;
+          newItem.status = 'published';
+          newItem.published_at = new Date().toISOString();
+          await persistFbStateToSupabase(false);
+          renderFbScheduledQueue();
+          showToast(`✅ Facebook'ta yayınlandı! ID: ${cronData.publishedId}`);
+        }
+      }
+    } catch (e) {
+      console.error('Publish error:', e);
+      showToast('⚠️ Yayınlama sırasında bağlantı hatası: ' + e.message);
+    }
   } else {
     showToast(`⏰ Facebook ${mediaType} tasarımı üretildi ve bulut kuyruğuna eklendi!`);
+  }
+}
+
+async function triggerFbDirectTestPost(btn) {
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Yayınlanıyor...';
+  }
+  try {
+    await autonomousInventNewFbDesign();
+    await addFbScheduledPost(true);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Örnek Test Gönderisi Yayınla';
+    }
   }
 }
 
