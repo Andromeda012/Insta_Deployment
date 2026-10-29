@@ -6,6 +6,7 @@
 <title>Modül 2 — Instagram Bulut Bot & 3 Aşamalı İletişim Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../nova-studio-engine.js"></script>
 <style>
   :root {
     --navy: #0F253E;
@@ -613,10 +614,15 @@
           <!-- CANLI OTONOM TASARIM TUVALİ (BOTUN KENDİ ÜRETTİĞİ GÖRSEL / REELS ÖNİZLEMESİ) -->
           <div style="background:#0B1320;border:1px solid #1E293B;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-              <span style="font-size:11.5px;font-weight:700;color:#93C5FD;">✨ Botun Kendi Tasarladığı Canlı Görsel / Reels Sahnesi</span>
-              <button type="button" class="btn btn-insta btn-sm" onclick="autonomousInventNewDesign()">
-                🎲 Bot Yeni Konsept, Tasarım & Metin Üretsin
-              </button>
+              <span style="font-size:11.5px;font-weight:700;color:#93C5FD;">✨ Lüks Mimari Afiş & Video Sahnesi (Nova Motoru)</span>
+              <div style="display:flex;gap:6px;">
+                <button type="button" class="btn btn-outline btn-sm" id="btnIgKenBurns" onclick="toggleInstagramKenBurns()">
+                  ▶️ Kamera Hareketi (Ken Burns)
+                </button>
+                <button type="button" class="btn btn-insta btn-sm" onclick="autonomousInventNewDesign()">
+                  🎲 Katalogdan Yeni Ürün & Tasarım Seç
+                </button>
+              </div>
             </div>
             <canvas id="autoDesignCanvas" width="540" height="540" style="max-height:310px;width:auto;max-width:100%;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);"></canvas>
             <div style="font-size:11px;color:#94A3B8;margin-top:8px;" id="autoDesignStatusLabel">
@@ -1049,6 +1055,10 @@ const DEFAULT_BOT_STATE = {
 let botState = JSON.parse(JSON.stringify(DEFAULT_BOT_STATE));
 let catalogProducts = [];
 let pendingUploadFile = null;
+let currentSelectedProduct = null;
+let currentProductImageEl = null;
+let igAnimController = null;
+let isIgAnimPlaying = false;
 
 function showToast(msg) {
   const el = document.getElementById('toastEl');
@@ -1144,7 +1154,11 @@ function populateFormsAndRenderAll() {
   renderTier3Handoffs();
   renderRecentConversations();
   updateKpis();
-  renderAutonomousCanvasPreview();
+  if (catalogProducts && catalogProducts.length > 0 && !currentSelectedProduct) {
+    autonomousInventNewDesign();
+  } else {
+    renderAutonomousCanvasPreview();
+  }
 }
 
 function updateKpis() {
@@ -1251,10 +1265,37 @@ const AUTO_CONCEPTS = [
 function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
   if (!canvas) return;
   const mediaType = opts.mediaType || document.getElementById('post_media_type')?.value || 'REELS';
+  const headline = (opts.headline || document.getElementById('post_title')?.value || 'NOVA - ZÜRİH YATAK ODASI').toLocaleUpperCase('tr-TR');
+  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak';
+  const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
+
+  // LÜKS MİMARİ AFİŞ MOTORU (Referans 1 & 2 Görselleri)
+  if (window.NovaStudioEngine) {
+    const prod = currentSelectedProduct || {
+      title: headline,
+      kategori: subheadline,
+      ozellikler: [
+        '🪵 1. Sınıf Sağlam MDF Gövde & CNC Membran Kapaklar',
+        '🪞 Çizilmeye dayanıklı ithal membran yüzey teknolojisi',
+        '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
+        '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
+      ]
+    };
+
+    window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+      productImageEl: currentProductImageEl,
+      product: prod,
+      isVertical,
+      zoomScale: opts.zoomScale || 1.0,
+      panX: opts.panX || 0,
+      panY: opts.panY || 0,
+      fullRes: opts.fullRes !== false
+    });
+    return;
+  }
+
   const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'nordic-fjord';
   const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
-  const headline = (opts.headline || document.getElementById('post_title')?.value || 'FJORD MAVİ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
-  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 Yıl Garanti';
 
   const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
   const W = opts.fullRes ? 1080 : 540;
@@ -1445,37 +1486,73 @@ function renderAutonomousCanvasPreview() {
   drawAutonomousGraphicOnCanvas(previewCanvas, { fullRes: false });
 }
 
+function toggleInstagramKenBurns() {
+  if (!window.NovaStudioEngine) return;
+  const btn = document.getElementById('btnIgKenBurns');
+  const previewCanvas = document.getElementById('autoDesignCanvas');
+  const mediaType = document.getElementById('post_media_type')?.value || 'REELS';
+  const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
+
+  const prod = currentSelectedProduct || {
+    title: document.getElementById('post_title')?.value || 'ZÜRİH YATAK ODASI',
+    kategori: document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak'
+  };
+
+  if (isIgAnimPlaying) {
+    if (igAnimController) igAnimController.stop();
+    isIgAnimPlaying = false;
+    if (btn) btn.textContent = '▶️ Kamera Hareketi (Ken Burns)';
+    renderAutonomousCanvasPreview();
+  } else {
+    isIgAnimPlaying = true;
+    if (btn) btn.textContent = '⏹️ Hareketi Durdur';
+    igAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentProductImageEl, prod, isVertical);
+  }
+}
+
 async function autonomousInventNewDesign() {
-  const themeKeys = Object.keys(AUTO_THEMES);
-  const doorStyles = ['shaker', 'diagonal', 'fluted'];
-  const randomTheme = themeKeys[Math.floor(Math.random() * themeKeys.length)];
-  const randomDoor = doorStyles[Math.floor(Math.random() * doorStyles.length)];
-
-  document.getElementById('auto_theme_select').value = randomTheme;
-  document.getElementById('auto_door_style').value = randomDoor;
-
   if (catalogProducts && catalogProducts.length > 0) {
     const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
-    const pTitle = (prod.title || prod.baslik || prod.slug || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
-    const pSub = prod.kisa_aciklama || `${prod.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`;
+    currentSelectedProduct = prod;
+
+    const rawTitle = (prod.title || prod.baslik || prod.slug || 'ZÜRİH YATAK ODASI').trim().toUpperCase();
+    const pTitle = rawTitle.startsWith('NOVA') ? rawTitle : `NOVA - ${rawTitle}`;
+    const pSub = prod.kategori || '1. Sınıf MDF • CNC Membran Kapak';
 
     document.getElementById('post_title').value = pTitle;
     document.getElementById('post_subtitle').value = pSub;
-    document.getElementById('post_caption').value =
-      `✨ ${prod.title || pTitle} — Global Kapak Mobilya Otonom Koleksiyon Sunumu!\n\n` +
-      `${pSub}\n\n` +
-      `🛡️ 5 Yıl Üretici Garantisi | 🚚 5 İş Gününde Hızlı Teslimat\n` +
-      `🎨 Web sitemizdeki Canlı Tasarım Modunda kendi dolap ölçünüz ve renginizle hemen deneyin: https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}\n` +
-      `📲 WhatsApp Sipariş Hattı: 0 (505) 015 1035`;
+
+    // Lüks Açıklama (Referans 2 Görsel Formatı)
+    if (window.NovaStudioEngine) {
+      document.getElementById('post_caption').value = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
+    }
+
+    // Ürün görselini yükle
+    if (prod.ana_resim) {
+      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
+        ? prod.ana_resim
+        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        currentProductImageEl = img;
+        renderAutonomousCanvasPreview();
+      };
+      img.src = fullImg;
+    } else {
+      currentProductImageEl = null;
+      renderAutonomousCanvasPreview();
+    }
   } else {
     const concept = AUTO_CONCEPTS[Math.floor(Math.random() * AUTO_CONCEPTS.length)];
     document.getElementById('post_title').value = concept.title;
     document.getElementById('post_subtitle').value = concept.subtitle;
     document.getElementById('post_caption').value = concept.caption;
+    renderAutonomousCanvasPreview();
   }
 
-  renderAutonomousCanvasPreview();
-  showToast('🎨 Bot fotoğraf/video girişi olmadan yeni görsel tasarımı ve metni kendi üretti!');
+  showToast('👑 Nova Lüks Mimari Afiş: Ürün fotoğrafı, oda atmosferi tamamlama ve İskandinav açıklama metni yüklendi!');
 }
 
 async function exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle) {

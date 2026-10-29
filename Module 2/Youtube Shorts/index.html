@@ -6,6 +6,7 @@
 <title>Modül 2 — YouTube Shorts Bulut Botu & 3 Aşamalı Yorum Otomasyon Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="../nova-studio-engine.js"></script>
 <style>
   :root {
     --navy: #0B1628;
@@ -1066,6 +1067,10 @@ const DEFAULT_YT_BOT_STATE = {
 let ytState = JSON.parse(JSON.stringify(DEFAULT_YT_BOT_STATE));
 let catalogProducts = [];
 let shortsAnimTimer = null;
+let currentYtSelectedProduct = null;
+let currentYtProductImageEl = null;
+let ytKenBurnsController = null;
+let isYtKenBurnsPlaying = false;
 
 function showToast(msg) {
   const el = document.getElementById('toastEl');
@@ -1246,6 +1251,34 @@ const YT_THEMES = {
 
 function drawYtShortsCanvas(canvas, opts = {}) {
   if (!canvas) return;
+  const headline = (opts.headline || document.getElementById('post_title')?.value || 'NOVA - ZÜRİH YATAK ODASI').toLocaleUpperCase('tr-TR');
+  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak';
+
+  // LÜKS MİMARİ AFİŞ & VİDEO MOTORU (Referans 1 & 2 Görselleri)
+  if (window.NovaStudioEngine) {
+    const prod = currentYtSelectedProduct || {
+      title: headline,
+      kategori: subheadline,
+      ozellikler: [
+        '🪵 1. Sınıf Sağlam MDF Gövde & CNC Membran Kapaklar',
+        '🪞 Çizilmeye dayanıklı ithal membran yüzey teknolojisi',
+        '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
+        '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
+      ]
+    };
+
+    window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+      productImageEl: currentYtProductImageEl,
+      product: prod,
+      isVertical: true,
+      zoomScale: opts.zoomScale || 1.0,
+      panX: opts.panX || 0,
+      panY: opts.panY || 0,
+      fullRes: opts.fullRes !== false
+    });
+    return;
+  }
+
   const format = opts.format || document.getElementById('post_media_type')?.value || 'SHORTS_CNC';
   const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'yt-crimson-navy';
   const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'diagonal';
@@ -1438,32 +1471,67 @@ function playShortsAnimatedPreview() {
   }, 1600);
 }
 
-async function autonomousInventNewYtShort() {
-  const themeKeys = Object.keys(YT_THEMES);
-  const doorStyles = ['diagonal', 'shaker', 'fluted'];
-  document.getElementById('auto_theme_select').value = themeKeys[Math.floor(Math.random() * themeKeys.length)];
-  document.getElementById('auto_door_style').value = doorStyles[Math.floor(Math.random() * doorStyles.length)];
+function toggleYouTubeKenBurns() {
+  if (!window.NovaStudioEngine) return;
+  const btn = document.getElementById('btnYtKenBurns');
+  const previewCanvas = document.getElementById('ytAutoDesignCanvas');
 
+  const prod = currentYtSelectedProduct || {
+    title: document.getElementById('post_title')?.value || 'ZÜRİH YATAK ODASI',
+    kategori: document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak'
+  };
+
+  if (isYtKenBurnsPlaying) {
+    if (ytKenBurnsController) ytKenBurnsController.stop();
+    isYtKenBurnsPlaying = false;
+    if (btn) btn.textContent = '▶️ Ken Burns Kamera Hareketi';
+    renderYtAutonomousCanvasPreview(0);
+  } else {
+    isYtKenBurnsPlaying = true;
+    if (btn) btn.textContent = '⏹️ Hareketi Durdur';
+    ytKenBurnsController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentYtProductImageEl, prod, true);
+  }
+}
+
+async function autonomousInventNewYtShort() {
   if (catalogProducts && catalogProducts.length > 0) {
     const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
-    const pTitle = (prod.title || prod.slug || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK').toLocaleUpperCase('tr-TR');
-    const pSub = prod.kisa_aciklama || `${prod.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`;
+    currentYtSelectedProduct = prod;
+
+    const rawTitle = (prod.title || prod.slug || 'ZÜRİH YATAK ODASI').toUpperCase();
+    const cleanTitle = rawTitle.replace(/^NOVA\s*[-–—:]*\s*/i, '');
+    const pTitle = `NOVA - ${cleanTitle}`;
+    const pSub = prod.kategori || '1. Sınıf MDF • CNC Membran Kapak';
     const link = `https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}`;
 
-    document.getElementById('post_video_title').value = `${prod.title || pTitle} — Özel Ölçü CNC Membran Kapak Üretimi! 🛠️ #Shorts`;
+    document.getElementById('post_video_title').value = `⛰️ NOVA | ${cleanTitle} Koleksiyonu — 1. Sınıf Lüks Mimari Tasarım #Shorts`;
     document.getElementById('post_title').value = pTitle;
     document.getElementById('post_subtitle').value = pSub;
-    document.getElementById('post_pinned_comment').value = `📌 ${prod.title || 'Bu kapak modelimizi'} kendi dolap ölçünüz ve renginizle canlı denemek için tıklayın: ${link} | 📲 WhatsApp: https://wa.me/905050151035`;
-    document.getElementById('post_description').value =
-      `✨ ${prod.title || pTitle} — Global Kapak Mobilya Otonom YouTube Shorts Sunumu! #Shorts\n\n` +
-      `${pSub}\n\n` +
-      `⏱️ Video Bölümleri:\n00:00 ${prod.title || 'CNC Kapak'} Tasarım & Rölyef Detayı\n00:10 18mm E1 MDF & Suya Dayanıklı Membran Yüzey\n00:25 Canlı Ölçü & Renk Tasarım Modu\n\n` +
-      `🎨 Kendi ölçünüzle denemek için: ${link}\n` +
-      `📲 WhatsApp Sipariş Hattı: https://wa.me/905050151035 (0505 015 1035)`;
+    document.getElementById('post_pinned_comment').value = `📌 ${cleanTitle} koleksiyonumuzun detaylı ölçüleri ve fiyat teklifi için yoruma "FİYAT" yazın veya WhatsApp'tan ulaşın: https://wa.me/905050151035`;
+
+    if (window.NovaStudioEngine) {
+      document.getElementById('post_description').value = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'youtube');
+    }
+
+    if (prod.ana_resim) {
+      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
+        ? prod.ana_resim
+        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+      
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        currentYtProductImageEl = img;
+        renderYtAutonomousCanvasPreview(0);
+      };
+      img.src = fullImg;
+    } else {
+      currentYtProductImageEl = null;
+      renderYtAutonomousCanvasPreview(0);
+    }
   }
 
-  renderYtAutonomousCanvasPreview(0);
-  showToast('🎬 YouTube Shorts Botu video girişi olmadan yeni 9:16 sahneyi, #Shorts başlığını ve sabit yorumu üretti!');
+  showToast('👑 YouTube Shorts Botu: Nova lüks 9:16 sahnesi ve #Shorts açıklaması yüklendi!');
 }
 
 async function exportYtAutonomousCanvasAndUpload(format, headline, subheadline, themeKey, doorStyle) {

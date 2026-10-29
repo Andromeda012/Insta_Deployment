@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ürün Kataloğu & Medya Havuzu | Modül 2 — Global Kapak Mobilya</title>
+  <title>Ürün Kataloğu & Medya Havuzu | Modül 2 — Global Kapak Mobilya & Nova Furniture</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../nova-studio-engine.js"></script>
   <style>
     :root {
       --bg: #0A0F1D;
@@ -16,6 +17,7 @@
       --accent-emerald: #10B981;
       --accent-purple: #A855F7;
       --accent-pink: #EC4899;
+      --accent-gold: #D4AF37;
       --text: #F8FAFC;
       --text-muted: #94A3B8;
       --navy-dark: #0B1120;
@@ -58,8 +60,8 @@
       width: 50px;
       height: 50px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(16, 185, 129, 0.2));
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(56, 189, 248, 0.2));
+      border: 1px solid rgba(212, 175, 55, 0.45);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -83,10 +85,10 @@
     }
 
     .header-badge {
-      background: linear-gradient(90deg, #0284c7, #10b981);
-      color: #fff;
+      background: linear-gradient(90deg, #d4af37, #f59e0b);
+      color: #0b1120;
       font-size: 10px;
-      font-weight: 800;
+      font-weight: 900;
       padding: 3px 9px;
       border-radius: 99px;
       text-transform: uppercase;
@@ -98,47 +100,61 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      padding: 9px 16px;
+      padding: 10px 18px;
       border-radius: 10px;
       font-size: 12.5px;
       font-weight: 700;
       cursor: pointer;
-      border: 1px solid transparent;
-      transition: all 0.18s ease;
+      border: none;
       font-family: inherit;
+      transition: all 0.2s ease;
+      text-decoration: none;
     }
 
     .btn-primary {
       background: linear-gradient(135deg, #0284c7, #0369a1);
       color: #fff;
-      border-color: rgba(56, 189, 248, 0.4);
-      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35);
     }
     .btn-primary:hover {
+      background: linear-gradient(135deg, #0369a1, #075985);
       transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #d4af37, #b8860b);
+      color: #0f172a;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+    }
+    .btn-gold:hover {
+      filter: brightness(1.1);
+      transform: translateY(-1px);
     }
 
     .btn-emerald {
       background: linear-gradient(135deg, #10b981, #059669);
       color: #fff;
-      border-color: rgba(16, 185, 129, 0.5);
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35);
+    }
+    .btn-emerald:hover {
+      background: linear-gradient(135deg, #059669, #047857);
+      transform: translateY(-1px);
     }
 
     .btn-outline {
-      background: rgba(30, 41, 59, 0.7);
-      color: #cbd5e1;
-      border-color: rgba(148, 163, 184, 0.25);
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      color: var(--text);
     }
     .btn-outline:hover {
+      background: rgba(51, 65, 85, 0.9);
       border-color: var(--accent-blue);
-      color: #fff;
     }
 
-    /* KPI Bar */
+    /* KPI Kartları */
     .kpi-row {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 14px;
       margin-bottom: 22px;
     }
@@ -148,12 +164,14 @@
       border: 1px solid var(--card-border);
       border-radius: 14px;
       padding: 14px 18px;
+      position: relative;
+      overflow: hidden;
     }
 
     .kpi-label {
       font-size: 11px;
-      color: var(--text-muted);
       font-weight: 700;
+      color: var(--text-muted);
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
@@ -161,29 +179,30 @@
     .kpi-val {
       font-size: 22px;
       font-weight: 900;
-      margin-top: 5px;
+      color: #fff;
+      margin-top: 4px;
       display: flex;
-      align-items: center;
-      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
     }
 
     .kpi-sub {
       font-size: 11px;
-      color: var(--accent-blue);
-      margin-top: 3px;
+      color: var(--text-muted);
+      margin-top: 4px;
     }
 
-    /* 2 Sütunlu Ana Gövde: Sol Ürün Ekle/Düzenle, Sağ Katalog Vitrini */
+    /* Ana Izgara */
     .main-grid {
       display: grid;
-      grid-template-columns: 430px 1fr;
+      grid-template-columns: 460px 1fr;
       gap: 20px;
-      align-items: start;
     }
 
-    @media (max-width: 1180px) {
-      .main-grid { grid-template-columns: 1fr; }
-      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    @media (max-width: 1100px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .panel-card {
@@ -195,8 +214,9 @@
     }
 
     .panel-title {
-      font-size: 14.5px;
+      font-size: 15px;
       font-weight: 800;
+      color: #fff;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -238,29 +258,29 @@
 
     textarea.form-control {
       resize: vertical;
-      min-height: 72px;
+      min-height: 65px;
       line-height: 1.45;
     }
 
     /* Fotoğraf Yükleme / Dropzone Alanı */
     .dropzone-box {
-      border: 2px dashed rgba(56, 189, 248, 0.4);
+      border: 2px dashed rgba(212, 175, 55, 0.45);
       background: rgba(11, 17, 32, 0.6);
       border-radius: 12px;
-      padding: 18px;
+      padding: 16px;
       text-align: center;
       cursor: pointer;
       transition: all 0.2s ease;
       position: relative;
     }
     .dropzone-box:hover {
-      border-color: var(--accent-blue);
-      background: rgba(56, 189, 248, 0.05);
+      border-color: #f5d77f;
+      background: rgba(212, 175, 55, 0.06);
     }
 
     .dropzone-preview {
       width: 100%;
-      height: 180px;
+      height: 170px;
       border-radius: 10px;
       object-fit: cover;
       display: none;
@@ -290,9 +310,53 @@
       color: #94a3b8;
     }
     .bot-dot-pill.ready {
-      color: #38bdf8;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-      background: rgba(56, 189, 248, 0.08);
+      color: #d4af37;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      background: rgba(212, 175, 55, 0.08);
+    }
+
+    /* Canlı Poster & Video Kutusu */
+    .live-preview-box {
+      background: #070a12;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .preview-canvas-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      background: #000;
+      border-radius: 12px;
+      padding: 8px;
+    }
+
+    #catalogLiveCanvas {
+      max-height: 380px;
+      width: auto;
+      max-width: 100%;
+      border-radius: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+
+    .caption-preview-box {
+      width: 100%;
+      background: #090e1a;
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #cbd5e1;
+      white-space: pre-wrap;
+      max-height: 140px;
+      overflow-y: auto;
+      font-family: monospace;
     }
 
     /* Katalog Vitrini & Grid */
@@ -308,7 +372,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 16px;
-      max-height: 680px;
+      max-height: 780px;
       overflow-y: auto;
       padding-right: 4px;
     }
@@ -324,16 +388,17 @@
     }
     .prod-card:hover {
       transform: translateY(-2px);
-      border-color: rgba(56, 189, 248, 0.45);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+      border-color: rgba(212, 175, 55, 0.5);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
     }
 
     .prod-thumb-wrap {
       width: 100%;
-      height: 155px;
+      height: 160px;
       background: #111b2e;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .prod-thumb {
@@ -347,13 +412,13 @@
       position: absolute;
       top: 8px;
       left: 8px;
-      background: rgba(11, 17, 32, 0.85);
-      color: var(--accent-blue);
+      background: rgba(11, 17, 32, 0.88);
+      color: #fde68a;
       font-size: 10.5px;
       font-weight: 800;
       padding: 3px 8px;
       border-radius: 6px;
-      border: 1px solid rgba(56, 189, 248, 0.4);
+      border: 1px solid rgba(212, 175, 55, 0.4);
       font-family: 'JetBrains Mono', monospace;
     }
 
@@ -374,7 +439,7 @@
 
     .prod-cat {
       font-size: 11px;
-      color: #38bdf8;
+      color: #f59e0b;
       font-weight: 600;
       margin-bottom: 6px;
     }
@@ -427,7 +492,7 @@
     }
     .prod-btn:hover {
       color: #fff;
-      border-color: var(--accent-blue);
+      border-color: #d4af37;
     }
     .prod-btn-delete:hover {
       border-color: #ef4444;
@@ -440,17 +505,17 @@
   <!-- ÜST KONTROL & BİLGİLENDİRME BAŞLIĞI -->
   <header class="catalog-header">
     <div class="header-info">
-      <div class="header-icon">📦</div>
+      <div class="header-icon">👑</div>
       <div class="header-title">
         <h1>
-          Ürün Kataloğu & Medya Havuzu
-          <span class="header-badge">4 BOTUN ORTAK İÇERİK MOTORU</span>
+          Ürün Kataloğu & Lüks Medya Havuzu
+          <span class="header-badge">NOVA FURNITURE & 4 BOT MOTORU</span>
         </h1>
-        <p>Buraya eklediğiniz tüm fotoğraflar ve ürün detayları Instagram, Facebook, YouTube Shorts ve TikTok botlarının gönderi, Reels ve Story üretiminde kaynak olarak kullanılır.</p>
+        <p>30 katalog fotoğrafı ve yeni ürünler bu ortak havuzda toplanır. Instagram, Facebook, YouTube ve TikTok botları fotoğrafları oda atmosferiyle tamamlar, Ken Burns kamera hareketi ve İskandinav açıklama metniyle otonom yayınlar.</p>
       </div>
     </div>
     <div style="display:flex; gap:10px;">
-      <button class="btn btn-primary" onclick="resetFormForNew()">✨ Yeni Ürün Ekle</button>
+      <button class="btn btn-gold" onclick="resetFormForNew()">✨ Yeni Ürün Ekle</button>
       <button class="btn btn-outline" onclick="loadCatalogFromSupabase()">🔄 Kataloğu Yenile</button>
     </div>
   </header>
@@ -458,10 +523,10 @@
   <!-- KPI METRİK ŞERİDİ -->
   <section class="kpi-row">
     <div class="kpi-box">
-      <div class="kpi-label">Toplam Kapak Modeli</div>
+      <div class="kpi-label">Toplam Koleksiyon / Model</div>
       <div class="kpi-val">
         <span id="kpiTotalCount">Yükleniyor...</span>
-        <span style="font-size:12px; color:var(--accent-blue);">Supabase</span>
+        <span style="font-size:12px; color:var(--accent-gold);">Supabase</span>
       </div>
       <div class="kpi-sub">Veritabanında kayıtlı ürün sayısı</div>
     </div>
@@ -469,23 +534,23 @@
       <div class="kpi-label">Fotoğraflı İçerik Havuzu</div>
       <div class="kpi-val">
         <span id="kpiPhotoCount">0 Ürün</span>
-        <span style="font-size:12px; color:var(--accent-emerald);">Görsel Hazır</span>
+        <span style="font-size:12px; color:var(--accent-emerald);">Lüks Afiş Hazır</span>
       </div>
-      <div class="kpi-sub">Botların Reels/Post için kullandığı görseller</div>
+      <div class="kpi-sub">Botların Reels & Gönderiler için kullandığı görseller</div>
     </div>
     <div class="kpi-box">
       <div class="kpi-label">Kategori Dağılımı</div>
       <div class="kpi-val">
         <span id="kpiCategoryCount">0 Kategori</span>
-        <span style="font-size:12px; color:var(--accent-purple);">Membran • Lake</span>
+        <span style="font-size:12px; color:var(--accent-purple);">MDF • Membran</span>
       </div>
-      <div class="kpi-sub">Farklı kapak serileri</div>
+      <div class="kpi-sub">Yatak odası & Kapak serileri</div>
     </div>
     <div class="kpi-box">
       <div class="kpi-label">4 Bot Senkronizasyonu</div>
       <div class="kpi-val">
         <span style="color:#10b981;">%100 AKTİF</span>
-        <span style="font-size:12px; color:#38bdf8;">Canlı Havuz</span>
+        <span style="font-size:12px; color:#f59e0b;">Canlı Motor</span>
       </div>
       <div class="kpi-sub">Instagram • Facebook • YouTube • TikTok</div>
     </div>
@@ -494,23 +559,23 @@
   <!-- ANA 2 SÜTUNLU YAPI -->
   <main class="main-grid">
 
-    <!-- SOL SÜTUN: ÜRÜN & FOTOĞRAF EKLEME / DÜZENLEME FORMU -->
+    <!-- SOL SÜTUN: ÜRÜN & FOTOĞRAF EKLEME / DÜZENLEME FORMU + CANLI ÖNİZLEME -->
     <section class="panel-card">
       <div class="panel-title">
         <span id="formModeTitle">➕ Yeni Ürün & Fotoğraf Ekle</span>
-        <span style="font-size:11px; color:var(--accent-emerald); font-weight:800;">CANLI SUPABASE</span>
+        <span style="font-size:11px; color:var(--accent-gold); font-weight:800;">LÜKS MİMARİ MOTOR</span>
       </div>
 
       <input type="hidden" id="edit_slug" value="">
 
       <!-- FOTOĞRAF YÜKLEME ALANI -->
       <div class="form-group">
-        <label>1. Ürün Fotoğrafı (Botların Paylaşacağı Ana Görsel):</label>
+        <label>1. Ürün Fotoğrafı (Botların Tamamlayacağı Görsel):</label>
         <div class="dropzone-box" onclick="document.getElementById('fileInput').click()">
           <div id="dropzoneText">
-            <div style="font-size:28px; margin-bottom:4px;">📷</div>
-            <strong style="font-size:13px; color:#fff;">Fotoğraf Seçin veya Sürükleyin</strong>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">PNG, JPG, WEBP (Katalogdaki 30 fotoğraftan birini yükleyin)</p>
+            <div style="font-size:26px; margin-bottom:4px;">📸</div>
+            <strong style="font-size:13px; color:#fde68a;">Fotoğraf Seçin veya Sürükleyin</strong>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">PNG, JPG, WEBP (Kataloğunuzdaki fotoğrafları yükleyin)</p>
           </div>
           <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
           <img id="imagePreview" class="dropzone-preview" alt="Önizleme">
@@ -518,7 +583,7 @@
       </div>
 
       <div class="form-group">
-        <label>Veya Harici Resim URL Adresi:</label>
+        <label>Veya Resim URL Adresi:</label>
         <input type="text" id="prod_image_url" class="form-control" placeholder="https://...png" oninput="handleUrlInput(this.value)">
       </div>
 
@@ -526,35 +591,34 @@
       <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
         <div class="form-group">
           <label>2. Ürün / Model Başlığı:</label>
-          <input type="text" id="prod_title" class="form-control" placeholder="Örn: Venedik Çıtalı Derzli Membran Kapak">
+          <input type="text" id="prod_title" class="form-control" placeholder="Örn: ZÜRİH YATAK ODASI" oninput="triggerLivePreviewUpdate()">
         </div>
         <div class="form-group">
           <label>Model Kodu (SKU):</label>
-          <input type="text" id="prod_sku" class="form-control" placeholder="Örn: GKM-204">
+          <input type="text" id="prod_sku" class="form-control" placeholder="Örn: NV-ZUR-01">
         </div>
       </div>
 
       <div class="form-group">
-        <label>3. Kapak Kategorisi:</label>
-        <select id="prod_category" class="form-control">
-          <option value="Düz Membran Kapak">Düz Membran Kapak</option>
-          <option value="Çerçeveli Klasik Membran">Çerçeveli Klasik Membran</option>
-          <option value="Country Kapak Serisi">Country Kapak Serisi</option>
-          <option value="Modern Çıtalı & Derzli">Modern Çıtalı & Derzli</option>
-          <option value="High Gloss Parlak Membran">High Gloss Parlak Membran</option>
-          <option value="Boyalı Lake Kapak">Boyalı Lake Kapak</option>
-          <option value="Doğal Ahşap Dokulu Seri">Doğal Ahşap Dokulu Seri</option>
-        </select>
+        <label>3. Malzeme & Alt Kategori:</label>
+        <input type="text" id="prod_category" class="form-control" value="1. Sınıf MDF • CNC Membran Kapak" placeholder="Örn: 1. Sınıf MDF • CNC Membran Kapak" oninput="triggerLivePreviewUpdate()">
+      </div>
+
+      <!-- ÖNE ÇIKAN ÖZELLİKLER -->
+      <div class="form-group">
+        <label>4. Öne Çıkan Özellikler (Her satıra bir özellik):</label>
+        <textarea id="prod_features" class="form-control" style="min-height:85px;" placeholder="🪵 1. Sınıf Sağlam MDF Gövde&#10;🪞 Çizilmeye dayanıklı membran kapaklar&#10;🗄️ Geniş depolama hacmi ve frenli raylar&#10;🧹 Robot süpürgeye uygun yüksek ayak" oninput="triggerLivePreviewUpdate()"></textarea>
+      </div>
+
+      <!-- NET KATALOG ÖLÇÜLERİ -->
+      <div class="form-group">
+        <label>5. Net Katalog Ölçüleri (Her satıra bir parça ölçüsü):</label>
+        <textarea id="prod_dimensions" class="form-control" style="min-height:85px;" placeholder="• Gardırop: Genişlik: 240 cm | Yükseklik: 210 cm | Derinlik: 55 cm&#10;• Şifonyer: Genişlik: 118 cm | Yükseklik: 80 cm | Derinlik: 44 cm&#10;• Komodin: Genişlik: 55 cm | Yükseklik: 56 cm | Derinlik: 44 cm&#10;• Yatak Başlığı: Genişlik: 160 cm | Yükseklik: 120 cm" oninput="triggerLivePreviewUpdate()"></textarea>
       </div>
 
       <div class="form-group">
-        <label>4. Renk Kartelası (Virgülle Ayırın):</label>
+        <label>6. Renk Kartelası (Virgülle Ayırın):</label>
         <input type="text" id="prod_colors" class="form-control" placeholder="Örn: Mat Antrasit, Kaşmir, İpek Beyaz, Doğal Meşe, Adaçayı">
-      </div>
-
-      <div class="form-group">
-        <label>5. Kısa Açıklama (Botların Paylaşım Metinlerinde Kullanılır):</label>
-        <textarea id="prod_description" class="form-control" placeholder="18mm 1. sınıf yüksek yoğunluklu MDF üzerine 0.35mm ithal PVC membran vakum pres teknolojisi. Buhara ve neme tam dayanıklı, 5 yıl garantili."></textarea>
       </div>
 
       <!-- BOT DAĞITIM BİLGİLENDİRMESİ -->
@@ -565,8 +629,27 @@
         <div class="bot-dot-pill ready">🎵 TikTok</div>
       </div>
 
+      <!-- CANLI LÜKS AFİŞ VE VİDEO ÖNİZLEME BÖLÜMÜ -->
+      <div class="live-preview-box">
+        <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; font-weight:800; color:#fde68a;">🎬 Canlı Lüks Afiş & Video Hareketi (Önizleme)</span>
+          <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:11px;" id="btnToggleAnim" onclick="toggleKenBurnsPreview()">
+            ▶️ Kamera Hareketi (Ken Burns)
+          </button>
+        </div>
+        
+        <div class="preview-canvas-wrap">
+          <canvas id="catalogLiveCanvas" width="540" height="960"></canvas>
+        </div>
+
+        <div style="width:100%;">
+          <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:4px;">📝 Otomatik Üretilen Gönderi Açıklaması:</div>
+          <div class="caption-preview-box" id="captionPreviewText">Açıklama yükleniyor...</div>
+        </div>
+      </div>
+
       <div style="display:flex; gap:10px; margin-top:16px;">
-        <button class="btn btn-emerald" id="btnSaveProduct" style="flex:1;" onclick="saveProductToSupabase()">
+        <button class="btn btn-gold" id="btnSaveProduct" style="flex:1;" onclick="saveProductToSupabase()">
           💾 Ürünü Kaydet & 4 Bota Dağıt
         </button>
         <button class="btn btn-outline" id="btnCancelEdit" style="display:none;" onclick="resetFormForNew()">
@@ -610,6 +693,9 @@
 
     let catalogItems = [];
     let currentImageBase64 = '';
+    let loadedImageEl = null;
+    let animController = null;
+    let isAnimPlaying = false;
 
     // =========================================================================
     // KATALOĞU SUPABASE'DEN ÇEKME
@@ -627,6 +713,11 @@
         renderCatalogGrid(catalogItems);
         updateKPIs(catalogItems);
         populateCategoryFilter(catalogItems);
+
+        // İlk ürünü önizlemeye koy
+        if (catalogItems.length > 0 && !document.getElementById('edit_slug').value) {
+          selectProductForPreview(catalogItems[0]);
+        }
       } catch (err) {
         console.error('Katalog çekme hatası:', err);
         document.getElementById('catalogGrid').innerHTML = `
@@ -661,7 +752,7 @@
       if (!items || items.length === 0) {
         grid.innerHTML = `
           <div style="grid-column: 1 / -1; text-align:center; padding:50px 20px; color:var(--text-muted); font-size:13px;">
-            Katalogda henüz ürün bulunmuyor. Sol taraftaki formdan elinizdeki 30 fotoğrafı ve detayları ekleyebilirsiniz.
+            Katalogda henüz ürün bulunmuyor. Sol taraftaki formdan fotoğrafları ve detayları ekleyebilirsiniz.
           </div>
         `;
         return;
@@ -674,19 +765,19 @@
               : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`)
           : 'https://globalmobilyaweb.vercel.app/resim/logo.png';
 
-        const sku = item.sku || 'GKM-KOD';
+        const sku = item.sku || 'NV-01';
         const colors = Array.isArray(item.renkler)
           ? item.renkler
           : (typeof item.renkler === 'string' ? item.renkler.split(',').map(s => s.trim()) : []);
 
         return `
           <div class="prod-card">
-            <div class="prod-thumb-wrap">
+            <div class="prod-thumb-wrap" onclick="selectProductForPreviewBySlug('${item.slug}')" title="Lüks Afiş Önizlemesini Gör">
               <span class="prod-sku-tag">${sku}</span>
               <img class="prod-thumb" src="${imgUrl}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="${item.title || ''}">
             </div>
             <div class="prod-body">
-              <div class="prod-cat">${item.kategori || 'Membran Kapak'}</div>
+              <div class="prod-cat">${item.kategori || '1. Sınıf MDF • CNC Membran'}</div>
               <div class="prod-title">${item.title || 'Başlıksız Model'}</div>
               <div class="prod-desc">${item.kisa_aciklama || 'Açıklama girilmemiş.'}</div>
               
@@ -734,6 +825,7 @@
         currentImageBase64 = e.target.result;
         showImagePreview(currentImageBase64);
         document.getElementById('prod_image_url').value = '';
+        triggerLivePreviewUpdate();
       };
       reader.readAsDataURL(file);
     }
@@ -743,6 +835,7 @@
       if (val) {
         currentImageBase64 = val;
         showImagePreview(val);
+        triggerLivePreviewUpdate();
       }
     }
 
@@ -751,6 +844,109 @@
       preview.src = src;
       preview.style.display = 'block';
       document.getElementById('dropzoneText').style.display = 'none';
+
+      // Arka planda Image nesnesi yükle
+      loadedImageEl = new Image();
+      loadedImageEl.crossOrigin = 'anonymous';
+      loadedImageEl.onload = () => {
+        triggerLivePreviewUpdate();
+      };
+      loadedImageEl.src = src;
+    }
+
+    // =========================================================================
+    // CANLI LÜKS AFİŞ & KEN BURNS VİDEO ÖNİZLEME
+    // =========================================================================
+    function getFormProductData() {
+      const title = document.getElementById('prod_title').value.trim() || 'ZÜRİH YATAK ODASI';
+      const kategori = document.getElementById('prod_category').value.trim() || '1. Sınıf MDF • CNC Membran Kapak';
+      const rawFeat = document.getElementById('prod_features').value.trim();
+      const rawDims = document.getElementById('prod_dimensions').value.trim();
+
+      const ozellikler = rawFeat
+        ? rawFeat.split('\n').map(s => s.trim()).filter(Boolean)
+        : [
+            '🪵 1. Sınıf Sağlam MDF Gövde & CNC Membran Kapaklar',
+            '🪞 Çizilmeye dayanıklı ithal membran yüzey teknolojisi',
+            '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
+            '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
+          ];
+
+      return {
+        title,
+        kategori,
+        ozellikler,
+        olculer: rawDims || null
+      };
+    }
+
+    function triggerLivePreviewUpdate() {
+      if (!window.NovaStudioEngine) return;
+      const canvas = document.getElementById('catalogLiveCanvas');
+      const prod = getFormProductData();
+
+      // Afişi Çiz
+      if (!isAnimPlaying) {
+        window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+          productImageEl: loadedImageEl,
+          product: prod,
+          isVertical: true,
+          zoomScale: 1.0,
+          fullRes: false
+        });
+      }
+
+      // Açıklama Metnini Güncelle (Referans 2 Formatı)
+      const caption = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
+      document.getElementById('captionPreviewText').textContent = caption;
+    }
+
+    function toggleKenBurnsPreview() {
+      if (!window.NovaStudioEngine) return;
+      const btn = document.getElementById('btnToggleAnim');
+      const canvas = document.getElementById('catalogLiveCanvas');
+      const prod = getFormProductData();
+
+      if (isAnimPlaying) {
+        if (animController) animController.stop();
+        isAnimPlaying = false;
+        btn.textContent = '▶️ Kamera Hareketi (Ken Burns)';
+        triggerLivePreviewUpdate();
+      } else {
+        isAnimPlaying = true;
+        btn.textContent = '⏹️ Hareketi Durdur';
+        animController = window.NovaStudioEngine.animateKenBurns(canvas, loadedImageEl, prod, true);
+      }
+    }
+
+    function selectProductForPreviewBySlug(slug) {
+      const item = catalogItems.find(i => i.slug === slug);
+      if (item) selectProductForPreview(item);
+    }
+
+    function selectProductForPreview(item) {
+      document.getElementById('prod_title').value = item.title || '';
+      document.getElementById('prod_sku').value = item.sku || '';
+      document.getElementById('prod_category').value = item.kategori || '1. Sınıf MDF • CNC Membran Kapak';
+      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : (item.renkler || '');
+
+      if (Array.isArray(item.ozellikler)) {
+        document.getElementById('prod_features').value = item.ozellikler.join('\n');
+      }
+      if (item.olculer) {
+        document.getElementById('prod_dimensions').value = typeof item.olculer === 'string' ? item.olculer : JSON.stringify(item.olculer, null, 2);
+      }
+
+      if (item.ana_resim) {
+        const fullImg = (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:'))
+          ? item.ana_resim
+          : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`;
+        currentImageBase64 = fullImg;
+        showImagePreview(fullImg);
+        document.getElementById('prod_image_url').value = fullImg;
+      }
+
+      triggerLivePreviewUpdate();
     }
 
     // =========================================================================
@@ -759,14 +955,15 @@
     async function saveProductToSupabase() {
       const btn = document.getElementById('btnSaveProduct');
       const title = document.getElementById('prod_title').value.trim();
-      const sku = document.getElementById('prod_sku').value.trim() || `GKM-${Date.now().toString().slice(-4)}`;
-      const kategori = document.getElementById('prod_category').value;
+      const sku = document.getElementById('prod_sku').value.trim() || `NV-${Date.now().toString().slice(-4)}`;
+      const kategori = document.getElementById('prod_category').value.trim() || '1. Sınıf MDF • CNC Membran Kapak';
       const rawColors = document.getElementById('prod_colors').value.trim();
-      const kisa_aciklama = document.getElementById('prod_description').value.trim();
+      const rawFeatures = document.getElementById('prod_features').value.trim();
+      const rawDimensions = document.getElementById('prod_dimensions').value.trim();
       const editSlug = document.getElementById('edit_slug').value.trim();
 
       if (!title) {
-        alert('Lütfen ürün / kapak model başlığını yazın.');
+        alert('Lütfen model / ürün başlığını yazın (örn: ZÜRİH YATAK ODASI).');
         return;
       }
 
@@ -778,10 +975,16 @@
         ? rawColors.split(',').map(s => s.trim()).filter(Boolean)
         : ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe'];
 
-      // Slug oluştur
-      const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
+      const ozellikler = rawFeatures
+        ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean)
+        : [
+            '🪵 1. Sınıf Sağlam MDF Gövde & CNC Membran Kapaklar',
+            '🪞 Çizilmeye dayanıklı ithal membran yüzey teknolojisi',
+            '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
+            '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
+          ];
 
-      // Ana resim (Base64 veya URL veya varsayılan)
+      const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
       const ana_resim = currentImageBase64 || document.getElementById('prod_image_url').value.trim() || '/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
 
       const payload = {
@@ -789,10 +992,11 @@
         title,
         sku,
         kategori,
-        kisa_aciklama: kisa_aciklama || `${kategori} • 18mm MDF • 0.35mm İthal PVC Membran • 5 Yıl Garanti`,
+        kisa_aciklama: `${kategori} • 18mm MDF • 5 Yıl Garanti`,
         ana_resim,
         renkler,
-        ozellikler: ['18mm E1 MDF', '0.35mm İthal Membran', '5 Yıl Garanti', '5 İş Gününde Teslim'],
+        ozellikler,
+        olculer: rawDimensions || null,
         anasayfada_goster: true,
         updated_at: new Date().toISOString()
       };
@@ -805,7 +1009,7 @@
         const { error } = await sb.from('products').upsert(payload);
         if (error) throw error;
 
-        alert(`✅ "${title}" başarıyla Supabase kataloğuna kaydedildi ve 4 sosyal medya botunun ortak havuzuna eklendi!`);
+        alert(`✅ "${title}" başarıyla kaydedildi! 4 sosyal medya botu (Instagram, Facebook, YouTube, TikTok) bu fotoğrafı ve özellikleri lüks afiş formatında yayınlamaya hazır.`);
         resetFormForNew();
         await loadCatalogFromSupabase();
       } catch (err) {
@@ -824,20 +1028,7 @@
       if (!item) return;
 
       document.getElementById('edit_slug').value = item.slug;
-      document.getElementById('prod_title').value = item.title || '';
-      document.getElementById('prod_sku').value = item.sku || '';
-      document.getElementById('prod_category').value = item.kategori || 'Düz Membran Kapak';
-      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : (item.renkler || '');
-      document.getElementById('prod_description').value = item.kisa_aciklama || '';
-
-      if (item.ana_resim) {
-        const fullImg = (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:'))
-          ? item.ana_resim
-          : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`;
-        currentImageBase64 = fullImg;
-        showImagePreview(fullImg);
-        document.getElementById('prod_image_url').value = fullImg;
-      }
+      selectProductForPreview(item);
 
       document.getElementById('formModeTitle').textContent = `✏️ Ürünü Düzenle: ${item.title}`;
       document.getElementById('btnSaveProduct').textContent = '💾 Değişiklikleri Güncelle';
@@ -859,20 +1050,30 @@
     }
 
     function resetFormForNew() {
+      if (isAnimPlaying && animController) {
+        animController.stop();
+        isAnimPlaying = false;
+        document.getElementById('btnToggleAnim').textContent = '▶️ Kamera Hareketi (Ken Burns)';
+      }
+
       document.getElementById('edit_slug').value = '';
       document.getElementById('prod_title').value = '';
       document.getElementById('prod_sku').value = '';
       document.getElementById('prod_colors').value = '';
-      document.getElementById('prod_description').value = '';
+      document.getElementById('prod_features').value = '';
+      document.getElementById('prod_dimensions').value = '';
       document.getElementById('prod_image_url').value = '';
       document.getElementById('fileInput').value = '';
       currentImageBase64 = '';
+      loadedImageEl = null;
       document.getElementById('imagePreview').style.display = 'none';
       document.getElementById('dropzoneText').style.display = 'block';
 
       document.getElementById('formModeTitle').textContent = '➕ Yeni Ürün & Fotoğraf Ekle';
       document.getElementById('btnSaveProduct').textContent = '💾 Ürünü Kaydet & 4 Bota Dağıt';
       document.getElementById('btnCancelEdit').style.display = 'none';
+
+      triggerLivePreviewUpdate();
     }
 
     function slugify(text) {

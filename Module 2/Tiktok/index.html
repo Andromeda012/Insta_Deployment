@@ -7,6 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../nova-studio-engine.js"></script>
     <style>
         :root {
             --bg-dark: #09090b;
@@ -546,9 +547,11 @@
 
         <!-- SOL SÜTUN: 9:16 TIKTOK DİKEY STÜDYO ÖNİZLEME (SIFIR MEDYA GİRİŞİ) -->
         <section class="panel-card tiktok-stage-wrap">
-            <div class="panel-header" style="width:100%;">
-                <h2>📱 Otonom 9:16 TikTok Sahnesi (1080×1920)</h2>
-                <span style="font-size:11px; color:var(--tt-cyan); font-weight:700;">CANLI CANVAS</span>
+            <div class="panel-header" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                <h2>📱 Nova Lüks 9:16 TikTok Sahnesi</h2>
+                <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:11px;" id="btnTtKenBurns" onclick="toggleTikTokKenBurns()">
+                    ▶️ Kamera Hareketi
+                </button>
             </div>
 
             <div class="phone-frame">
@@ -790,6 +793,9 @@
         let currentFormat = 'TIKTOK_ASMR_CNC';
         let currentProductIndex = 0;
         let visualSeed = 0;
+        let currentTtProductImageEl = null;
+        let ttAnimController = null;
+        let isTtAnimPlaying = false;
 
         let botState = {
             botActive: true,
@@ -900,6 +906,24 @@
             applyDraftFromSelection();
         }
 
+        function toggleTikTokKenBurns() {
+            if (!window.NovaStudioEngine) return;
+            const btn = document.getElementById('btnTtKenBurns');
+            const canvas = document.getElementById('tiktokCanvas');
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+
+            if (isTtAnimPlaying) {
+                if (ttAnimController) ttAnimController.stop();
+                isTtAnimPlaying = false;
+                if (btn) btn.textContent = '▶️ Kamera Hareketi';
+                renderTikTokCanvas();
+            } else {
+                isTtAnimPlaying = true;
+                if (btn) btn.textContent = '⏹️ Durdur';
+                ttAnimController = window.NovaStudioEngine.animateKenBurns(canvas, currentTtProductImageEl, p, true);
+            }
+        }
+
         function applyDraftFromSelection() {
             const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
             const sku = p.sku || 'GKM-104';
@@ -911,23 +935,40 @@
             document.getElementById('hookInput').value = hook;
             document.getElementById('trendingAudioInput').value = cfg.audio;
 
-            const caption = `${hook} 🛠️✨\n\n` +
-                `🔹 Model: ${title} (${sku})\n` +
-                `🔹 Teknik Yapı: 18mm 1. Sınıf MDF + 0.35mm İthal PVC Membran Vakum Pres\n` +
-                `🔹 Renk Kartelası: ${colors}\n` +
-                `🚚 5 İş Gününde Fabrikadan Sevkiyat | 🛡️ 5 Yıl Garanti\n` +
-                `📲 Özel ölçü & fiyat için sabitlenen yoruma tıklayın! 👇\n\n` +
-                `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #globalkapak`;
+            if (window.NovaStudioEngine) {
+                document.getElementById('captionInput').value = window.NovaStudioEngine.generateNovaLuxuryCaption(p, 'tiktok');
+            } else {
+                const caption = `${hook} 🛠️✨\n\n` +
+                    `🔹 Model: ${title} (${sku})\n` +
+                    `🔹 Teknik Yapı: 18mm 1. Sınıf MDF + 0.35mm İthal PVC Membran Vakum Pres\n` +
+                    `🔹 Renk Kartelası: ${colors}\n` +
+                    `🚚 5 İş Gününde Fabrikadan Sevkiyat | 🛡️ 5 Yıl Garanti\n` +
+                    `📲 Özel ölçü & fiyat için sabitlenen yoruma tıklayın! 👇\n\n` +
+                    `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #globalkapak`;
+                document.getElementById('captionInput').value = caption;
+            }
 
             const pinned = `📌 FABRİKA DOĞRUDAN SİPARİŞ & ÖLÇÜ HATTI:\n` +
                 `📐 ${title} (${sku}) modelimiz için özel ölçü fiyat teklifi ve renk kartelası istemek için WhatsApp hattımıza tıklayın:\n` +
                 `👉 https://wa.me/905050151035 (0505 015 10 35)\n` +
                 `🌐 Dijital Katalog: https://globalmobilyaweb.vercel.app`;
-
-            document.getElementById('captionInput').value = caption;
             document.getElementById('pinnedCommentInput').value = pinned;
 
-            renderTikTokCanvas();
+            if (p.ana_resim) {
+                const fullImg = (p.ana_resim.startsWith('http') || p.ana_resim.startsWith('data:'))
+                    ? p.ana_resim
+                    : `https://globalmobilyaweb.vercel.app${p.ana_resim.startsWith('/') ? '' : '/'}${p.ana_resim}`;
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => {
+                    currentTtProductImageEl = img;
+                    renderTikTokCanvas();
+                };
+                img.src = fullImg;
+            } else {
+                currentTtProductImageEl = null;
+                renderTikTokCanvas();
+            }
         }
 
         // =====================================================================
@@ -936,6 +977,20 @@
         function renderTikTokCanvas() {
             const canvas = document.getElementById('tiktokCanvas');
             if (!canvas) return;
+            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
+
+            // Lüks Nova Mimari Motoru
+            if (window.NovaStudioEngine) {
+                window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+                    productImageEl: currentTtProductImageEl,
+                    product: p,
+                    isVertical: true,
+                    zoomScale: 1.0,
+                    fullRes: true
+                });
+                return;
+            }
+
             const ctx = canvas.getContext('2d');
             const W = canvas.width;
             const H = canvas.height;
