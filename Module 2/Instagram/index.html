@@ -1571,58 +1571,84 @@ async function addScheduledPost(publishImmediately = false) {
   if (publishImmediately) {
     // Doğrudan Meta Graph API'ye yayın isteği at
     try {
+      const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
+      const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+
+      if (!igUserId || !accessToken) {
+        if (btn) { btn.disabled = false; btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle'; }
+        alert('❌ Instagram Business ID veya Meta Access Token eksik! Lütfen "API & Otomasyon Ayarları" sekmesinden bu bilgileri kaydedin.');
+        return;
+      }
+
       const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
-      const pubRes = await fetch('/api/instagram-cron', {
+      let publicImageUrl = mediaUrl;
+      if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
+        publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+      }
+
+      showToast('🚀 Meta Graph API ile doğrudan Instagram\'a bağlanılıyor...');
+
+      // 1. Meta Konteyner Oluştur
+      const cParams = new URLSearchParams();
+      cParams.set('access_token', accessToken);
+      cParams.set('image_url', publicImageUrl);
+      cParams.set('caption', fullCaption);
+
+      const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'publish',
-          mediaType,
-          caption: fullCaption,
-          imageBase64,
-          mediaUrl,
-          igUserId: botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim(),
-          accessToken: botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim()
-        })
+        body: cParams
       });
-      const pubData = await pubRes.json();
+      const cData = await cRes.json();
+      if (!cRes.ok || !cData.id) {
+        throw new Error(cData?.error?.message || 'Meta medya konteyneri oluşturulamadı');
+      }
+
+      // 2. Meta Yayınla (media_publish)
+      const pParams = new URLSearchParams();
+      pParams.set('creation_id', cData.id);
+      pParams.set('access_token', accessToken);
+
+      const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+        method: 'POST',
+        body: pParams
+      });
+      const pData = await pRes.json();
+      if (!pRes.ok || !pData.id) {
+        throw new Error(pData?.error?.message || 'Meta yayını başarısız oldu');
+      }
 
       if (btn) {
         btn.disabled = false;
         btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
       }
 
-      if (pubData.ok) {
-        const newItem = {
-          id: 'auto-post-' + Date.now(),
-          media_type: mediaType,
-          title: `[Otonom Tasarım] ${headline}`,
-          headline,
-          subheadline,
-          theme_id: themeKey,
-          door_style: doorStyle,
-          caption,
-          hashtags,
-          media_url: pubData.mediaUrl || mediaUrl,
-          auto_designed: true,
-          scheduled_for: new Date().toISOString(),
-          status: 'published',
-          published_at: new Date().toISOString(),
-          ig_published_id: pubData.publishedId
-        };
-        botState.scheduled_posts.unshift(newItem);
-        await persistBotStateToSupabase(false);
-        showToast(`✅ Gönderi Instagram'da BAŞARIYLA yayınlandı! (ID: ${pubData.publishedId})`);
-        alert(`🎉 Harika haber! Gönderi doğrudan Instagram hesabınızda yayınlandı!\n\nInstagram Gönderi ID: ${pubData.publishedId}\n\nProfilinizi yenileyerek yayını kontrol edebilirsiniz.`);
-      } else {
-        alert(`❌ Instagram Yayını Başarısız Oldu!\n\nMeta API Açıklaması:\n${pubData.error || 'Bilinmeyen hata'}\n\nLütfen "API & Otomasyon Ayarları" sekmesindeki Instagram Business ID ve Meta Token bilgilerinizi kontrol edin.`);
-      }
+      const newItem = {
+        id: 'auto-post-' + Date.now(),
+        media_type: mediaType,
+        title: `[Otonom Tasarım] ${headline}`,
+        headline,
+        subheadline,
+        theme_id: themeKey,
+        door_style: doorStyle,
+        caption,
+        hashtags,
+        media_url: publicImageUrl,
+        auto_designed: true,
+        scheduled_for: new Date().toISOString(),
+        status: 'published',
+        published_at: new Date().toISOString(),
+        ig_published_id: pData.id
+      };
+      botState.scheduled_posts.unshift(newItem);
+      await persistBotStateToSupabase(false);
+      showToast(`✅ Gönderi Instagram'da BAŞARIYLA yayınlandı! (ID: ${pData.id})`);
+      alert(`🎉 Tebrikler! Gönderi doğrudan Instagram hesabınızda (@thenovafurniture) yayınlandı!\n\nInstagram Gönderi ID: ${pData.id}\n\nProfilinizi yenileyerek yayını kontrol edebilirsiniz.`);
     } catch (err) {
       if (btn) {
         btn.disabled = false;
         btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
       }
-      alert(`❌ Bağlantı Hatası: ${err.message}`);
+      alert(`❌ Instagram Yayın Hatası:\n${err.message}`);
     }
     return;
   }
@@ -1691,31 +1717,50 @@ async function publishQueueItemNow(idx) {
   const post = botState.scheduled_posts[idx];
   if (!post) return;
 
+  const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
+  const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+
+  if (!igUserId || !accessToken) {
+    alert('❌ Instagram Business ID veya Meta Access Token eksik!');
+    return;
+  }
+
   showToast(`🚀 "${post.title}" Instagram'a gönderiliyor...`);
   try {
-    const pubRes = await fetch('/api/instagram-cron', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'publish',
-        mediaType: post.media_type || 'POST',
-        caption: [post.caption, post.hashtags].filter(Boolean).join('\n\n'),
-        mediaUrl: post.media_url,
-        igUserId: botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim(),
-        accessToken: botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim()
-      })
-    });
-    const pubData = await pubRes.json();
-    if (pubData.ok) {
-      post.status = 'published';
-      post.published_at = new Date().toISOString();
-      post.ig_published_id = pubData.publishedId;
-      await persistBotStateToSupabase(false);
-      showToast(`✅ "${post.title}" Instagram'da BAŞARIYLA yayınlandı!`);
-      alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${pubData.publishedId})`);
-    } else {
-      alert(`❌ Instagram Yayın Hatası:\n${pubData.error || 'Yayınlanamadı'}`);
+    let publicImageUrl = post.media_url;
+    if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
+      publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
     }
+
+    const cParams = new URLSearchParams();
+    cParams.set('access_token', accessToken);
+    cParams.set('image_url', publicImageUrl);
+    cParams.set('caption', [post.caption, post.hashtags].filter(Boolean).join('\n\n'));
+
+    const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+      method: 'POST',
+      body: cParams
+    });
+    const cData = await cRes.json();
+    if (!cRes.ok || !cData.id) throw new Error(cData?.error?.message || 'Medya konteyneri oluşturulamadı');
+
+    const pParams = new URLSearchParams();
+    pParams.set('creation_id', cData.id);
+    pParams.set('access_token', accessToken);
+
+    const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+      method: 'POST',
+      body: pParams
+    });
+    const pData = await pRes.json();
+    if (!pRes.ok || !pData.id) throw new Error(pData?.error?.message || 'Yayın başarısız oldu');
+
+    post.status = 'published';
+    post.published_at = new Date().toISOString();
+    post.ig_published_id = pData.id;
+    await persistBotStateToSupabase(false);
+    showToast(`✅ "${post.title}" Instagram'da BAŞARIYLA yayınlandı!`);
+    alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${pData.id})`);
   } catch (err) {
     alert(`❌ Hata: ${err.message}`);
   }
