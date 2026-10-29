@@ -876,7 +876,8 @@
         title,
         kategori,
         ozellikler,
-        olculer: rawDims || null
+        olculer: rawDims || null,
+        body: rawDims || ''
       };
     }
 
@@ -933,8 +934,9 @@
       if (Array.isArray(item.ozellikler)) {
         document.getElementById('prod_features').value = item.ozellikler.join('\n');
       }
-      if (item.olculer) {
-        document.getElementById('prod_dimensions').value = typeof item.olculer === 'string' ? item.olculer : JSON.stringify(item.olculer, null, 2);
+      const dims = item.olculer || item.body || '';
+      if (dims) {
+        document.getElementById('prod_dimensions').value = typeof dims === 'string' ? dims : JSON.stringify(dims, null, 2);
       }
 
       if (item.ana_resim) {
@@ -996,7 +998,7 @@
         ana_resim,
         renkler,
         ozellikler,
-        olculer: rawDimensions || null,
+        body: rawDimensions || '',
         anasayfada_goster: true,
         updated_at: new Date().toISOString()
       };

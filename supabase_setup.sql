@@ -21,6 +21,9 @@ CREATE TABLE IF NOT EXISTS public.products (
     updated_at TIMESTAMPTZ DEFAULT now()
 );
 
+-- Ek kolon güvencesi
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS olculer TEXT DEFAULT '';
+
 -- 2. TEDARİKÇİLER TABLOSU (suppliers)
 CREATE TABLE IF NOT EXISTS public.suppliers (
     slug TEXT PRIMARY KEY,

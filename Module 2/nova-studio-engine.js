@@ -66,11 +66,12 @@
     };
 
     let dimText = '';
-    if (product.olculer) {
-      if (typeof product.olculer === 'string') {
-        dimText = product.olculer;
-      } else if (typeof product.olculer === 'object') {
-        dimText = Object.entries(product.olculer)
+    const rawDims = product.olculer || product.body;
+    if (rawDims) {
+      if (typeof rawDims === 'string') {
+        dimText = rawDims;
+      } else if (typeof rawDims === 'object') {
+        dimText = Object.entries(rawDims)
           .map(([k, v]) => `• ${capitalizeFirst(k.replace(/_/g, ' '))}: ${v}`)
           .join('\n');
       }
