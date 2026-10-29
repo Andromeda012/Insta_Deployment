@@ -363,12 +363,21 @@ ${hashtags}`;
   }
 
   function roundRect(ctx, x, y, w, h, r, fill, stroke) {
+    if (typeof ctx.roundRect === 'function') {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      if (fill) ctx.fill();
+      if (stroke) ctx.stroke();
+      return;
+    }
+    if (r > w / 2) r = w / 2;
+    if (r > h / 2) r = h / 2;
     ctx.beginPath();
     ctx.moveTo(x + r, y);
     ctx.arcTo(x + w, y, x + w, y + h, r);
     ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y + x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
     ctx.closePath();
     if (fill) ctx.fill();
     if (stroke) ctx.stroke();
