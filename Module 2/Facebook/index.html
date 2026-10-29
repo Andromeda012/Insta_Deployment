@@ -6,7 +6,8 @@
 <title>Modül 2 — Facebook Sayfa Bulut Botu & 3 Aşamalı Messenger/Yorum Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../nova-studio-engine.js"></script>
+<script src="/Module%202/nova-studio-engine.js"></script>
+<script src="/nova-studio-engine.js"></script>
 <style>
   :root {
     --navy: #0A192F;
@@ -1289,7 +1290,6 @@ function drawFbAutonomousCanvas(canvas, opts = {}) {
   const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
   const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
 
-  const isVertical = mediaType === 'FB_REELS' || mediaType === 'FB_STORIES';
   const fullW = isVertical ? 1080 : 1200;
   const fullH = isVertical ? 1920 : 630;
   const scale = opts.fullRes ? 1 : (isVertical ? 0.28 : 0.52);

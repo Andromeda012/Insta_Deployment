@@ -432,38 +432,27 @@ export function toggleInAppFullscreen(forceState) {
 // Module 2 Multi-Bot Channel Switcher
 export function switchSocialBotChannel(btnEl, channel) {
     const frame = document.getElementById('module2-frame');
-    if (channel === 'instagram' || channel === 'facebook' || channel === 'youtube' || channel === 'tiktok' || channel === 'catalog') {
-        if (btnEl) {
-            btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
-            btnEl.classList.add('active');
+    if (!frame) return;
+
+    if (btnEl) {
+        btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
+        btnEl.classList.add('active');
+    }
+
+    const channelMap = {
+        instagram: { path: 'Module%202/Instagram/index.html', label: '📸 Instagram Bulut Bot Kontrol Merkezi aktif.' },
+        facebook: { path: 'Module%202/Facebook/index.html', label: '📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.' },
+        youtube: { path: 'Module%202/Youtube%20Shorts/index.html', label: '▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.' },
+        tiktok: { path: 'Module%202/Tiktok/index.html', label: '🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.' },
+        catalog: { path: 'Module%202/Catalog/index.html', label: '🗂️ Ürün Kataloğu & Medya Havuzu (4 Botun Ortak Kaynağı) aktif.' }
+    };
+
+    const target = channelMap[channel];
+    if (target) {
+        frame.src = target.path;
+        if (typeof showToast === 'function') {
+            showToast(target.label);
         }
-        if (channel === 'instagram') {
-            if (frame && !frame.src.includes('Module%202/Instagram/index.html')) {
-                frame.src = 'Module%202/Instagram/index.html';
-            }
-            showToast('📸 Instagram Bulut Bot Kontrol Merkezi aktif.');
-        } else if (channel === 'facebook') {
-            if (frame && !frame.src.includes('Module%202/Facebook/index.html')) {
-                frame.src = 'Module%202/Facebook/index.html';
-            }
-            showToast('📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.');
-        } else if (channel === 'youtube') {
-            if (frame && !frame.src.includes('Module%202/Youtube%20Shorts/index.html')) {
-                frame.src = 'Module%202/Youtube%20Shorts/index.html';
-            }
-            showToast('▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.');
-        } else if (channel === 'tiktok') {
-            if (frame && !frame.src.includes('Module%202/Tiktok/index.html')) {
-                frame.src = 'Module%202/Tiktok/index.html';
-            }
-            showToast('🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.');
-        } else if (channel === 'catalog') {
-            if (frame && !frame.src.includes('Module%202/Catalog/index.html')) {
-                frame.src = 'Module%202/Catalog/index.html';
-            }
-            showToast('🗂️ Ürün Kataloğu & Medya Havuzu (4 Botun Ortak Kaynağı) aktif.');
-        }
-        return;
     }
 }
 

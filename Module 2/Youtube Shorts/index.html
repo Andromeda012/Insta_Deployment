@@ -6,7 +6,8 @@
 <title>Modül 2 — YouTube Shorts Bulut Botu & 3 Aşamalı Yorum Otomasyon Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../nova-studio-engine.js"></script>
+<script src="/Module%202/nova-studio-engine.js"></script>
+<script src="/nova-studio-engine.js"></script>
 <style>
   :root {
     --navy: #0B1628;
@@ -1282,8 +1283,6 @@ function drawYtShortsCanvas(canvas, opts = {}) {
   const format = opts.format || document.getElementById('post_media_type')?.value || 'SHORTS_CNC';
   const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'yt-crimson-navy';
   const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'diagonal';
-  const headline = (opts.headline || document.getElementById('post_title')?.value || '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ').toLocaleUpperCase('tr-TR');
-  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim';
   const sceneIndex = opts.sceneIndex || 0; // 0: Normal/Sahne1, 1: Sahne2, 2: Sahne3
 
   const fullW = 1080;

@@ -6,7 +6,8 @@
 <title>Modül 2 — Instagram Bulut Bot & 3 Aşamalı İletişim Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="../nova-studio-engine.js"></script>
+<script src="/Module%202/nova-studio-engine.js"></script>
+<script src="/nova-studio-engine.js"></script>
 <style>
   :root {
     --navy: #0F253E;
@@ -1297,7 +1298,6 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
   const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'nordic-fjord';
   const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
 
-  const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
   const W = opts.fullRes ? 1080 : 540;
   const H = opts.fullRes ? (isVertical ? 1920 : 1080) : (isVertical ? 960 : 540);
   const scale = W / 1080;
