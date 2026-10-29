@@ -1549,12 +1549,82 @@ async function addScheduledPost(publishImmediately = false) {
     ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
     : new Date().toISOString();
 
+  // 1080p tam çözünürlüklü kanvası bellekte çiz ve PNG Base64 al
+  const offscreen = document.createElement('canvas');
+  drawAutonomousGraphicOnCanvas(offscreen, {
+    fullRes: true,
+    mediaType,
+    themeKey,
+    doorStyle,
+    headline,
+    subheadline
+  });
+  const imageBase64 = offscreen.toDataURL('image/png', 0.95);
+
   if (btn) {
     btn.disabled = true;
-    btn.textContent = '🎨 Bot Görseli 1080p Tasarlıyor ve Buluta Kaydediyor...';
+    btn.textContent = publishImmediately ? '🚀 Instagram API’ye Gönderiliyor...' : '🎨 Bot Görseli 1080p Tasarlıyor...';
   }
 
-  const mediaUrl = await exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
+  let mediaUrl = await exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
+
+  if (publishImmediately) {
+    // Doğrudan Meta Graph API'ye yayın isteği at
+    try {
+      const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
+      const pubRes = await fetch('/api/instagram-publish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mediaType,
+          caption: fullCaption,
+          imageBase64,
+          mediaUrl,
+          igUserId: botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim(),
+          accessToken: botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim()
+        })
+      });
+      const pubData = await pubRes.json();
+
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+      }
+
+      if (pubData.ok) {
+        const newItem = {
+          id: 'auto-post-' + Date.now(),
+          media_type: mediaType,
+          title: `[Otonom Tasarım] ${headline}`,
+          headline,
+          subheadline,
+          theme_id: themeKey,
+          door_style: doorStyle,
+          caption,
+          hashtags,
+          media_url: pubData.mediaUrl || mediaUrl,
+          auto_designed: true,
+          scheduled_for: new Date().toISOString(),
+          status: 'published',
+          published_at: new Date().toISOString(),
+          ig_published_id: pubData.publishedId
+        };
+        botState.scheduled_posts.unshift(newItem);
+        await persistBotStateToSupabase(false);
+        showToast(`✅ Gönderi Instagram'da BAŞARIYLA yayınlandı! (ID: ${pubData.publishedId})`);
+        alert(`🎉 Harika haber! Gönderi doğrudan Instagram hesabınızda yayınlandı!\n\nInstagram Gönderi ID: ${pubData.publishedId}\n\nProfilinizi yenileyerek yayını kontrol edebilirsiniz.`);
+      } else {
+        alert(`❌ Instagram Yayını Başarısız Oldu!\n\nMeta API Açıklaması:\n${pubData.error || 'Bilinmeyen hata'}\n\nLütfen "API & Otomasyon Ayarları" sekmesindeki Instagram Business ID ve Meta Token bilgilerinizi kontrol edin.`);
+      }
+    } catch (err) {
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+      }
+      alert(`❌ Bağlantı Hatası: ${err.message}`);
+    }
+    return;
+  }
 
   if (btn) {
     btn.disabled = false;
@@ -1573,21 +1643,14 @@ async function addScheduledPost(publishImmediately = false) {
     hashtags,
     media_url: mediaUrl,
     auto_designed: true,
-    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
-    status: publishImmediately ? 'published' : 'scheduled',
-    published_at: publishImmediately ? new Date().toISOString() : null
+    scheduled_for: scheduledFor,
+    status: 'scheduled',
+    published_at: null
   };
 
   botState.scheduled_posts.unshift(newItem);
   await persistBotStateToSupabase(false);
-
-  if (publishImmediately) {
-    // Bulut sunucu uç noktasını da tetikle
-    fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
-    showToast(`🚀 Bot ${mediaType} tasarımını kendi üretti ve onay beklemeden doğrudan yayınladı!`);
-  } else {
-    showToast(`⏰ Bot ${mediaType} tasarımını üretti ve bulut kuyruğuna ekledi; saati geldiğinde otomatik paylaşılacak!`);
-  }
+  showToast(`⏰ Bot ${mediaType} tasarımını üretti ve bulut kuyruğuna ekledi; saati geldiğinde otomatik paylaşılacak!`);
 }
 
 function renderScheduledQueue() {
@@ -1623,13 +1686,37 @@ function renderScheduledQueue() {
   }).join('');
 }
 
-function publishQueueItemNow(idx) {
-  if (!botState.scheduled_posts[idx]) return;
-  botState.scheduled_posts[idx].status = 'published';
-  botState.scheduled_posts[idx].published_at = new Date().toISOString();
-  persistBotStateToSupabase(false);
-  fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
-  showToast(`🚀 "${botState.scheduled_posts[idx].title}" buluttan otomatik yayınlandı!`);
+async function publishQueueItemNow(idx) {
+  const post = botState.scheduled_posts[idx];
+  if (!post) return;
+
+  showToast(`🚀 "${post.title}" Instagram'a gönderiliyor...`);
+  try {
+    const pubRes = await fetch('/api/instagram-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mediaType: post.media_type || 'POST',
+        caption: [post.caption, post.hashtags].filter(Boolean).join('\n\n'),
+        mediaUrl: post.media_url,
+        igUserId: botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim(),
+        accessToken: botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim()
+      })
+    });
+    const pubData = await pubRes.json();
+    if (pubData.ok) {
+      post.status = 'published';
+      post.published_at = new Date().toISOString();
+      post.ig_published_id = pubData.publishedId;
+      await persistBotStateToSupabase(false);
+      showToast(`✅ "${post.title}" Instagram'da BAŞARIYLA yayınlandı!`);
+      alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${pubData.publishedId})`);
+    } else {
+      alert(`❌ Instagram Yayın Hatası:\n${pubData.error || 'Yayınlanamadı'}`);
+    }
+  } catch (err) {
+    alert(`❌ Hata: ${err.message}`);
+  }
 }
 
 function deleteQueueItem(idx) {
@@ -1638,6 +1725,9 @@ function deleteQueueItem(idx) {
 }
 
 async function runCloudAutonomousCycleNow() {
+  await autonomousInventNewDesign();
+  await addScheduledPost(true);
+}
   let count = 0;
   (botState.scheduled_posts || []).forEach(p => {
     if (p.status === 'scheduled') {
