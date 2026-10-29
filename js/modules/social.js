@@ -43,6 +43,14 @@ export function renderSocialModule(data) {
                     >
                         🎵 TikTok Bot <span style="background:#10b981; color:#052e16; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:800;">AKTİF • 7/24 BULUT</span>
                     </button>
+                    <button
+                        class="embed-tab-chip"
+                        data-channel="catalog"
+                        onclick="window.switchSocialBotChannel(this, 'catalog')"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:8px; border:1px solid rgba(56,189,248,0.5); background:linear-gradient(135deg, rgba(56,189,248,0.22), rgba(15,23,42,0.6)); color:#fff; font-size:12px; font-weight:700; cursor:pointer;"
+                    >
+                        🗂️ Ürün Kataloğu & Medya Havuzu <span style="background:#38bdf8; color:#0b1120; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:900;">4 BOTUN ORTAK KAYNAĞI</span>
+                    </button>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
                     <span style="display:inline-flex; align-items:center; gap:5px; color:#34d399; font-weight:600;">

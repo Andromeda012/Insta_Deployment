@@ -691,32 +691,21 @@
           <div id="scheduledQueueContainer"></div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🔑 Resmi Instagram Graph API Bulut Kimlik Bilgileri</div>
-            <span class="badge badge-blue">Cloud Env / Supabase</span>
-          </div>
-          <div class="form-row">
-            <div class="form-group">
-              <label>Instagram Business Hesap Kullanıcı Adı</label>
-              <input type="text" class="form-control" id="cfg_handle" value="@globalkapakmobilya">
+        <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(6, 95, 70, 0.04)); border: 1px solid rgba(16, 185, 129, 0.35);">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#10b981; box-shadow:0 0 10px #10b981;"></span>
+              <div>
+                <h4 style="font-size:13px; font-weight:800; color:#065f46;">Instagram Graph API Bulut Bağlantısı Aktif</h4>
+                <p style="font-size:11.5px; color:#047857; margin-top:2px;">Hesap: <strong>@thenovafurniture</strong> • Kalıcı Meta Sistem Yetkilendirmesi devrede</p>
+              </div>
             </div>
-            <div class="form-group">
-              <label>Instagram Graph User ID (ig_user_id)</label>
-              <input type="text" class="form-control" id="cfg_ig_user_id" placeholder="Örn: 17841405822304914">
-            </div>
+            <span class="badge badge-green" style="font-size:11px; padding:4px 10px;">7/24 BULUT AKTİF</span>
           </div>
-          <div class="form-group">
-            <label>Meta Uzun Ömürlü Sayfa / Sistem Kullanıcı Tokenı (Access Token)</label>
-            <input type="password" class="form-control" id="cfg_access_token" placeholder="EAABwzLixnjYBO...">
-          </div>
-          <div style="background:#F8FAFC;border:1px solid var(--border);border-radius:10px;padding:10px 12px;font-size:11.5px;color:var(--muted);margin-bottom:12px;">
-            <div><strong>🌐 Bulut Webhook URL:</strong> <code>https://insta-deployment-rho.vercel.app/api/instagram-webhook</code></div>
-            <div style="margin-top:4px;"><strong>🔑 Verify Token:</strong> <code>global_kapak_insta_verify_2026</code></div>
-          </div>
-          <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
-            💾 Bulut API Ayarlarını Supabase'e Kaydet
-          </button>
+          <!-- Gizli girdi alanları (Arka plan bot motoru için korunmuştur) -->
+          <input type="hidden" id="cfg_handle" value="@thenovafurniture">
+          <input type="hidden" id="cfg_ig_user_id" value="17841435882645322">
+          <input type="hidden" id="cfg_access_token">
         </div>
       </div>
     </div>

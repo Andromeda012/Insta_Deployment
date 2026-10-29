@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ürün Kataloğu & Medya Havuzu | Modül 2 — Global Kapak Mobilya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root {
+      --bg: #0A0F1D;
+      --card-bg: #111B2E;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --accent-blue: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-purple: #A855F7;
+      --accent-pink: #EC4899;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --navy-dark: #0B1120;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.08), transparent 30%),
+                  radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 16px 22px 40px;
+    }
+
+    /* Üst Başlık */
+    .catalog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .header-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(16, 185, 129, 0.2));
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+
+    .header-title h1 {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .header-title p {
+      font-size: 12.5px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .header-badge {
+      background: linear-gradient(90deg, #0284c7, #10b981);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.18s ease;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0284c7, #0369a1);
+      color: #fff;
+      border-color: rgba(56, 189, 248, 0.4);
+      box-shadow: 0 4px 14px rgba(2, 132, 199, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(2, 132, 199, 0.45);
+    }
+
+    .btn-emerald {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+
+    .btn-outline {
+      background: rgba(30, 41, 59, 0.7);
+      color: #cbd5e1;
+      border-color: rgba(148, 163, 184, 0.25);
+    }
+    .btn-outline:hover {
+      border-color: var(--accent-blue);
+      color: #fff;
+    }
+
+    /* KPI Bar */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 22px;
+    }
+
+    .kpi-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 14px 18px;
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-val {
+      font-size: 22px;
+      font-weight: 900;
+      margin-top: 5px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .kpi-sub {
+      font-size: 11px;
+      color: var(--accent-blue);
+      margin-top: 3px;
+    }
+
+    /* 2 Sütunlu Ana Gövde: Sol Ürün Ekle/Düzenle, Sağ Katalog Vitrini */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 430px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+
+    @media (max-width: 1180px) {
+      .main-grid { grid-template-columns: 1fr; }
+      .kpi-row { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    .panel-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+
+    .panel-title {
+      font-size: 14.5px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    /* Form Elemanları */
+    .form-group {
+      margin-bottom: 13px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 10px 13px;
+      border-radius: 10px;
+      border: 1px solid var(--card-border);
+      background: #090e1a;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+      transition: border-color 0.15s ease;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+
+    textarea.form-control {
+      resize: vertical;
+      min-height: 72px;
+      line-height: 1.45;
+    }
+
+    /* Fotoğraf Yükleme / Dropzone Alanı */
+    .dropzone-box {
+      border: 2px dashed rgba(56, 189, 248, 0.4);
+      background: rgba(11, 17, 32, 0.6);
+      border-radius: 12px;
+      padding: 18px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .dropzone-box:hover {
+      border-color: var(--accent-blue);
+      background: rgba(56, 189, 248, 0.05);
+    }
+
+    .dropzone-preview {
+      width: 100%;
+      height: 180px;
+      border-radius: 10px;
+      object-fit: cover;
+      display: none;
+      margin-top: 10px;
+      border: 1px solid var(--card-border);
+    }
+
+    /* 4 Bot Dağıtım Rozetleri */
+    .bot-distribution-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 14px 0;
+      padding: 10px;
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    .bot-dot-pill {
+      font-size: 10px;
+      font-weight: 700;
+      text-align: center;
+      padding: 4px;
+      border-radius: 6px;
+      background: rgba(30, 41, 59, 0.7);
+      color: #94a3b8;
+    }
+    .bot-dot-pill.ready {
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    /* Katalog Vitrini & Grid */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      max-height: 680px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .prod-card {
+      background: #090e1a;
+      border: 1px solid var(--card-border);
+      border-radius: 13px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+    .prod-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(56, 189, 248, 0.45);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+    }
+
+    .prod-thumb-wrap {
+      width: 100%;
+      height: 155px;
+      background: #111b2e;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .prod-thumb {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .prod-sku-tag {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(11, 17, 32, 0.85);
+      color: var(--accent-blue);
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.4);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .prod-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .prod-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+      line-height: 1.35;
+    }
+
+    .prod-cat {
+      font-size: 11px;
+      color: #38bdf8;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .prod-desc {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      line-height: 1.4;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+
+    .prod-colors-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .color-chip {
+      font-size: 9.5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(30, 41, 59, 0.9);
+      color: #cbd5e1;
+    }
+
+    .prod-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: auto;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+      padding-top: 10px;
+    }
+
+    .prod-btn {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 7px;
+      border: 1px solid var(--card-border);
+      background: rgba(30, 41, 59, 0.8);
+      color: #cbd5e1;
+      cursor: pointer;
+      text-align: center;
+    }
+    .prod-btn:hover {
+      color: #fff;
+      border-color: var(--accent-blue);
+    }
+    .prod-btn-delete:hover {
+      border-color: #ef4444;
+      color: #f87171;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ÜST KONTROL & BİLGİLENDİRME BAŞLIĞI -->
+  <header class="catalog-header">
+    <div class="header-info">
+      <div class="header-icon">📦</div>
+      <div class="header-title">
+        <h1>
+          Ürün Kataloğu & Medya Havuzu
+          <span class="header-badge">4 BOTUN ORTAK İÇERİK MOTORU</span>
+        </h1>
+        <p>Buraya eklediğiniz tüm fotoğraflar ve ürün detayları Instagram, Facebook, YouTube Shorts ve TikTok botlarının gönderi, Reels ve Story üretiminde kaynak olarak kullanılır.</p>
+      </div>
+    </div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-primary" onclick="resetFormForNew()">✨ Yeni Ürün Ekle</button>
+      <button class="btn btn-outline" onclick="loadCatalogFromSupabase()">🔄 Kataloğu Yenile</button>
+    </div>
+  </header>
+
+  <!-- KPI METRİK ŞERİDİ -->
+  <section class="kpi-row">
+    <div class="kpi-box">
+      <div class="kpi-label">Toplam Kapak Modeli</div>
+      <div class="kpi-val">
+        <span id="kpiTotalCount">Yükleniyor...</span>
+        <span style="font-size:12px; color:var(--accent-blue);">Supabase</span>
+      </div>
+      <div class="kpi-sub">Veritabanında kayıtlı ürün sayısı</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">Fotoğraflı İçerik Havuzu</div>
+      <div class="kpi-val">
+        <span id="kpiPhotoCount">0 Ürün</span>
+        <span style="font-size:12px; color:var(--accent-emerald);">Görsel Hazır</span>
+      </div>
+      <div class="kpi-sub">Botların Reels/Post için kullandığı görseller</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">Kategori Dağılımı</div>
+      <div class="kpi-val">
+        <span id="kpiCategoryCount">0 Kategori</span>
+        <span style="font-size:12px; color:var(--accent-purple);">Membran • Lake</span>
+      </div>
+      <div class="kpi-sub">Farklı kapak serileri</div>
+    </div>
+    <div class="kpi-box">
+      <div class="kpi-label">4 Bot Senkronizasyonu</div>
+      <div class="kpi-val">
+        <span style="color:#10b981;">%100 AKTİF</span>
+        <span style="font-size:12px; color:#38bdf8;">Canlı Havuz</span>
+      </div>
+      <div class="kpi-sub">Instagram • Facebook • YouTube • TikTok</div>
+    </div>
+  </section>
+
+  <!-- ANA 2 SÜTUNLU YAPI -->
+  <main class="main-grid">
+
+    <!-- SOL SÜTUN: ÜRÜN & FOTOĞRAF EKLEME / DÜZENLEME FORMU -->
+    <section class="panel-card">
+      <div class="panel-title">
+        <span id="formModeTitle">➕ Yeni Ürün & Fotoğraf Ekle</span>
+        <span style="font-size:11px; color:var(--accent-emerald); font-weight:800;">CANLI SUPABASE</span>
+      </div>
+
+      <input type="hidden" id="edit_slug" value="">
+
+      <!-- FOTOĞRAF YÜKLEME ALANI -->
+      <div class="form-group">
+        <label>1. Ürün Fotoğrafı (Botların Paylaşacağı Ana Görsel):</label>
+        <div class="dropzone-box" onclick="document.getElementById('fileInput').click()">
+          <div id="dropzoneText">
+            <div style="font-size:28px; margin-bottom:4px;">📷</div>
+            <strong style="font-size:13px; color:#fff;">Fotoğraf Seçin veya Sürükleyin</strong>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">PNG, JPG, WEBP (Katalogdaki 30 fotoğraftan birini yükleyin)</p>
+          </div>
+          <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
+          <img id="imagePreview" class="dropzone-preview" alt="Önizleme">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Veya Harici Resim URL Adresi:</label>
+        <input type="text" id="prod_image_url" class="form-control" placeholder="https://...png" oninput="handleUrlInput(this.value)">
+      </div>
+
+      <!-- TEMEL ÜRÜN DETAYLARI -->
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>2. Ürün / Model Başlığı:</label>
+          <input type="text" id="prod_title" class="form-control" placeholder="Örn: Venedik Çıtalı Derzli Membran Kapak">
+        </div>
+        <div class="form-group">
+          <label>Model Kodu (SKU):</label>
+          <input type="text" id="prod_sku" class="form-control" placeholder="Örn: GKM-204">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>3. Kapak Kategorisi:</label>
+        <select id="prod_category" class="form-control">
+          <option value="Düz Membran Kapak">Düz Membran Kapak</option>
+          <option value="Çerçeveli Klasik Membran">Çerçeveli Klasik Membran</option>
+          <option value="Country Kapak Serisi">Country Kapak Serisi</option>
+          <option value="Modern Çıtalı & Derzli">Modern Çıtalı & Derzli</option>
+          <option value="High Gloss Parlak Membran">High Gloss Parlak Membran</option>
+          <option value="Boyalı Lake Kapak">Boyalı Lake Kapak</option>
+          <option value="Doğal Ahşap Dokulu Seri">Doğal Ahşap Dokulu Seri</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>4. Renk Kartelası (Virgülle Ayırın):</label>
+        <input type="text" id="prod_colors" class="form-control" placeholder="Örn: Mat Antrasit, Kaşmir, İpek Beyaz, Doğal Meşe, Adaçayı">
+      </div>
+
+      <div class="form-group">
+        <label>5. Kısa Açıklama (Botların Paylaşım Metinlerinde Kullanılır):</label>
+        <textarea id="prod_description" class="form-control" placeholder="18mm 1. sınıf yüksek yoğunluklu MDF üzerine 0.35mm ithal PVC membran vakum pres teknolojisi. Buhara ve neme tam dayanıklı, 5 yıl garantili."></textarea>
+      </div>
+
+      <!-- BOT DAĞITIM BİLGİLENDİRMESİ -->
+      <div class="bot-distribution-bar">
+        <div class="bot-dot-pill ready">📸 Instagram</div>
+        <div class="bot-dot-pill ready">📘 Facebook</div>
+        <div class="bot-dot-pill ready">▶️ YouTube</div>
+        <div class="bot-dot-pill ready">🎵 TikTok</div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-emerald" id="btnSaveProduct" style="flex:1;" onclick="saveProductToSupabase()">
+          💾 Ürünü Kaydet & 4 Bota Dağıt
+        </button>
+        <button class="btn btn-outline" id="btnCancelEdit" style="display:none;" onclick="resetFormForNew()">
+          İptal
+        </button>
+      </div>
+    </section>
+
+    <!-- SAĞ SÜTUN: MEVCUT KATALOG VİTRİNİ & MEDYA LİSTESİ -->
+    <section class="panel-card">
+      <div class="panel-title">
+        <span>🗂️ Veritabanındaki Ürünler & Medya Havuzu (<span id="catalogCountBadge">0</span>)</span>
+        <span style="font-size:11px; color:var(--text-muted);">Botların Canlı Çektiği Liste</span>
+      </div>
+
+      <!-- ARAMA & FİLTRELEME -->
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="form-control" style="flex:1; min-width:200px;" placeholder="Ürün adı veya SKU ile ara..." oninput="filterCatalog()">
+        <select id="filterCategory" class="form-control" style="width:190px;" onchange="filterCatalog()">
+          <option value="ALL">Tüm Kategoriler</option>
+        </select>
+      </div>
+
+      <!-- ÜRÜN KARTLARI GRİDİ -->
+      <div class="catalog-grid" id="catalogGrid">
+        <div style="grid-column: 1 / -1; text-align:center; padding:50px 20px; color:var(--text-muted); font-size:13px;">
+          Supabase veritabanından ürün kataloğu yükleniyor...
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // SUPABASE BAĞLANTISI & CANLI VERİ
+    // =========================================================================
+    const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    let catalogItems = [];
+    let currentImageBase64 = '';
+
+    // =========================================================================
+    // KATALOĞU SUPABASE'DEN ÇEKME
+    // =========================================================================
+    async function loadCatalogFromSupabase() {
+      if (!sb) return;
+      try {
+        const { data, error } = await sb
+          .from('products')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        catalogItems = data || [];
+        renderCatalogGrid(catalogItems);
+        updateKPIs(catalogItems);
+        populateCategoryFilter(catalogItems);
+      } catch (err) {
+        console.error('Katalog çekme hatası:', err);
+        document.getElementById('catalogGrid').innerHTML = `
+          <div style="grid-column: 1 / -1; text-align:center; padding:40px; color:#f87171;">
+            ❌ Katalog yüklenirken hata oluştu: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function updateKPIs(items) {
+      document.getElementById('kpiTotalCount').textContent = `${items.length} Model`;
+      const withPhoto = items.filter(i => !!i.ana_resim).length;
+      document.getElementById('kpiPhotoCount').textContent = `${withPhoto} Fotoğraflı`;
+      const cats = new Set(items.map(i => i.kategori).filter(Boolean));
+      document.getElementById('kpiCategoryCount').textContent = `${cats.size} Kategori`;
+      document.getElementById('catalogCountBadge').textContent = `${items.length} Ürün`;
+    }
+
+    function populateCategoryFilter(items) {
+      const cats = Array.from(new Set(items.map(i => i.kategori).filter(Boolean)));
+      const sel = document.getElementById('filterCategory');
+      sel.innerHTML = '<option value="ALL">Tüm Kategoriler</option>' +
+        cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    // =========================================================================
+    // KATALOG VİTRİNİNİ ÇİZME
+    // =========================================================================
+    function renderCatalogGrid(items) {
+      const grid = document.getElementById('catalogGrid');
+      if (!items || items.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align:center; padding:50px 20px; color:var(--text-muted); font-size:13px;">
+            Katalogda henüz ürün bulunmuyor. Sol taraftaki formdan elinizdeki 30 fotoğrafı ve detayları ekleyebilirsiniz.
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = items.map(item => {
+        const imgUrl = item.ana_resim
+          ? (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:')
+              ? item.ana_resim
+              : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`)
+          : 'https://globalmobilyaweb.vercel.app/resim/logo.png';
+
+        const sku = item.sku || 'GKM-KOD';
+        const colors = Array.isArray(item.renkler)
+          ? item.renkler
+          : (typeof item.renkler === 'string' ? item.renkler.split(',').map(s => s.trim()) : []);
+
+        return `
+          <div class="prod-card">
+            <div class="prod-thumb-wrap">
+              <span class="prod-sku-tag">${sku}</span>
+              <img class="prod-thumb" src="${imgUrl}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="${item.title || ''}">
+            </div>
+            <div class="prod-body">
+              <div class="prod-cat">${item.kategori || 'Membran Kapak'}</div>
+              <div class="prod-title">${item.title || 'Başlıksız Model'}</div>
+              <div class="prod-desc">${item.kisa_aciklama || 'Açıklama girilmemiş.'}</div>
+              
+              <div class="prod-colors-row">
+                ${colors.slice(0, 4).map(c => `<span class="color-chip">${c}</span>`).join('')}
+                ${colors.length > 4 ? `<span class="color-chip">+${colors.length - 4}</span>` : ''}
+              </div>
+
+              <div class="prod-actions">
+                <button class="prod-btn" onclick="editProduct('${item.slug}')">✏️ Düzenle</button>
+                <button class="prod-btn prod-btn-delete" onclick="deleteProduct('${item.slug}', '${item.title || ''}')">🗑️ Sil</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterCatalog() {
+      const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
+      const cat = document.getElementById('filterCategory').value;
+
+      const filtered = catalogItems.filter(item => {
+        const matchesQ = !q ||
+          (item.title && item.title.toLowerCase().includes(q)) ||
+          (item.sku && item.sku.toLowerCase().includes(q)) ||
+          (item.kategori && item.kategori.toLowerCase().includes(q));
+
+        const matchesCat = cat === 'ALL' || item.kategori === cat;
+        return matchesQ && matchesCat;
+      });
+
+      renderCatalogGrid(filtered);
+    }
+
+    // =========================================================================
+    // FOTOĞRAF SEÇME & ÖNİZLEME
+    // =========================================================================
+    function handleFileSelect(event) {
+      const file = event.target.files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        currentImageBase64 = e.target.result;
+        showImagePreview(currentImageBase64);
+        document.getElementById('prod_image_url').value = '';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function handleUrlInput(val) {
+      val = val.trim();
+      if (val) {
+        currentImageBase64 = val;
+        showImagePreview(val);
+      }
+    }
+
+    function showImagePreview(src) {
+      const preview = document.getElementById('imagePreview');
+      preview.src = src;
+      preview.style.display = 'block';
+      document.getElementById('dropzoneText').style.display = 'none';
+    }
+
+    // =========================================================================
+    // ÜRÜN KAYDETME (INSERT VEYA UPDATE)
+    // =========================================================================
+    async function saveProductToSupabase() {
+      const btn = document.getElementById('btnSaveProduct');
+      const title = document.getElementById('prod_title').value.trim();
+      const sku = document.getElementById('prod_sku').value.trim() || `GKM-${Date.now().toString().slice(-4)}`;
+      const kategori = document.getElementById('prod_category').value;
+      const rawColors = document.getElementById('prod_colors').value.trim();
+      const kisa_aciklama = document.getElementById('prod_description').value.trim();
+      const editSlug = document.getElementById('edit_slug').value.trim();
+
+      if (!title) {
+        alert('Lütfen ürün / kapak model başlığını yazın.');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = '⏳ Supabase\'e Kaydediliyor...';
+
+      // Renkleri diziye çevir
+      const renkler = rawColors
+        ? rawColors.split(',').map(s => s.trim()).filter(Boolean)
+        : ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe'];
+
+      // Slug oluştur
+      const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
+
+      // Ana resim (Base64 veya URL veya varsayılan)
+      const ana_resim = currentImageBase64 || document.getElementById('prod_image_url').value.trim() || '/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+
+      const payload = {
+        slug,
+        title,
+        sku,
+        kategori,
+        kisa_aciklama: kisa_aciklama || `${kategori} • 18mm MDF • 0.35mm İthal PVC Membran • 5 Yıl Garanti`,
+        ana_resim,
+        renkler,
+        ozellikler: ['18mm E1 MDF', '0.35mm İthal Membran', '5 Yıl Garanti', '5 İş Gününde Teslim'],
+        anasayfada_goster: true,
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        if (!editSlug) {
+          payload.created_at = new Date().toISOString();
+        }
+
+        const { error } = await sb.from('products').upsert(payload);
+        if (error) throw error;
+
+        alert(`✅ "${title}" başarıyla Supabase kataloğuna kaydedildi ve 4 sosyal medya botunun ortak havuzuna eklendi!`);
+        resetFormForNew();
+        await loadCatalogFromSupabase();
+      } catch (err) {
+        alert(`❌ Kayıt Hatası: ${err.message}`);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '💾 Ürünü Kaydet & 4 Bota Dağıt';
+      }
+    }
+
+    // =========================================================================
+    // DÜZENLEME & SİLME İŞLEMLERİ
+    // =========================================================================
+    function editProduct(slug) {
+      const item = catalogItems.find(i => i.slug === slug);
+      if (!item) return;
+
+      document.getElementById('edit_slug').value = item.slug;
+      document.getElementById('prod_title').value = item.title || '';
+      document.getElementById('prod_sku').value = item.sku || '';
+      document.getElementById('prod_category').value = item.kategori || 'Düz Membran Kapak';
+      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : (item.renkler || '');
+      document.getElementById('prod_description').value = item.kisa_aciklama || '';
+
+      if (item.ana_resim) {
+        const fullImg = (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:'))
+          ? item.ana_resim
+          : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`;
+        currentImageBase64 = fullImg;
+        showImagePreview(fullImg);
+        document.getElementById('prod_image_url').value = fullImg;
+      }
+
+      document.getElementById('formModeTitle').textContent = `✏️ Ürünü Düzenle: ${item.title}`;
+      document.getElementById('btnSaveProduct').textContent = '💾 Değişiklikleri Güncelle';
+      document.getElementById('btnCancelEdit').style.display = 'inline-flex';
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    async function deleteProduct(slug, title) {
+      if (!confirm(`"${title}" modelini katalogdan ve bot havuzundan silmek istediğinize emin misiniz?`)) return;
+
+      try {
+        const { error } = await sb.from('products').delete().eq('slug', slug);
+        if (error) throw error;
+        await loadCatalogFromSupabase();
+      } catch (err) {
+        alert(`Silme hatası: ${err.message}`);
+      }
+    }
+
+    function resetFormForNew() {
+      document.getElementById('edit_slug').value = '';
+      document.getElementById('prod_title').value = '';
+      document.getElementById('prod_sku').value = '';
+      document.getElementById('prod_colors').value = '';
+      document.getElementById('prod_description').value = '';
+      document.getElementById('prod_image_url').value = '';
+      document.getElementById('fileInput').value = '';
+      currentImageBase64 = '';
+      document.getElementById('imagePreview').style.display = 'none';
+      document.getElementById('dropzoneText').style.display = 'block';
+
+      document.getElementById('formModeTitle').textContent = '➕ Yeni Ürün & Fotoğraf Ekle';
+      document.getElementById('btnSaveProduct').textContent = '💾 Ürünü Kaydet & 4 Bota Dağıt';
+      document.getElementById('btnCancelEdit').style.display = 'none';
+    }
+
+    function slugify(text) {
+      const trMap = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
+      return text
+        .replace(/[çğıöşüÇĞİÖŞÜ]/g, match => trMap[match] || match)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '') || 'model';
+    }
+
+    window.addEventListener('DOMContentLoaded', loadCatalogFromSupabase);
+  </script>
+</body>
+</html>

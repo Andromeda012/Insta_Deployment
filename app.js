@@ -432,7 +432,7 @@ export function toggleInAppFullscreen(forceState) {
 // Module 2 Multi-Bot Channel Switcher
 export function switchSocialBotChannel(btnEl, channel) {
     const frame = document.getElementById('module2-frame');
-    if (channel === 'instagram' || channel === 'facebook' || channel === 'youtube' || channel === 'tiktok') {
+    if (channel === 'instagram' || channel === 'facebook' || channel === 'youtube' || channel === 'tiktok' || channel === 'catalog') {
         if (btnEl) {
             btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
             btnEl.classList.add('active');
@@ -457,6 +457,11 @@ export function switchSocialBotChannel(btnEl, channel) {
                 frame.src = 'Module%202/Tiktok/index.html';
             }
             showToast('🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.');
+        } else if (channel === 'catalog') {
+            if (frame && !frame.src.includes('Module%202/Catalog/index.html')) {
+                frame.src = 'Module%202/Catalog/index.html';
+            }
+            showToast('🗂️ Ürün Kataloğu & Medya Havuzu (4 Botun Ortak Kaynağı) aktif.');
         }
         return;
     }
