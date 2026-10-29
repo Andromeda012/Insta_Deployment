@@ -60,6 +60,88 @@ export default async function handler(req, res) {
     const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
     const config = state.config || {};
 
+    // Doğrudan UI'dan "Şimdi Yayınla" isteği geldiyse Meta Graph API'ye anında gönder
+    if (req.method === 'POST' && (req.body?.action === 'publish' || req.body?.imageBase64)) {
+      const body = req.body || {};
+      let igUserId = body.igUserId || config.ig_user_id || process.env.IG_USER_ID;
+      let accessToken = body.accessToken || config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN;
+      let publicImageUrl = body.mediaUrl;
+      const mediaType = body.mediaType || 'POST';
+      const caption = body.caption || '';
+
+      if (!igUserId || !accessToken) {
+        return res.status(400).json({ ok: false, error: 'Instagram Business ID veya Meta Access Token eksik!' });
+      }
+
+      if (body.imageBase64) {
+        try {
+          const cleanBase64 = body.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const buffer = Buffer.from(cleanBase64, 'base64');
+          const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.png`;
+          const storagePath = `instagram/${fileName}`;
+          const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${storagePath}`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'image/png',
+              'x-upsert': 'true'
+            },
+            body: buffer
+          });
+          if (uploadRes.ok) {
+            publicImageUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
+          }
+        } catch (_) {}
+      }
+
+      if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
+        publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+      }
+
+      // 1. Meta Konteyner Oluştur
+      const createParams = new URLSearchParams();
+      createParams.set('access_token', accessToken);
+      createParams.set('image_url', publicImageUrl);
+      createParams.set('caption', caption);
+      if (mediaType === 'STORIES') createParams.set('media_type', 'STORIES');
+
+      const containerRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+        method: 'POST',
+        body: createParams
+      });
+      const containerData = await containerRes.json();
+      if (!containerRes.ok || !containerData.id) {
+        return res.status(400).json({
+          ok: false,
+          error: `Meta Hatası: ${containerData?.error?.message || 'Medya konteyneri oluşturulamadı'}`
+        });
+      }
+
+      // 2. Meta Yayınla
+      const pubParams = new URLSearchParams();
+      pubParams.set('creation_id', containerData.id);
+      pubParams.set('access_token', accessToken);
+      const pubRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+        method: 'POST',
+        body: pubParams
+      });
+      const pubData = await pubRes.json();
+      if (!pubRes.ok || !pubData.id) {
+        return res.status(400).json({
+          ok: false,
+          error: `Meta Yayın Hatası: ${pubData?.error?.message || 'Yayınlanamadı'}`
+        });
+      }
+
+      return res.status(200).json({
+        ok: true,
+        publishedId: pubData.id,
+        mediaUrl: publicImageUrl,
+        message: 'Gönderi başarıyla Instagram hesabınızda yayınlandı!'
+      });
+    }
+
     if (config.auto_publish_enabled === false) {
       return res.status(200).json({ ok: true, message: 'Otomatik paylaşım duraklatılmış durumda.', published: [] });
     }

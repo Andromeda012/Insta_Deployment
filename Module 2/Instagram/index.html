@@ -1572,10 +1572,11 @@ async function addScheduledPost(publishImmediately = false) {
     // Doğrudan Meta Graph API'ye yayın isteği at
     try {
       const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
-      const pubRes = await fetch('/api/instagram-publish', {
+      const pubRes = await fetch('/api/instagram-cron', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          action: 'publish',
           mediaType,
           caption: fullCaption,
           imageBase64,
@@ -1692,10 +1693,11 @@ async function publishQueueItemNow(idx) {
 
   showToast(`🚀 "${post.title}" Instagram'a gönderiliyor...`);
   try {
-    const pubRes = await fetch('/api/instagram-publish', {
+    const pubRes = await fetch('/api/instagram-cron', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        action: 'publish',
         mediaType: post.media_type || 'POST',
         caption: [post.caption, post.hashtags].filter(Boolean).join('\n\n'),
         mediaUrl: post.media_url,
