@@ -610,22 +610,6 @@
                 <option value="fluted">📏 Dikey Fugalı (Çıtalı) CNC</option>
               </select>
             </div>
-            <div class="form-group">
-              <label>🏛️ Mimari Oda / Stüdyo Sahnesi</label>
-              <select class="form-control" id="auto_room_select" onchange="renderAutonomousCanvasPreview()">
-                <option value="0">🏡 İskandinav Sıcak Ahşap Atölye</option>
-                <option value="1">🏛️ Akustik Çıtalı Lüks Showroom</option>
-                <option value="2">🏢 Modern Taş & Beton Loft</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>🖼️ Görsel & Kadraj Uyumu</label>
-              <select class="form-control" id="auto_fit_mode" onchange="renderAutonomousCanvasPreview()">
-                <option value="cover" selected>🖼️ Tam Kadraj Mimari Afiş (Referans 1 — Bütün Görsel)</option>
-                <option value="cutout">✂️ Fonu Temizle & Mobilyayı Odaya Yerleştir (Akıllı Cutout)</option>
-                <option value="contain_room">🏛️ Mobilyayı Showroom Odasına Oturt (Çift Katman)</option>
-              </select>
-            </div>
           </div>
 
           <!-- CANLI OTONOM TASARIM TUVALİ (BOTUN KENDİ ÜRETTİĞİ GÖRSEL / REELS ÖNİZLEMESİ) -->
@@ -1302,11 +1286,6 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
       ]
     };
 
-    const roomIdx = opts.roomIndex !== undefined
-      ? opts.roomIndex
-      : parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
-    const fitMode = opts.fitMode || document.getElementById('auto_fit_mode')?.value || 'cover';
-
     window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
       productImageEl: currentProductImageEl,
       product: prod,
@@ -1314,9 +1293,7 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
       zoomScale: opts.zoomScale || 1.0,
       panX: opts.panX || 0,
       panY: opts.panY || 0,
-      fullRes: opts.fullRes !== false,
-      roomIndex: roomIdx,
-      fitMode
+      fullRes: opts.fullRes !== false
     });
     return;
   }
@@ -1532,9 +1509,7 @@ function toggleInstagramKenBurns() {
   } else {
     isIgAnimPlaying = true;
     if (btn) btn.textContent = '⏹️ Hareketi Durdur';
-    const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
-    const fitMode = document.getElementById('auto_fit_mode')?.value || 'cover';
-    igAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentProductImageEl, prod, isVertical, null, roomIdx, fitMode);
+    igAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentProductImageEl, prod, isVertical);
   }
 }
 
@@ -1630,15 +1605,12 @@ async function addScheduledPost(publishImmediately = false) {
       }
       showToast('🎬 Kamera hareketi kaydediliyor (MP4 video üretiliyor)...');
 
-      const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
-      const fitMode = document.getElementById('auto_fit_mode')?.value || 'cover';
       const mp4Blob = await window.NovaStudioEngine.recordCanvasVideo(
         previewCanvas,
         currentProductImageEl,
         prod,
         isVertical,
-        5000,
-        { roomIndex: roomIdx, fitMode }
+        5000
       );
 
       if (btn) btn.textContent = '☁️ MP4 Video Storage’a Yükleniyor...';
@@ -1660,16 +1632,12 @@ async function addScheduledPost(publishImmediately = false) {
         btn.disabled = true;
         btn.textContent = '🎨 1080p Görsel Hazırlanıyor...';
       }
-      const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
-      const fitMode = document.getElementById('auto_fit_mode')?.value || 'cover';
       const offscreen = document.createElement('canvas');
       window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
         productImageEl: currentProductImageEl,
         product: prod,
         isVertical,
-        fullRes: true,
-        roomIndex: roomIdx,
-        fitMode
+        fullRes: true
       });
 
       const pngBlob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.95));

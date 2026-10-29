@@ -3,6 +3,7 @@ import { mockData } from './js/data.js';
 import { renderDashboard } from './js/modules/dashboard.js';
 import { renderWebsiteModule } from './js/modules/website.js';
 import { renderSocialModule } from './js/modules/social.js';
+import { renderProductsModule } from './js/modules/products.js';
 import { renderCrmModule } from './js/modules/crm.js';
 import { renderProductionModule } from './js/modules/production.js';
 import { renderOperationsModule } from './js/modules/operations.js';
@@ -47,12 +48,13 @@ export function navigateTo(route) {
     renderCurrentView();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+if (typeof window !== 'undefined') window.navigateTo = navigateTo;
 
 // Render View Router
 function renderCurrentView() {
     if (!contentContainer) return;
 
-    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'social' || state.currentRoute === 'production';
+    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'social' || state.currentRoute === 'products' || state.currentRoute === 'production';
     contentContainer.classList.toggle('full-bleed-module', isEmbeddedModule);
     document.body.classList.toggle('module-immersive-view', isEmbeddedModule);
 
@@ -65,6 +67,9 @@ function renderCurrentView() {
             break;
         case 'social':
             contentContainer.innerHTML = renderSocialModule(mockData);
+            break;
+        case 'products':
+            contentContainer.innerHTML = renderProductsModule(mockData);
             break;
         case 'crm':
             contentContainer.innerHTML = renderCrmModule(mockData);
@@ -539,6 +544,12 @@ function initApp() {
             }
         });
     }
+
+    // Hash change handler for browser navigation
+    window.addEventListener('hashchange', () => {
+        const r = window.location.hash.replace('#', '');
+        if (r && r !== state.currentRoute) navigateTo(r);
+    });
 
     // Initial render
     const initialRoute = window.location.hash ? window.location.hash.replace('#', '') : 'dashboard';

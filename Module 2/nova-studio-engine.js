@@ -34,26 +34,11 @@
     handle: '@thenovafurniture'
   };
 
-  // Gerçekçi Mimari Showroom / Oda Arka Planları (CDN Supabase)
-  const SHOWROOM_ROOMS = [
-    'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/showroom/warm_atelier.jpg',
-    'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/showroom/luxury_showroom.jpg',
-    'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/showroom/nordic_atelier.jpg'
-  ];
+  // Showroom arka plan oturtma kaldırıldı — Katalog çekimi hero odaklı çalışır
+  const SHOWROOM_ROOMS = [];
 
-  const cachedRoomImages = [];
-  if (typeof Image !== 'undefined') {
-    SHOWROOM_ROOMS.forEach((url, i) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = url;
-      cachedRoomImages[i] = img;
-    });
-  }
-
-  function getPreloadedRoomImage(index = 0) {
-    const idx = Math.abs(index) % SHOWROOM_ROOMS.length;
-    return cachedRoomImages[idx] || null;
+  function getPreloadedRoomImage() {
+    return null;
   }
 
   /**
@@ -206,47 +191,7 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
     return fallback;
   }
 
-  /**
-   * Düz / açık renkli stüdyo fonlarını otomatik temizleyip şeffaf yapar (Hızlı Cutout)
-   */
-  function removeSolidBackground(imgEl, tolerance = 32) {
-    try {
-      const c = document.createElement('canvas');
-      const w = imgEl.naturalWidth || imgEl.width;
-      const h = imgEl.naturalHeight || imgEl.height;
-      if (!w || !h) return imgEl;
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext('2d');
-      ctx.drawImage(imgEl, 0, 0);
-      const imgData = ctx.getImageData(0, 0, w, h);
-      const d = imgData.data;
 
-      // Köşe renk ortalamasını al
-      const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
-      let bgR = 0, bgG = 0, bgB = 0;
-      corners.forEach(([cx, cy]) => {
-        const idx = (cy * w + cx) * 4;
-        bgR += d[idx];
-        bgG += d[idx + 1];
-        bgB += d[idx + 2];
-      });
-      bgR /= 4; bgG /= 4; bgB /= 4;
-
-      for (let i = 0; i < d.length; i += 4) {
-        const diff = Math.sqrt((d[i] - bgR) ** 2 + (d[i + 1] - bgG) ** 2 + (d[i + 2] - bgB) ** 2);
-        if (diff < tolerance) {
-          d[i + 3] = 0;
-        } else if (diff < tolerance * 1.5) {
-          d[i + 3] = Math.round(((diff - tolerance) / (tolerance * 0.5)) * 255);
-        }
-      }
-      ctx.putImageData(imgData, 0, 0);
-      return c;
-    } catch (_) {
-      return imgEl;
-    }
-  }
 
   /**
    * 1. Görseldeki profesyonel mimari afişi HTML5 Canvas üzerinde tam çözünürlüklü çizer.
@@ -337,11 +282,11 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
 
     const hasValidImage = productImageEl && productImageEl.complete && (productImageEl.naturalWidth > 0 || productImageEl.width > 0);
 
-    if (hasValidImage && fitMode === 'cover') {
+    if (hasValidImage) {
       // ════════════════════════════════════════════════════════════════════════
-      // MOD 1: TAM KADRAJ MİMARİ AFİŞ (Referans 1 Formatı - Çakışma Sıfır)
-      // Ürünün kendi orijinal fotoğrafı kadrajı kenardan kenara doldurur.
-      // Dışarıdan ikinci bir oda görünmez; görsel stüdyo ışığıyla kusursuz bütünleşir.
+      // MİMARİ KATALOG ÇEKİMİ: Gerçek Fotoğraf Kadrajı Doldurur (Sıfır Çakışma)
+      // Arka plan oturtma kaldırıldı; mevcut mobilya fotoğrafı profesyonel stüdyo
+      // ışıklandırması ve vinyet ile gerçek bir katalog çekimi gibi sergilenir.
       // ════════════════════════════════════════════════════════════════════════
       const pW = productImageEl.naturalWidth || productImageEl.width;
       const pH = productImageEl.naturalHeight || productImageEl.height;
@@ -364,109 +309,49 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
       ctx.drawImage(productImageEl, drawX, drawY, drawW, drawH);
       ctx.restore();
 
-      // Sıcak Stüdyo Tavan Spot Işığı & Sinematik Vinyet
+      // Minimal Katalog Stüdyo Işıklandırması: Üstten dökülen zarif tavan spot ışığı
       ctx.save();
       const spot = ctx.createRadialGradient(
-        photoX + photoW / 2, photoY + 50, 40,
+        photoX + photoW / 2, photoY + 60, 40,
         photoX + photoW / 2, photoY + photoH / 2, photoW * 0.75
       );
-      spot.addColorStop(0, 'rgba(255, 235, 195, 0.08)');
+      spot.addColorStop(0, 'rgba(255, 245, 225, 0.08)');
       spot.addColorStop(0.55, 'rgba(255, 255, 255, 0)');
-      spot.addColorStop(1, 'rgba(5, 7, 10, 0.40)');
+      spot.addColorStop(1, 'rgba(5, 7, 10, 0.38)');
       ctx.fillStyle = spot;
       ctx.fillRect(photoX, photoY, photoW, photoH);
       ctx.restore();
 
+      // Yumuşak Stüdyo Vinyeti (Kenar karartmasıyla mobilyayı öne çıkarır)
+      ctx.save();
+      const vig = ctx.createRadialGradient(
+        photoX + photoW / 2, photoY + photoH / 2, photoW * 0.38,
+        photoX + photoW / 2, photoY + photoH / 2, photoW * 0.72
+      );
+      vig.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vig.addColorStop(1, 'rgba(6, 8, 12, 0.32)');
+      ctx.fillStyle = vig;
+      ctx.fillRect(photoX, photoY, photoW, photoH);
+      ctx.restore();
+
+      // Sıcak lüks mobilya katalog tonu
+      ctx.save();
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.025)';
+      ctx.fillRect(photoX, photoY, photoW, photoH);
+      ctx.restore();
     } else {
-      // ════════════════════════════════════════════════════════════════════════
-      // MOD 2 & 3: SHOWROOM ODASI & MOBİLYA İZOLASYONU (Cutout / Contain Room)
-      // Showroom odası arkaya çizilir, mobilya parke zemin üzerine oturtulur.
-      // ════════════════════════════════════════════════════════════════════════
-      const roomImg = getPreloadedRoomImage(roomIndex);
-      if (roomImg && roomImg.complete && roomImg.naturalWidth > 0) {
-        const rZoom = zoomScale;
-        const rW = photoW * rZoom;
-        const rH = photoH * rZoom;
-        const rX = photoX - (rW - photoW) / 2;
-        const rY = photoY - (rH - photoH) / 2 + panY * 0.4;
-        ctx.drawImage(roomImg, rX, rY, rW, rH);
-      } else {
-        const wallGrad = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH * 0.65);
-        wallGrad.addColorStop(0, '#11151E');
-        wallGrad.addColorStop(1, '#1A212E');
-        ctx.fillStyle = wallGrad;
-        ctx.fillRect(photoX, photoY, photoW, photoH * 0.65);
+      ctx.save();
+      const phGrad = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
+      phGrad.addColorStop(0, '#101726');
+      phGrad.addColorStop(1, '#0B0F19');
+      ctx.fillStyle = phGrad;
+      ctx.fillRect(photoX, photoY, photoW, photoH);
 
-        const floorGrad = ctx.createLinearGradient(photoX, photoY + photoH * 0.65, photoX, photoY + photoH);
-        floorGrad.addColorStop(0, '#2D2218');
-        floorGrad.addColorStop(0.3, '#3A2C1E');
-        floorGrad.addColorStop(1, '#1E150D');
-        ctx.fillStyle = floorGrad;
-        ctx.fillRect(photoX, photoY + photoH * 0.65, photoW, photoH * 0.35);
-      }
-
-      if (hasValidImage) {
-        const sourceImg = (fitMode === 'cutout') ? removeSolidBackground(productImageEl) : productImageEl;
-        const sW = sourceImg.naturalWidth || sourceImg.width;
-        const sH = sourceImg.naturalHeight || sourceImg.height;
-
-        const pMaxW = photoW * 0.84;
-        const pMaxH = photoH * 0.74;
-        const pRatio = sW / sH;
-        let pDrawW = pMaxW;
-        let pDrawH = pDrawW / pRatio;
-        if (pDrawH > pMaxH) {
-          pDrawH = pMaxH;
-          pDrawW = pDrawH * pRatio;
-        }
-
-        const curZoom = zoomScale;
-        const finalW = pDrawW * curZoom;
-        const finalH = pDrawH * curZoom;
-        const finalX = photoX + (photoW - finalW) / 2 + panX;
-        const groundY = photoY + photoH - (photoH * 0.11);
-        const finalY = groundY - finalH + panY;
-
-        // Zemin Temas Gölgesi (Contact Shadow)
-        ctx.save();
-        const shadowGrad = ctx.createRadialGradient(
-          finalX + finalW / 2, groundY + 4, 15,
-          finalX + finalW / 2, groundY + 10, finalW * 0.54
-        );
-        shadowGrad.addColorStop(0, 'rgba(0, 0, 0, 0.85)');
-        shadowGrad.addColorStop(0.4, 'rgba(0, 0, 0, 0.45)');
-        shadowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-        ctx.fillStyle = shadowGrad;
-        ctx.beginPath();
-        ctx.ellipse(finalX + finalW / 2, groundY + 6, finalW * 0.48, Math.max(14, finalH * 0.08), 0, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-
-        // Mobilya
-        ctx.save();
-        ctx.drawImage(sourceImg, finalX, finalY, finalW, finalH);
-        ctx.restore();
-
-        // Stüdyo Işığı & Vinyet
-        ctx.save();
-        const spot = ctx.createRadialGradient(
-          photoX + photoW / 2, photoY + 50, 40,
-          photoX + photoW / 2, photoY + photoH / 2, photoW * 0.75
-        );
-        spot.addColorStop(0, 'rgba(255, 235, 195, 0.12)');
-        spot.addColorStop(0.55, 'rgba(255, 255, 255, 0)');
-        spot.addColorStop(1, 'rgba(5, 7, 10, 0.50)');
-        ctx.fillStyle = spot;
-        ctx.fillRect(photoX, photoY, photoW, photoH);
-        ctx.restore();
-      } else {
-        ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-        ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('📷 Katalog Fotoğrafı Hazırlanıyor...', targetW / 2, photoY + photoH / 2);
-        ctx.restore();
-      }
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.75)';
+      ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('📷 Katalog Fotoğrafı Hazırlanıyor...', targetW / 2, photoY + photoH / 2);
+      ctx.restore();
     }
 
     ctx.restore(); // frame clip kapat
@@ -651,9 +536,7 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
         zoomScale,
         panX: 0,
         panY,
-        fullRes: false,
-        roomIndex,
-        fitMode
+        fullRes: false
       });
 
       if (typeof onFrame === 'function') onFrame(zoomScale);
@@ -749,9 +632,7 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
             zoomScale,
             panX: 0,
             panY,
-            fullRes: true,
-            roomIndex: opts.roomIndex || 0,
-            fitMode: opts.fitMode || 'cover'
+            fullRes: true
           });
 
           if (canvas && isTemp) {
