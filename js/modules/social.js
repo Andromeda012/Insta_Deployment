@@ -70,7 +70,7 @@ export function renderSocialModule(data) {
                         onclick="if(window.navigateTo) { window.navigateTo('products'); return false; }"
                         style="display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:8px; border:1px solid rgba(212,175,55,0.45); background:linear-gradient(135deg, rgba(212,175,55,0.18), rgba(15,23,42,0.6)); color:#fde68a; font-size:12px; font-weight:700; text-decoration:none; cursor:pointer;"
                     >
-                        🛋️ Ürün Yönetimi (Modül 3) ↗ <span style="background:#d4af37; color:#0b1120; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:900;">ORTAK KAYNAK</span>
+                        🛋️ Ürün Yönetimi (Modül 7) ↗ <span style="background:#d4af37; color:#0b1120; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:900;">ORTAK KAYNAK</span>
                     </a>
                 </div>
                 <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
