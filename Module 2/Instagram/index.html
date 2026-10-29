@@ -1728,26 +1728,6 @@ async function runCloudAutonomousCycleNow() {
   await autonomousInventNewDesign();
   await addScheduledPost(true);
 }
-  let count = 0;
-  (botState.scheduled_posts || []).forEach(p => {
-    if (p.status === 'scheduled') {
-      p.status = 'published';
-      p.published_at = new Date().toISOString();
-      count++;
-    }
-  });
-
-  // Eğer kuyrukta bekleyen gönderi yoksa, bot HİÇBİR FOTO/VİDEO GİRİŞİ OLMADAN KENDİ TASARLAR VE YAYINLAR!
-  if (count === 0) {
-    await autonomousInventNewDesign();
-    await addScheduledPost(true);
-    return;
-  }
-
-  await persistBotStateToSupabase(false);
-  fetch('/api/instagram-cron', { method: 'POST' }).catch(() => {});
-  showToast(`⚡ Bulut Otonom Döngüsü çalıştı: ${count} içerik onay beklenmeden yayınlandı!`);
-}
 
 // ── 1. AŞAMA SABİT KURALLAR ──
 function renderTier1Rules() {
