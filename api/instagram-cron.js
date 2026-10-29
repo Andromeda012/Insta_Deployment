@@ -61,19 +61,44 @@ export default async function handler(req, res) {
     const config = state.config || {};
 
     // Doğrudan UI'dan "Şimdi Yayınla" isteği geldiyse Meta Graph API'ye anında gönder
-    if (req.method === 'POST' && (req.body?.action === 'publish' || req.body?.imageBase64)) {
+    if (req.method === 'POST' && (req.body?.action === 'publish' || req.body?.imageBase64 || req.body?.videoBase64 || req.body?.videoUrl || req.body?.mediaUrl)) {
       const body = req.body || {};
       let igUserId = body.igUserId || config.ig_user_id || process.env.IG_USER_ID;
       let accessToken = body.accessToken || config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN;
-      let publicImageUrl = body.mediaUrl;
-      const mediaType = body.mediaType || 'POST';
+      let publicImageUrl = body.mediaUrl || body.imageUrl;
+      let publicVideoUrl = body.videoUrl;
+      const mediaType = (body.mediaType || (publicVideoUrl ? 'REELS' : 'POST')).toUpperCase();
       const caption = body.caption || '';
 
       if (!igUserId || !accessToken) {
         return res.status(400).json({ ok: false, error: 'Instagram Business ID veya Meta Access Token eksik!' });
       }
 
-      if (body.imageBase64) {
+      // Eğer Base64 Video geldiyse MP4 olarak Supabase Storage'a kaydet
+      if (body.videoBase64) {
+        try {
+          const cleanBase64 = body.videoBase64.replace(/^data:video\/\w+;base64,/, '');
+          const buffer = Buffer.from(cleanBase64, 'base64');
+          const fileName = `reels-${Date.now()}-${Math.random().toString(36).substring(2, 7)}.mp4`;
+          const storagePath = `instagram/${fileName}`;
+          const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${storagePath}`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'video/mp4',
+              'x-upsert': 'true'
+            },
+            body: buffer
+          });
+          if (uploadRes.ok) {
+            publicVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
+          }
+        } catch (_) {}
+      }
+
+      // Eğer Base64 Görsel geldiyse PNG olarak Supabase Storage'a kaydet
+      if (body.imageBase64 && !publicVideoUrl) {
         try {
           const cleanBase64 = body.imageBase64.replace(/^data:image\/\w+;base64,/, '');
           const buffer = Buffer.from(cleanBase64, 'base64');
@@ -95,6 +120,85 @@ export default async function handler(req, res) {
         } catch (_) {}
       }
 
+      // REELS VİDEOSU YAYINLAMA
+      if (mediaType === 'REELS' || publicVideoUrl) {
+        if (!publicVideoUrl) {
+          return res.status(400).json({ ok: false, error: 'Reels için videoUrl veya videoBase64 verisi gereklidir!' });
+        }
+
+        // 1. Meta Reels Video Konteyneri Oluştur
+        const createParams = new URLSearchParams();
+        createParams.set('access_token', accessToken);
+        createParams.set('media_type', 'REELS');
+        createParams.set('video_url', publicVideoUrl);
+        createParams.set('caption', caption);
+        createParams.set('share_to_feed', 'true');
+
+        const containerRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+          method: 'POST',
+          body: createParams
+        });
+        const containerData = await containerRes.json();
+        if (!containerRes.ok || !containerData.id) {
+          return res.status(400).json({
+            ok: false,
+            error: `Meta Reels Hatası: ${containerData?.error?.message || 'Reels konteyneri oluşturulamadı'}`
+          });
+        }
+
+        const containerId = containerData.id;
+
+        // 2. Meta Video Transcoding Durumunu Bekle (status_code === 'FINISHED')
+        let ready = false;
+        for (let i = 0; i < 25; i++) {
+          await new Promise(r => setTimeout(r, 2500));
+          const checkRes = await fetch(`https://graph.facebook.com/v20.0/${containerId}?fields=status_code,status&access_token=${accessToken}`);
+          const checkData = await checkRes.json();
+          if (checkData.status_code === 'FINISHED') {
+            ready = true;
+            break;
+          }
+          if (checkData.status_code === 'ERROR') {
+            return res.status(400).json({
+              ok: false,
+              error: `Meta Video İşleme Hatası: ${checkData.status || 'Reels videosu kodlanamadı'}`
+            });
+          }
+        }
+
+        if (!ready) {
+          return res.status(400).json({
+            ok: false,
+            error: 'Meta Reels video işleme zaman aşımına uğradı, lütfen birkaç saniye sonra tekrar deneyin.'
+          });
+        }
+
+        // 3. Meta Yayınla (media_publish)
+        const pubParams = new URLSearchParams();
+        pubParams.set('creation_id', containerId);
+        pubParams.set('access_token', accessToken);
+        const pubRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+          method: 'POST',
+          body: pubParams
+        });
+        const pubData = await pubRes.json();
+        if (!pubRes.ok || !pubData.id) {
+          return res.status(400).json({
+            ok: false,
+            error: `Meta Reels Yayın Hatası: ${pubData?.error?.message || 'Yayınlanamadı'}`
+          });
+        }
+
+        return res.status(200).json({
+          ok: true,
+          publishedId: pubData.id,
+          mediaUrl: publicVideoUrl,
+          mediaType: 'REELS',
+          message: 'Reels videosu hareketli kamera efektiyle başarıyla Instagram\'da yayınlandı!'
+        });
+      }
+
+      // STANDART GÖNDERİ / HİKAYE YAYINLAMA
       if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
         publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
       }
@@ -138,6 +242,7 @@ export default async function handler(req, res) {
         ok: true,
         publishedId: pubData.id,
         mediaUrl: publicImageUrl,
+        mediaType,
         message: 'Gönderi başarıyla Instagram hesabınızda yayınlandı!'
       });
     }

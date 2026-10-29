@@ -610,6 +610,14 @@
                 <option value="fluted">📏 Dikey Fugalı (Çıtalı) CNC</option>
               </select>
             </div>
+            <div class="form-group">
+              <label>🏛️ Mimari Oda / Stüdyo Sahnesi</label>
+              <select class="form-control" id="auto_room_select" onchange="renderAutonomousCanvasPreview()">
+                <option value="0">🏡 İskandinav Sıcak Ahşap Atölye</option>
+                <option value="1">🏛️ Akustik Çıtalı Lüks Showroom</option>
+                <option value="2">🏢 Modern Taş & Beton Loft</option>
+              </select>
+            </div>
           </div>
 
           <!-- CANLI OTONOM TASARIM TUVALİ (BOTUN KENDİ ÜRETTİĞİ GÖRSEL / REELS ÖNİZLEMESİ) -->
@@ -796,6 +804,9 @@
           <div class="form-group">
             <label>Google Gemini API Key</label>
             <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
+            <small style="color:#60A5FA;display:block;margin-top:5px;font-size:11.5px;">
+              🔑 <strong>Ücretsiz Gemini API Anahtarı:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#93C5FD;text-decoration:underline;font-weight:600;">aistudio.google.com/app/apikey</a> adresinden Google hesabınızla anında ve ücretsiz oluşturabilirsiniz.
+            </small>
           </div>
         </div>
         <div class="form-group">
@@ -1283,6 +1294,10 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
       ]
     };
 
+    const roomIdx = opts.roomIndex !== undefined
+      ? opts.roomIndex
+      : parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
+
     window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
       productImageEl: currentProductImageEl,
       product: prod,
@@ -1290,7 +1305,8 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
       zoomScale: opts.zoomScale || 1.0,
       panX: opts.panX || 0,
       panY: opts.panY || 0,
-      fullRes: opts.fullRes !== false
+      fullRes: opts.fullRes !== false,
+      roomIndex: roomIdx
     });
     return;
   }
@@ -1506,7 +1522,8 @@ function toggleInstagramKenBurns() {
   } else {
     isIgAnimPlaying = true;
     if (btn) btn.textContent = '⏹️ Hareketi Durdur';
-    igAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentProductImageEl, prod, isVertical);
+    const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
+    igAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentProductImageEl, prod, isVertical, null, roomIdx);
   }
 }
 
@@ -1522,9 +1539,14 @@ async function autonomousInventNewDesign() {
     document.getElementById('post_title').value = pTitle;
     document.getElementById('post_subtitle').value = pSub;
 
-    // Lüks Açıklama (Referans 2 Görsel Formatı)
+    // Gemini AI ile lüks açıklama üret (API key yoksa lüks şablon)
     if (window.NovaStudioEngine) {
-      document.getElementById('post_caption').value = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
+      const geminiKey = botState?.config?.gemini_api_key || '';
+      const geminiModel = botState?.config?.gemini_model || 'gemini-2.5-flash';
+      document.getElementById('post_caption').value = '✨ Gemini AI lüks açıklama metnini hazırlıyor...';
+      window.NovaStudioEngine.generateGeminiLuxuryCaption(prod, geminiKey, geminiModel, 'instagram').then(cap => {
+        document.getElementById('post_caption').value = cap;
+      });
     }
 
     // Ürün görselini yükle
@@ -1537,6 +1559,10 @@ async function autonomousInventNewDesign() {
       img.crossOrigin = 'anonymous';
       img.onload = () => {
         currentProductImageEl = img;
+        renderAutonomousCanvasPreview();
+      };
+      img.onerror = () => {
+        currentProductImageEl = null;
         renderAutonomousCanvasPreview();
       };
       img.src = fullImg;
@@ -1552,140 +1578,121 @@ async function autonomousInventNewDesign() {
     renderAutonomousCanvasPreview();
   }
 
-  showToast('👑 Nova Lüks Mimari Afiş: Ürün fotoğrafı, oda atmosferi tamamlama ve İskandinav açıklama metni yüklendi!');
-}
-
-async function exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle) {
-  // 1. Önce 1080p tam çözünürlüklü kanvası bellekte çiz ve PNG olarak Supabase Storage'a yükle
-  try {
-    const offscreen = document.createElement('canvas');
-    drawAutonomousGraphicOnCanvas(offscreen, {
-      fullRes: true,
-      mediaType,
-      themeKey,
-      doorStyle,
-      headline,
-      subheadline
-    });
-
-    const blob = await new Promise(resolve => offscreen.toBlob(resolve, 'image/png', 0.95));
-    if (blob && sbClient) {
-      const filePath = `instagram/auto-${mediaType.toLowerCase()}-${Date.now()}.png`;
-      const { error } = await sbClient.storage.from('media').upload(filePath, blob, {
-        contentType: 'image/png',
-        upsert: true
-      });
-      if (!error) {
-        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
-        if (data?.publicUrl) return data.publicUrl;
-      }
-    }
-  } catch (e) {
-    console.warn('Canvas Storage upload fallback:', e);
-  }
-
-  // 2. Bulut Render API yedek URL'si (Her zaman çalışır, dosya yükleme gerektirmez)
-  const params = new URLSearchParams({
-    type: mediaType,
-    badge: 'GLOBAL KAPAK MOBİLYA • OTONOM TASARIM',
-    headline,
-    subheadline,
-    theme: themeKey,
-    door: doorStyle
-  });
-  return `https://insta-deployment-rho.vercel.app/api/instagram-render?${params.toString()}`;
+  showToast('👑 Lüks Mimari Sahne & Gemini AI Metni Hazırlandı!');
 }
 
 async function addScheduledPost(publishImmediately = false) {
   const btn = document.getElementById('btnQueuePost');
-  const mediaType = document.getElementById('post_media_type').value || 'REELS';
-  const themeKey = document.getElementById('auto_theme_select')?.value || 'nordic-fjord';
-  const doorStyle = document.getElementById('auto_door_style')?.value || 'shaker';
+  const mediaType = (document.getElementById('post_media_type')?.value || 'REELS').toUpperCase();
+  const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
 
-  // Eğer başlık veya metin boşsa bot kendisi doldursun
-  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) {
+  if (!document.getElementById('post_title')?.value.trim() || !document.getElementById('post_caption')?.value.trim()) {
     await autonomousInventNewDesign();
   }
 
-  const headline = document.getElementById('post_title').value.trim();
-  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
-  const caption = document.getElementById('post_caption').value.trim();
-  const hashtags = document.getElementById('post_hashtags').value.trim();
-  const scheduledFor = document.getElementById('post_scheduled_for').value
+  const headline = document.getElementById('post_title')?.value.trim() || 'NOVA KOLEKSİYONU';
+  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • CNC Membran';
+  const caption = document.getElementById('post_caption')?.value.trim() || '';
+  const hashtags = document.getElementById('post_hashtags')?.value.trim() || '';
+  const scheduledFor = document.getElementById('post_scheduled_for')?.value
     ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
     : new Date().toISOString();
 
-  // 1080p tam çözünürlüklü kanvası bellekte çiz ve PNG Base64 al
-  const offscreen = document.createElement('canvas');
-  drawAutonomousGraphicOnCanvas(offscreen, {
-    fullRes: true,
-    mediaType,
-    themeKey,
-    doorStyle,
-    headline,
-    subheadline
-  });
-  const imageBase64 = offscreen.toDataURL('image/png', 0.95);
+  const prod = currentSelectedProduct || { title: headline, kategori: subheadline };
+  const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
 
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = publishImmediately ? '🚀 Instagram API’ye Gönderiliyor...' : '🎨 Bot Görseli 1080p Tasarlıyor...';
+  const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
+  const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+
+  if (publishImmediately && (!igUserId || !accessToken)) {
+    alert('❌ Instagram Business ID veya Meta Access Token eksik! Lütfen "API & Otomasyon Ayarları" sekmesinden bu bilgileri kaydedin.');
+    return;
   }
 
-  let mediaUrl = await exportAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
+  try {
+    let finalMediaUrl = '';
 
-  if (publishImmediately) {
-    // Doğrudan Meta Graph API'ye yayın isteği at
-    try {
-      const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
-      const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
-
-      if (!igUserId || !accessToken) {
-        if (btn) { btn.disabled = false; btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle'; }
-        alert('❌ Instagram Business ID veya Meta Access Token eksik! Lütfen "API & Otomasyon Ayarları" sekmesinden bu bilgileri kaydedin.');
-        return;
-      }
-
-      const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
-      let publicImageUrl = mediaUrl;
-      if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
-        publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
-      }
-
-      showToast('🚀 Meta Graph API ile doğrudan Instagram\'a bağlanılıyor...');
-
-      // 1. Meta Konteyner Oluştur
-      const cParams = new URLSearchParams();
-      cParams.set('access_token', accessToken);
-      cParams.set('image_url', publicImageUrl);
-      cParams.set('caption', fullCaption);
-
-      const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
-        method: 'POST',
-        body: cParams
-      });
-      const cData = await cRes.json();
-      if (!cRes.ok || !cData.id) {
-        throw new Error(cData?.error?.message || 'Meta medya konteyneri oluşturulamadı');
-      }
-
-      // 2. Meta Yayınla (media_publish)
-      const pParams = new URLSearchParams();
-      pParams.set('creation_id', cData.id);
-      pParams.set('access_token', accessToken);
-
-      const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
-        method: 'POST',
-        body: pParams
-      });
-      const pData = await pRes.json();
-      if (!pRes.ok || !pData.id) {
-        throw new Error(pData?.error?.message || 'Meta yayını başarısız oldu');
-      }
-
+    if (mediaType === 'REELS') {
       if (btn) {
-        btn.disabled = false;
-        btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+        btn.disabled = true;
+        btn.textContent = '🎬 Kamera Hareketi Kaydediliyor (MP4)...';
+      }
+      showToast('🎬 Kamera hareketi kaydediliyor (MP4 video üretiliyor)...');
+
+      const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
+      const mp4Blob = await window.NovaStudioEngine.recordCanvasVideo(
+        previewCanvas,
+        currentProductImageEl,
+        prod,
+        isVertical,
+        5000,
+        { roomIndex: roomIdx }
+      );
+
+      if (btn) btn.textContent = '☁️ MP4 Video Storage’a Yükleniyor...';
+      const fileName = `reels-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.mp4`;
+      const filePath = `instagram/${fileName}`;
+      
+      const { data: uploadData, error: upErr } = await sbClient.storage.from('media').upload(filePath, mp4Blob, {
+        contentType: 'video/mp4',
+        upsert: true
+      });
+      if (upErr) throw new Error(`Video Storage Hatası: ${upErr.message}`);
+
+      const { data: pubData } = sbClient.storage.from('media').getPublicUrl(filePath);
+      finalMediaUrl = pubData?.publicUrl;
+
+    } else {
+      // POST veya STORY: 1080p Tam Çözünürlüklü Görsel
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '🎨 1080p Görsel Hazırlanıyor...';
+      }
+      const roomIdx = parseInt(document.getElementById('auto_room_select')?.value || '0', 10);
+      const offscreen = document.createElement('canvas');
+      window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
+        productImageEl: currentProductImageEl,
+        product: prod,
+        isVertical,
+        fullRes: true,
+        roomIndex: roomIdx
+      });
+
+      const pngBlob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.95));
+      const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.png`;
+      const filePath = `instagram/${fileName}`;
+
+      const { error: upErr } = await sbClient.storage.from('media').upload(filePath, pngBlob, {
+        contentType: 'image/png',
+        upsert: true
+      });
+      if (upErr) throw new Error(`Görsel Storage Hatası: ${upErr.message}`);
+
+      const { data: pubData } = sbClient.storage.from('media').getPublicUrl(filePath);
+      finalMediaUrl = pubData?.publicUrl;
+    }
+
+    if (publishImmediately) {
+      if (btn) btn.textContent = '🚀 Instagram API’ye Gönderiliyor (Meta İşliyor)...';
+      showToast('🚀 Meta Graph API’ye gönderiliyor, video işlenmesi bekleniyor...');
+
+      const pubRes = await fetch('/api/instagram-cron', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'publish',
+          mediaType,
+          videoUrl: mediaType === 'REELS' ? finalMediaUrl : null,
+          mediaUrl: mediaType !== 'REELS' ? finalMediaUrl : null,
+          caption: fullCaption,
+          igUserId,
+          accessToken
+        })
+      });
+
+      const resData = await pubRes.json();
+      if (!pubRes.ok || !resData.ok) {
+        throw new Error(resData?.error || 'Yayınlanamadı');
       }
 
       const newItem = {
@@ -1694,56 +1701,50 @@ async function addScheduledPost(publishImmediately = false) {
         title: `[Otonom Tasarım] ${headline}`,
         headline,
         subheadline,
-        theme_id: themeKey,
-        door_style: doorStyle,
         caption,
         hashtags,
-        media_url: publicImageUrl,
+        media_url: finalMediaUrl,
         auto_designed: true,
         scheduled_for: new Date().toISOString(),
         status: 'published',
         published_at: new Date().toISOString(),
-        ig_published_id: pData.id
+        ig_published_id: resData.publishedId
       };
       botState.scheduled_posts.unshift(newItem);
       await persistBotStateToSupabase(false);
-      showToast(`✅ Gönderi Instagram'da BAŞARIYLA yayınlandı! (ID: ${pData.id})`);
-      alert(`🎉 Tebrikler! Gönderi doğrudan Instagram hesabınızda (@thenovafurniture) yayınlandı!\n\nInstagram Gönderi ID: ${pData.id}\n\nProfilinizi yenileyerek yayını kontrol edebilirsiniz.`);
-    } catch (err) {
-      if (btn) {
-        btn.disabled = false;
-        btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
-      }
-      alert(`❌ Instagram Yayın Hatası:\n${err.message}`);
+      renderScheduledQueue();
+
+      alert(`🎉 Tebrikler! ${mediaType === 'REELS' ? 'Reels videonuz hareketli kamera efektiyle' : 'Gönderiniz'} doğrudan Instagram hesabınızda (@thenovafurniture) yayınlandı!\n\nInstagram Medya ID: ${resData.publishedId}`);
+      showToast(`✅ Instagram'da yayınlandı! ID: ${resData.publishedId}`);
+    } else {
+      const newItem = {
+        id: 'auto-post-' + Date.now(),
+        media_type: mediaType,
+        title: `[Otonom Tasarım] ${headline}`,
+        headline,
+        subheadline,
+        caption,
+        hashtags,
+        media_url: finalMediaUrl,
+        auto_designed: true,
+        scheduled_for: scheduledFor,
+        status: 'scheduled',
+        published_at: null
+      };
+      botState.scheduled_posts.unshift(newItem);
+      await persistBotStateToSupabase(false);
+      renderScheduledQueue();
+      showToast(`⏰ Bot ${mediaType} içeriğini üretti ve bulut kuyruğuna ekledi!`);
     }
-    return;
+
+  } catch (err) {
+    alert(`❌ İşlem Hatası: ${err.message}`);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
+    }
   }
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
-  }
-
-  const newItem = {
-    id: 'auto-post-' + Date.now(),
-    media_type: mediaType,
-    title: `[Otonom Tasarım] ${headline}`,
-    headline,
-    subheadline,
-    theme_id: themeKey,
-    door_style: doorStyle,
-    caption,
-    hashtags,
-    media_url: mediaUrl,
-    auto_designed: true,
-    scheduled_for: scheduledFor,
-    status: 'scheduled',
-    published_at: null
-  };
-
-  botState.scheduled_posts.unshift(newItem);
-  await persistBotStateToSupabase(false);
-  showToast(`⏰ Bot ${mediaType} tasarımını üretti ve bulut kuyruğuna ekledi; saati geldiğinde otomatik paylaşılacak!`);
 }
 
 function renderScheduledQueue() {
@@ -1757,9 +1758,10 @@ function renderScheduledQueue() {
   cont.innerHTML = posts.map((p, idx) => {
     const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
     const isPub = p.status === 'published';
+    const isVid = p.media_type === 'REELS' || (p.media_url && p.media_url.endsWith('.mp4'));
     return `
       <div class="queue-item">
-        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+        ${isVid ? `<video class="queue-thumb" src="${p.media_url}" muted autoplay loop></video>` : `<img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">`}
         <div class="queue-info">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
             <span class="badge ${p.media_type==='REELS'?'badge-pink':p.media_type==='STORIES'?'badge-purple':'badge-blue'}">${p.media_type}</span>
@@ -1793,40 +1795,35 @@ async function publishQueueItemNow(idx) {
 
   showToast(`🚀 "${post.title}" Instagram'a gönderiliyor...`);
   try {
-    let publicImageUrl = post.media_url;
-    if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
-      publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+    const isReel = post.media_type === 'REELS' || (post.media_url && post.media_url.endsWith('.mp4'));
+    const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
+
+    const pubRes = await fetch('/api/instagram-cron', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'publish',
+        mediaType: isReel ? 'REELS' : (post.media_type || 'POST'),
+        videoUrl: isReel ? post.media_url : null,
+        mediaUrl: !isReel ? post.media_url : null,
+        caption: fullCaption,
+        igUserId,
+        accessToken
+      })
+    });
+
+    const resData = await pubRes.json();
+    if (!pubRes.ok || !resData.ok) {
+      throw new Error(resData?.error || 'Yayınlanamadı');
     }
-
-    const cParams = new URLSearchParams();
-    cParams.set('access_token', accessToken);
-    cParams.set('image_url', publicImageUrl);
-    cParams.set('caption', [post.caption, post.hashtags].filter(Boolean).join('\n\n'));
-
-    const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
-      method: 'POST',
-      body: cParams
-    });
-    const cData = await cRes.json();
-    if (!cRes.ok || !cData.id) throw new Error(cData?.error?.message || 'Medya konteyneri oluşturulamadı');
-
-    const pParams = new URLSearchParams();
-    pParams.set('creation_id', cData.id);
-    pParams.set('access_token', accessToken);
-
-    const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
-      method: 'POST',
-      body: pParams
-    });
-    const pData = await pRes.json();
-    if (!pRes.ok || !pData.id) throw new Error(pData?.error?.message || 'Yayın başarısız oldu');
 
     post.status = 'published';
     post.published_at = new Date().toISOString();
-    post.ig_published_id = pData.id;
+    post.ig_published_id = resData.publishedId;
     await persistBotStateToSupabase(false);
+    renderScheduledQueue();
+    alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${resData.publishedId})`);
     showToast(`✅ "${post.title}" Instagram'da BAŞARIYLA yayınlandı!`);
-    alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${pData.id})`);
   } catch (err) {
     alert(`❌ Hata: ${err.message}`);
   }
