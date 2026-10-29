@@ -457,7 +457,7 @@ export function switchSocialBotChannel(btnEl, channel) {
 }
 
 // Initialize Application
-document.addEventListener('DOMContentLoaded', () => {
+function initApp() {
     // Expose helpers globally to window for inline template handlers
     window.navigateTo = navigateTo;
     window.setRole = setRole;
@@ -541,5 +541,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Initial render
-    navigateTo('dashboard');
-});
+    const initialRoute = window.location.hash ? window.location.hash.replace('#', '') : 'dashboard';
+    navigateTo(initialRoute || 'dashboard');
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initApp);
+} else {
+    initApp();
+}

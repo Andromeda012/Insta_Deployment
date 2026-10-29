@@ -1,9 +1,32 @@
 // Module 2: Social Media & Cloud Bot Control Panel (Multi-Platform Hub)
-// Active Bots:
-// 1. Module 2 / Instagram Cloud Bot (Otonom Reels/Story/Post Tasarımı + 3 Aşamalı DM/Yorum)
-// 2. Module 2 / Facebook Cloud Bot (Otonom Katalog/B2B Kart/FB Reels/FB Story Tasarımı + 3 Aşamalı Messenger/Yorum)
-// 3. Module 2 / YouTube Shorts Cloud Bot (Otonom 9:16 Dikey Sahne + #Shorts SEO & Sabit Yorum + 3 Aşamalı Yorum Motoru)
-// 4. Module 2 / TikTok Cloud Bot (Otonom 9:16 Fabrika ASMR, Photo Mode Kartela, POV Dönüşüm + 3 Aşamalı Yorum/DM Motoru)
+if (typeof window !== 'undefined') {
+    window.switchSocialBotChannel = function(btnEl, channel) {
+        const frame = document.getElementById('module2-frame');
+        if (!frame) return;
+
+        if (btnEl) {
+            btnEl.parentElement?.querySelectorAll('.embed-tab-chip').forEach(b => b.classList.remove('active'));
+            btnEl.classList.add('active');
+        }
+
+        const channelMap = {
+            instagram: { path: 'Module%202/Instagram/index.html', label: '📸 Instagram Bulut Bot Kontrol Merkezi aktif.' },
+            facebook: { path: 'Module%202/Facebook/index.html', label: '📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.' },
+            youtube: { path: 'Module%202/Youtube%20Shorts/index.html', label: '▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.' },
+            tiktok: { path: 'Module%202/Tiktok/index.html', label: '🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.' },
+            catalog: { path: 'Module%202/Catalog/index.html', label: '🗂️ Ürün Kataloğu & Medya Havuzu (4 Botun Ortak Kaynağı) aktif.' }
+        };
+
+        const target = channelMap[channel];
+        if (target) {
+            frame.src = target.path;
+            if (typeof window.showToast === 'function') {
+                window.showToast(target.label);
+            }
+        }
+    };
+}
+
 export function renderSocialModule(data) {
     return `
         <div class="module-embed-shell" style="display:flex; flex-direction:column; height:100%;">
