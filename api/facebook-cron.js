@@ -15,12 +15,56 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik
 
 async function fetchProductsCatalog() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
   } catch (_) {}
   return [];
+}
+
+async function ensurePublicImageUrl(rawImg, slug = 'item') {
+  if (!rawImg) {
+    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+  }
+  if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+    if (rawImg.includes('.svg') || rawImg.includes('facebook-render')) {
+      return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+    }
+    return rawImg;
+  }
+  if (rawImg.startsWith('data:image/')) {
+    try {
+      const cleanB64 = rawImg.replace(/^data:image\/\w+;base64,/, '');
+      const mimeMatch = rawImg.match(/^data:(image\/\w+);base64,/);
+      const ext = mimeMatch && mimeMatch[1].includes('jpeg') ? 'jpg' : 'png';
+      const cType = mimeMatch ? mimeMatch[1] : 'image/png';
+      const buf = Buffer.from(cleanB64, 'base64');
+      const safeSlug = (slug || 'product').replace(/[^a-zA-Z0-9_-]/g, '');
+      const fileName = `catalog-${safeSlug}-${Date.now()}.${ext}`;
+      const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/facebook/${fileName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': cType,
+          'x-upsert': 'true'
+        },
+        body: buf
+      });
+      if (uploadRes.ok) {
+        return `${SUPABASE_URL}/storage/v1/object/public/media/facebook/${fileName}`;
+      }
+    } catch (_) {}
+    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+  }
+  if (rawImg.startsWith('/')) {
+    return `https://globalmobilyaweb.vercel.app${rawImg}`;
+  }
+  return `https://globalmobilyaweb.vercel.app/${rawImg}`;
 }
 
 async function uploadAutonomousFbSvgToStorage(fileName, svgString) {
@@ -118,13 +162,13 @@ export default async function handler(req, res) {
         config
       });
 
-      const uploadedUrl = await uploadAutonomousFbSvgToStorage(
-        `${autoDesigned.id}.svg`,
-        autoDesigned.svg_markup
-      );
-      if (uploadedUrl) {
-        autoDesigned.media_url = uploadedUrl;
+      let pickedProduct = null;
+      if (catalog && catalog.length > 0) {
+        pickedProduct = catalog[Math.floor(Math.random() * catalog.length)];
       }
+
+      const mediaImg = await ensurePublicImageUrl(pickedProduct?.ana_resim, pickedProduct?.slug);
+      autoDesigned.media_url = mediaImg;
 
       const newPostRecord = {
         id: autoDesigned.id,
@@ -140,6 +184,7 @@ export default async function handler(req, res) {
         hashtags: autoDesigned.hashtags,
         media_url: autoDesigned.media_url,
         auto_designed: true,
+        product_slug: pickedProduct?.slug || null,
         scheduled_for: new Date().toISOString(),
         status: 'scheduled'
       };
@@ -153,7 +198,8 @@ export default async function handler(req, res) {
       const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
       try {
         const publishResult = await publishToFacebookPageGraphApi({
-          pageId: config.page_id || process.env.FB_PAGE_ID || '',
+          pageId: config.page_id || process.env.FB_PAGE_ID || '122127295833480422',
+          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
           pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || '',
           mediaType: post.media_type || 'PHOTO_POST',
           mediaUrl: post.media_url,

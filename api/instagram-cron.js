@@ -14,12 +14,60 @@ const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6Ik
 
 async function fetchProductsCatalog() {
   try {
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler`, {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
-    if (res.ok) return await res.json();
-  } catch (_) {}
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) return data;
+    }
+  } catch (err) {
+    console.warn('Ürün kataloğu çekme hatası:', err);
+  }
   return [];
+}
+
+async function ensurePublicImageUrl(rawImg, slug = 'item') {
+  if (!rawImg) {
+    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+  }
+  if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
+    if (rawImg.includes('.svg') || rawImg.includes('instagram-render')) {
+      return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+    }
+    return rawImg;
+  }
+  if (rawImg.startsWith('data:image/')) {
+    try {
+      const cleanB64 = rawImg.replace(/^data:image\/\w+;base64,/, '');
+      const mimeMatch = rawImg.match(/^data:(image\/\w+);base64,/);
+      const ext = mimeMatch && mimeMatch[1].includes('jpeg') ? 'jpg' : 'png';
+      const cType = mimeMatch ? mimeMatch[1] : 'image/png';
+      const buf = Buffer.from(cleanB64, 'base64');
+      const safeSlug = (slug || 'product').replace(/[^a-zA-Z0-9_-]/g, '');
+      const fileName = `catalog-${safeSlug}-${Date.now()}.${ext}`;
+      const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/instagram/${fileName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': cType,
+          'x-upsert': 'true'
+        },
+        body: buf
+      });
+      if (uploadRes.ok) {
+        return `${SUPABASE_URL}/storage/v1/object/public/media/instagram/${fileName}`;
+      }
+    } catch (e) {
+      console.warn('Base64 upload error:', e);
+    }
+    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+  }
+  if (rawImg.startsWith('/')) {
+    return `https://globalmobilyaweb.vercel.app${rawImg}`;
+  }
+  return `https://globalmobilyaweb.vercel.app/${rawImg}`;
 }
 
 async function uploadAutonomousSvgToStorage(fileName, svgString) {
@@ -263,21 +311,23 @@ export default async function handler(req, res) {
     // Eğer kuyrukta saati gelmiş gönderi yoksa (veya doğrudan otonom üretim tetiklendiyse):
     // Bot herhangi bir fotoğraf/video girişine ihtiyaç duymadan KENDİSİ TASARLAR ve yayın kuyruğuna alır!
     if (duePosts.length === 0) {
-      const typesRotation = ['REELS', 'STORIES', 'POST'];
+      const typesRotation = ['POST', 'REELS', 'POST', 'STORIES'];
       const chosenType = forceGenerateType || typesRotation[Math.floor(Math.random() * typesRotation.length)];
+      
+      let pickedProduct = null;
+      if (catalog && catalog.length > 0) {
+        pickedProduct = catalog[Math.floor(Math.random() * catalog.length)];
+      }
+
       const autoDesigned = await generateAutonomousInstagramContent({
         mediaType: chosenType,
         productsCatalog: catalog,
         config
       });
 
-      const uploadedUrl = await uploadAutonomousSvgToStorage(
-        `${autoDesigned.id}.svg`,
-        autoDesigned.svg_markup
-      );
-      if (uploadedUrl) {
-        autoDesigned.media_url = uploadedUrl;
-      }
+      // Gerçek ürün görselini Meta Graph API için geçerli PNG/JPEG URL'ine dönüştür
+      const mediaImg = await ensurePublicImageUrl(pickedProduct?.ana_resim, pickedProduct?.slug);
+      autoDesigned.media_url = mediaImg;
 
       const newPostRecord = {
         id: autoDesigned.id,
@@ -292,6 +342,7 @@ export default async function handler(req, res) {
         hashtags: autoDesigned.hashtags,
         media_url: autoDesigned.media_url,
         auto_designed: true,
+        product_slug: pickedProduct?.slug || null,
         scheduled_for: new Date().toISOString(),
         status: 'scheduled'
       };
@@ -304,8 +355,8 @@ export default async function handler(req, res) {
     for (const post of duePosts) {
       const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
       const publishResult = await publishToInstagramGraphApi({
-        igUserId: config.ig_user_id || process.env.IG_USER_ID || '',
-        accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || '',
+        igUserId: config.ig_user_id || process.env.IG_USER_ID || '17841435882645322',
+        accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
         mediaType: post.media_type || post.content_type || 'POST',
         mediaUrl: post.media_url,
         caption: fullCaption
