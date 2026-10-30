@@ -1,0 +1,23 @@
+name: 7/24 Cloud Bot Autonomous Heartbeat
+
+on:
+  schedule:
+    # Her 5 dakikada bir 7/24 otonom calisir (UTC)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Instagram DM Scanner & AI Responder
+        run: |
+          curl -s -m 25 "https://insta-deployment-rho.vercel.app/api/instagram-cron?action=scan_dms" || true
+
+      - name: Trigger Instagram Scheduled Post Publisher
+        run: |
+          curl -s -m 35 "https://insta-deployment-rho.vercel.app/api/instagram-cron" || true
+
+      - name: Trigger Facebook Scheduled Post Publisher
+        run: |
+          curl -s -m 35 "https://insta-deployment-rho.vercel.app/api/facebook-cron" || true
