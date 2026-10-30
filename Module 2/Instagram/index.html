@@ -976,16 +976,21 @@ async function persistBotStateToSupabase(notify = true) {
 
 function populateFormsAndRenderAll() {
   const c = botState.config || {};
-  document.getElementById('cfg_handle').value = c.account_handle || '@thenovafurniture';
-  document.getElementById('cfg_ig_user_id').value = c.ig_user_id || '17841435882645322';
-  document.getElementById('cfg_access_token').value = c.access_token || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi';
-  document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
-  document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
-  document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
-  document.getElementById('cfg_wa_number').value = c.tier3_whatsapp_number || '905050151035';
-  document.getElementById('cfg_phone_display').value = c.tier3_phone_display || '0 (505) 015 1035';
-  document.getElementById('cfg_tier3_triggers').value = (c.tier3_handoff_triggers || []).join(', ');
-  document.getElementById('cfg_tier3_template').value = c.tier3_handoff_template || '';
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+
+  setVal('cfg_handle', c.account_handle || '@thenovafurniture');
+  setVal('cfg_ig_user_id', c.ig_user_id || '17841435882645322');
+  setVal('cfg_access_token', c.access_token || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi');
+  setVal('cfg_gemini_model', c.gemini_model || 'gemini-2.5-flash');
+  setVal('cfg_gemini_key', c.gemini_api_key || '');
+  setVal('cfg_tier2_prompt', c.tier2_system_prompt || '');
+  setVal('cfg_wa_number', c.tier3_whatsapp_number || '905050151035');
+  setVal('cfg_phone_display', c.tier3_phone_display || '0 (505) 015 1035');
+  setVal('cfg_tier3_triggers', (c.tier3_handoff_triggers || []).join(', '));
+  setVal('cfg_tier3_template', c.tier3_handoff_template || '');
 
   // Varsayılan tarih/saat inputunu 1 saat sonrasına ayarla
   const dtInput = document.getElementById('post_scheduled_for');
@@ -1027,6 +1032,7 @@ function updateKpis() {
 // ── SAAT ARALIKLARI (SLOTS) YÖNETİMİ ──
 function renderSlots() {
   const cont = document.getElementById('slotsContainer');
+  if (!cont) return;
   const slots = botState.config.posting_slots || [];
   cont.innerHTML = slots.map((s, idx) => `
     <div class="slot-item">
@@ -2114,6 +2120,7 @@ setInterval(async () => {
 // ── 1. AŞAMA SABİT KURALLAR ──
 function renderTier1Rules() {
   const cont = document.getElementById('tier1RulesList');
+  if (!cont) return;
   const rules = botState.rules || [];
   cont.innerHTML = rules.map((r, idx) => `
     <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#F8FAFC;">
@@ -2169,6 +2176,7 @@ function deleteTier1Rule(idx) {
 // ── 2. AŞAMA GEMINI AI KATALOG ÖNİZLEMESİ ──
 function renderAiCatalogPreview() {
   const cont = document.getElementById('aiCatalogPreviewList');
+  if (!cont) return;
   if (!catalogProducts || catalogProducts.length === 0) {
     cont.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:12.5px;">Supabase ürün kataloğu yükleniyor...</div>`;
     return;
@@ -2187,6 +2195,7 @@ function renderAiCatalogPreview() {
 // ── 3. AŞAMA İNSAN / WHATSAPP DEVİR LİSTESİ ──
 function renderTier3Handoffs() {
   const cont = document.getElementById('tier3HandoffList');
+  if (!cont) return;
   const handoffs = (botState.conversations || []).filter(c => c.resolved_tier === 3);
   if (handoffs.length === 0) {
     cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz 3. aşamaya devredilen müşteri talebi yok. Simülatör sekmesinden test edebilirsiniz.</div>`;
@@ -2240,7 +2249,10 @@ function saveBotConfigToSupabase() {
   if (inputToken) c.access_token = inputToken;
 
   c.gemini_model = document.getElementById('cfg_gemini_model')?.value || 'gemini-2.5-flash';
-  c.gemini_api_key = document.getElementById('cfg_gemini_key')?.value?.trim() || '';
+  const inputGemKey = document.getElementById('cfg_gemini_key')?.value?.trim();
+  if (inputGemKey && !inputGemKey.includes('***')) {
+    c.gemini_api_key = inputGemKey;
+  }
   c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt')?.value?.trim() || '';
   c.tier3_whatsapp_number = document.getElementById('cfg_wa_number')?.value?.trim() || '905050151035';
   c.tier3_phone_display = document.getElementById('cfg_phone_display')?.value?.trim() || '0 (505) 015 1035';

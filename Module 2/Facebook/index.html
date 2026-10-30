@@ -1189,21 +1189,25 @@ async function persistFbStateToSupabase(notify = true) {
 }
 
 function populateFbFormsAndRenderAll() {
-  const c = fbState.config;
-  document.getElementById('cfg_page_name').value = c.page_name || 'Global Kapak Mobilya';
-  document.getElementById('cfg_page_id').value = c.page_id || '';
-  document.getElementById('cfg_page_token').value = c.page_access_token || '';
+  const c = fbState.config || {};
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.value = val !== undefined && val !== null ? val : '';
+  };
+  setVal('cfg_page_name', c.page_name || 'Global Kapak Mobilya');
+  setVal('cfg_page_id', c.page_id || '');
+  setVal('cfg_page_token', c.page_access_token || '');
 
   const nameDisp = document.getElementById('fbActivePageNameDisplay');
   if (nameDisp) nameDisp.textContent = c.page_name || 'Global Kapak Mobilya';
   const idDisp = document.getElementById('fbActivePageIdDisplay');
   if (idDisp) idDisp.textContent = c.page_id || '122127295833480422';
-  document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
-  document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
-  document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
-  document.getElementById('cfg_wa_number').value = c.tier3_whatsapp_number || '905050151035';
-  document.getElementById('cfg_phone_display').value = c.tier3_phone_display || '0 (505) 015 1035';
-  document.getElementById('cfg_tier3_triggers').value = (c.tier3_handoff_triggers || []).join(', ');
+  setVal('cfg_gemini_model', c.gemini_model || 'gemini-2.5-flash');
+  setVal('cfg_gemini_key', c.gemini_api_key || '');
+  setVal('cfg_tier2_prompt', c.tier2_system_prompt || '');
+  setVal('cfg_wa_number', c.tier3_whatsapp_number || '905050151035');
+  setVal('cfg_phone_display', c.tier3_phone_display || '0 (505) 015 1035');
+  setVal('cfg_tier3_triggers', (c.tier3_handoff_triggers || []).join(', '));
 
   const dtInput = document.getElementById('post_scheduled_for');
   if (dtInput && !dtInput.value) {
