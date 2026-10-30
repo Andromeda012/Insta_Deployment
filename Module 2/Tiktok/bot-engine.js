@@ -464,7 +464,7 @@ async function publishAutonomousTikTokPost({
     }
 }
 
-module.exports = {
+export {
     BRAND_CONTEXT,
     STAGE_1_RULES,
     STAGE_3_ESCALATION_KEYWORDS,

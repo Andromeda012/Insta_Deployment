@@ -6,7 +6,7 @@
  * WhatsApp & Canlı İnsan Devri) otomatik yanıtlar.
  */
 
-const { processIncomingTikTokInteraction } = require('../Module 2/Tiktok/bot-engine');
+import { processIncomingTikTokInteraction } from '../Module 2/Tiktok/bot-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nyvctdskhAbImlvgbnhx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';

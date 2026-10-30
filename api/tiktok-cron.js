@@ -9,12 +9,12 @@
  * 3. Bekleyen TikTok yorum/DM mesajlarını 3 Aşamalı Hibrit İletişim Motoruyla yanıtlar.
  */
 
-const {
+import {
     TIKTOK_FORMATS,
     processIncomingTikTokInteraction,
     generateAutonomousTikTokDraft,
     publishAutonomousTikTokPost
-} = require('../Module 2/Tiktok/bot-engine');
+} from '../Module 2/Tiktok/bot-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nyvctdskhAbImlvgbnhx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
