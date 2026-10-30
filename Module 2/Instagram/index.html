@@ -1530,9 +1530,10 @@ async function autonomousInventNewDesign() {
       const geminiKey = botState?.config?.gemini_api_key || '';
       const geminiModel = botState?.config?.gemini_model || 'gemini-2.5-flash';
       document.getElementById('post_caption').value = '✨ Gemini AI lüks açıklama metnini hazırlıyor...';
-      window.NovaStudioEngine.generateGeminiLuxuryCaption(prod, geminiKey, geminiModel, 'instagram').then(cap => {
+      try {
+        const cap = await window.NovaStudioEngine.generateGeminiLuxuryCaption(prod, geminiKey, geminiModel, 'instagram');
         document.getElementById('post_caption').value = cap;
-      });
+      } catch (_) {}
     }
 
     // Ürün görselini yükle
@@ -1543,15 +1544,19 @@ async function autonomousInventNewDesign() {
       
       const img = new Image();
       img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        currentProductImageEl = img;
-        renderAutonomousCanvasPreview();
-      };
-      img.onerror = () => {
-        currentProductImageEl = null;
-        renderAutonomousCanvasPreview();
-      };
-      img.src = fullImg;
+      await new Promise(resolve => {
+        img.onload = () => {
+          currentProductImageEl = img;
+          renderAutonomousCanvasPreview();
+          resolve();
+        };
+        img.onerror = () => {
+          currentProductImageEl = null;
+          renderAutonomousCanvasPreview();
+          resolve();
+        };
+        img.src = fullImg;
+      });
     } else {
       currentProductImageEl = null;
       renderAutonomousCanvasPreview();
@@ -1597,6 +1602,21 @@ async function addScheduledPost(publishImmediately = false) {
 
   try {
     let finalMediaUrl = '';
+    const previewCanvas = document.getElementById('autoDesignCanvas') || document.createElement('canvas');
+
+    // Eğer ürün görseli henüz yüklenmediyse güvenli yükle
+    if (!currentProductImageEl && prod.ana_resim) {
+      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
+        ? prod.ana_resim
+        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      await new Promise(r => {
+        img.onload = () => { currentProductImageEl = img; r(); };
+        img.onerror = () => { r(); };
+        img.src = fullImg;
+      });
+    }
 
     if (mediaType === 'REELS') {
       if (btn) {
@@ -1656,25 +1676,109 @@ async function addScheduledPost(publishImmediately = false) {
 
     if (publishImmediately) {
       if (btn) btn.textContent = '🚀 Instagram API’ye Gönderiliyor (Meta İşliyor)...';
-      showToast('🚀 Meta Graph API’ye gönderiliyor, video işlenmesi bekleniyor...');
+      showToast('🚀 Meta Graph API’ye gönderiliyor...');
 
-      const pubRes = await fetch('/api/instagram-cron', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'publish',
-          mediaType,
-          videoUrl: mediaType === 'REELS' ? finalMediaUrl : null,
-          mediaUrl: mediaType !== 'REELS' ? finalMediaUrl : null,
-          caption: fullCaption,
-          igUserId,
-          accessToken
-        })
-      });
+      let publishedId = null;
 
-      const resData = await pubRes.json();
-      if (!pubRes.ok || !resData.ok) {
-        throw new Error(resData?.error || 'Yayınlanamadı');
+      // 1. Önce doğrudan tarayıcıdan Meta Graph API'ye yayın dene (Vercel timeout sınırına takılmaz)
+      try {
+        if (mediaType === 'REELS') {
+          showToast('🎬 Meta Reels konteyneri oluşturuluyor...');
+          const cParams = new URLSearchParams();
+          cParams.set('access_token', accessToken);
+          cParams.set('media_type', 'REELS');
+          cParams.set('video_url', finalMediaUrl);
+          cParams.set('caption', fullCaption);
+          cParams.set('share_to_feed', 'true');
+
+          const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+            method: 'POST',
+            body: cParams
+          });
+          const cData = await cRes.json();
+          if (cRes.ok && cData.id) {
+            const containerId = cData.id;
+            let ready = false;
+            for (let i = 0; i < 25; i++) {
+              if (btn) btn.textContent = `⏳ Video İşleniyor (${i + 1}/25)...`;
+              await new Promise(r => setTimeout(r, 2500));
+              const sRes = await fetch(`https://graph.facebook.com/v20.0/${containerId}?fields=status_code,status&access_token=${accessToken}`);
+              const sData = await sRes.json();
+              if (sData.status_code === 'FINISHED') {
+                ready = true;
+                break;
+              }
+              if (sData.status_code === 'ERROR') {
+                throw new Error(`Meta Video İşleme Hatası: ${sData.status || 'Reels kodlanamadı'}`);
+              }
+            }
+
+            if (ready) {
+              const pParams = new URLSearchParams();
+              pParams.set('creation_id', containerId);
+              pParams.set('access_token', accessToken);
+              const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+                method: 'POST',
+                body: pParams
+              });
+              const pData = await pRes.json();
+              if (pRes.ok && pData.id) {
+                publishedId = pData.id;
+              }
+            }
+          }
+        } else {
+          // POST veya STORY
+          const cParams = new URLSearchParams();
+          if (mediaType === 'STORIES') cParams.set('media_type', 'STORIES');
+          cParams.set('image_url', finalMediaUrl);
+          cParams.set('caption', fullCaption);
+          cParams.set('access_token', accessToken);
+
+          const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+            method: 'POST',
+            body: cParams
+          });
+          const cData = await cRes.json();
+          if (cRes.ok && cData.id) {
+            const pParams = new URLSearchParams();
+            pParams.set('creation_id', cData.id);
+            pParams.set('access_token', accessToken);
+            const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+              method: 'POST',
+              body: pParams
+            });
+            const pData = await pRes.json();
+            if (pRes.ok && pData.id) {
+              publishedId = pData.id;
+            }
+          }
+        }
+      } catch (directErr) {
+        console.warn('Direct Meta publish fallback to cron:', directErr);
+      }
+
+      // 2. Doğrudan yayın tamamlanmadıysa /api/instagram-cron yedek hattını çalıştır
+      if (!publishedId) {
+        const pubRes = await fetch('/api/instagram-cron', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'publish',
+            mediaType,
+            videoUrl: mediaType === 'REELS' ? finalMediaUrl : null,
+            mediaUrl: mediaType !== 'REELS' ? finalMediaUrl : null,
+            caption: fullCaption,
+            igUserId,
+            accessToken
+          })
+        });
+
+        const resData = await pubRes.json();
+        if (!pubRes.ok || !resData.ok) {
+          throw new Error(resData?.error || 'Meta Graph API yayın isteği tamamlanamadı');
+        }
+        publishedId = resData.publishedId;
       }
 
       const newItem = {
@@ -1690,14 +1794,14 @@ async function addScheduledPost(publishImmediately = false) {
         scheduled_for: new Date().toISOString(),
         status: 'published',
         published_at: new Date().toISOString(),
-        ig_published_id: resData.publishedId
+        ig_published_id: publishedId
       };
       botState.scheduled_posts.unshift(newItem);
       await persistBotStateToSupabase(false);
       renderScheduledQueue();
 
-      alert(`🎉 Tebrikler! ${mediaType === 'REELS' ? 'Reels videonuz hareketli kamera efektiyle' : 'Gönderiniz'} doğrudan Instagram hesabınızda (@thenovafurniture) yayınlandı!\n\nInstagram Medya ID: ${resData.publishedId}`);
-      showToast(`✅ Instagram'da yayınlandı! ID: ${resData.publishedId}`);
+      alert(`🎉 Tebrikler! ${mediaType === 'REELS' ? 'Reels videonuz hareketli kamera efektiyle' : 'Gönderiniz'} doğrudan Instagram hesabınızda (@thenovafurniture) yayınlandı!\n\nInstagram Medya ID: ${publishedId}`);
+      showToast(`✅ Instagram'da yayınlandı! ID: ${publishedId}`);
     } else {
       const newItem = {
         id: 'auto-post-' + Date.now(),
@@ -1779,32 +1883,113 @@ async function publishQueueItemNow(idx) {
   try {
     const isReel = post.media_type === 'REELS' || (post.media_url && post.media_url.endsWith('.mp4'));
     const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
+    let publishedId = null;
 
-    const pubRes = await fetch('/api/instagram-cron', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        action: 'publish',
-        mediaType: isReel ? 'REELS' : (post.media_type || 'POST'),
-        videoUrl: isReel ? post.media_url : null,
-        mediaUrl: !isReel ? post.media_url : null,
-        caption: fullCaption,
-        igUserId,
-        accessToken
-      })
-    });
+    // 1. Önce doğrudan Meta Graph API'ye yayın dene
+    try {
+      if (isReel) {
+        showToast('🎬 Meta Reels işleniyor...');
+        const cParams = new URLSearchParams();
+        cParams.set('access_token', accessToken);
+        cParams.set('media_type', 'REELS');
+        cParams.set('video_url', post.media_url);
+        cParams.set('caption', fullCaption);
+        cParams.set('share_to_feed', 'true');
 
-    const resData = await pubRes.json();
-    if (!pubRes.ok || !resData.ok) {
-      throw new Error(resData?.error || 'Yayınlanamadı');
+        const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+          method: 'POST',
+          body: cParams
+        });
+        const cData = await cRes.json();
+        if (cRes.ok && cData.id) {
+          const containerId = cData.id;
+          let ready = false;
+          for (let i = 0; i < 25; i++) {
+            showToast(`⏳ Video İşleniyor (${i + 1}/25)...`);
+            await new Promise(r => setTimeout(r, 2500));
+            const sRes = await fetch(`https://graph.facebook.com/v20.0/${containerId}?fields=status_code,status&access_token=${accessToken}`);
+            const sData = await sRes.json();
+            if (sData.status_code === 'FINISHED') {
+              ready = true;
+              break;
+            }
+            if (sData.status_code === 'ERROR') {
+              throw new Error(`Meta Video İşleme Hatası: ${sData.status || 'Reels kodlanamadı'}`);
+            }
+          }
+          if (ready) {
+            const pParams = new URLSearchParams();
+            pParams.set('creation_id', containerId);
+            pParams.set('access_token', accessToken);
+            const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+              method: 'POST',
+              body: pParams
+            });
+            const pData = await pRes.json();
+            if (pRes.ok && pData.id) {
+              publishedId = pData.id;
+            }
+          }
+        }
+      } else {
+        const cParams = new URLSearchParams();
+        if (post.media_type === 'STORIES') cParams.set('media_type', 'STORIES');
+        cParams.set('image_url', post.media_url);
+        cParams.set('caption', fullCaption);
+        cParams.set('access_token', accessToken);
+
+        const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, {
+          method: 'POST',
+          body: cParams
+        });
+        const cData = await cRes.json();
+        if (cRes.ok && cData.id) {
+          const pParams = new URLSearchParams();
+          pParams.set('creation_id', cData.id);
+          pParams.set('access_token', accessToken);
+          const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, {
+            method: 'POST',
+            body: pParams
+          });
+          const pData = await pRes.json();
+          if (pRes.ok && pData.id) {
+            publishedId = pData.id;
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('Direct Meta fallback to cron:', e);
+    }
+
+    // 2. Doğrudan yayın gerçekleşmediyse /api/instagram-cron hattına gönder
+    if (!publishedId) {
+      const pubRes = await fetch('/api/instagram-cron', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'publish',
+          mediaType: isReel ? 'REELS' : (post.media_type || 'POST'),
+          videoUrl: isReel ? post.media_url : null,
+          mediaUrl: !isReel ? post.media_url : null,
+          caption: fullCaption,
+          igUserId,
+          accessToken
+        })
+      });
+
+      const resData = await pubRes.json();
+      if (!pubRes.ok || !resData.ok) {
+        throw new Error(resData?.error || 'Yayınlanamadı');
+      }
+      publishedId = resData.publishedId;
     }
 
     post.status = 'published';
     post.published_at = new Date().toISOString();
-    post.ig_published_id = resData.publishedId;
+    post.ig_published_id = publishedId;
     await persistBotStateToSupabase(false);
     renderScheduledQueue();
-    alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${resData.publishedId})`);
+    alert(`🎉 Gönderi başarıyla Instagram'da yayınlandı! (ID: ${publishedId})`);
     showToast(`✅ "${post.title}" Instagram'da BAŞARIYLA yayınlandı!`);
   } catch (err) {
     alert(`❌ Hata: ${err.message}`);
