@@ -122,9 +122,9 @@ export default async function handler(req, res) {
         return res.status(200).json({ ok: true, decision });
       }
 
-      // Standard Meta Instagram Webhook payload
+      // Standard Meta Instagram / Page Webhook payload
       const results = [];
-      if (payload.object === 'instagram' && Array.isArray(payload.entry)) {
+      if ((payload.object === 'instagram' || payload.object === 'page') && Array.isArray(payload.entry)) {
         for (const entry of payload.entry) {
           // Direct Messages
           if (Array.isArray(entry.messaging)) {
