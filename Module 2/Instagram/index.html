@@ -2519,8 +2519,8 @@ async function runClientSideThreeTierEngine(cleanText, channel) {
       const publicReply = `Merhaba @test_musteri, model detaylarını ve kataloğumuzu DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
       let dmOpening = `Merhaba! Nova Furniture (@thenovafurniture) ailesine hoş geldiniz. ✨\n\n` +
         `İlgilendiğiniz modelimiz 1. sınıf 18mm E1 sertifikalı sağlam MDF gövde ve suya/buhara dayanıklı ithal CNC membran kapak kalitesiyle üretilmektedir (5 Yıl Üretici Garantili).\n\n` +
-        `📖 Canlı Ürün Kataloğumuz & Tasarım Modu:\n` +
-        `👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+        `📖 Tüm Modellerimiz & Canlı Ürün Kataloğumuz:\n` +
+        `👉 https://globalmobilyaweb.vercel.app/urunler\n\n` +
         `Size özel net fiyatlandırma ve tasarım planlaması yapabilmemiz için:\n` +
         `❓ Hangi odayı (yatak odası, mutfak, gardırop vb.) yenilemek istiyorsunuz? Düşündüğünüz yaklaşık ölçü veya renk tercihiniz nedir?\n\n` +
         `Dilediğiniz an buradan doğrudan yazabilir veya doğrudan WhatsApp hattımızdan bize ulaşabilirsiniz: 0 (505) 015 1035 (https://wa.me/${waNum})`;
@@ -2531,7 +2531,7 @@ async function runClientSideThreeTierEngine(cleanText, channel) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri gönderimize "${cleanText}" yorumunu yaptı. DM üzerinden göndereceğimiz İLK özel mesajı yaz. Müşteriyi kibarca karşıla, ilgisi için teşekkür et, canlı katalog linkini ver (https://globalmobilyaweb.vercel.app/urunler.html) ve ne istediğini öğrenmek için oda/ölçü/renk tercihlerini sor.` }] }]
+              contents: [{ parts: [{ text: `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri gönderimize "${cleanText}" yorumunu yaptı. DM üzerinden göndereceğimiz İLK özel mesajı yaz. Müşteriyi kibarca karşıla, ilgisi için teşekkür et, canlı ürünler sayfamızı ver (https://globalmobilyaweb.vercel.app/urunler) ve ne istediğini öğrenmek için oda/ölçü/renk tercihlerini sor.` }] }]
             })
           });
           if (res.ok) {

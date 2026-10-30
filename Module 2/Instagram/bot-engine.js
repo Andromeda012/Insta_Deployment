@@ -646,25 +646,25 @@ export async function evaluateThreeTierCommunication({
       // 1. Yoruma verilecek kurumsal açık yanıt
       const publicCommentReply = `Merhaba @${cleanSender}, model detaylarını ve kataloğumuzu DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
 
-      // 2. Müşteriye özel DM açılış mesajı (Katalog Linki + Soru + WhatsApp)
+      // 2. Müşteriye özel DM açılış mesajı (Doğrudan Web Sitesi Ürünler Kataloğu + Soru + WhatsApp)
       let dmOpeningText = `Merhaba @${cleanSender}! Nova Furniture (@thenovafurniture) ailesine hoş geldiniz. ✨\n\n` +
         `İlgilendiğiniz modelimiz 1. sınıf 18mm E1 sertifikalı sağlam MDF gövde ve yüksek dayanımlı CNC membran kapak teknolojisiyle üretilmektedir (5 Yıl Üretici Garantili).\n\n` +
-        `📖 Canlı Ürün Kataloğumuz & Tasarım Modu:\n` +
-        `👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+        `📖 Tüm Modellerimiz & Canlı Ürün Kataloğumuz:\n` +
+        `👉 https://globalmobilyaweb.vercel.app/urunler\n\n` +
         `Size özel net fiyatlandırma ve tasarım planlaması yapabilmemiz için:\n` +
         `❓ Hangi odayı (yatak odası, mutfak, gardırop vb.) yenilemek istiyorsunuz? Düşündüğünüz yaklaşık ölçü veya renk tercihiniz nedir?\n\n` +
-        `Dilediğiniz an buradan doğrudan yazabilir veya WhatsApp hattımızdan bize ulaşabilirsiniz: 0 (505) 015 1035 (${prefilledWa})`;
+        `Dilediğiniz an buradan doğrudan yazabilir veya doğrudan WhatsApp hattımızdan bize ulaşabilirsiniz: 0 (505) 015 1035 (${prefilledWa})`;
 
       if (geminiKey) {
         try {
           const dmPrompt = `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri (@${cleanSender}) gönderimizin altına "${cleanText}" yorumunu yazdı.
 Ona Instagram DM kutusundan göndereceğimiz İLK özel mesajı yaz.
 Kurallar:
-- Müşteriyi kibarca karşıla ve ilgisi için teşekkür et.
-- Canlı katalog linkini paylaş (https://globalmobilyaweb.vercel.app/urunler.html).
+- Müşteriyi son derece kibar ve sıcak karşıla.
+- Kataloğumuzu inceleyebileceği resmi web sitemizin ürünler sayfasını paylaş: https://globalmobilyaweb.vercel.app/urunler
 - Fiyatın ve modelin netleşmesi için müşteriye ne istediğini, hangi odayı yenilemek istediğini, düşündüğü yaklaşık ölçü veya renk tercihini sor.
-- WhatsApp hattını ekle (https://wa.me/${whatsappNumber}).
-- Sıcak, lüks ve profesyonel bir dil kullan.
+- WhatsApp hattını ekle: https://wa.me/${whatsappNumber} (0 505 015 1035).
+- Sıcak, lüks ve profesyonel Türkçe kullan.
 - JSON formatında yanıt ver: { "dm_opening": "..." }`;
 
           const gRes = await fetch(
