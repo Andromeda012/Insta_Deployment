@@ -667,7 +667,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>📌 Otomatik Sabitlenecek İlk Yorum (Pinned Comment)</label>
-              <input type="text" class="form-control" id="post_pinned_comment" value="📌 Kendi dolap ölçünüz ve renginizle canlı denemek için tıklayın: https://globalmobilyaweb.vercel.app/urunler.html | 📲 WhatsApp: https://wa.me/905050151035">
+              <input type="text" class="form-control" id="post_pinned_comment" value="📌 Kendi dolap ölçünüz ve renginizle canlı denemek için tıklayın: https://wa.me/905050151035 | 📲 WhatsApp: https://wa.me/905050151035">
             </div>
             <div class="form-group">
               <label>YouTube SEO Etiketleri (Tags)</label>
@@ -726,7 +726,7 @@
           <div class="form-row">
             <div class="form-group">
               <label>YouTube Kanal Adı / Handle</label>
-              <input type="text" class="form-control" id="cfg_channel_handle" value="@GlobalKapakMobilya">
+              <input type="text" class="form-control" id="cfg_channel_handle" value="@thenovafurniture">
             </div>
             <div class="form-group">
               <label>YouTube Channel ID (Kanal Kimliği)</label>
@@ -909,7 +909,7 @@
       <div class="chat-window">
         <div class="chat-header">
           <div>
-            <strong style="font-size:14px;">▶️ YouTube Shorts Yorum & Yanıt Simülatörü (@GlobalKapakMobilya)</strong>
+            <strong style="font-size:14px;">▶️ YouTube Shorts Yorum & Yanıt Simülatörü (@thenovafurniture)</strong>
             <div style="font-size:11px;color:#FECDD3;">3 Aşamalı Hibrit Yorum Yanıt Motoru Canlı Test Ekranı</div>
           </div>
           <span class="badge badge-red">#Shorts Yorumları</span>
@@ -973,7 +973,7 @@ const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
 
 const DEFAULT_YT_BOT_STATE = {
   config: {
-    channel_handle: '@GlobalKapakMobilya',
+    channel_handle: '@thenovafurniture',
     channel_id: '',
     client_id: '',
     client_secret: '',
@@ -987,7 +987,7 @@ const DEFAULT_YT_BOT_STATE = {
       { slot_id: 'yt_slot_2', time: '16:00', type: 'SHORTS_SHOWCASE', active: true, label: 'İkindi 2026 Renk & Kapak Modeli Karşılaştırma #Shorts' },
       { slot_id: 'yt_slot_3', time: '20:30', type: 'SHORTS_GUIDE', active: true, label: 'Akşam Prime-Time Canlı Tasarım Modu Rehberi #Shorts' }
     ],
-    tier2_system_prompt: 'Sen Global Kapak Mobilya\'nın resmi YouTube kanalı yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. YouTube Shorts izleyicilerinin yorumlarına samimi, kurumsal ve bilgilendirici yanıtlar ver.',
+    tier2_system_prompt: 'Sen Nova Furniture\'nın resmi YouTube kanalı yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. YouTube Shorts izleyicilerinin yorumlarına samimi, kurumsal ve bilgilendirici yanıtlar ver.',
     tier3_whatsapp_number: '905050151035',
     tier3_phone_display: '0 (505) 015 1035',
     tier3_handoff_triggers: [
@@ -1001,7 +1001,7 @@ const DEFAULT_YT_BOT_STATE = {
       rule_name: 'Teşekkür & Beğeni Yorumları',
       keywords: ['merhaba', 'selam', 'elinize sağlık', 'çok güzel', 'harika', 'başarılar', 'kolay gelsin'],
       match_type: 'contains',
-      response_text: 'Çok teşekkür ederiz! 🙏✨ Global Kapak Mobilya olarak 2.000 m² tesisimizde 5 yıl garantili özel ölçü CNC membran kapak üretiyoruz. Tüm modellerimizi kendi ölçünüzle denemek için: https://globalmobilyaweb.vercel.app/urunler.html'
+      response_text: 'Çok teşekkür ederiz! 🙏✨ Nova Furniture olarak 2.000 m² tesisimizde 5 yıl garantili özel ölçü CNC membran kapak üretiyoruz. Tüm modellerimizi kendi ölçünüzle denemek için: https://wa.me/905050151035'
     },
     {
       id: 'yt-rule-2',
@@ -1029,7 +1029,7 @@ const DEFAULT_YT_BOT_STATE = {
       rule_name: 'Renk Kartelası & Canlı Tasarım Modu',
       keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'tasarım'],
       match_type: 'contains',
-      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html'
+      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://wa.me/905050151035'
     }
   ],
   scheduled_posts: [
@@ -1039,8 +1039,8 @@ const DEFAULT_YT_BOT_STATE = {
       title: '0.01 mm Hassasiyetle Özel Ölçü CNC Membran Kapak Nasıl Üretilir? 🛠️ #Shorts',
       headline: '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ',
       subheadline: '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim',
-      description: '✨ 2.000 m² tesisimizde 0.01 mm CNC hassasiyetiyle özel ölçü membran kapak üretimi! 🌐 https://globalmobilyaweb.vercel.app/urunler.html #Shorts',
-      pinned_comment: '📌 Kendi dolap ölçünüz ve renginizle canlı denemek için: https://globalmobilyaweb.vercel.app/urunler.html | 📲 WhatsApp: https://wa.me/905050151035',
+      description: '✨ 2.000 m² tesisimizde 0.01 mm CNC hassasiyetiyle özel ölçü membran kapak üretimi! 🌐 https://wa.me/905050151035 #Shorts',
+      pinned_comment: '📌 Kendi dolap ölçünüz ve renginizle canlı denemek için: https://wa.me/905050151035 | 📲 WhatsApp: https://wa.me/905050151035',
       tags: ['Shorts', 'membran kapak', 'mutfak dolabı', 'cnc kapak', 'global kapak mobilya'],
       media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_CNC&theme=yt-crimson-navy&door=diagonal',
       auto_designed: true,
@@ -1054,7 +1054,7 @@ const DEFAULT_YT_BOT_STATE = {
       headline: 'FJORD MAVİ VS ADAÇAYI YEŞİLİ KAPAKLAR',
       subheadline: 'Parmak İzi Bırakmayan Anti-Fingerprint Mat Membran Yüzeyler',
       description: '🎨 2026 Mutfak ve Banyo Mimarisinde En Çok Tercih Edilen CNC Membran Kapak Renkleri! #Shorts',
-      pinned_comment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Canlı denemek için: https://globalmobilyaweb.vercel.app/urunler.html',
+      pinned_comment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Canlı denemek için: https://wa.me/905050151035',
       tags: ['Shorts', 'mutfak renkleri', 'country mutfak kapağı', 'fjord mavi', 'adaçayı yeşili'],
       media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_SHOWCASE&theme=nordic-fjord&door=shaker',
       auto_designed: true,
@@ -1139,7 +1139,7 @@ async function persistYtStateToSupabase(notify = true) {
 
 function populateYtFormsAndRenderAll() {
   const c = ytState.config;
-  document.getElementById('cfg_channel_handle').value = c.channel_handle || '@GlobalKapakMobilya';
+  document.getElementById('cfg_channel_handle').value = c.channel_handle || '@thenovafurniture';
   document.getElementById('cfg_channel_id').value = c.channel_id || '';
   document.getElementById('cfg_client_id').value = c.client_id || '';
   document.getElementById('cfg_client_secret').value = c.client_secret || '';
@@ -1159,9 +1159,9 @@ function populateYtFormsAndRenderAll() {
 
   if (!document.getElementById('post_description').value) {
     document.getElementById('post_description').value =
-      `✨ Global Kapak Mobilya — 2.000 m² Modern Üretim Tesisimizde Özel Ölçü CNC Membran Kapak Üretimi! #Shorts\n\n` +
+      `✨ Nova Furniture — 2.000 m² Modern Üretim Tesisimizde Özel Ölçü CNC Membran Kapak Üretimi! #Shorts\n\n` +
       `⏱️ Video Bölümleri:\n00:00 0.01mm 5 Eksen CNC İşleme Hassasiyeti\n00:08 18mm E1 Sertifikalı MDF & İthal PVC Membran Kalitesi\n00:25 Canlı Kapak Tasarım Modu & 5 İş Gününde Teslimat\n\n` +
-      `🎨 Kendi dolap ölçünüzü girip renkleri anında denemek için tıklayın:\n👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+      `🎨 Kendi dolap ölçünüzü girip renkleri anında denemek için tıklayın:\n👉 https://wa.me/905050151035\n\n` +
       `📲 WhatsApp Hızlı Fiyat Teklifi: https://wa.me/905050151035 (0505 015 1035)`;
   }
 
@@ -1328,7 +1328,7 @@ function drawYtShortsCanvas(canvas, opts = {}) {
     ? '▶️ SAHNE 2/3: 18MM E1 MDF & VAKUM MEMBRAN'
     : sceneIndex === 2
       ? '▶️ SAHNE 3/3: CANLI TASARIM MODU & 5 GÜN TESLİM'
-      : '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA';
+      : '▶️ YOUTUBE SHORTS • NOVA FURNITURE';
   ctx.fillText(sceneLabel, fullW / 2, 125);
 
   // Ana Başlık
@@ -1432,11 +1432,11 @@ function drawYtShortsCanvas(canvas, opts = {}) {
   ctx.fillText(subCaption, fullW / 2, 1598);
   ctx.fillStyle = '#93C5FD';
   ctx.font = '700 21px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('🌐 globalmobilyaweb.vercel.app   •   📞 0 (505) 015 1035', fullW / 2, 1642);
+  ctx.fillText('🌐 0 (505) 015 1035   •   📞 0 (505) 015 1035', fullW / 2, 1642);
 
   ctx.fillStyle = '#94A3B8';
   ctx.font = '700 21px "Plus Jakarta Sans", sans-serif';
-  ctx.fillText('▶️ @GlobalKapakMobilya   •   #Shorts #MembranKapak #MutfakTasarım', fullW / 2, 1835);
+  ctx.fillText('▶️ @thenovafurniture   •   #Shorts #MembranKapak #MutfakTasarım', fullW / 2, 1835);
 
   ctx.restore();
 }
@@ -1501,7 +1501,7 @@ async function autonomousInventNewYtShort() {
     const cleanTitle = rawTitle.replace(/^NOVA\s*[-–—:]*\s*/i, '');
     const pTitle = `NOVA - ${cleanTitle}`;
     const pSub = prod.kategori || '1. Sınıf MDF • CNC Membran Kapak';
-    const link = `https://globalmobilyaweb.vercel.app/urun.html?id=${prod.slug || ''}`;
+    const link = `https://wa.me/905050151035/urun.html?id=${prod.slug || ''}`;
 
     document.getElementById('post_video_title').value = `⛰️ NOVA | ${cleanTitle} Koleksiyonu — 1. Sınıf Lüks Mimari Tasarım #Shorts`;
     document.getElementById('post_title').value = pTitle;
@@ -1515,7 +1515,7 @@ async function autonomousInventNewYtShort() {
     if (prod.ana_resim) {
       const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
         ? prod.ana_resim
-        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+        : `https://wa.me/905050151035${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
       
       const img = new Image();
       img.crossOrigin = 'anonymous';
@@ -1561,7 +1561,7 @@ async function exportYtAutonomousCanvasAndUpload(format, headline, subheadline, 
 
   const params = new URLSearchParams({
     format,
-    badge: '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA',
+    badge: '▶️ YOUTUBE SHORTS • NOVA FURNITURE',
     headline,
     subheadline,
     theme: themeKey,
@@ -1646,7 +1646,7 @@ function renderYtScheduledQueue() {
     const isPub = p.status === 'published';
     return `
       <div class="queue-item">
-        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://wa.me/905050151035/resim/logo.png'" alt="">
         <div class="queue-info">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
             <span class="badge badge-red">▶️ ${p.media_type}</span>
@@ -1885,7 +1885,7 @@ async function runYtClientSideThreeTierEngine(cleanText) {
   const triggers = c.tier3_handoff_triggers || [];
   const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
   if (t3Match) {
-    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube Shorts videonuzdan ulaşıyorum. "${cleanText}" konusunda fiyat teklifi almak istiyorum.`)}`;
+    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Nova Furniture, YouTube Shorts videonuzdan ulaşıyorum. "${cleanText}" konusunda fiyat teklifi almak istiyorum.`)}`;
     return {
       resolved_tier: 3,
       tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
@@ -1941,7 +1941,7 @@ async function runYtClientSideThreeTierEngine(cleanText) {
   return {
     resolved_tier: 2,
     tier_label: '2. AŞAMA: GEMINI AI TEKNİK YORUM DANIŞMANI',
-    bot_reply: `Harika bir soru! 🤖 Global Kapak Mobilya koleksiyonumuzdaki **${prodNames}** modellerimiz aynı 18mm E1 MDF kalınlığında ve birebir aynı membran renk tonlarında üretildiği için alt dolaplarda Çerçeveli Country, üst dolaplarda ise Dikey Fugalı (Fluted) modeli kusursuz şekilde kombinleyebilirsiniz.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html`,
+    bot_reply: `Harika bir soru! 🤖 Nova Furniture koleksiyonumuzdaki **${prodNames}** modellerimiz aynı 18mm E1 MDF kalınlığında ve birebir aynı membran renk tonlarında üretildiği için alt dolaplarda Çerçeveli Country, üst dolaplarda ise Dikey Fugalı (Fluted) modeli kusursuz şekilde kombinleyebilirsiniz.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek renkleri anlık deneyebilirsiniz: https://wa.me/905050151035`,
     whatsapp_link: ''
   };
 }

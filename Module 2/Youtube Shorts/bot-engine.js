@@ -1,5 +1,5 @@
 /**
- * GLOBAL KAPAK MOBİLYA — MODULE 2: YOUTUBE SHORTS BULUT BOT MOTORU (bot-engine.js)
+ * NOVA FURNITURE — MODULE 2: YOUTUBE SHORTS BULUT BOT MOTORU (bot-engine.js)
  *
  * Özellikler:
  * 1. 7/24 Bulut Sunucu Uyumlu (Cihaz bağımsız çalışır, tüm durumunu Supabase `yt_bot_state` içinde tutar).
@@ -102,9 +102,9 @@ export const YT_SHORTS_CONCEPT_LIBRARY = [
       { time: '00:08 - 00:25', sceneTitle: 'Sahne 2 (Üretim & Kalite)', narration: '2.000 m² tesisimizde 18mm E1 sertifikalı MDF gövdeyi 0.01 mm CNC hassasiyetiyle işliyor, ithal membran folyo ile vakumluyoruz.' },
       { time: '00:25 - 00:40', sceneTitle: 'Sahne 3 (Tasarım & Sipariş)', narration: '5 yıl garantili ve 5 iş gününde teslim kapaklarımızı web sitemizdeki Canlı Tasarım Modunda hemen deneyin!' }
     ],
-    description: `✨ Global Kapak Mobilya — 2.000 m² Modern Üretim Tesisimizde Özel Ölçü CNC Membran Kapak Üretimi! #Shorts\n\n⏱️ Video Bölümleri:\n00:00 0.01mm 5 Eksen CNC İşleme Hassasiyeti\n00:08 18mm E1 Sertifikalı MDF & İthal PVC Membran Kalitesi\n00:25 Canlı Kapak Tasarım Modu & 5 İş Gününde Teslimat\n\n🎨 Kendi dolap ölçünüzü girip renkleri anında denemek için tıklayın:\n👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n📲 WhatsApp Hızlı Fiyat Teklifi & Sipariş: https://wa.me/905050151035\n📞 Fabrika İletişim: 0 (505) 015 1035\n📍 Adres: Bağcılar / İstanbul`,
+    description: `✨ Nova Furniture — 2.000 m² Modern Üretim Tesisimizde Özel Ölçü CNC Membran Kapak Üretimi! #Shorts\n\n⏱️ Video Bölümleri:\n00:00 0.01mm 5 Eksen CNC İşleme Hassasiyeti\n00:08 18mm E1 Sertifikalı MDF & İthal PVC Membran Kalitesi\n00:25 Canlı Kapak Tasarım Modu & 5 İş Gününde Teslimat\n\n🎨 Kendi dolap ölçünüzü girip renkleri anında denemek için tıklayın:\n👉 https://wa.me/905050151035\n\n📲 WhatsApp Hızlı Fiyat Teklifi & Sipariş: https://wa.me/905050151035\n📞 Fabrika İletişim: 0 (505) 015 1035\n📍 Adres: Bağcılar / İstanbul`,
     tags: ['Shorts', 'membran kapak', 'mutfak dolabı', 'cnc kapak', 'global kapak mobilya', 'mutfak tasarımı', 'banyo dolabı', 'iç mimari'],
-    pinnedComment: '📌 Kendi mutfak/banyo dolap ölçünüzle renkleri canlı denemek için tıklayın: https://globalmobilyaweb.vercel.app/urunler.html | 📲 WhatsApp Sipariş Hattımız: https://wa.me/905050151035 (0505 015 1035)'
+    pinnedComment: '📌 Kendi mutfak/banyo dolap ölçünüzle renkleri canlı denemek için tıklayın: https://wa.me/905050151035 | 📲 WhatsApp Sipariş Hattımız: https://wa.me/905050151035 (0505 015 1035)'
   },
   {
     format: 'SHORTS_SHOWCASE',
@@ -118,9 +118,9 @@ export const YT_SHORTS_CONCEPT_LIBRARY = [
       { time: '00:08 - 00:25', sceneTitle: 'Sahne 2 (Teknik Üstünlük)', narration: 'Her iki rengimiz de leke ve parmak izi tutmayan, buhara tam dayanıklı 1. sınıf membran yüzey teknolojisine sahiptir.' },
       { time: '00:25 - 00:40', sceneTitle: 'Sahne 3 (Canlı Önizleme)', narration: 'Yorumlarda favori renginizi yazın veya web sitemizde kendi ölçünüzle canlı önizleyin!' }
     ],
-    description: `🎨 2026 Mutfak ve Banyo Mimarisinde En Çok Tercih Edilen CNC Membran Kapak Renkleri! #Shorts\n\n✅ Fjord Mavi Mat\n✅ Adaçayı Yeşili (Sage Green)\n✅ Kuvars Gri & Kutup Beyazı\n✅ 5 Yıl Üretici Garantisi & 5 İş Gününde Teslim\n\n🌐 Online Canlı Kapak Tasarım Modu: https://globalmobilyaweb.vercel.app/urunler.html\n📲 WhatsApp Sipariş & Katalog: https://wa.me/905050151035`,
+    description: `🎨 2026 Mutfak ve Banyo Mimarisinde En Çok Tercih Edilen CNC Membran Kapak Renkleri! #Shorts\n\n✅ Fjord Mavi Mat\n✅ Adaçayı Yeşili (Sage Green)\n✅ Kuvars Gri & Kutup Beyazı\n✅ 5 Yıl Üretici Garantisi & 5 İş Gününde Teslim\n\n🌐 Online Canlı Kapak Tasarım Modu: https://wa.me/905050151035\n📲 WhatsApp Sipariş & Katalog: https://wa.me/905050151035`,
     tags: ['Shorts', 'mutfak renkleri', 'country mutfak kapağı', 'fjord mavi', 'adaçayı yeşili mutfak', 'membran kapak modelleri', 'global kapak'],
-    pinnedComment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Tüm renkleri kendi dolap ölçünüzle denemek için: https://globalmobilyaweb.vercel.app/urunler.html'
+    pinnedComment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Tüm renkleri kendi dolap ölçünüzle denemek için: https://wa.me/905050151035'
   },
   {
     format: 'SHORTS_GUIDE',
@@ -134,9 +134,9 @@ export const YT_SHORTS_CONCEPT_LIBRARY = [
       { time: '00:08 - 00:25', sceneTitle: 'Sahne 2 (Canlı Tasarım Modu)', narration: 'Web sitemizdeki Canlı Tasarım Moduna girin; en-boy ölçünüzü ve renginizi seçerek 3 boyutlu önizlemeyi anında oluşturun.' },
       { time: '00:25 - 00:40', sceneTitle: 'Sahne 3 (Hızlı Üretim)', narration: 'Seçtiğiniz tasarımı 5 iş gününde üretip Türkiye geneline sevk ediyoruz!' }
     ],
-    description: `📐 Global Kapak Mobilya İnteraktif Kapak Tasarım ve Ölçü Önizleme Modu Yayında! #Shorts\n\n🔗 Hemen Denemek İçin: https://globalmobilyaweb.vercel.app/urunler.html\n📲 WhatsApp Destek Hattı: https://wa.me/905050151035 (0505 015 1035)`,
+    description: `📐 Nova Furniture İnteraktif Kapak Tasarım ve Ölçü Önizleme Modu Yayında! #Shorts\n\n🔗 Hemen Denemek İçin: https://wa.me/905050151035\n📲 WhatsApp Destek Hattı: https://wa.me/905050151035 (0505 015 1035)`,
     tags: ['Shorts', 'kapak tasarım', 'özel ölçü dolap kapağı', 'dikey fugalı kapak', 'membran kapak fiyatları', 'global kapak mobilya'],
-    pinnedComment: '📐 Ücretsiz Canlı Kapak Tasarım aracımızı hemen denemek için tıklayın: https://globalmobilyaweb.vercel.app/urunler.html'
+    pinnedComment: '📐 Ücretsiz Canlı Kapak Tasarım aracımızı hemen denemek için tıklayın: https://wa.me/905050151035'
   }
 ];
 
@@ -148,7 +148,7 @@ export const DEFAULT_YT_TIER1_RULES = [
     keywords: ['merhaba', 'selam', 'elinize sağlık', 'çok güzel', 'harika', 'başarılar', 'kolay gelsin'],
     match_type: 'contains',
     channel_scope: 'COMMENT',
-    response_text: 'Çok teşekkür ederiz! 🙏✨ Global Kapak Mobilya olarak 2.000 m² tesisimizde 5 yıl garantili özel ölçü CNC membran kapak üretiyoruz. Tüm modellerimizi kendi ölçünüzle denemek için: https://globalmobilyaweb.vercel.app/urunler.html',
+    response_text: 'Çok teşekkür ederiz! 🙏✨ Nova Furniture olarak 2.000 m² tesisimizde 5 yıl garantili özel ölçü CNC membran kapak üretiyoruz. Tüm modellerimizi kendi ölçünüzle denemek için: https://wa.me/905050151035',
     escalate_to_tier3: false,
     priority: 8,
     active: true
@@ -192,7 +192,7 @@ export const DEFAULT_YT_TIER1_RULES = [
     keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'mat mavi', 'adaçayı', 'antrasit', 'tasarım'],
     match_type: 'contains',
     channel_scope: 'COMMENT',
-    response_text: '🎨 Fjord Mavi Mat, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html',
+    response_text: '🎨 Fjord Mavi Mat, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://wa.me/905050151035',
     escalate_to_tier3: false,
     priority: 10,
     active: true
@@ -254,7 +254,7 @@ function escapeXml(str = '') {
  */
 export function renderAutonomousYouTubeShortsSvg({
   format = 'SHORTS_CNC',
-  badge = '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA',
+  badge = '▶️ YOUTUBE SHORTS • NOVA FURNITURE',
   headline = '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ',
   subheadline = '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim',
   specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', '0.01mm 5 Eksen CNC'],
@@ -360,10 +360,10 @@ export function renderAutonomousYouTubeShortsSvg({
     <!-- YouTube Shorts Altyazı / Sabit Yorum Çağrı Kutusu -->
     <rect x="110" y="1595" width="860" height="125" rx="20" fill="rgba(15, 23, 42, 0.78)" stroke="${theme.accent}" stroke-width="2"/>
     <text x="${width / 2}" y="1645" fill="#FFFFFF" font-family="sans-serif" font-size="24" font-weight="800" text-anchor="middle">📌 Sabitlenen Yorumdaki Linkten Canlı Tasarlayın!</text>
-    <text x="${width / 2}" y="1688" fill="#93C5FD" font-family="sans-serif" font-size="22" font-weight="700" text-anchor="middle">🌐 globalmobilyaweb.vercel.app   •   📞 0 (505) 015 1035</text>
+    <text x="${width / 2}" y="1688" fill="#93C5FD" font-family="sans-serif" font-size="22" font-weight="700" text-anchor="middle">🌐 0 (505) 015 1035   •   📞 0 (505) 015 1035</text>
 
     <!-- Alt İmza -->
-    <text x="${width / 2}" y="1845" fill="#94A3B8" font-family="sans-serif" font-size="21" font-weight="700" text-anchor="middle">▶️ @GlobalKapakMobilya   •   #Shorts #MembranKapak #MutfakTasarım</text>
+    <text x="${width / 2}" y="1845" fill="#94A3B8" font-family="sans-serif" font-size="21" font-weight="700" text-anchor="middle">▶️ @thenovafurniture   •   #Shorts #MembranKapak #MutfakTasarım</text>
   </svg>`;
 }
 
@@ -387,8 +387,8 @@ export async function generateAutonomousYouTubeShortsContent({
     || YT_SHORTS_CONCEPT_LIBRARY[Math.floor(Math.random() * YT_SHORTS_CONCEPT_LIBRARY.length)];
 
   const targetUrl = pickedProduct?.slug
-    ? `https://globalmobilyaweb.vercel.app/urun.html?id=${pickedProduct.slug}`
-    : 'https://globalmobilyaweb.vercel.app/urunler.html';
+    ? `https://wa.me/905050151035/urun.html?id=${pickedProduct.slug}`
+    : 'https://wa.me/905050151035';
 
   let badge = fallbackConcept.badge;
   let headline = pickedProduct
@@ -424,7 +424,7 @@ export async function generateAutonomousYouTubeShortsContent({
   if (geminiKey) {
     try {
       const geminiModel = config.gemini_model || 'gemini-2.5-flash';
-      const aiPrompt = `Sen Global Kapak Mobilya'nın YouTube Shorts büyüme ve içerik uzmanısın.
+      const aiPrompt = `Sen Nova Furniture'nın YouTube Shorts büyüme ve içerik uzmanısın.
 Şirketimiz İstanbul Bağcılar'da 2.000 m² fabrikasında 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim özel ölçü CNC membran mutfak, banyo ve gardırop kapağı üretiyor.
 Format: ${format} (${slotLabel || 'Otonom YouTube Shorts'})
 Seçilen Ürün/Konu: ${pickedProduct ? `${pickedProduct.title} - ${pickedProduct.kisa_aciklama || ''}` : fallbackConcept.headline}
@@ -569,7 +569,7 @@ export async function publishToYouTubeDataApi({
   }
 
   // Gerçek YouTube Data API v3 Metadata Kaydı & İlk Yorum Otomasyonu
-  const ensuredTitle = (title || 'Global Kapak Mobilya #Shorts').includes('#Shorts')
+  const ensuredTitle = (title || 'Nova Furniture #Shorts').includes('#Shorts')
     ? title
     : `${title} #Shorts`;
 
@@ -579,7 +579,7 @@ export async function publishToYouTubeDataApi({
     videoId: `yt_${Date.now().toString(36)}`,
     publishedId: `yt_${Date.now().toString(36)}`,
     title: ensuredTitle,
-    channelId: channelId || 'UC_GlobalKapakMobilya',
+    channelId: channelId || 'UC_NovaFurniture',
     pinnedCommentPosted: Boolean(pinnedComment),
     mediaUrl,
     publishedAt: new Date().toISOString()
@@ -631,8 +631,8 @@ export async function evaluateYouTubeThreeTierCommunication({
   // ÖN KONTROL: 3. Aşama (Sipariş, Fiyat Teklifi, m² Fiyatı, Toptan/B2B, İletişim)
   const directTier3Match = handoffTriggers.find(trigger => lowerText.includes(trigger.toLocaleLowerCase('tr-TR')));
   if (directTier3Match) {
-    const prefilledWa = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube Shorts videonuzdan (${videoTitle}) ulaşıyorum. Konu: "${cleanText}" hakkında fiyat teklifi almak istiyorum.`)}`;
-    const reply = `Merhaba ${authorName}! 🙌 Yorumunuz ve ilginiz için teşekkür ederiz. **"${directTier3Match}"** talebiniz dolap ölçünüze ve seçeceğiniz modele göre hesaplandığı için sizi doğrudan **Satış & Üretim Ekibimize** davet ediyoruz:\n\n📲 **Tek Tıkla WhatsApp Fiyat Teklifi:** ${prefilledWa}\n📞 **Fabrika Hat:** ${phoneDisplay}\n🌐 **Canlı Tasarım Modu:** https://globalmobilyaweb.vercel.app/urunler.html`;
+    const prefilledWa = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, YouTube Shorts videonuzdan (${videoTitle}) ulaşıyorum. Konu: "${cleanText}" hakkında fiyat teklifi almak istiyorum.`)}`;
+    const reply = `Merhaba ${authorName}! 🙌 Yorumunuz ve ilginiz için teşekkür ederiz. **"${directTier3Match}"** talebiniz dolap ölçünüze ve seçeceğiniz modele göre hesaplandığı için sizi doğrudan **Satış & Üretim Ekibimize** davet ediyoruz:\n\n📲 **Tek Tıkla WhatsApp Fiyat Teklifi:** ${prefilledWa}\n📞 **Fabrika Hat:** ${phoneDisplay}\n🌐 **Canlı Tasarım Modu:** https://wa.me/905050151035`;
     return {
       resolved_tier: 3,
       stage: 3,
@@ -690,7 +690,7 @@ export async function evaluateYouTubeThreeTierCommunication({
   if (geminiKey) {
     try {
       const systemInstruction = config.tier2_system_prompt ||
-        'Sen Global Kapak Mobilya\'nın resmi YouTube kanalı yapay zeka asistanısın. 2.000 m² tesisimizde 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim CNC membran kapak üretiyoruz.';
+        'Sen Nova Furniture\'nın resmi YouTube kanalı yapay zeka asistanısın. 2.000 m² tesisimizde 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim CNC membran kapak üretiyoruz.';
 
       const prompt = `${systemInstruction}
 
@@ -729,7 +729,7 @@ Lütfen JSON formatında yanıt ver:
         const parsed = JSON.parse(rawJson);
 
         if (parsed.needs_human_handoff) {
-          const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube Shorts yorumum üzerine "${cleanText}" konusunda destek almak istiyorum.`)}`;
+          const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, YouTube Shorts yorumum üzerine "${cleanText}" konusunda destek almak istiyorum.`)}`;
           const fullReply = `${parsed.reply}\n\n📲 **WhatsApp Destek & Fiyat Teklifi:** ${waLink} (${phoneDisplay})`;
           return {
             resolved_tier: 3,
@@ -770,8 +770,8 @@ Lütfen JSON formatında yanıt ver:
   // Yerleşik 2. Aşama Gemini AI Teknik & Katalog Danışmanı
   const isComplexTechnical = /ölçü|cm|metre|mutfak|banyo|dolap|kapak|model|desen|cnc|folyo|pvc|renk|uygun mu|nasıl|mimar|usta|menteşe/i.test(lowerText);
   if (isComplexTechnical) {
-    const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube kanalınızdan "${cleanText}" hakkında bilgi almak istiyorum.`)}`;
-    const techReply = `Güzel sorunuz için teşekkürler! 🤖 Global Kapak Mobilya olarak tüm CNC membran kapak modellerimizi mutfak, banyo ve gardırop ölçünüze göre **milimetrik özel ebatlarda (18mm E1 MDF gövde, suya/buhara tam dayanıklı yüzey)** üretiyoruz. Sitemizdeki **Canlı Tasarım Modu** ile ebat ve renk önizlemesi yapabilir (https://globalmobilyaweb.vercel.app/urunler.html) veya WhatsApp hattımızdan bize ulaşabilirsiniz: ${waLink}`;
+    const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, YouTube kanalınızdan "${cleanText}" hakkında bilgi almak istiyorum.`)}`;
+    const techReply = `Güzel sorunuz için teşekkürler! 🤖 Nova Furniture olarak tüm CNC membran kapak modellerimizi mutfak, banyo ve gardırop ölçünüze göre **milimetrik özel ebatlarda (18mm E1 MDF gövde, suya/buhara tam dayanıklı yüzey)** üretiyoruz. Sitemizdeki **Canlı Tasarım Modu** ile ebat ve renk önizlemesi yapabilir (https://wa.me/905050151035) veya WhatsApp hattımızdan bize ulaşabilirsiniz: ${waLink}`;
     return {
       resolved_tier: 2,
       stage: 2,
@@ -788,7 +788,7 @@ Lütfen JSON formatında yanıt ver:
   }
 
   // 3. Aşama Yedek Yönlendirme
-  const fallbackWaLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, YouTube üzerinden yazıyorum: "${cleanText}"`)}`;
+  const fallbackWaLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, YouTube üzerinden yazıyorum: "${cleanText}"`)}`;
   const fallbackReply = `Yorumunuz için teşekkür ederiz! 🙌 Detaylı teknik bilgi ve projenize özel teklif sunabilmemiz için satış ekibimizle doğrudan iletişime geçebilirsiniz:\n\n📲 **WhatsApp Canlı Destek:** ${fallbackWaLink}\n📞 **Telefon:** ${phoneDisplay}`;
   return {
     resolved_tier: 3,

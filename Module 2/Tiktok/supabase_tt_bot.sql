@@ -1,5 +1,5 @@
 -- ============================================================================
--- MODULE 2: GLOBAL KAPAK MOBİLYA — 7/24 TIKTOK BULUT BOTU SUPABASE KURULUMU
+-- MODULE 2: NOVA FURNITURE — 7/24 TIKTOK BULUT BOTU SUPABASE KURULUMU
 -- ============================================================================
 -- Bu SQL betiği mevcut public.site_settings tablosuna 'tt_bot_state' anahtarını
 -- ekler ve otonom TikTok zamanlayıcısı + 3 aşamalı yorum/DM geçmişini başlatır.
@@ -11,7 +11,7 @@ VALUES (
         'botActive', true,
         'autonomousMode', true,
         'zeroInputRender', true,
-        'accountHandle', '@globalkapak',
+        'accountHandle', '@thenovafurniture',
         'scheduleTimes', jsonb_build_array('11:30', '16:30', '20:30'),
         'rotationFormats', jsonb_build_array(
             'TIKTOK_ASMR_CNC',

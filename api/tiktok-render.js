@@ -95,7 +95,7 @@ function buildAutonomousTikTokSvg({
 
     <!-- Üst Marka & TikTok Doğrulanmış Hesap Başlığı -->
     <rect x="65" y="95" width="950" height="90" rx="45" fill="#000000" opacity="0.55" stroke="url(#ttNeon)" stroke-width="2"/>
-    <text x="115" y="152" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="800" fill="#ffffff">🎵 @globalkapak • GLOBAL KAPAK MOBİLYA</text>
+    <text x="115" y="152" font-family="Inter, Arial, sans-serif" font-size="32" font-weight="800" fill="#ffffff">🎵 @thenovafurniture • NOVA FURNITURE</text>
     <rect x="815" y="115" width="175" height="50" rx="25" fill="${t.accentPink}"/>
     <text x="902" y="148" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="24" font-weight="800" fill="#ffffff">#KEŞFET</text>
 

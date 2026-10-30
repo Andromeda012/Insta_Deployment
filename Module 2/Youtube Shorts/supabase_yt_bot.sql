@@ -1,13 +1,13 @@
 -- ============================================================================
--- GLOBAL KAPAK MOBİLYA — MODULE 2: YOUTUBE SHORTS CLOUD BOT SUPABASE ŞEMASI
+-- NOVA FURNITURE — MODULE 2: YOUTUBE SHORTS CLOUD BOT SUPABASE ŞEMASI
 -- Not: Bot tüm durumunu anlık olarak `public.site_settings` (`key = 'yt_bot_state'`)
 -- üzerinde tutar. İsteğe bağlı ilişkisel tablolar aşağıdadır:
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS public.yt_bot_config (
   id TEXT PRIMARY KEY DEFAULT 'default',
-  channel_name TEXT DEFAULT 'Global Kapak Mobilya',
-  channel_handle TEXT DEFAULT '@GlobalKapakMobilya',
+  channel_name TEXT DEFAULT 'Nova Furniture',
+  channel_handle TEXT DEFAULT '@thenovafurniture',
   channel_id TEXT DEFAULT '',
   client_id TEXT DEFAULT '',
   client_secret TEXT DEFAULT '',

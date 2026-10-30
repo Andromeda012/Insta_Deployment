@@ -1,5 +1,5 @@
 /**
- * MODULE 2 — GLOBAL KAPAK MOBİLYA: 7/24 BULUT TIKTOK BOT MOTORU (bot-engine.js)
+ * MODULE 2 — NOVA FURNITURE: 7/24 BULUT TIKTOK BOT MOTORU (bot-engine.js)
  * ====================================================================================
  * Bu modül şunları sağlar:
  * 1. Sıfır Fotoğraf/Video Girişiyle Otonom 9:16 Dikey (1080x1920) TikTok Tasarımı:
@@ -22,16 +22,16 @@ const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
 // ---------------------------------------------------------------------------
-// VARSAYILAN FABRİKA & MARKA BİLGİLERİ (Global Kapak Mobilya)
+// VARSAYILAN FABRİKA & MARKA BİLGİLERİ (Nova Furniture)
 // ---------------------------------------------------------------------------
 const BRAND_CONTEXT = {
-    companyName: 'Global Kapak Mobilya',
-    officialTikTok: '@globalkapak',
+    companyName: 'Nova Furniture',
+    officialTikTok: '@thenovafurniture',
     factoryAddress: 'Yüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul',
     phone: '0 (505) 015 1035',
     whatsappUrl: 'https://wa.me/905050151035',
-    email: 'globalkapak@gmail.com',
-    website: 'https://globalmobilyaweb.vercel.app',
+    email: 'info@thenovafurniture.com',
+    website: 'https://wa.me/905050151035',
     deliverySla: '5 İş Gününde Hızlı Sevkiyat',
     warranty: '5 Yıl Fabrika Garantisi',
     specs: '18mm 1. Sınıf MDF + 0.35mm İthal PVC Membran Vakum Pres + Hassas CNC İşleme'
@@ -57,13 +57,13 @@ const STAGE_1_RULES = [
         id: 'factory_address',
         name: 'Fabrika Adresi & Showroom Ziyareti',
         keywords: ['adres', 'nerede', 'yeriniz', 'konum', 'hangi il', 'istanbul', 'bağcılar', 'showroom', 'fabrika nerede', 'gelip görebilir'],
-        reply: '📍 **Global Kapak Mobilya Fabrika & Showroom:**\nYüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul\n🕘 Hafta içi 08:30 - 18:30, Cumartesi 09:00 - 15:00 saatleri arasında fabrikamızı ziyaret edip canlı numuneleri inceleyebilirsiniz.'
+        reply: '📍 **Nova Furniture Fabrika & Showroom:**\nYüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul\n🕘 Hafta içi 08:30 - 18:30, Cumartesi 09:00 - 15:00 saatleri arasında fabrikamızı ziyaret edip canlı numuneleri inceleyebilirsiniz.'
     },
     {
         id: 'color_catalog',
         name: 'Renk Kartelası & Katalog',
         keywords: ['renk', 'kartela', 'katalog', 'modeller', 'mat antrasit', 'kaşmir', 'ahşap desen', 'beyaz', 'renkleri nasıl'],
-        reply: '🎨 50+ mat, ipek mat, parlak (high gloss) ve doğal ahşap dokulu membran renk kartelamızı ve tüm CNC kapak modellerimizi web kataloğumuzda inceleyebilirsiniz:\n🌐 https://globalmobilyaweb.vercel.app\n📲 PDF Kartela için WhatsApp: 0 (505) 015 1035'
+        reply: '🎨 50+ mat, ipek mat, parlak (high gloss) ve doğal ahşap dokulu membran renk kartelamızı ve tüm CNC kapak modellerimizi web kataloğumuzda inceleyebilirsiniz:\n🌐 https://wa.me/905050151035\n📲 PDF Kartela için WhatsApp: 0 (505) 015 1035'
     }
 ];
 
@@ -132,7 +132,7 @@ async function generateGeminiTikTokReply({ userMessage, username = 'Takipçimiz'
         return `- [${sku}] ${title} (${cat}) | Renkler: ${colors}`;
     }).join('\n');
 
-    const fallbackReply = `Merhaba @${username} 👋 Global Kapak Mobilya fabrikamızda tüm kapaklarımız 18mm 1. sınıf MDF üzerine 0.35mm ithal PVC membran vakum pres ve CNC işleme ile üretilmektedir. Buhar ve neme tam dayanıklıdır, 5 yıl garantilidir ve 5 iş gününde teslim edilir. 🛠️ Özel ölçü ve fiyat teklifi için WhatsApp hattımızdan bize ulaşabilirsiniz: https://wa.me/905050151035 (0505 015 10 35)`;
+    const fallbackReply = `Merhaba @${username} 👋 Nova Furniture fabrikamızda tüm kapaklarımız 18mm 1. sınıf MDF üzerine 0.35mm ithal PVC membran vakum pres ve CNC işleme ile üretilmektedir. Buhar ve neme tam dayanıklıdır, 5 yıl garantilidir ve 5 iş gününde teslim edilir. 🛠️ Özel ölçü ve fiyat teklifi için WhatsApp hattımızdan bize ulaşabilirsiniz: https://wa.me/905050151035 (0505 015 10 35)`;
 
     if (!geminiApiKey) {
         return {
@@ -141,7 +141,7 @@ async function generateGeminiTikTokReply({ userMessage, username = 'Takipçimiz'
         };
     }
 
-    const systemPrompt = `Sen Global Kapak Mobilya'nın resmi TikTok (@globalkapak) Yapay Zeka Müşteri Temsilcisisin.
+    const systemPrompt = `Sen Nova Furniture'nın resmi TikTok (@thenovafurniture) Yapay Zeka Müşteri Temsilcisisin.
 Görevin: TikTok yorum veya DM üzerinden gelen teknik soruları samimi, enerjik, profesyonel ve kısa (maksimum 3-4 cümle) şekilde yanıtlamak.
 
 ŞİRKET KURALLARI:
@@ -150,7 +150,7 @@ Görevin: TikTok yorum veya DM üzerinden gelen teknik soruları samimi, enerjik
 - Garanti: Soyulma ve kabarmaya karşı 5 yıl fabrika garantisi.
 - Fabrika Adresi: Yüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul.
 - İletişim & WhatsApp: 0 (505) 015 1035 | https://wa.me/905050151035
-- Web Katalog: https://globalmobilyaweb.vercel.app
+- Web Katalog: https://wa.me/905050151035
 - KESİNLİKLE rastgele TL/m² fiyat uydurma; fiyat sorulursa ölçüye ve modele göre değiştiğini belirtip WhatsApp hattına yönlendir.
 
 CANLI ÜRÜN KATALOĞU:
@@ -322,34 +322,34 @@ function generateAutonomousTikTokDraft({ format = 'TIKTOK_ASMR_CNC', product = {
             `🔹 Renk Seçenekleri: ${colors}\n` +
             `🚚 5 İş Gününde Fabrikadan Teslim | 🛡️ 5 Yıl Garanti\n` +
             `📲 Özel ölçü & fiyat için sabitlenen yoruma tıklayın! 👇\n\n` +
-            `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #globalkapak #mobilyaüretim`;
+            `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #thenovafurniture #mobilyaüretim`;
     } else if (format === 'TIKTOK_PHOTO_CAROUSEL') {
         caption = `Senin mutfağına hangisi yakışır? Yorumlara favori rengini yaz! 👇🎨\n\n` +
             `📸 Kaydırmalı Kartela: ${title} (${sku})\n` +
             `🎨 Popüler Renkler: ${colors}\n` +
             `✅ Soyulma ve kabarmaya karşı 5 Yıl Fabrika Garantisi\n` +
             `🚚 Bağcılar / İstanbul fabrikamızdan 81 ile 5 iş gününde sevkiyat!\n\n` +
-            `#keşfet #photomode #mutfaktasarım #renkkartelası #membrankapak #mutfakdekorasyonu #globalkapak #fyp`;
+            `#keşfet #photomode #mutfaktasarım #renkkartelası #membrankapak #mutfakdekorasyonu #thenovafurniture #fyp`;
     } else if (format === 'TIKTOK_POV_RENOVATION') {
         caption = `Eski mutfak dolaplarınızı kırmadan sadece kapaklarını değiştirerek yepyeni bir mutfağa kavuşun! 🔄✨\n\n` +
             `💎 Uygulanan Model: ${title} (${sku} - ${category})\n` +
             `📐 Milimetrik CNC kesim ve menteşe yeri hazırlığı\n` +
             `🚚 5 İş Gününde Teslimat | 🛡️ 5 Yıl Garanti\n` +
             `📲 Ölçünüzü WhatsApp'tan gönderin, anında fiyatlandıralım: 0505 015 10 35\n\n` +
-            `#keşfet #öncesonra #mutfakdönüşümü #mutfakyenileme #kapakdeğişimi #membrankapak #globalkapak #fyp`;
+            `#keşfet #öncesonra #mutfakdönüşümü #mutfakyenileme #kapakdeğişimi #membrankapak #thenovafurniture #fyp`;
     } else {
         caption = `Mutfak imalatçıları, marangoz atölyeleri ve iç mimarlar için Bağcılar fabrikamızdan doğrudan toptan kapak üretimi! 🏭📦\n\n` +
             `🔸 Seri: ${title} (${sku})\n` +
             `🔸 Kapasite: Yüksek hassasiyetli CNC & Vakum Pres Hattı\n` +
             `🔸 Sevkiyat: 5 İş Gününde Türkiye Geneli Ambar & Kargo\n` +
             `📲 B2B Bayilik & Toptan Fiyat Listesi: 0 (505) 015 1035\n\n` +
-            `#keşfet #marangoz #mutfakimalatı #toptanmobilya #b2bmobilya #cncmembran #bağcılar #globalkapak #fyp`;
+            `#keşfet #marangoz #mutfakimalatı #toptanmobilya #b2bmobilya #cncmembran #bağcılar #thenovafurniture #fyp`;
     }
 
     const pinnedComment = `📌 FABRİKA DOĞRUDAN SİPARİŞ & ÖLÇÜ HATTI:\n` +
         `📐 ${title} (${sku}) modelimiz için özel ölçü fiyat teklifi ve renk kartelası istemek için WhatsApp hattımıza tıklayın:\n` +
         `👉 https://wa.me/905050151035 (0505 015 10 35)\n` +
-        `🌐 Dijital Katalog: https://globalmobilyaweb.vercel.app`;
+        `🌐 Dijital Katalog: https://wa.me/905050151035`;
 
     return {
         format: fmt.id,
@@ -364,7 +364,7 @@ function generateAutonomousTikTokDraft({ format = 'TIKTOK_ASMR_CNC', product = {
         trendingAudio: fmt.trendingAudio,
         caption,
         pinnedComment,
-        hashtags: ['#keşfet', '#fyp', '#mutfakdolabı', '#membrankapak', '#mutfakyenileme', '#cncüretim', '#globalkapak']
+        hashtags: ['#keşfet', '#fyp', '#mutfakdolabı', '#membrankapak', '#mutfakyenileme', '#cncüretim', '#thenovafurniture']
     };
 }
 
@@ -383,11 +383,11 @@ async function publishAutonomousTikTokPost({
             ok: true,
             mode: 'CLOUD_AUTONOMOUS_SIMULATION',
             publishId: `tt_pub_${Date.now()}`,
-            shareUrl: `https://www.tiktok.com/@globalkapak/video/${Date.now()}`,
+            shareUrl: `https://www.tiktok.com/@thenovafurniture/video/${Date.now()}`,
             pinnedCommentId: `tt_cmt_${Date.now()}`,
             mediaUrl,
             publishedAt: new Date().toISOString(),
-            note: 'TikTok Content Posting API v2 token girildiğinde doğrudan @globalkapak hesabında yayınlanır.'
+            note: 'TikTok Content Posting API v2 token girildiğinde doğrudan @thenovafurniture hesabında yayınlanır.'
         };
     }
 
@@ -443,7 +443,7 @@ async function publishAutonomousTikTokPost({
                 ok: false,
                 mode: 'TIKTOK_API_ERROR',
                 error: data.error?.message || `HTTP ${res.status}`,
-                fallbackShareUrl: `https://www.tiktok.com/@globalkapak`
+                fallbackShareUrl: `https://www.tiktok.com/@thenovafurniture`
             };
         }
 
@@ -451,7 +451,7 @@ async function publishAutonomousTikTokPost({
             ok: true,
             mode: 'TIKTOK_DIRECT_POST_V2',
             publishId: data.data?.publish_id || `tt_live_${Date.now()}`,
-            shareUrl: `https://www.tiktok.com/@globalkapak`,
+            shareUrl: `https://www.tiktok.com/@thenovafurniture`,
             mediaUrl,
             publishedAt: new Date().toISOString()
         };

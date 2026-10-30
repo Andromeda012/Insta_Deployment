@@ -91,7 +91,7 @@ module.exports = async function handler(req, res) {
             botActive: true,
             autonomousMode: true,
             zeroInputRender: true,
-            accountHandle: '@globalkapak',
+            accountHandle: '@thenovafurniture',
             scheduledQueue: [],
             publishedHistory: [],
             interactionLogs: []

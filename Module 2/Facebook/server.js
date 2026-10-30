@@ -101,7 +101,7 @@ async function checkAndPublishFacebookPosts(forceGenerate = false) {
         mediaType: post.media_type || 'PHOTO_POST',
         mediaUrl: post.media_url,
         caption: fullCaption,
-        targetLink: post.target_link || 'https://globalmobilyaweb.vercel.app/urunler.html'
+        targetLink: post.target_link || 'https://wa.me/905050151035'
       });
 
       post.status = 'published';

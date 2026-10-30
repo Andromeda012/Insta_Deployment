@@ -1,12 +1,12 @@
 -- ============================================================================
--- GLOBAL KAPAK MOBİLYA — MODULE 2: INSTAGRAM CLOUD BOT SUPABASE VERİTABANI ŞEMASI
+-- NOVA FURNITURE (@thenovafurniture) — MODULE 2: INSTAGRAM CLOUD BOT
 -- 7/24 Bulut Üzerinde Çalışan Otomatik Reels/Story/Gönderi & 3 Aşamalı İletişim Botu
 -- ============================================================================
 
 -- 1. Bot Genel & Bulut Zamanlayıcı Ayarları Tablosu
 CREATE TABLE IF NOT EXISTS public.insta_bot_config (
   id TEXT PRIMARY KEY DEFAULT 'default',
-  account_handle TEXT DEFAULT '@globalkapakmobilya',
+  account_handle TEXT DEFAULT '@thenovafurniture',
   ig_user_id TEXT DEFAULT '',
   access_token TEXT DEFAULT '',
   gemini_api_key TEXT DEFAULT '',
@@ -20,11 +20,11 @@ CREATE TABLE IF NOT EXISTS public.insta_bot_config (
     {"slot_id": "slot_afternoon", "time": "14:30", "type": "STORIES", "active": true, "label": "Öğleden Sonra Atölye / Renk Story"},
     {"slot_id": "slot_evening", "time": "19:30", "type": "REELS", "active": true, "label": "Akşam CNC Üretim & Mutfak Reels"}
   ]'::jsonb,
-  tier2_system_prompt TEXT DEFAULT 'Sen Global Kapak Mobilya''nın resmi Instagram yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar''da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. Müşterilere nazik, kurumsal ve kısa (maksimum 3-4 cümle) yanıtlar ver. Eğer müşteri net fiyat teklifi, özel ölçü siparişi, toplu alım veya yetkiliyle görüşmek isterse 3. aşama olan WhatsApp hattımıza (+90 505 015 1035) yönlendir.',
+  tier2_system_prompt TEXT DEFAULT 'Sen Nova Furniture''ın (@thenovafurniture) resmi Instagram asistanısın. Modern tesisimizde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı ithal kaplama teknolojisiyle özel ölçü mobilya, gardırop, yatak odası, mutfak ve banyo modelleri üretmekteyiz. KESİNLİKLE hiçbir web sitesi linki verme ve "Global Kapak" veya "#globalkapak" kelimelerini asla kullanma. Müşteriyi her zaman WhatsApp hattımıza (0 505 015 1035) veya DM ile iletişime yönlendir.',
   tier3_whatsapp_number TEXT DEFAULT '905050151035',
   tier3_phone_display TEXT DEFAULT '0 (505) 015 1035',
-  tier3_email TEXT DEFAULT 'info@globalkapakmobilya.com',
-  tier3_web_url TEXT DEFAULT 'https://globalmobilyaweb.vercel.app',
+  tier3_email TEXT DEFAULT 'info@thenovafurniture.com',
+  tier3_web_url TEXT DEFAULT '',
   tier3_handoff_triggers JSONB DEFAULT '["sipariş vermek", "özel ölçü fiyat", "yetkili", "insan", "temsilci", "toplu alım", "bayilik", "şikayet", "sorun", "ustayla görüşmek", "whatsapp", "numaranız"]'::jsonb,
   tier3_handoff_template TEXT DEFAULT 'Memnuniyetle yardımcı olalım! 🙌 Özel ölçü hesaplaması, net fiyat teklifi ve birebir müşteri temsilcimizle görüşmek için doğrudan WhatsApp hattımıza tıklayabilirsiniz: https://wa.me/905050151035 — Ayrıca 0 (505) 015 1035 numaralı hattımızdan bize hemen ulaşabilirsiniz.',
   updated_at TIMESTAMPTZ DEFAULT now()
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS public.insta_scheduled_posts (
   media_type TEXT NOT NULL DEFAULT 'POST', -- 'POST' | 'REELS' | 'STORIES'
   title TEXT NOT NULL,
   caption TEXT DEFAULT '',
-  hashtags TEXT DEFAULT '#globalkapakmobilya #membrankapak #mutfakdolabı #cnckapak #içmimari',
+  hashtags TEXT DEFAULT '#novafurniture #thenovafurniture #mobilyatasarim #luxuryfurniture #evdekorasyonu',
   media_url TEXT NOT NULL,
   thumbnail_url TEXT DEFAULT '',
   scheduled_for TIMESTAMPTZ NOT NULL,

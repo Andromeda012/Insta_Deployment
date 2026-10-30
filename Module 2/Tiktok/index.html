@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modül 2 — 7/24 Bulut TikTok Botu | Global Kapak Mobilya</title>
+    <title>Modül 2 — 7/24 Bulut TikTok Botu | Nova Furniture</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -490,7 +490,7 @@
             <div class="tt-logo-box">🎵</div>
             <div class="brand-title">
                 <h1>
-                    Global Kapak Mobilya — TikTok 7/24 Bulut Botu
+                    Nova Furniture — TikTok 7/24 Bulut Botu
                     <span class="badge-cloud">SIFIR MEDYA GİRİŞİ • OTONOM 9:16</span>
                 </h1>
                 <p>Otonom Fabrika ASMR, TikTok Photo Mode Kartela, POV Mutfak Dönüşümü & 3 Aşamalı Yorum/DM Motoru</p>
@@ -499,7 +499,7 @@
         <div class="header-actions">
             <div class="status-pill" id="cloudStatusPill">
                 <span class="dot-pulse"></span>
-                <span id="cloudStatusText">7/24 Bulut Motoru Aktif (@globalkapak)</span>
+                <span id="cloudStatusText">7/24 Bulut Motoru Aktif (@thenovafurniture)</span>
             </div>
             <button class="btn" onclick="openApiModal()">🔑 TikTok API & Gemini Ayarları</button>
             <button class="btn btn-cyan" onclick="generateAutonomousTikTokScene()">✨ Otonom Yeni Sahne Tasarla</button>
@@ -715,7 +715,7 @@
             </div>
             <div class="form-group">
                 <label>TikTok Hesap Kullanıcı Adı:</label>
-                <input type="text" id="cfgHandle" class="form-control" value="@globalkapak" />
+                <input type="text" id="cfgHandle" class="form-control" value="@thenovafurniture" />
             </div>
             <div class="form-group">
                 <label>TikTok OAuth2 Access Token (`act.xxx` — Content Posting API v2):</label>
@@ -800,7 +800,7 @@
 
         let botState = {
             botActive: true,
-            accountHandle: '@globalkapak',
+            accountHandle: '@thenovafurniture',
             tiktokAccessToken: '',
             tiktokOpenId: '',
             geminiApiKey: '',
@@ -945,20 +945,20 @@
                     `🔹 Renk Kartelası: ${colors}\n` +
                     `🚚 5 İş Gününde Fabrikadan Sevkiyat | 🛡️ 5 Yıl Garanti\n` +
                     `📲 Özel ölçü & fiyat için sabitlenen yoruma tıklayın! 👇\n\n` +
-                    `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #globalkapak`;
+                    `#keşfet #fyp #mutfakdolabı #membrankapak #cncüretim #mutfakyenileme #içmimarlık #thenovafurniture`;
                 document.getElementById('captionInput').value = caption;
             }
 
             const pinned = `📌 FABRİKA DOĞRUDAN SİPARİŞ & ÖLÇÜ HATTI:\n` +
                 `📐 ${title} (${sku}) modelimiz için özel ölçü fiyat teklifi ve renk kartelası istemek için WhatsApp hattımıza tıklayın:\n` +
                 `👉 https://wa.me/905050151035 (0505 015 10 35)\n` +
-                `🌐 Dijital Katalog: https://globalmobilyaweb.vercel.app`;
+                `🌐 Dijital Katalog: https://wa.me/905050151035`;
             document.getElementById('pinnedCommentInput').value = pinned;
 
             if (p.ana_resim) {
                 const fullImg = (p.ana_resim.startsWith('http') || p.ana_resim.startsWith('data:'))
                     ? p.ana_resim
-                    : `https://globalmobilyaweb.vercel.app${p.ana_resim.startsWith('/') ? '' : '/'}${p.ana_resim}`;
+                    : `https://wa.me/905050151035${p.ana_resim.startsWith('/') ? '' : '/'}${p.ana_resim}`;
                 const img = new Image();
                 img.crossOrigin = 'anonymous';
                 img.onload = () => {
@@ -1024,7 +1024,7 @@
             ctx.fill();
             ctx.restore();
 
-            // Üst @globalkapak Hesap Barı
+            // Üst @thenovafurniture Hesap Barı
             ctx.fillStyle = 'rgba(0,0,0,0.65)';
             roundRect(ctx, 65, 90, 950, 88, 44, true, false);
             ctx.strokeStyle = cfg.accent1;
@@ -1034,7 +1034,7 @@
             ctx.fillStyle = '#ffffff';
             ctx.font = '800 31px Inter, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText('🎵 @globalkapak • GLOBAL KAPAK', 110, 145);
+            ctx.fillText('🎵 @thenovafurniture • GLOBAL KAPAK', 110, 145);
 
             // #KEŞFET Rozeti
             ctx.fillStyle = cfg.accent2;
@@ -1200,7 +1200,7 @@
         function downloadTikTokPoster() {
             const canvas = document.getElementById('tiktokCanvas');
             const link = document.createElement('a');
-            link.download = `tiktok_globalkapak_${currentFormat.toLowerCase()}_${Date.now()}.png`;
+            link.download = `tiktok_novafurniture_${currentFormat.toLowerCase()}_${Date.now()}.png`;
             link.href = canvas.toDataURL('image/png');
             link.click();
         }
@@ -1359,7 +1359,7 @@
                     channel,
                     username: 'tiktok_takipci',
                     userMessage: text,
-                    reply: '🎨 50+ mat, ipek mat, parlak ve ahşap dokulu membran renk kartelamızı web sitemizde inceleyebilirsiniz: https://globalmobilyaweb.vercel.app',
+                    reply: '🎨 50+ mat, ipek mat, parlak ve ahşap dokulu membran renk kartelamızı web sitemizde inceleyebilirsiniz: https://wa.me/905050151035',
                     timestamp: 'Şimdi'
                 };
             } else if (stageCode === 3) {
@@ -1374,7 +1374,7 @@
                 };
             } else {
                 // 2. Aşama: Sunucu /api/tiktok-webhook veya Gemini AI üzerinden yanıt al
-                let aiReply = 'Merhaba 👋 Global Kapak Mobilya fabrikamızda 18mm 1. sınıf MDF üzerine 0.35mm ithal PVC membran vakum pres uyguluyoruz. Buhar, nem ve ısıya karşı ekstra dirençlidir, 5 yıl garantilidir. Özel ölçü ve teknik detaylar için WhatsApp hattımızdan (0505 015 10 35) bize ulaşabilirsiniz.';
+                let aiReply = 'Merhaba 👋 Nova Furniture fabrikamızda 18mm 1. sınıf MDF üzerine 0.35mm ithal PVC membran vakum pres uyguluyoruz. Buhar, nem ve ısıya karşı ekstra dirençlidir, 5 yıl garantilidir. Özel ölçü ve teknik detaylar için WhatsApp hattımızdan (0505 015 10 35) bize ulaşabilirsiniz.';
                 try {
                     const res = await fetch('/api/tiktok-webhook', {
                         method: 'POST',
@@ -1437,7 +1437,7 @@
         // MODAL KONTROLLERİ
         // =====================================================================
         function openApiModal() {
-            document.getElementById('cfgHandle').value = botState.accountHandle || '@globalkapak';
+            document.getElementById('cfgHandle').value = botState.accountHandle || '@thenovafurniture';
             document.getElementById('cfgAccessToken').value = botState.tiktokAccessToken || '';
             document.getElementById('cfgOpenId').value = botState.tiktokOpenId || '';
             document.getElementById('cfgGeminiKey').value = botState.geminiApiKey || '';
@@ -1450,7 +1450,7 @@
         }
 
         async function saveApiConfig() {
-            botState.accountHandle = document.getElementById('cfgHandle').value.trim() || '@globalkapak';
+            botState.accountHandle = document.getElementById('cfgHandle').value.trim() || '@thenovafurniture';
             botState.tiktokAccessToken = document.getElementById('cfgAccessToken').value.trim();
             botState.tiktokOpenId = document.getElementById('cfgOpenId').value.trim();
             botState.geminiApiKey = document.getElementById('cfgGeminiKey').value.trim();

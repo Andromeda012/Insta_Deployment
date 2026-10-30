@@ -28,7 +28,7 @@
 
   const NOVA_BRAND = {
     brandTitle: 'NOVA FURNITURE',
-    companyName: 'Global Kapak Mobilya & Nova Furniture',
+    companyName: 'Nova Furniture',
     phone: '0 (505) 015 1035',
     whatsappUrl: 'https://wa.me/905050151035',
     handle: '@thenovafurniture'
@@ -92,7 +92,7 @@
 
     // Hashtag'ler
     const cleanTag = cleanCollectionName.toLowerCase().replace(/[^a-z0-9ğüşıöç]/gi, '');
-    const hashtags = `#novafurniture #${cleanTag || 'koleksiyon'} #minimalistmobilya #yatakodasıtakımı #gardırop #şifonyer #komodin #membrankapak #mdfmobilya #cnckapak #içmimari #globalkapak`;
+    const hashtags = `#novafurniture #${cleanTag || 'koleksiyon'} #minimalistmobilya #yatakodasıtakımı #gardırop #şifonyer #komodin #membrankapak #mdfmobilya #cnckapak #içmimari #luxuryfurniture`;
 
     if (platform === 'youtube') {
       return `⛰️ NOVA | ${cleanCollectionName} Koleksiyonu — 1. Sınıf Mimari Tasarım #Shorts
@@ -108,7 +108,6 @@ ${dimText}
 🏷️ FİYAT & SİPARİŞ BİLGİSİ:
 💬 Yoruma "FİYAT" yazın, detaylı kataloğu ve güncel liste fiyatını paylaşalım!
 📲 WhatsApp Sipariş & Destek Hattı: 0 (505) 015 1035
-🌐 Web: https://globalmobilyaweb.vercel.app
 
 ${hashtags}`;
     }
@@ -147,7 +146,7 @@ ${hashtags}`;
       const title = (product.title || product.baslik || 'ZÜRİH YATAK ODASI').trim();
       const cleanName = title.replace(/^NOVA\s*[-–—:]*\s*/i, '');
 
-      const promptText = `Sen Nova Furniture ve Global Kapak Mobilya'nın lüks sosyal medya yöneticisisin.
+      const promptText = `Sen Nova Furniture'ın (@thenovafurniture) lüks sosyal medya yöneticisisin. KESİNLİKLE hiçbir web sitesi linki verme ve 'Global Kapak' veya '#globalkapak' kelimelerini asla kullanma!
 Aşağıdaki mobilya ürünü için ${platform} platformuna özel, tam olarak Reference 2 lüks İskandinav formatında, göz alıcı bir açıklama metni yaz.
 
 Ürün Bilgileri:

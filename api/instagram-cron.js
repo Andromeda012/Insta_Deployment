@@ -1,8 +1,6 @@
 // ============================================================================
-// Global Kapak Mobilya — Modül 2: Instagram Cloud Autonomous Designer & Publisher
+// Nova Furniture (@thenovafurniture) — Instagram Cloud Autonomous Publisher
 // Endpoint: https://insta-deployment-rho.vercel.app/api/instagram-cron
-// Özellik: Herhangi bir fotoğraf/video girişi olmadan kendi gönderisini,
-//          hikayesini (Story) ve Reels içeriğini KENDİSİ TASARLAR ve ONAYSIZ PAYLAŞIR.
 // ============================================================================
 import {
   generateAutonomousInstagramContent,
@@ -16,6 +14,7 @@ import {
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+const DEFAULT_MEDIA_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
 async function fetchProductsCatalog() {
   try {
@@ -34,11 +33,11 @@ async function fetchProductsCatalog() {
 
 async function ensurePublicImageUrl(rawImg, slug = 'item') {
   if (!rawImg) {
-    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+    return DEFAULT_MEDIA_FALLBACK;
   }
   if (rawImg.startsWith('http://') || rawImg.startsWith('https://')) {
     if (rawImg.includes('.svg') || rawImg.includes('instagram-render')) {
-      return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+      return DEFAULT_MEDIA_FALLBACK;
     }
     return rawImg;
   }
@@ -67,12 +66,9 @@ async function ensurePublicImageUrl(rawImg, slug = 'item') {
     } catch (e) {
       console.warn('Base64 upload error:', e);
     }
-    return 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+    return DEFAULT_MEDIA_FALLBACK;
   }
-  if (rawImg.startsWith('/')) {
-    return `https://globalmobilyaweb.vercel.app${rawImg}`;
-  }
-  return `https://globalmobilyaweb.vercel.app/${rawImg}`;
+  return DEFAULT_MEDIA_FALLBACK;
 }
 
 async function uploadAutonomousSvgToStorage(fileName, svgString) {
@@ -278,7 +274,7 @@ export default async function handler(req, res) {
 
       // STANDART GÖNDERİ / HİKAYE YAYINLAMA
       if (!publicImageUrl || publicImageUrl.includes('.svg') || publicImageUrl.includes('instagram-render')) {
-        publicImageUrl = 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+        publicImageUrl = DEFAULT_MEDIA_FALLBACK;
       }
 
       // 1. Meta Konteyner Oluştur

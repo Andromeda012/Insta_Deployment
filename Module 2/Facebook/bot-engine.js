@@ -80,23 +80,23 @@ export const FB_AUTONOMOUS_THEMES = [
 export const FB_CONCEPT_LIBRARY = [
   {
     conceptType: 'B2B_FACTORY_PARTNER',
-    badge: 'MOBİLYA USTALARI & İÇ MİMARLAR İÇİN B2B ÜRETİM',
-    headline: 'PROJELERİNİZ İÇİN 5 İŞ GÜNÜNDE ÖZEL ÖLÇÜ CNC KAPAK',
-    subheadline: '2.000 m² Modern Tesis • 18mm 1. Sınıf E1 MDF • Türkiye Geneli Sevkiyat',
+    badge: 'NOVA FURNITURE • ÖZEL & LÜKS ÜRETİM',
+    headline: 'PROJELERİNİZ İÇİN ÖZEL ÖLÇÜ CNC MOBİLYA VE KAPAK',
+    subheadline: 'Modern Üretim Tesisi • 18mm 1. Sınıf E1 MDF • Türkiye Geneli Sevkiyat',
     doorStyle: 'shaker',
-    specs: ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Toptan & Perakende'],
-    caption: '🏭 Mutfak, banyo ve gardırop projelerinizde termin gecikmelerine ve yüzey sorunlarına son!\n\nGlobal Kapak Mobilya olarak İstanbul Bağcılar’daki 2.000 m² yüksek teknolojili tesisimizde, 0.01 mm 5 eksen CNC hassasiyetiyle özel ölçü membran kapak üretiyoruz.\n\n✅ 1. Sınıf 18mm E1 Sertifikalı MDF\n✅ Suya, Buhara ve Isıya Dayanıklı İthal Membran Yüzey\n✅ 5 Yıl Üretici Garantisi & 5 İş Gününde Teslimat\n\n👉 Online Canlı Kapak Tasarım Modumuzda ölçü ve renkleri hemen deneyin:\n🌐 https://globalmobilyaweb.vercel.app/urunler.html\n📲 WhatsApp Sipariş & Bayilik Hattı: 0 (505) 015 1035',
-    hashtags: '#globalkapakmobilya #membrankapak #mutfakdolabı #mobilyimalatı #içmimarlık #cnckapak #mutfaktasarım'
+    specs: ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Özel Ölçü Tasarım'],
+    caption: '🏭 Mutfak, banyo, gardırop ve yatak odası projelerinizde termin gecikmelerine ve kalite sorunlarına son!\n\nNova Furniture olarak modern yüksek teknolojili tesisimizde, 0.01 mm 5 eksen CNC hassasiyetiyle özel ölçü mobilya ve membran kapaklar üretiyoruz.\n\n✅ 1. Sınıf 18mm E1 Sertifikalı MDF\n✅ Suya, Buhara ve Isıya Dayanıklı İthal Membran Yüzey\n✅ 5 Yıl Üretici Garantisi & Hızlı Teslimat\n\n📲 Özel Fiyat Teklifi ve Dijital Katalog İçin WhatsApp Hattımız: 0 (505) 015 1035\n📩 Veya detaylı bilgi için bize doğrudan mesaj (DM) gönderebilirsiniz.',
+    hashtags: '#novafurniture #thenovafurniture #mobilyatasarim #luxuryfurniture #evdekorasyonu #icmimari #ozelolcumobilya #mutfakdolabi'
   },
   {
     conceptType: 'INTERACTIVE_DESIGN_LINK',
-    badge: 'CANLI KAPAK TASARIM & ÖLÇÜ ÖNİZLEME MODU',
-    headline: 'DOLAP ÖLÇÜNÜZÜ GİRİN, RENGİNİZİ ANINDA ÖNİZLEYİN!',
+    badge: 'NOVA 2026 ÖZEL RENK & MODEL KOLEKSİYONU',
+    headline: 'DOLAP ÖLÇÜNÜZÜ İLETİN, MODEL VE RENGİ ÖZEL PLANLAYALIM!',
     subheadline: 'Fjord Mavi • Kuvars Gri • Adaçayı Yeşili • Kutup Beyazı • 50+ Renk',
     doorStyle: 'diagonal',
-    specs: ['Canlı 3B Önizleme', '50+ Renk Kartelası', 'Milimetrik Özel Ölçü'],
-    caption: '🎨 Mutfağınıza veya banyonuza hangi kapak modelinin ve rengin yakışacağını merak mı ediyorsunuz?\n\nWeb sitemizde yer alan interaktif "Canlı Tasarım ve Ölçü Önizleme Modu" ile en/boy ölçünüzü seçin, Fjord Mavi, Adaçayı Yeşili veya Kuvars Gri renk alternatiflerini saniyeler içinde canlı görün!\n\n🔗 Hemen Tasarlamak İçin Tıklayın: https://globalmobilyaweb.vercel.app/urunler.html\n📍 Fabrika & Showroom: Bağcılar / İstanbul\n📞 0 (505) 015 1035',
-    hashtags: '#globalkapak #mutfakyenileme #kapakmodelleri #membrankapak #evdekorasyonu #banyodolabı'
+    specs: ['Kişiye Özel Tasarım', '50+ Renk Kartelası', 'Milimetrik Özel Ölçü'],
+    caption: '🎨 Yaşam alanınıza hangi dolap modelinin ve rengin yakışacağını keşfedin!\n\nFjord Mavi, Adaçayı Yeşili, Kuvars Gri ve Kutup Beyazı dahil 50’den fazla renk ve yüzey alternatifimiz hakkında bilgi almak, numune veya katalog talep etmek için bize dilediğiniz zaman ulaşabilirsiniz.\n\n📲 WhatsApp Sipariş & Destek: 0 (505) 015 1035\n📩 DM üzerinden de oda ölçülerinizi hemen iletebilirsiniz.',
+    hashtags: '#novafurniture #thenovafurniture #mobilyatasarim #renkkartelasi #luxuryfurniture #evdekorasyonu #icmimari'
   },
   {
     conceptType: 'CNC_REELS_SHOWCASE',
@@ -105,8 +105,8 @@ export const FB_CONCEPT_LIBRARY = [
     subheadline: 'Anti-Fingerprint (Parmak İzi Bırakmayan) Mat ve Doğal Ahşap Dokular',
     doorStyle: 'fluted',
     specs: ['0.01mm CNC Kesim', 'Anti-Fingerprint', '5 Yıl Tam Garanti'],
-    caption: '✨ Kalite detaylarda gizlidir! Dikey fugalı (fluted), çerçeveli country ve diyagonal CNC membran kapak modellerimizle yaşam alanlarınıza değer katıyoruz.\n\n🛡️ 5 Yıl Üretici Garantisi\n🚚 5 İş Gününde Hızlı Üretim & Sevkiyat\n🌐 Tüm Katalog: https://globalmobilyaweb.vercel.app\n📲 Hızlı Fiyat Teklifi (WhatsApp): https://wa.me/905050151035',
-    hashtags: '#globalkapakmobilya #cnckesim #membrankapak #mutfakkapakları #mobilyatasarım #facebookreels'
+    caption: '✨ Kalite detaylarda gizlidir! Dikey fugalı (fluted), çerçeveli country ve modern kapak modellerimizle yaşam alanlarınıza değer katıyoruz.\n\n🛡️ 5 Yıl Üretici Garantisi\n🚚 Hızlı Üretim & Güvenli Ambalajlı Sevkiyat\n📲 WhatsApp Katalog & Fiyat Hattı: 0 (505) 015 1035\n📩 Özel proje teklifleri için doğrudan mesaj atabilirsiniz.',
+    hashtags: '#novafurniture #thenovafurniture #mobilyatasarim #luxuryfurniture #evdekorasyonu #ozelolcumobilya #facebookreels'
   }
 ];
 
@@ -118,7 +118,7 @@ export const DEFAULT_FB_TIER1_RULES = [
     keywords: ['merhaba', 'selam', 'iyi günler', 'iyi çalışmalar', 'kolay gelsin', 'slm', 'mrb'],
     match_type: 'exact',
     channel_scope: 'BOTH',
-    response_text: 'Merhaba! 👋 Global Kapak Mobilya resmi Facebook sayfasına hoş geldiniz. Özel ölçü CNC membran mutfak, banyo ve gardırop kapaklarımız, 50+ renk kartelamız veya B2B/toptan üretimimiz hakkında size nasıl yardımcı olabilirim?',
+    response_text: 'Merhaba! 👋 Nova Furniture (@thenovafurniture) resmi sayfasına hoş geldiniz. Özel ölçü mobilya, gardırop, yatak odası, mutfak ve banyo modellerimiz veya renk kartelamız hakkında size nasıl yardımcı olabilirim?',
     escalate_to_tier3: false,
     priority: 5,
     active: true
@@ -129,7 +129,7 @@ export const DEFAULT_FB_TIER1_RULES = [
     keywords: ['teslimat', 'kaç günde', 'ne zaman çıkar', 'termin', 'kargo', 'şehir dışı', 'sevkiyat', 'nakliye'],
     match_type: 'contains',
     channel_scope: 'BOTH',
-    response_text: '🚚 Tüm özel ölçü membran kapak siparişlerimizi 2.000 m² modern fabrikamızda **5 iş günü** içinde üretip sevkiyata hazır hale getiriyoruz. İstanbul içi kendi araçlarımızla, Türkiye geneline ise darbe korumalı özel ambalajla güvenli sevkiyatımız mevcuttur.',
+    response_text: '🚚 Tüm özel ölçü mobilya ve kapak siparişlerimizi modern fabrikamızda ortalama **5 iş günü** içinde üretip sevkiyata hazır hale getiriyoruz. İstanbul içi güvenli teslimat, Türkiye geneline ise darbe korumalı özel ambalajla sigortalı sevkiyatımız mevcuttur.',
     escalate_to_tier3: false,
     priority: 10,
     active: true
@@ -140,7 +140,7 @@ export const DEFAULT_FB_TIER1_RULES = [
     keywords: ['garanti', 'kabarma', 'soyulma', 'suya dayanıklı', 'buhar', 'mdf', 'kalite', 'folyo'],
     match_type: 'contains',
     channel_scope: 'BOTH',
-    response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı ithal PVC membran folyo kullanıyoruz. Tüm kapaklarımız kabarma ve soyulmaya karşı **5 Yıl Üretici Garantisi** altındadır.',
+    response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı ithal membran yüzey teknolojisi kullanıyoruz. Tüm ürünlerimiz kabarma ve soyulmaya karşı **5 Yıl Üretici Garantisi** altındadır.',
     escalate_to_tier3: false,
     priority: 10,
     active: true
@@ -151,18 +151,18 @@ export const DEFAULT_FB_TIER1_RULES = [
     keywords: ['adres', 'nerede', 'konum', 'yeriniz', 'hangi semt', 'çalışma saat', 'kaça kadar', 'showroom'],
     match_type: 'contains',
     channel_scope: 'BOTH',
-    response_text: '📍 Fabrikamız ve Showroom: Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul adresindedir. Hafta içi ve Cumartesi 08:00 – 18:00 saatleri arasında bizi ziyaret edebilirsiniz.',
+    response_text: '📍 Showroom ve Üretim Tesisimiz İstanbul’dadır. Hafta içi ve Cumartesi 08:30 – 18:30 saatleri arasında randevuyla ziyaret edebilir veya WhatsApp üzerinden konum talep edebilirsiniz: 0 (505) 015 1035.',
     escalate_to_tier3: false,
     priority: 10,
     active: true
   },
   {
     id: 'fb-rule-catalog',
-    rule_name: 'Renk Kartelası & Canlı Tasarım Modu Linki',
+    rule_name: 'Renk Kartelası & Katalog Talebi',
     keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'mat mavi', 'adaçayı', 'antrasit', 'tasarım'],
     match_type: 'contains',
     channel_scope: 'BOTH',
-    response_text: '🎨 Fjord Mavi Mat, Kuvars Gri, Adaçayı Yeşili, Kutup Beyazı ve Doğal Meşe dahil 50+ membran renk seçeneğimiz mevcuttur. Web sitemizdeki Canlı Tasarım Modunda kendi dolap ölçünüz ve renginizle anlık önizleme yapabilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html',
+    response_text: '🎨 Fjord Mavi Mat, Kuvars Gri, Adaçayı Yeşili, Kutup Beyazı ve Doğal Meşe dahil 50+ renk seçeneğimiz mevcuttur. Detaylı dijital kataloğumuz ve numune talepleri için bize DM atabilir veya doğrudan WhatsApp hattımızdan yazabilirsiniz: 0 (505) 015 1035',
     escalate_to_tier3: false,
     priority: 10,
     active: true
@@ -231,10 +231,10 @@ function escapeXml(str = '') {
  */
 export function renderAutonomousFacebookSvg({
   mediaType = 'PHOTO_POST', // 'PHOTO_POST' | 'LINK_CARD' | 'FB_REELS' | 'FB_STORIES'
-  badge = 'GLOBAL KAPAK MOBİLYA • KURUMSAL FACEBOOK YAYINI',
-  headline = 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU',
+  badge = 'NOVA FURNITURE • KURUMSAL FACEBOOK YAYINI',
+  headline = 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK & MOBİLYA KOLEKSİYONU',
   subheadline = '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim',
-  specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Toptan & Perakende'],
+  specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Özel Ölçü Tasarım'],
   doorStyle = 'shaker',
   theme = FB_AUTONOMOUS_THEMES[0]
 }) {
@@ -313,10 +313,10 @@ export function renderAutonomousFacebookSvg({
 
       <text x="70" y="${hLine2 ? 275 : 235}" fill="#CBD5E1" font-family="sans-serif" font-size="20" font-weight="500">${escapeXml(subheadline.slice(0, 68))}</text>
 
-      <!-- Canlı Tasarım Modu Çağrı Kutusu -->
+      <!-- Canlı WhatsApp İletişim Kutusu -->
       <rect x="70" y="320" width="610" height="82" rx="14" fill="rgba(15, 23, 42, 0.55)" stroke="rgba(147, 197, 253, 0.35)" stroke-width="1.5"/>
-      <text x="95" y="355" fill="#93C5FD" font-family="sans-serif" font-size="16" font-weight="800">🌐 CANLI KAPAK TASARIM &amp; ÖLÇÜ ÖNİZLEME MODU</text>
-      <text x="95" y="383" fill="#F8FAFC" font-family="sans-serif" font-size="18" font-weight="700">globalmobilyaweb.vercel.app/urunler.html   •   0 (505) 015 1035</text>
+      <text x="95" y="355" fill="#93C5FD" font-family="sans-serif" font-size="16" font-weight="800">📲 NOVA FURNITURE • ÖZEL ÖLÇÜ &amp; DİJİTAL KATALOG HATTI</text>
+      <text x="95" y="383" fill="#F8FAFC" font-family="sans-serif" font-size="18" font-weight="700">WhatsApp: 0 (505) 015 1035   •   DM: @thenovafurniture</text>
 
       ${specsSvg}
 
@@ -328,7 +328,7 @@ export function renderAutonomousFacebookSvg({
       ${swatchesSvg}
 
       <!-- Alt İmza -->
-      <text x="70" y="592" fill="#94A3B8" font-family="sans-serif" font-size="17" font-weight="700">📘 Global Kapak Mobilya Resmi Facebook Sayfası   |   📍 Bağcılar / İstanbul   |   🛡️ 5 Yıl Üretici Garantisi</text>
+      <text x="70" y="592" fill="#94A3B8" font-family="sans-serif" font-size="17" font-weight="700">📘 Nova Furniture Resmi Facebook Sayfası   |   📞 0 (505) 015 1035   |   🛡️ 5 Yıl Üretici Garantisi</text>
     </svg>`;
   }
 
@@ -404,7 +404,7 @@ export function renderAutonomousFacebookSvg({
     <rect x="${doorX + doorW - 26}" y="${doorY + Math.round(doorH / 2) - 45}" width="8" height="90" rx="4" fill="#E2E8F0"/>
     ${swatchesSvg}
     ${specsSvg}
-    <text x="${width / 2}" y="${height - 64}" fill="#94A3B8" font-family="sans-serif" font-size="22" font-weight="700" text-anchor="middle">📘 Global Kapak Mobilya   •   🌐 globalmobilyaweb.vercel.app   •   📞 0 (505) 015 1035</text>
+    <text x="${width / 2}" y="${height - 64}" fill="#94A3B8" font-family="sans-serif" font-size="22" font-weight="700" text-anchor="middle">📘 Nova Furniture   •   📲 WhatsApp: 0 (505) 015 1035   •   🛡️ 5 Yıl Garanti</text>
   </svg>`;
 }
 
@@ -426,36 +426,34 @@ export async function generateAutonomousFacebookContent({
   const fallbackConcept = FB_CONCEPT_LIBRARY[Math.floor(Math.random() * FB_CONCEPT_LIBRARY.length)];
 
   let badge = mediaType === 'FB_REELS'
-    ? '📘 FACEBOOK REELS • CNC ÜRETİM & TASARIM'
+    ? '📘 FACEBOOK REELS • NOVA ÖZEL ÜRETİM'
     : mediaType === 'FB_STORIES'
-      ? '📘 FACEBOOK HİKAYE • GÜNLÜK FABRİKA & RENK KARTELASI'
+      ? '📘 FACEBOOK HİKAYE • GÜNLÜK ATÖLYE & RENK KARTELASI'
       : mediaType === 'LINK_CARD'
-        ? '📘 B2B & MİMARİ PROJE • CANLI TASARIM MODU'
-        : '📘 GLOBAL KAPAK MOBİLYA • KURUMSAL KATALOG';
+        ? '📘 ÖZEL TASARIM & MİMARİ PROJE • NOVA FURNITURE'
+        : '📘 NOVA FURNITURE • KURUMSAL KATALOG';
 
   let headline = pickedProduct
     ? (pickedProduct.title || pickedProduct.slug || fallbackConcept.headline).toLocaleUpperCase('tr-TR')
     : fallbackConcept.headline;
 
   let subheadline = pickedProduct
-    ? (pickedProduct.kisa_aciklama || `${pickedProduct.kategori || 'CNC Membran Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`)
+    ? (pickedProduct.kisa_aciklama || `${pickedProduct.kategori || 'Özel Ölçü Mobilya & Kapak'} • 18mm E1 MDF • 5 Yıl Garanti`)
     : fallbackConcept.subheadline;
 
-  let specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Toptan & Perakende'];
+  let specs = ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Özel Ölçü Tasarım'];
   let doorStyle = ['shaker', 'diagonal', 'fluted'][Math.floor(Math.random() * 3)];
-  const targetUrl = pickedProduct?.slug
-    ? `https://globalmobilyaweb.vercel.app/urun.html?id=${pickedProduct.slug}`
-    : 'https://globalmobilyaweb.vercel.app/urunler.html';
+  const targetUrl = 'https://wa.me/905050151035';
 
   let caption = pickedProduct
-    ? `📘 ${pickedProduct.title || 'Özel Ölçü CNC Membran Kapak'} — Fabrika Doğrudan Satış & B2B Üretim!\n\n` +
-      `${pickedProduct.kisa_aciklama || '2.000 m² modern üretim tesisimizde 0.01 mm CNC hassasiyeti ve 1. sınıf 18mm E1 MDF ile üretilmektedir.'}\n\n` +
+    ? `📘 ${pickedProduct.title || 'Özel Ölçü Mobilya & Membran Kapak'} — Nova Furniture Özel Tasarım Koleksiyonu!\n\n` +
+      `${pickedProduct.kisa_aciklama || 'Modern üretim tesisimizde 0.01 mm CNC hassasiyeti ve 1. sınıf 18mm E1 MDF ile üretilmektedir.'}\n\n` +
       `✅ 5 Yıl Üretici Garantisi (Suya & Buhara Tam Dayanım)\n` +
-      `✅ 5 İş Gününde Hızlı Üretim & Türkiye Geneli Sevkiyat\n` +
-      `✅ Mutfak, Banyo ve Gardırop İçin Milimetrik Özel Ölçü\n\n` +
-      `🎨 Web sitemizdeki Canlı Tasarım Modunda dolap ölçünüz ve renginizle hemen deneyin:\n` +
-      `👉 ${targetUrl}\n` +
-      `📲 WhatsApp Sipariş & Fiyat Teklifi: https://wa.me/905050151035 (0505 015 1035)`
+      `✅ 5 İş Gününde Hızlı Üretim & Türkiye Geneli Güvenli Sevkiyat\n` +
+      `✅ Mutfak, Banyo, Gardırop ve Yatak Odası İçin Milimetrik Özel Ölçü\n\n` +
+      `📖 Dijital katalog, renk seçenekleri ve özel fiyat teklifi için bize ulaşın:\n` +
+      `📲 WhatsApp Hattımız: 0 (505) 015 1035 (${targetUrl})\n` +
+      `📩 Dilerseniz sayfamız üzerinden doğrudan mesaj (DM) iletebilirsiniz.`
     : fallbackConcept.caption;
 
   let hashtags = fallbackConcept.hashtags;
@@ -464,19 +462,19 @@ export async function generateAutonomousFacebookContent({
   if (geminiKey) {
     try {
       const geminiModel = config.gemini_model || 'gemini-2.5-flash';
-      const aiPrompt = `Sen Global Kapak Mobilya'nın kurumsal Facebook sayfası içerik yöneticisisin.
-Şirketimiz İstanbul Bağcılar'da 2.000 m² fabrikasında 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim özel ölçü CNC membran mutfak, banyo ve gardırop kapağı üretiyor.
-Facebook'ta hem ev sahiplerine hem de mobilya ustaları / iç mimarlara (B2B) hitap ediyoruz. Facebook gönderilerinde tıklanabilir web sitesi linki (${targetUrl}) doğrudan çalışır.
+      const aiPrompt = `Sen Nova Furniture'ın (@thenovafurniture) kurumsal Facebook sayfası içerik yöneticisisin.
+Şirketimiz modern üretim tesisinde 1. sınıf 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim özel ölçü CNC mobilya, lüks gardırop, yatak odası, banyo ve mutfak kapakları üretiyor.
+ÖNEMLİ KURAL: Kesinlikle hiçbir web sitesi linki paylaşma! Kesinlikle 'Global Kapak' veya '#globalkapak' kelimelerini KULLANMA! Sadece Nova Furniture markasını ve WhatsApp 0 (505) 015 1035 / DM yönlendirmesini kullan.
 Format: ${mediaType} (${slotLabel || 'Otonom Facebook Yayını'})
 Seçilen Ürün/Konu: ${pickedProduct ? `${pickedProduct.title} - ${pickedProduct.kisa_aciklama || ''}` : fallbackConcept.headline}
 
 Lütfen Facebook tasarım kartının üzerine yazılacak başlıkları ve detaylı Facebook gönderi metnini JSON olarak üret:
 {
-  "badge": "Üst rozet (maks 36 karakter, büyük harf)",
+  "badge": "Üst rozet (maks 36 karakter, büyük harf, NOVA FURNITURE vurgulu)",
   "headline": "Görsel üzerindeki ana başlık (maks 44 karakter, büyük harf)",
   "subheadline": "Görsel alt başlığı (maks 68 karakter)",
-  "caption": "Facebook gönderi metni (kurumsal, bilgilendirici, maddeli, içinde ${targetUrl} ve 0505 015 1035 geçen 3-4 paragraf)",
-  "hashtags": "#globalkapakmobilya ile başlayan 6-8 hashtag"
+  "caption": "Facebook gönderi metni (kurumsal, bilgilendirici, lüks, katalog ve fiyat için WhatsApp 0505 015 1035 ve DM vurgulu, 3-4 paragraf)",
+  "hashtags": "#novafurniture #thenovafurniture ile başlayan 6-8 hashtag (asla globalkapak olmasın)"
 }`;
 
       const gRes = await fetch(
@@ -550,7 +548,7 @@ export async function publishToFacebookPageGraphApi({
   mediaType = 'PHOTO_POST', // 'PHOTO_POST' | 'FB_REELS' | 'FB_STORIES' | 'LINK_CARD'
   mediaUrl,
   caption = '',
-  targetLink = 'https://globalmobilyaweb.vercel.app/urunler.html'
+  targetLink = 'https://wa.me/905050151035'
 }) {
   const resolvedType = (mediaType || 'PHOTO_POST').toUpperCase();
 
@@ -693,7 +691,7 @@ export async function evaluateFacebookThreeTierCommunication({
   // ÖN KONTROL: 3. Aşama (İnsan / Sipariş / Toptan B2B / Net Fiyat / WhatsApp)
   const directTier3Match = handoffTriggers.find(trigger => lowerText.includes(trigger.toLocaleLowerCase('tr-TR')));
   if (directTier3Match) {
-    const prefilledWa = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Facebook sayfanızdan ulaşıyorum (${senderName}). Konu: "${cleanText}" hakkında fiyat teklifi ve uzman desteği almak istiyorum.`)}`;
+    const prefilledWa = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, Facebook sayfanızdan ulaşıyorum (${senderName}). Konu: "${cleanText}" hakkında detaylı bilgi ve fiyat teklifi almak istiyorum.`)}`;
     const reply = `Memnuniyetle yardımcı olalım! 🙌 Talebiniz (**"${directTier3Match}"**) özel ölçü hesaplaması ve birebir müşteri temsilcisi desteği gerektirdiği için sizi doğrudan **Satış & Üretim Ekibimize** bağlıyorum.\n\n📲 **Tek Tıkla WhatsApp Destek:** ${prefilledWa}\n📞 **Fabrika Doğrudan Hat:** ${phoneDisplay}`;
     return {
       resolved_tier: 3,
@@ -752,20 +750,20 @@ export async function evaluateFacebookThreeTierCommunication({
   if (geminiKey) {
     try {
       const systemInstruction = config.tier2_system_prompt ||
-        'Sen Global Kapak Mobilya\'nın resmi Facebook sayfası yapay zeka asistanısın. 2.000 m² tesisimizde 18mm E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim CNC membran kapak üretiyoruz.';
+        'Sen Nova Furniture\'ın (@thenovafurniture) resmi Facebook sayfası yapay zeka asistanısın. Modern tesisimizde 18mm 1. sınıf E1 MDF üzerine 5 yıl garantili, 5 iş gününde teslim özel ölçü mobilya, gardırop, yatak odası, mutfak ve banyo modelleri üretiyoruz. KESİNLİKLE hiçbir web sitesi linki verme ve "Global Kapak" markasını asla kullanma. Müşteriyi her zaman WhatsApp hattımıza (0 505 015 1035) veya DM ile iletişime yönlendir.';
 
       const prompt = `${systemInstruction}
 
-Canlı Ürün Kataloğumuz:
-${catalogContext || '- Fjord Mavi Diyagonal CNC Kapak\n- Kuvars Gri Dalga Model\n- Adaçayı Yeşili Çerçeveli Country Kapak\n- Özel Ölçü Düz & Çıtalı Membran Kapaklar'}
+Canlı Ürün Koleksiyonumuz:
+${catalogContext || '- Fjord Mavi Diyagonal Model\n- Kuvars Gri Dalga Tasarım\n- Adaçayı Yeşili Çerçeveli Country Tasarım\n- Özel Ölçü Minimalist Yatak Odası & Gardıroplar'}
 
 Müşteri (${senderName}) Facebook ${channel} üzerinden şu mesajı gönderdi:
 "${cleanText}"
 
 Lütfen JSON formatında yanıt ver:
 {
-  "reply": "Müşteriye verilecek kibar, kurumsal, net Türkçe yanıt (maksimum 3-4 cümle)",
-  "needs_human_handoff": true veya false (Eğer müşteri özel ölçü siparişi, net fiyat hesaplaması, toptan bayilik, şikayet veya insan temsilciyle görüşmek istiyorsa true yap),
+  "reply": "Müşteriye verilecek lüks, kurumsal, net Türkçe yanıt (asla web sitesi linki verme, maksimum 3-4 cümle)",
+  "needs_human_handoff": true veya false (Eğer müşteri özel ölçü siparişi, net fiyat hesaplaması, toptan/proje, şikayet veya insan temsilciyle görüşmek istiyorsa true yap),
   "handoff_reason": "Eğer needs_human_handoff true ise kısa sebebi"
 }`;
 
@@ -791,7 +789,7 @@ Lütfen JSON formatında yanıt ver:
         const parsed = JSON.parse(rawJson);
 
         if (parsed.needs_human_handoff) {
-          const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Facebook üzerinden "${cleanText}" konusunda destek almak istiyorum.`)}`;
+          const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, Facebook üzerinden "${cleanText}" konusunda destek almak istiyorum.`)}`;
           const fullReply = `${parsed.reply}\n\n📲 **Uzman Temsilcimizle WhatsApp'tan Görüşün:** ${waLink} (${phoneDisplay})`;
           return {
             resolved_tier: 3,
@@ -832,8 +830,8 @@ Lütfen JSON formatında yanıt ver:
   // Yerleşik 2. Aşama Gemini AI Teknik & Katalog Danışmanı
   const isComplexTechnical = /ölçü|cm|metre|mutfak|banyo|dolap|kapak|model|desen|cnc|folyo|pvc|renk|uygun mu|nasıl|mimar|usta/i.test(lowerText);
   if (isComplexTechnical) {
-    const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Facebook sayfanızdan "${cleanText}" hakkında bilgi almak istiyorum.`)}`;
-    const techReply = `Sorunuz için teşekkür ederiz! 🤖 Global Kapak Mobilya olarak tüm CNC membran kapak modellerimizi mutfak, banyo ve gardırop ölçünüze göre **milimetrik özel ebatlarda (18mm E1 MDF gövde, suya/buhara tam dayanıklı yüzey)** üretiyoruz. Web sitemizdeki **Canlı Tasarım Modu** üzerinden ebat ve renk önizlemesi yapabilir (https://globalmobilyaweb.vercel.app/urunler.html) veya ölçünüzü doğrudan uzman ekibimize iletmek için WhatsApp hattımıza tıklayabilirsiniz: ${waLink}`;
+    const waLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, Facebook sayfanızdan "${cleanText}" hakkında bilgi almak istiyorum.`)}`;
+    const techReply = `Sorunuz için teşekkür ederiz! 🤖 Nova Furniture olarak tüm modellerimizi oda ve dolap ölçünüze göre **milimetrik özel ebatlarda (18mm E1 MDF gövde, suya/buhara tam dayanıklı yüzey)** üretiyoruz. Detaylı dijital katalog ve renk kartelamızı incelemek veya ölçülerinizi uzman ekibimize iletmek için WhatsApp hattımızdan bize anında ulaşabilirsiniz: ${waLink}`;
     return {
       resolved_tier: 2,
       stage: 2,
@@ -850,7 +848,7 @@ Lütfen JSON formatında yanıt ver:
   }
 
   // 3. Aşama Yedek Yönlendirme
-  const fallbackWaLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Facebook üzerinden yazıyorum: "${cleanText}"`)}`;
+  const fallbackWaLink = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(`Merhaba Nova Furniture, Facebook üzerinden yazıyorum: "${cleanText}"`)}`;
   const fallbackReply = `Mesajınız için teşekkür ederiz! 🙌 Konuyla ilgili size en doğru bilgiyi ve özel fiyat teklifini sunabilmemiz için müşteri temsilcimiz sizi bekliyor.\n\n📲 **WhatsApp Canlı Destek:** ${fallbackWaLink}\n📞 **Telefon:** ${phoneDisplay}`;
   return {
     resolved_tier: 3,

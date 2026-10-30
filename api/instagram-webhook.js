@@ -1,5 +1,5 @@
 // ============================================================================
-// Global Kapak Mobilya — Modül 2: Instagram Cloud Bot Webhook Endpoint (Vercel Serverless)
+// Nova Furniture — Modül 2: Instagram Cloud Bot Webhook Endpoint (Vercel Serverless)
 // Endpoint: https://insta-deployment-rho.vercel.app/api/instagram-webhook
 // ============================================================================
 import {
@@ -89,7 +89,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       status: 'online',
-      service: 'Global Kapak Mobilya — Instagram Cloud Webhook (7/24 Serverless)',
+      service: 'Nova Furniture — Instagram Cloud Webhook (7/24 Serverless)',
       autonomous_design: 'Aktif (Fotoğraf/Video girişi olmadan kendi Reels/Story/Gönderi tasarımını üretir ve paylaşır)',
       mode: '3-Stage Hybrid Communication Engine (Stage 1: Fixed -> Stage 2: Gemini AI -> Stage 3: Human/WhatsApp)',
       webhook_ready: true
