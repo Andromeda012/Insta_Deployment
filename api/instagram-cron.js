@@ -407,7 +407,7 @@ export default async function handler(req, res) {
       const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
       const publishResult = await publishToInstagramGraphApi({
         igUserId: config.ig_user_id || process.env.IG_USER_ID || '17841435882645322',
-        accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD',
+        accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD',
         mediaType: post.media_type || post.content_type || 'POST',
         mediaUrl: post.media_url,
         caption: fullCaption

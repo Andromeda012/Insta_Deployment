@@ -21,7 +21,7 @@
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 export const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
 export const DEFAULT_IG_USER_ID = '17841435882645322';
-export const DEFAULT_META_ACCESS_TOKEN = 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD';
+export const DEFAULT_META_ACCESS_TOKEN = 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD';
 export const DEFAULT_SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 export const DEFAULT_SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 

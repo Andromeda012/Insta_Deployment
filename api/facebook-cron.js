@@ -199,7 +199,7 @@ export default async function handler(req, res) {
       try {
         const publishResult = await publishToFacebookPageGraphApi({
           pageId: config.page_id || process.env.FB_PAGE_ID || '1436666706190366',
-          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD',
+          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || 'EAAVytShbbJUBS8UfPHT8aacyWnUEJAd1pVOfheayPPUoFTgzIXy9PVhATjHuytePm9xJHSXbvZCC3wq9H88Nj0vJl5AParFBPJcmUnUBYAEnxShy3O1T3qh6bWQDvS3TC5ZBRcngYHSMZBjESkMUKDLCuyWCC0mTnxSd4gb0iWZAunwZBpdqWpZC2DKDrrsb6LFpbk3y8Y',
           mediaType: post.media_type || 'PHOTO_POST',
           mediaUrl: post.media_url,
           caption: fullCaption,

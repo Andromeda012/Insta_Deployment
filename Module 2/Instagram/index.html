@@ -610,7 +610,7 @@
           <!-- Gizli girdi alanları (Arka plan bot motoru için korunmuştur) -->
           <input type="hidden" id="cfg_handle" value="@thenovafurniture">
           <input type="hidden" id="cfg_ig_user_id" value="17841435882645322">
-          <input type="hidden" id="cfg_access_token" value="EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD">
+          <input type="hidden" id="cfg_access_token" value="EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD">
         </div>
       </div>
 
@@ -789,7 +789,7 @@ const DEFAULT_BOT_STATE = {
   config: {
     account_handle: '@thenovafurniture',
     ig_user_id: '17841435882645322',
-    access_token: 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD',
+    access_token: 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD',
     gemini_api_key: ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join(''),
     gemini_model: 'gemini-2.5-flash',
     auto_publish_enabled: true,
@@ -916,7 +916,7 @@ async function resolveInstagramCredentials() {
 
   // Güvenli kalıcı token ve ID yedeği
   if (!igUserId) igUserId = '17841435882645322';
-  if (!accessToken) accessToken = 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD';
+  if (!accessToken) accessToken = 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD';
 
   if (botState && botState.config) {
     botState.config.ig_user_id = igUserId;
@@ -996,7 +996,7 @@ function populateFormsAndRenderAll() {
 
   setVal('cfg_handle', c.account_handle || '@thenovafurniture');
   setVal('cfg_ig_user_id', c.ig_user_id || '17841435882645322');
-  setVal('cfg_access_token', c.access_token || 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD');
+  setVal('cfg_access_token', c.access_token || 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD');
   setVal('cfg_gemini_model', c.gemini_model || 'gemini-2.5-flash');
   setVal('cfg_gemini_key', c.gemini_api_key || '');
   setVal('cfg_tier2_prompt', c.tier2_system_prompt || '');
