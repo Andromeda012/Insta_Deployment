@@ -2808,12 +2808,15 @@ async function triggerScanInstagramCommentsClient(isAuto = false) {
   }
 }
 
-// Sayfa açıkken her 30 saniyede bir otonom canlı Instagram yorum ve DM kontrolü
+// Sayfa açıkken her 10 saniyede bir otonom canlı Instagram yorum ve DM kontrolü
 setInterval(() => {
   triggerScanInstagramCommentsClient(true);
-}, 30000);
+}, 10000);
 
-document.addEventListener('DOMContentLoaded', loadBotStateFromSupabase);
+document.addEventListener('DOMContentLoaded', () => {
+  loadBotStateFromSupabase();
+  setTimeout(() => { triggerScanInstagramCommentsClient(true); }, 2500);
+});
 </script>
 </body>
 </html>
