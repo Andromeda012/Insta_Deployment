@@ -728,7 +728,7 @@
                   Facebook Page Graph API Bulut Bağlantısı Aktif
                 </h4>
                 <p style="font-size:11.5px;color:#94a3b8;margin-top:2px;">
-                  Sayfa: <strong style="color:#f8fafc;" id="fbActivePageNameDisplay">Global Kapak Mobilya</strong> • Sayfa ID: <code style="color:#93c5fd;background:rgba(15,23,42,0.7);padding:2px 7px;border-radius:5px;" id="fbActivePageIdDisplay">122127295833480422</code>
+                  Sayfa: <strong style="color:#f8fafc;" id="fbActivePageNameDisplay">Thenovafurniture</strong> • Sayfa ID: <code style="color:#93c5fd;background:rgba(15,23,42,0.7);padding:2px 7px;border-radius:5px;" id="fbActivePageIdDisplay">1436666706190366</code>
                 </p>
               </div>
             </div>
@@ -740,8 +740,8 @@
             </div>
           </div>
           <!-- Gizli girdi alanları (Arka plan bot motoru ve Supabase senkronizasyonu için korunmuştur) -->
-          <input type="hidden" id="cfg_page_name" value="Nova Furniture">
-          <input type="hidden" id="cfg_page_id" value="122127295833480422">
+          <input type="hidden" id="cfg_page_name" value="Thenovafurniture">
+          <input type="hidden" id="cfg_page_id" value="1436666706190366">
           <input type="hidden" id="cfg_page_token" value="EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD">
         </div>
       </div>
@@ -985,8 +985,8 @@ const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
 
 const DEFAULT_FB_BOT_STATE = {
   config: {
-    page_name: 'Nova Furniture',
-    page_id: '122127295833480422',
+    page_name: 'Thenovafurniture',
+    page_id: '1436666706190366',
     page_access_token: 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD',
     gemini_api_key: ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join(''),
     gemini_model: 'gemini-2.5-flash',
@@ -1119,7 +1119,7 @@ async function resolveFacebookCredentials() {
     } catch (_) {}
   }
 
-  if (!pageId) pageId = '122127295833480422';
+  if (!pageId) pageId = '1436666706190366';
   if (!pageAccessToken) pageAccessToken = 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD';
 
   if (fbState && fbState.config) {
@@ -1199,9 +1199,9 @@ function populateFbFormsAndRenderAll() {
   setVal('cfg_page_token', c.page_access_token || '');
 
   const nameDisp = document.getElementById('fbActivePageNameDisplay');
-  if (nameDisp) nameDisp.textContent = c.page_name || 'Global Kapak Mobilya';
+  if (nameDisp) nameDisp.textContent = c.page_name || 'Thenovafurniture';
   const idDisp = document.getElementById('fbActivePageIdDisplay');
-  if (idDisp) idDisp.textContent = c.page_id || '122127295833480422';
+  if (idDisp) idDisp.textContent = c.page_id || '1436666706190366';
   setVal('cfg_gemini_model', c.gemini_model || 'gemini-2.5-flash');
   setVal('cfg_gemini_key', c.gemini_api_key || '');
   setVal('cfg_tier2_prompt', c.tier2_system_prompt || '');
