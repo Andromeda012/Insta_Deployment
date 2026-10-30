@@ -8,6 +8,8 @@ import {
   generateAutonomousInstagramContent,
   publishToInstagramGraphApi,
   scanAndReplyInstagramComments,
+  scanAndReplyInstagramDms,
+  ensureInstagramAppSubscribed,
   DEFAULT_IG_USER_ID,
   DEFAULT_META_ACCESS_TOKEN
 } from '../Module 2/Instagram/bot-engine.js';
@@ -111,18 +113,29 @@ export default async function handler(req, res) {
     const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
     const config = state.config || {};
 
-    // Yorum Tarama ve Otomatik Yanıtlama İsteği
-    if (req.query?.action === 'scan_comments' || req.body?.action === 'scan_comments') {
+    // Yorum ve DM Tarama / Otomatik Yanıtlama İsteği
+    if (req.query?.action === 'scan_comments' || req.body?.action === 'scan_comments' || req.query?.action === 'scan_dms') {
       const catalog = await fetchProductsCatalog();
       const igUserId = config.ig_user_id || process.env.IG_USER_ID || DEFAULT_IG_USER_ID;
       const accessToken = config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || DEFAULT_META_ACCESS_TOKEN;
-      const scanResult = await scanAndReplyInstagramComments({
+      
+      await ensureInstagramAppSubscribed({ igUserId, accessToken });
+
+      const commentResults = await scanAndReplyInstagramComments({
         igUserId,
         accessToken,
         config,
         productsCatalog: catalog
       });
-      return res.status(200).json({ ok: true, scanResult });
+
+      const dmResults = await scanAndReplyInstagramDms({
+        igUserId,
+        accessToken,
+        config,
+        productsCatalog: catalog
+      });
+
+      return res.status(200).json({ ok: true, commentResults, dmResults });
     }
 
     // Doğrudan UI'dan "Şimdi Yayınla" isteği geldiyse Meta Graph API'ye anında gönder

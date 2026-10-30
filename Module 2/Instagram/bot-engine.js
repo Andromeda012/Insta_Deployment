@@ -644,10 +644,16 @@ export async function evaluateThreeTierCommunication({
   if (channel === 'COMMENT') {
     if (isPriceInquiry) {
       // 1. Yoruma verilecek kurumsal açık yanıt
-      const publicCommentReply = `Merhaba @${cleanSender}, fiyat ve model detaylarını DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
+      const publicCommentReply = `Merhaba @${cleanSender}, model detaylarını ve kataloğumuzu DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
 
-      // 2. Gemini AI ile DM üzerinden müşteriye özel açılış mesajı üret
-      let dmOpeningText = `Merhaba @${cleanSender}! Nova Furniture'a hoş geldiniz. ✨ Gönderimizdeki modelimizle ilgilendiğiniz için teşekkür ederiz. Size özel net fiyat ve detayları paylaşabilmemiz için düşündüğünüz oda (yatak odası, mutfak, gardırop), yaklaşık ölçüleriniz veya tercih ettiğiniz renk nedir acaba? Size nasıl yardımcı olabilirim?`;
+      // 2. Müşteriye özel DM açılış mesajı (Katalog Linki + Soru + WhatsApp)
+      let dmOpeningText = `Merhaba @${cleanSender}! Nova Furniture (@thenovafurniture) ailesine hoş geldiniz. ✨\n\n` +
+        `İlgilendiğiniz modelimiz 1. sınıf 18mm E1 sertifikalı sağlam MDF gövde ve yüksek dayanımlı CNC membran kapak teknolojisiyle üretilmektedir (5 Yıl Üretici Garantili).\n\n` +
+        `📖 Canlı Ürün Kataloğumuz & Tasarım Modu:\n` +
+        `👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+        `Size özel net fiyatlandırma ve tasarım planlaması yapabilmemiz için:\n` +
+        `❓ Hangi odayı (yatak odası, mutfak, gardırop vb.) yenilemek istiyorsunuz? Düşündüğünüz yaklaşık ölçü veya renk tercihiniz nedir?\n\n` +
+        `Dilediğiniz an buradan doğrudan yazabilir veya WhatsApp hattımızdan bize ulaşabilirsiniz: 0 (505) 015 1035 (${prefilledWa})`;
 
       if (geminiKey) {
         try {
@@ -655,8 +661,10 @@ export async function evaluateThreeTierCommunication({
 Ona Instagram DM kutusundan göndereceğimiz İLK özel mesajı yaz.
 Kurallar:
 - Müşteriyi kibarca karşıla ve ilgisi için teşekkür et.
+- Canlı katalog linkini paylaş (https://globalmobilyaweb.vercel.app/urunler.html).
 - Fiyatın ve modelin netleşmesi için müşteriye ne istediğini, hangi odayı yenilemek istediğini, düşündüğü yaklaşık ölçü veya renk tercihini sor.
-- Sıcak, lüks ve profesyonel bir dil kullan (maksimum 2-3 cümle).
+- WhatsApp hattını ekle (https://wa.me/${whatsappNumber}).
+- Sıcak, lüks ve profesyonel bir dil kullan.
 - JSON formatında yanıt ver: { "dm_opening": "..." }`;
 
           const gRes = await fetch(
@@ -932,4 +940,96 @@ export async function scanAndReplyInstagramComments({
     replied_count: repliedList.length,
     replies: repliedList
   };
+}
+
+// ── 4. INSTAGRAM UYGULAMA ABONELİĞİNİ DOĞRULA (WEBHOOK / MESAJ İZNİ) ──────────
+export async function ensureInstagramAppSubscribed({
+  igUserId = DEFAULT_IG_USER_ID,
+  accessToken = DEFAULT_META_ACCESS_TOKEN
+} = {}) {
+  if (!igUserId || !accessToken) return false;
+  try {
+    const res = await fetch(`${GRAPH_API_BASE}/${igUserId}/subscribed_apps?subscribed_fields=messages,comments&access_token=${encodeURIComponent(accessToken)}`, {
+      method: 'POST'
+    });
+    const d = await res.json();
+    return !!d?.success;
+  } catch (_) {
+    return false;
+  }
+}
+
+// ── 5. CANLI INSTAGRAM DM (ÖZEL MESAJ) TARAMA VE GEMINI AI İLE YANITLAMA ──────
+export async function scanAndReplyInstagramDms({
+  igUserId = DEFAULT_IG_USER_ID,
+  accessToken = DEFAULT_META_ACCESS_TOKEN,
+  config = {},
+  productsCatalog = []
+} = {}) {
+  if (!igUserId || !accessToken) return { scanned_conversations: 0, replied_count: 0, replies: [] };
+
+  try {
+    const url = `${GRAPH_API_BASE}/${igUserId}/conversations?fields=id,updated_time,participants,messages{id,created_time,from,message}&limit=10&access_token=${encodeURIComponent(accessToken)}`;
+    const res = await fetch(url);
+    if (!res.ok) return { scanned_conversations: 0, replied_count: 0, replies: [] };
+
+    const data = await res.json();
+    const convList = data?.data || [];
+    const repliedList = [];
+
+    for (const conv of convList) {
+      const participants = conv.participants?.data || [];
+      const otherUser = participants.find(p => p.id !== igUserId && p.username !== 'thenovafurniture');
+      if (!otherUser) continue;
+
+      const messages = conv.messages?.data || [];
+      if (messages.length === 0) continue;
+
+      const latestMsg = messages[0];
+      // Eğer en son mesaj zaten bizden gittiyse cevap verme (kendi kendimize döngüye girmemek için)
+      if (latestMsg.from?.id === igUserId || latestMsg.from?.username === 'thenovafurniture') {
+        continue;
+      }
+
+      const customerText = (latestMsg.message || '').trim();
+      if (!customerText) continue;
+
+      // Gemini AI ile DM yanıtı üret
+      const decision = await evaluateThreeTierCommunication({
+        incomingText: customerText,
+        channel: 'DM',
+        senderUsername: otherUser.username || otherUser.id,
+        config,
+        productsCatalog
+      });
+
+      // Müşteriye Instagram DM olarak gönder
+      const sendRes = await sendInstagramDmReply({
+        igUserId,
+        accessToken,
+        recipientId: otherUser.id,
+        replyText: decision.bot_reply
+      });
+
+      if (sendRes && !sendRes.error) {
+        repliedList.push({
+          conversation_id: conv.id,
+          recipient_id: otherUser.id,
+          recipient_username: otherUser.username || '',
+          incoming_message: customerText,
+          bot_reply: decision.bot_reply,
+          timestamp: new Date().toISOString()
+        });
+      }
+    }
+
+    return {
+      scanned_conversations: convList.length,
+      replied_count: repliedList.length,
+      replies: repliedList
+    };
+  } catch (err) {
+    console.warn('DM tarama hatası:', err);
+    return { scanned_conversations: 0, replied_count: 0, replies: [], error: err.message };
+  }
 }

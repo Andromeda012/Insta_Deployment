@@ -2516,8 +2516,14 @@ async function runClientSideThreeTierEngine(cleanText, channel) {
   const isPriceInquiry = /fiyat|ücret|ne kadar|kaç|m2|metrekare|tutar|maliyet|kaça|bilgi|sipariş|dm/i.test(lowerText);
   if (channel === 'COMMENT') {
     if (isPriceInquiry) {
-      const publicReply = `Merhaba @test_musteri, fiyat ve model detaylarını DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
-      let dmOpening = `Merhaba! Nova Furniture'a hoş geldiniz. ✨ Gönderimizdeki modelimizle ilgilendiğiniz için teşekkür ederiz. Size özel net fiyat ve detayları paylaşabilmemiz için düşündüğünüz oda (yatak odası, mutfak, gardırop), yaklaşık ölçüleriniz veya tercih ettiğiniz renk nedir acaba? Size nasıl yardımcı olabilirim?`;
+      const publicReply = `Merhaba @test_musteri, model detaylarını ve kataloğumuzu DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
+      let dmOpening = `Merhaba! Nova Furniture (@thenovafurniture) ailesine hoş geldiniz. ✨\n\n` +
+        `İlgilendiğiniz modelimiz 1. sınıf 18mm E1 sertifikalı sağlam MDF gövde ve suya/buhara dayanıklı ithal CNC membran kapak kalitesiyle üretilmektedir (5 Yıl Üretici Garantili).\n\n` +
+        `📖 Canlı Ürün Kataloğumuz & Tasarım Modu:\n` +
+        `👉 https://globalmobilyaweb.vercel.app/urunler.html\n\n` +
+        `Size özel net fiyatlandırma ve tasarım planlaması yapabilmemiz için:\n` +
+        `❓ Hangi odayı (yatak odası, mutfak, gardırop vb.) yenilemek istiyorsunuz? Düşündüğünüz yaklaşık ölçü veya renk tercihiniz nedir?\n\n` +
+        `Dilediğiniz an buradan doğrudan yazabilir veya doğrudan WhatsApp hattımızdan bize ulaşabilirsiniz: 0 (505) 015 1035 (https://wa.me/${waNum})`;
 
       if (gemKey) {
         try {
@@ -2525,7 +2531,7 @@ async function runClientSideThreeTierEngine(cleanText, channel) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{ parts: [{ text: `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri gönderimize "${cleanText}" yorumunu yaptı. DM üzerinden göndereceğimiz İLK özel mesajı yaz. Müşteriyi kibarca karşıla, ilgisi için teşekkür et ve ne istediğini öğrenmek için oda/ölçü/renk tercihlerini sor (2-3 cümle).` }] }]
+              contents: [{ parts: [{ text: `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri gönderimize "${cleanText}" yorumunu yaptı. DM üzerinden göndereceğimiz İLK özel mesajı yaz. Müşteriyi kibarca karşıla, ilgisi için teşekkür et, canlı katalog linkini ver (https://globalmobilyaweb.vercel.app/urunler.html) ve ne istediğini öğrenmek için oda/ölçü/renk tercihlerini sor.` }] }]
             })
           });
           if (res.ok) {
@@ -2658,6 +2664,10 @@ async function triggerScanInstagramCommentsClient(isAuto = false) {
   if (statusEl && !isAuto) statusEl.textContent = 'Instagram Graph API üzerinden son gönderiler ve yorumlar taranıyor...';
 
   try {
+    // 0. Instagram Webhook / Mesaj İznini Arka Planda Teyit Et
+    fetch(`https://graph.facebook.com/v21.0/${igUserId}/subscribed_apps?subscribed_fields=messages,comments&access_token=${encodeURIComponent(accessToken)}`, { method: 'POST' }).catch(() => {});
+
+    // 1. CANLI YORUMLARI TARA VE YANITLA (Yoruma Cevap + Anında Özel DM)
     const url = `https://graph.facebook.com/v21.0/${igUserId}/media?fields=id,caption,media_type,timestamp,comments{id,text,from,timestamp,replies{id,text,from}}&limit=10&access_token=${encodeURIComponent(accessToken)}`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Instagram medya bilgisi çekilemedi.');
@@ -2688,7 +2698,7 @@ async function triggerScanInstagramCommentsClient(isAuto = false) {
         });
         const replyData = await replyRes.json();
 
-        // Özel DM göndermeyi dene (Yetki varsa)
+        // Özel DM gönder (Katalog Linki + Soru + WhatsApp)
         if (decision.dm_initiate_message) {
           try {
             await fetch(`https://graph.facebook.com/v21.0/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`, {
@@ -2719,31 +2729,89 @@ async function triggerScanInstagramCommentsClient(isAuto = false) {
       }
     }
 
+    // 2. CANLI INSTAGRAM DM (ÖZEL MESAJ) KUTUSUNU TARA VE GEMINI AI İLE YANITLA
+    try {
+      const dmsUrl = `https://graph.facebook.com/v21.0/${igUserId}/conversations?fields=id,updated_time,participants,messages{id,created_time,from,message}&limit=10&access_token=${encodeURIComponent(accessToken)}`;
+      const dmsRes = await fetch(dmsUrl);
+      if (dmsRes.ok) {
+        const dmsData = await dmsRes.json();
+        const convList = dmsData?.data || [];
+        for (const conv of convList) {
+          const participants = conv.participants?.data || [];
+          const otherUser = participants.find(p => p.id !== igUserId && p.username !== 'thenovafurniture');
+          if (!otherUser) continue;
+          const msgs = conv.messages?.data || [];
+          if (msgs.length === 0) continue;
+          const latestMsg = msgs[0];
+          // Eğer son mesajı müşteri attıysa (biz atmadıysak):
+          if (latestMsg.from?.id === igUserId || latestMsg.from?.username === 'thenovafurniture') continue;
+          const customerText = (latestMsg.message || '').trim();
+          if (!customerText) continue;
+
+          // Bu DM daha önce cevaplandı mı kontrol et
+          const alreadyHandled = botState.conversations?.some(c => c.meta_msg_id === latestMsg.id);
+          if (alreadyHandled) continue;
+
+          // Gemini AI ile DM yanıtı üret
+          const dmDecision = await runClientSideThreeTierEngine(customerText, 'DM');
+
+          // Instagram DM kutusuna yanıtı gönder
+          const dmSendRes = await fetch(`https://graph.facebook.com/v21.0/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              recipient: { id: otherUser.id },
+              message: { text: dmDecision.bot_reply }
+            })
+          });
+          const dmSendData = await dmSendRes.json();
+
+          if (dmSendData.message_id) {
+            newRepliesCount++;
+            botState.conversations.unshift({
+              id: 'conv-' + Date.now(),
+              meta_msg_id: latestMsg.id,
+              sender_username: `@${otherUser.username || otherUser.id}`,
+              channel: 'DM',
+              incoming_text: customerText,
+              resolved_tier: dmDecision.resolved_tier || 2,
+              tier_label: dmDecision.tier_label || 'Gemini AI DM Sohbeti',
+              bot_reply: dmDecision.bot_reply,
+              whatsapp_link: dmDecision.whatsapp_link || '',
+              created_at: new Date().toISOString()
+            });
+          }
+        }
+      }
+    } catch (dmErr) {
+      console.warn('Canlı DM tarama uyarısı:', dmErr);
+    }
+
     if (newRepliesCount > 0) {
       await persistBotStateToSupabase(false);
       renderRecentConversations();
-      showToast(`🎉 ${newRepliesCount} adet yeni Instagram yorumuna yanıt verildi!`);
-      if (statusEl) statusEl.textContent = `Son taramada ${newRepliesCount} yeni yoruma başarıyla yanıt verildi (${new Date().toLocaleTimeString('tr-TR')}).`;
+      showToast(`🎉 ${newRepliesCount} adet yeni etkileşime (Yorum/DM) Gemini AI ile yanıt verildi!`);
+      if (statusEl) statusEl.textContent = `Son taramada ${newRepliesCount} yeni yoruma/DM'ye başarıyla yanıt verildi (${new Date().toLocaleTimeString('tr-TR')}).`;
     } else {
-      if (statusEl) statusEl.textContent = `Tüm yorumlar güncel. Cevapsız yeni yorum yok (${new Date().toLocaleTimeString('tr-TR')}).`;
-      if (!isAuto) showToast('✅ Tüm Instagram yorumları güncel, cevapsız yorum bulunmuyor.');
+      if (statusEl) statusEl.textContent = `Tüm yorumlar ve DM'ler güncel. Bekleyen yeni mesaj yok (${new Date().toLocaleTimeString('tr-TR')}).`;
+      if (!isAuto) showToast('✅ Tüm Instagram yorumları ve DM kutusu güncel.');
     }
 
   } catch (err) {
     console.warn('Yorum tarama uyarısı:', err);
-    if (statusEl) statusEl.textContent = `Yorum tarama durumu: ${err.message}`;
+    if (statusEl) statusEl.textContent = `Tarama durumu: ${err.message}`;
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '🔄 Canlı Instagram Yorumlarını Şimdi Tara & Yanıtla';
+      btn.innerHTML = '🔄 Canlı Instagram Yorumlarını & DM’leri Şimdi Tara';
     }
   }
 }
 
-// Sayfa açıkken her 45 saniyede bir otonom canlı Instagram yorum kontrolü
+// Sayfa açıkken her 30 saniyede bir otonom canlı Instagram yorum ve DM kontrolü
 setInterval(() => {
   triggerScanInstagramCommentsClient(true);
-}, 45000);
+}, 30000);
 
 document.addEventListener('DOMContentLoaded', loadBotStateFromSupabase);
 </script>
