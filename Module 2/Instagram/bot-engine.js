@@ -848,3 +848,88 @@ Lütfen JSON formatında yanıt ver:
     whatsappLink: prefilledWa
   };
 }
+
+// ── 3. OTONOM INSTAGRAM YORUM TARAMA & GEMINI AI YANITLAMA ───────────────────
+export async function scanAndReplyInstagramComments({
+  igUserId = DEFAULT_IG_USER_ID,
+  accessToken = DEFAULT_META_ACCESS_TOKEN,
+  config = {},
+  productsCatalog = []
+}) {
+  if (!igUserId || !accessToken) return { scanned_media: 0, replied_count: 0, replies: [] };
+
+  const url = `${GRAPH_API_BASE}/${igUserId}/media?fields=id,caption,media_type,timestamp,comments{id,text,from,timestamp,replies{id,text,from}}&limit=10&access_token=${encodeURIComponent(accessToken)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Instagram medya listesi alınamadı');
+  }
+
+  const mediaData = await res.json();
+  const mediaList = mediaData?.data || [];
+  const repliedList = [];
+
+  for (const media of mediaList) {
+    const comments = media.comments?.data || [];
+    for (const comment of comments) {
+      const fromUsername = comment.from?.username || '';
+      if (!fromUsername || fromUsername === 'thenovafurniture' || fromUsername === 'globalkapak' || fromUsername === 'globalkapakmobilya') continue;
+
+      const existingReplies = comment.replies?.data || [];
+      const alreadyReplied = existingReplies.some(r => r.from?.username === 'thenovafurniture' || r.from?.id === igUserId);
+      if (alreadyReplied) continue;
+
+      const decision = await evaluateThreeTierCommunication({
+        incomingText: comment.text,
+        channel: 'COMMENT',
+        senderUsername: fromUsername,
+        config,
+        productsCatalog
+      });
+
+      // Yoruma açık yanıt ver
+      try {
+        await sendInstagramCommentReply({
+          accessToken,
+          commentId: comment.id,
+          replyText: decision.bot_reply
+        });
+      } catch (e) {
+        console.warn('Comment reply error:', e);
+      }
+
+      // Özel DM göndermeyi dene
+      let dmSent = false;
+      if (decision.initiate_dm && decision.dm_initiate_message) {
+        try {
+          const dmRes = await sendInstagramPrivateReplyFromComment({
+            igUserId,
+            accessToken,
+            commentId: comment.id,
+            replyText: decision.dm_initiate_message
+          });
+          dmSent = !dmRes?.error;
+        } catch (e) {
+          console.warn('Private DM error:', e);
+        }
+      }
+
+      repliedList.push({
+        media_id: media.id,
+        comment_id: comment.id,
+        from_username: fromUsername,
+        incoming_text: comment.text,
+        bot_reply: decision.bot_reply,
+        dm_message: decision.dm_initiate_message || '',
+        dm_sent: dmSent,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }
+
+  return {
+    scanned_media: mediaList.length,
+    replied_count: repliedList.length,
+    replies: repliedList
+  };
+}

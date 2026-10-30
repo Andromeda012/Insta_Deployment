@@ -684,6 +684,19 @@
         <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;padding:12px;font-weight:700;">
           💾 Gemini AI Ayarlarını Buluta Kaydet
         </button>
+
+        <div style="margin-top:16px;padding:16px;border:1px solid rgba(225, 48, 108, 0.3);background:rgba(225, 48, 108, 0.05);border-radius:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <strong style="font-size:12.5px;color:var(--navy);">📡 Canlı Instagram Yorum Tarayıcı & Otonom Yanıtlayıcı</strong>
+            <span class="badge badge-pink" id="commentScanBadge">7/24 Canlı Tarama</span>
+          </div>
+          <button class="btn btn-insta" id="btnManualScanComments" onclick="triggerScanInstagramCommentsClient(false)" style="width:100%;justify-content:center;padding:11px;font-weight:700;">
+            🔄 Canlı Instagram Yorumlarını Şimdi Tara & Yanıtla
+          </button>
+          <div id="commentScanStatus" style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center;">
+            Sayfa açıkken her 45 saniyede bir son paylaşılan Reels & Gönderi yorumları taranır ve Gemini AI cevapsız kalanlara otomatik yanıt verir.
+          </div>
+        </div>
       </div>
 
       <div class="card">
@@ -2468,6 +2481,111 @@ Müşteri sipariş vermek veya yetkiliyle görüşmek isterse WhatsApp linkimizi
     whatsapp_link: prefilledWa
   };
 }
+
+// ── CANLI INSTAGRAM YORUMLARINI TARAMA VE OTONOM YANITLAMA ──
+async function triggerScanInstagramCommentsClient(isAuto = false) {
+  const btn = document.getElementById('btnManualScanComments');
+  const statusEl = document.getElementById('commentScanStatus');
+  const { igUserId, accessToken } = await resolveInstagramCredentials();
+
+  if (!igUserId || !accessToken) {
+    if (!isAuto) alert('Instagram Business ID veya Meta Token bulunamadı!');
+    return;
+  }
+
+  if (!isAuto && btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Instagram Yorumları Taranıyor...';
+  }
+  if (statusEl && !isAuto) statusEl.textContent = 'Instagram Graph API üzerinden son gönderiler ve yorumlar taranıyor...';
+
+  try {
+    const url = `https://graph.facebook.com/v21.0/${igUserId}/media?fields=id,caption,media_type,timestamp,comments{id,text,from,timestamp,replies{id,text,from}}&limit=10&access_token=${encodeURIComponent(accessToken)}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error('Instagram medya bilgisi çekilemedi.');
+    const data = await res.json();
+    const mediaList = data?.data || [];
+    let newRepliesCount = 0;
+
+    for (const media of mediaList) {
+      const comments = media.comments?.data || [];
+      for (const comment of comments) {
+        const fromUsername = comment.from?.username || '';
+        if (!fromUsername || fromUsername === 'thenovafurniture' || fromUsername === 'globalkapak' || fromUsername === 'globalkapakmobilya') continue;
+
+        const existingReplies = comment.replies?.data || [];
+        const alreadyReplied = existingReplies.some(r => r.from?.username === 'thenovafurniture' || r.from?.id === igUserId);
+        if (alreadyReplied) continue;
+
+        // Gemini AI değerlendirmesi yap
+        const decision = await runClientSideThreeTierEngine(comment.text, 'COMMENT');
+
+        // Yoruma açık yanıt ver
+        const cParams = new URLSearchParams();
+        cParams.set('message', decision.bot_reply);
+        cParams.set('access_token', accessToken);
+        const replyRes = await fetch(`https://graph.facebook.com/v21.0/${comment.id}/replies`, {
+          method: 'POST',
+          body: cParams
+        });
+        const replyData = await replyRes.json();
+
+        // Özel DM göndermeyi dene (Yetki varsa)
+        if (decision.dm_initiate_message) {
+          try {
+            await fetch(`https://graph.facebook.com/v21.0/${igUserId}/messages?access_token=${encodeURIComponent(accessToken)}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                recipient: { comment_id: comment.id },
+                message: { text: decision.dm_initiate_message }
+              })
+            });
+          } catch (_) {}
+        }
+
+        if (replyData.id) {
+          newRepliesCount++;
+          botState.conversations.unshift({
+            id: 'conv-' + Date.now(),
+            sender_username: `@${fromUsername}`,
+            channel: 'COMMENT',
+            incoming_text: comment.text,
+            resolved_tier: decision.resolved_tier || 2,
+            tier_label: decision.tier_label || 'Gemini AI Yorum Yanıtı',
+            bot_reply: decision.dm_initiate_message ? `[Yoruma Açık]: ${decision.bot_reply}\n[DM]: ${decision.dm_initiate_message}` : decision.bot_reply,
+            whatsapp_link: decision.whatsapp_link || '',
+            created_at: new Date().toISOString()
+          });
+        }
+      }
+    }
+
+    if (newRepliesCount > 0) {
+      await persistBotStateToSupabase(false);
+      renderRecentConversations();
+      showToast(`🎉 ${newRepliesCount} adet yeni Instagram yorumuna yanıt verildi!`);
+      if (statusEl) statusEl.textContent = `Son taramada ${newRepliesCount} yeni yoruma başarıyla yanıt verildi (${new Date().toLocaleTimeString('tr-TR')}).`;
+    } else {
+      if (statusEl) statusEl.textContent = `Tüm yorumlar güncel. Cevapsız yeni yorum yok (${new Date().toLocaleTimeString('tr-TR')}).`;
+      if (!isAuto) showToast('✅ Tüm Instagram yorumları güncel, cevapsız yorum bulunmuyor.');
+    }
+
+  } catch (err) {
+    console.warn('Yorum tarama uyarısı:', err);
+    if (statusEl) statusEl.textContent = `Yorum tarama durumu: ${err.message}`;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🔄 Canlı Instagram Yorumlarını Şimdi Tara & Yanıtla';
+    }
+  }
+}
+
+// Sayfa açıkken her 45 saniyede bir otonom canlı Instagram yorum kontrolü
+setInterval(() => {
+  triggerScanInstagramCommentsClient(true);
+}, 45000);
 
 document.addEventListener('DOMContentLoaded', loadBotStateFromSupabase);
 </script>

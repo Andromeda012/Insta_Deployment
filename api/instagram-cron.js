@@ -6,7 +6,10 @@
 // ============================================================================
 import {
   generateAutonomousInstagramContent,
-  publishToInstagramGraphApi
+  publishToInstagramGraphApi,
+  scanAndReplyInstagramComments,
+  DEFAULT_IG_USER_ID,
+  DEFAULT_META_ACCESS_TOKEN
 } from '../Module 2/Instagram/bot-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
@@ -107,6 +110,20 @@ export default async function handler(req, res) {
     const rows = stateRes.ok ? await stateRes.json() : [];
     const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
     const config = state.config || {};
+
+    // Yorum Tarama ve Otomatik Yanıtlama İsteği
+    if (req.query?.action === 'scan_comments' || req.body?.action === 'scan_comments') {
+      const catalog = await fetchProductsCatalog();
+      const igUserId = config.ig_user_id || process.env.IG_USER_ID || DEFAULT_IG_USER_ID;
+      const accessToken = config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || DEFAULT_META_ACCESS_TOKEN;
+      const scanResult = await scanAndReplyInstagramComments({
+        igUserId,
+        accessToken,
+        config,
+        productsCatalog: catalog
+      });
+      return res.status(200).json({ ok: true, scanResult });
+    }
 
     // Doğrudan UI'dan "Şimdi Yayınla" isteği geldiyse Meta Graph API'ye anında gönder
     if (req.method === 'POST' && (req.body?.action === 'publish' || req.body?.imageBase64 || req.body?.videoBase64 || req.body?.videoUrl || req.body?.mediaUrl)) {
