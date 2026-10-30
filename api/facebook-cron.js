@@ -199,7 +199,7 @@ export default async function handler(req, res) {
       try {
         const publishResult = await publishToFacebookPageGraphApi({
           pageId: config.page_id || process.env.FB_PAGE_ID || '122127295833480422',
-          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
+          pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || 'EAAVytShbbJUBS8kql9dGtmZATXCAtzKdi3ZAPX8e7lXyk2KYNNCXixibHSAlvLlAevfYKJNraXrLkSHz4y83yV4OrF5wKBecoBZBMLmrtNSLGxrvBZBwyQOe2MHmRPqZB7AH1EZA5QtP5aaEE0LA9G4zfyK7m3wGsuD8HCrAmfs5pag3oio3RkH923X4gxNgweKQZDZD',
           pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN || '',
           mediaType: post.media_type || 'PHOTO_POST',
           mediaUrl: post.media_url,
