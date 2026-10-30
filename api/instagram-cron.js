@@ -334,8 +334,8 @@ export default async function handler(req, res) {
       p => (p.status === 'scheduled' || p.status === 'QUEUED') && new Date(p.scheduled_for).getTime() <= nowMs
     );
 
-    // Eğer kuyrukta saati gelmiş gönderi yoksa (veya doğrudan otonom üretim tetiklendiyse):
-    // Bot herhangi bir fotoğraf/video girişine ihtiyaç duymadan KENDİSİ TASARLAR ve yayın kuyruğuna alır!
+    // Eğer kuyrukta kullanıcı tarafından planlanmış bekleyen gönderi yoksa:
+    // SADECE ve SADECE tanımlanmış zaman slotu (posting_slots) geldiyse otonom üret!
     if (duePosts.length === 0) {
       const slots = config.posting_slots || [];
       const now = new Date();
@@ -345,16 +345,28 @@ export default async function handler(req, res) {
       const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
       const todayStr = now.toISOString().slice(0, 10);
 
+      // Slot kontrolü: Yalnızca kullanıcının ayarladığı saatte (veya son 15 dakika içinde) ve bugün henüz çalışmamışsa
       const activeSlot = slots.find(s => {
-        if (!s.active) return false;
+        if (!s.active || !s.time) return false;
         if (s.last_run_date === todayStr) return false;
         const [sh, sm] = s.time.split(':').map(Number);
         const diffMin = (istHour * 60 + istMin) - (sh * 60 + sm);
-        return diffMin >= 0 && diffMin <= 60; // Son 60 dakika içinde saati gelmiş
+        return diffMin >= 0 && diffMin <= 15; // Belirlenen saatten itibaren maksimum 15 dakika tolerans
       });
 
-      const typesRotation = ['POST', 'REELS', 'POST', 'STORIES'];
-      const chosenType = forceGenerateType || (activeSlot ? activeSlot.type : null) || typesRotation[Math.floor(Math.random() * typesRotation.length)];
+      // Eğer şu an planlanmış bir saat slotu değilse VE panelden zorla (forceGenerateType) tetiklenmediyse: ASLA PAYLAŞMA!
+      if (!forceGenerateType && !activeSlot) {
+        return res.status(200).json({
+          ok: true,
+          checked_at: new Date().toISOString(),
+          message: 'Şu an Instagram için planlanmış bir paylaşım saati değil ve kuyrukta bekleyen gönderi yok.',
+          current_time: currentHHMM,
+          published_count: 0,
+          published: []
+        });
+      }
+
+      const chosenType = forceGenerateType || activeSlot?.type || 'POST';
 
       if (activeSlot) {
         activeSlot.last_run_date = todayStr;

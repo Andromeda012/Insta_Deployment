@@ -148,9 +148,44 @@ export default async function handler(req, res) {
       p => (p.status === 'scheduled' || p.status === 'QUEUED') && new Date(p.scheduled_for).getTime() <= nowMs
     );
 
+    // Eğer kuyrukta kullanıcı tarafından planlanmış bekleyen gönderi yoksa:
+    // SADECE ve SADECE tanımlanmış Facebook zaman slotu (posting_slots) geldiyse otonom üret!
     if (duePosts.length === 0) {
-      const typesRotation = ['PHOTO_POST', 'FB_REELS', 'FB_STORIES', 'LINK_CARD'];
-      const chosenType = forceGenerateType || typesRotation[Math.floor(Math.random() * typesRotation.length)];
+      const slots = config.posting_slots || [];
+      const now = new Date();
+      // Türkiye Saati (UTC+3)
+      const istHour = (now.getUTCHours() + 3) % 24;
+      const istMin = now.getUTCMinutes();
+      const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
+      const todayStr = now.toISOString().slice(0, 10);
+
+      const activeSlot = slots.find(s => {
+        if (!s.active || !s.time) return false;
+        if (s.last_run_date === todayStr) return false;
+        const [sh, sm] = s.time.split(':').map(Number);
+        const diffMin = (istHour * 60 + istMin) - (sh * 60 + sm);
+        return diffMin >= 0 && diffMin <= 15; // Belirlenen saatten itibaren maksimum 15 dakika tolerans
+      });
+
+      // Eğer şu an planlanmış bir saat slotu değilse VE panelden zorla (forceGenerateType) tetiklenmediyse: ASLA PAYLAŞMA!
+      if (!forceGenerateType && !activeSlot) {
+        return res.status(200).json({
+          ok: true,
+          checked_at: new Date().toISOString(),
+          message: 'Şu an Facebook için planlanmış bir paylaşım saati değil ve kuyrukta bekleyen gönderi yok.',
+          current_time: currentHHMM,
+          published_count: 0,
+          published: []
+        });
+      }
+
+      const chosenType = forceGenerateType || activeSlot?.type || 'PHOTO_POST';
+
+      if (activeSlot) {
+        activeSlot.last_run_date = todayStr;
+        activeSlot.last_run_time = currentHHMM;
+      }
+
       const autoDesigned = await generateAutonomousFacebookContent({
         mediaType: chosenType,
         productsCatalog: catalog,
