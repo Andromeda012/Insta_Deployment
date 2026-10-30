@@ -733,12 +733,19 @@
     }
 
     function updateKPIs(items) {
-      document.getElementById('kpiTotalCount').textContent = `${items.length} Model`;
+      const totalEl = document.getElementById('kpiTotalCount');
+      if (totalEl) totalEl.textContent = `${items.length} Model`;
+
       const withPhoto = items.filter(i => !!i.ana_resim).length;
-      document.getElementById('kpiPhotoCount').textContent = `${withPhoto} Fotoğraflı`;
+      const photoEl = document.getElementById('kpiPhotoCount');
+      if (photoEl) photoEl.textContent = `${withPhoto} Fotoğraflı`;
+
       const cats = new Set(items.map(i => i.kategori).filter(Boolean));
-      document.getElementById('kpiCategoryCount').textContent = `${cats.size} Kategori`;
-      document.getElementById('catalogCountBadge').textContent = `${items.length} Ürün`;
+      const catEl = document.getElementById('kpiCategoryCount');
+      if (catEl) catEl.textContent = `${cats.size} Kategori`;
+
+      const badgeEl = document.getElementById('catalogCountBadge');
+      if (badgeEl) badgeEl.textContent = `${items.length} Ürün`;
     }
 
     function populateCategoryFilter(items) {
@@ -903,7 +910,8 @@
 
       // Açıklama Metnini Güncelle (Referans 2 Formatı)
       const caption = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
-      document.getElementById('captionPreviewText').textContent = caption;
+      const capEl = document.getElementById('captionPreviewText');
+      if (capEl) capEl.textContent = caption;
     }
 
     function toggleKenBurnsPreview() {

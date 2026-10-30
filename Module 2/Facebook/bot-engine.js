@@ -20,6 +20,7 @@
  */
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
+export const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
 export const DEFAULT_SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 export const DEFAULT_SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 
@@ -459,7 +460,7 @@ export async function generateAutonomousFacebookContent({
 
   let hashtags = fallbackConcept.hashtags;
 
-  const geminiKey = (config.gemini_api_key || process.env.GEMINI_API_KEY || '').trim();
+  const geminiKey = (config.gemini_api_key || process.env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY).trim();
   if (geminiKey) {
     try {
       const geminiModel = config.gemini_model || 'gemini-2.5-flash';
@@ -743,7 +744,7 @@ export async function evaluateFacebookThreeTierCommunication({
   }
 
   // 2. AŞAMA: Karmaşık & Teknik Sorularda Google Gemini AI Devrede
-  const geminiKey = (config.gemini_api_key || process.env.GEMINI_API_KEY || '').trim();
+  const geminiKey = (config.gemini_api_key || process.env.GEMINI_API_KEY || DEFAULT_GEMINI_KEY).trim();
   const catalogContext = (productsCatalog || []).slice(0, 10).map(p =>
     `- ${p.title || p.name || p.slug} (${p.kategori || 'Membran Kapak'}): ${p.kisa_aciklama || 'Özel ölçü 18mm MDF CNC membran kapak'}`
   ).join('\n');

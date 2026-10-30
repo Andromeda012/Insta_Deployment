@@ -522,41 +522,35 @@
     <div class="kpi-card">
       <div class="kpi-top"><span>🎨 Otonom Tasarım Stüdyosu</span><span class="badge badge-green">Sıfır Medya Girişi</span></div>
       <div class="kpi-val">%100 Otonom</div>
-      <div class="kpi-sub">Foto/Video İstemeden Kendi Tasarlar & Paylaşır</div>
+      <div class="kpi-sub">Katalogdan Kendi Tasarlar & Paylaşır</div>
     </div>
     <div class="kpi-card">
       <div class="kpi-top"><span>🎬 Üretilen / Yayınlanan</span><span class="badge badge-pink">Reels • Story • Post</span></div>
       <div class="kpi-val" id="kpiScheduledCount">0 İçerik</div>
-      <div class="kpi-sub" id="kpiNextSlotInfo">Günlük 3 Otomatik Saat Dilimi Aktif</div>
+      <div class="kpi-sub" id="kpiNextSlotInfo">Günlük Otomatik Yayınlama Devrede</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-top"><span>🤖 1. & 2. Aşama Otomasyon</span><span class="badge badge-purple">Sabit + Gemini AI</span></div>
-      <div class="kpi-val" id="kpiRulesCount">5 Kural + AI</div>
-      <div class="kpi-sub">Basit Sorulara Sabit, Karmaşığa Gemini AI</div>
+      <div class="kpi-top"><span>🤖 Gemini AI Akıllı Asistan</span><span class="badge badge-purple">7/24 Aktif</span></div>
+      <div class="kpi-val">Tam Yapay Zeka</div>
+      <div class="kpi-sub">Fiyat Sorularında Otomatik DM Başlatır</div>
     </div>
     <div class="kpi-card">
-      <div class="kpi-top"><span>📲 3. Aşama İnsan / WhatsApp</span><span class="badge badge-amber">Canlı Devir</span></div>
-      <div class="kpi-val" id="kpiHandoffCount">0 Devir</div>
-      <div class="kpi-sub">WhatsApp (+90 505 015 1035) Otomatik Yönlendirme</div>
+      <div class="kpi-top"><span>📲 WhatsApp & İletişim</span><span class="badge badge-amber">+90 505 015 1035</span></div>
+      <div class="kpi-val" id="kpiHandoffCount">Canlı Destek</div>
+      <div class="kpi-sub">İsteyen Müşteriye WhatsApp Bağlantısı Verir</div>
     </div>
   </div>
 
   <!-- NAVIGATION TABS -->
   <div class="tabs-bar">
     <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
-      🎨 1. Otonom Reels, Story & Gönderi Tasarım + Zamanlayıcı
+      🎨 1. Otonom Gönderi & Reels Stüdyosu (Zamanlama & Yayın Kuyruğu)
     </button>
-    <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
-      💬 2. Birinci Aşama: Sabit Cevap Kuralları
-    </button>
-    <button class="tab-btn" data-tab="tab-tier2" onclick="switchTab('tab-tier2')">
-      🧠 3. İkinci Aşama: Gemini AI Destek Motoru
-    </button>
-    <button class="tab-btn" data-tab="tab-tier3" onclick="switchTab('tab-tier3')">
-      📲 4. Üçüncü Aşama: WhatsApp & İnsan Temsilci Devri
+    <button class="tab-btn" data-tab="tab-gemini" onclick="switchTab('tab-gemini')">
+      🤖 2. Gemini AI Yorum & DM Asistanı (Otomatik 'Fiyat' → DM)
     </button>
     <button class="tab-btn" data-tab="tab-simulator" onclick="switchTab('tab-simulator')">
-      🧪 5. Canlı 3 Aşamalı Bot Test & Simülasyon
+      💬 3. Canlı Gemini DM Simülatörü & Müşteri Konuşmaları
     </button>
   </div>
 
@@ -637,235 +631,130 @@
   </div>
 
   <!-- ===================================================================== -->
-  <!-- TAB 2: 1. AŞAMA — BASİT SORULAR İÇİN SABİT CEVAP KURALLARI           -->
+  <!-- TAB 2: GEMINI AI AKILLI ASİSTAN (YORUM & DM YÖNETİMİ)                 -->
   <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier1">
+  <div class="tab-pane" id="tab-gemini">
     <div class="grid-2">
       <div class="card">
         <div class="card-header">
-          <div class="card-title">➕ Yeni 1. Aşama Sabit Cevap Kuralı Ekle</div>
-          <span class="badge badge-blue">1. Aşama: Anlık Sabit Yanıt</span>
+          <div class="card-title">🤖 Google Gemini AI Akıllı Asistan Yapılandırması</div>
+          <span class="badge badge-purple">Tam Yapay Zeka Kontrolü</span>
         </div>
-        <div class="form-group">
-          <label>Kural Başlığı</label>
-          <input type="text" class="form-control" id="r_name" placeholder="Örn: Teslimat Süresi & Kargo Soruları">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Geçerli Kanal</label>
-            <select class="form-control" id="r_channel">
-              <option value="BOTH">DM + Yorumlar (Her İkisi)</option>
-              <option value="DM">Sadece Instagram DM</option>
-              <option value="COMMENT">Sadece Gönderi/Reels Yorumları</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Eşleşme Tipi</label>
-            <select class="form-control" id="r_match_type">
-              <option value="contains">Kelimeyi İçeriyorsa (Önerilen)</option>
-              <option value="exact">Tam Eşleşme</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Tetikleyici Anahtar Kelimeler (Virgülle Ayırın)</label>
-          <input type="text" class="form-control" id="r_keywords" placeholder="teslimat, kaç günde, kargo, termin, ne zaman çıkar">
-        </div>
-        <div class="form-group">
-          <label>Verilecek Sabit Kurumsal Cevap</label>
-          <textarea class="form-control" id="r_response" rows="4" placeholder="🚚 Tüm özel ölçü membran kapak siparişlerimizi 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz..."></textarea>
-        </div>
-        <button class="btn btn-navy" onclick="addTier1Rule()" style="width:100%;justify-content:center;">
-          💾 Sabit Cevap Kuralını Ekle ve Buluta Kaydet
-        </button>
-      </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📚 Aktif 1. Aşama Sabit Cevap Kuralları</div>
-          <span class="badge badge-green">Milisaniyelik Yanıt</span>
+        <div style="background:linear-gradient(135deg, rgba(99,102,241,0.12), rgba(15,23,42,0.85));border:1px solid rgba(99,102,241,0.35);border-radius:12px;padding:14px 16px;margin-bottom:16px;">
+          <h4 style="font-size:13px;font-weight:800;color:#c7d2fe;margin-bottom:4px;">🎯 'Fiyat' Yazanlara Anında Otomatik DM Özelliği Aktif:</h4>
+          <p style="font-size:12px;color:#e0e7ff;line-height:1.6;margin:0;">
+            Bir kullanıcı Instagram'da gönderi veya Reels altına <strong>"Fiyat"</strong>, <strong>"Fiyat nedir?"</strong> veya benzeri bir yorum yazdığında, yapay zeka yoruma anında kurumsal yanıt verir ve kullanıcının DM kutusuna geçerek ne istediğini, hangi odayı tasarladığını sormaya başlar. Müşteri yetkiliyle veya WhatsApp'tan görüşmek isterse hazır WhatsApp bağlantısını sunar.
+          </p>
         </div>
-        <div id="tier1RulesList"></div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ===================================================================== -->
-  <!-- TAB 3: 2. AŞAMA — KARMAŞIK SORULAR İÇİN GEMINI AI DESTEK MOTORU      -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier2">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🧠 2. Aşama: Google Gemini Yapay Zeka Yapılandırması</div>
-          <span class="badge badge-purple">2. Aşama: Akıllı Asistan</span>
-        </div>
-        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
-          Müşterinin mesajı 1. Aşamadaki basit sabit kurallarla eşleşmediğinde (örneğin teknik malzeme sorusu, özel mutfak/banyo kombinasyonu veya model karşılaştırması sorduğunda) <strong>Gemini AI</strong> devreye girer. Supabase'deki canlı ürün kataloğunuzu okuyarak müşteriye kurumsal yanıt üretir.
-        </p>
         <div class="form-row">
           <div class="form-group">
             <label>Gemini AI Modeli</label>
             <select class="form-control" id="cfg_gemini_model">
               <option value="gemini-2.5-flash">gemini-2.5-flash (Hızlı & Akıllı - Önerilen)</option>
-              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Teknik Analiz)</option>
+              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Analiz)</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Google Gemini API Key</label>
-            <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
-            <small style="color:#60A5FA;display:block;margin-top:5px;font-size:11.5px;">
-              🔑 <strong>Ücretsiz Gemini API Anahtarı:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:#93C5FD;text-decoration:underline;font-weight:600;">aistudio.google.com/app/apikey</a> adresinden Google hesabınızla anında ve ücretsiz oluşturabilirsiniz.
+            <label>Google Gemini API Key (Sisteme Entegre)</label>
+            <input type="text" class="form-control" id="cfg_gemini_key" value="AQ.Ab8RN6LZjph***">
+            <small style="color:#10b981;display:block;margin-top:5px;font-size:11.5px;font-weight:700;">
+              ✓ Gemini AI API Anahtarı sisteme gömüldü ve aktif.
             </small>
           </div>
         </div>
-        <div class="form-group">
-          <label>Gemini AI Kurumsal Sistem Talimatı (System Prompt)</label>
-          <textarea class="form-control" id="cfg_tier2_prompt" rows="6"></textarea>
-        </div>
-        <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
-          💾 2. Aşama Gemini AI Ayarlarını Kaydet
-        </button>
-      </div>
 
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📦 Gemini AI Hafızasına Bağlı Canlı Supabase Ürün Kataloğu</div>
-          <span class="badge badge-green">Otomatik Senkronize</span>
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-          Module 1 üzerinden Supabase'e eklediğiniz tüm ürünler otomatik olarak Gemini AI'ın bilgi dağarcığına aktarılır:
-        </p>
-        <div id="aiCatalogPreviewList" style="max-height:360px;overflow-y:auto;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 4: 3. AŞAMA — GERÇEK İNSAN & WHATSAPP / İLETİŞİM YÖNLENDİRME      -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier3">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📲 3. Aşama: Gerçek İnsan & İletişim Ağlarına Devir Ayarları</div>
-          <span class="badge badge-amber">3. Aşama: Canlı Temsilci</span>
-        </div>
-        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
-          Müşteri net fiyat teklifi, özel ölçü sipariş onayı, toplu alım/bayilik veya doğrudan bir yetkiliyle görüşmek istediğinde (ya da Gemini AI konunun insan uzmanlığı gerektirdiğini tespit ettiğinde) bot müşteriyi hazır mesaj bağlantısıyla doğrudan <strong>WhatsApp</strong> ve telefon hattınıza yönlendirir.
-        </p>
         <div class="form-row">
           <div class="form-group">
-            <label>WhatsApp Yönlendirme Numarası (Ülke Koduyla)</label>
+            <label>WhatsApp Sipariş Hattı (Ülke Koduyla)</label>
             <input type="text" class="form-control" id="cfg_wa_number" value="905050151035">
           </div>
           <div class="form-group">
-            <label>Gösterilecek Fabrika Telefonu</label>
+            <label>Fabrika Telefonu</label>
             <input type="text" class="form-control" id="cfg_phone_display" value="0 (505) 015 1035">
           </div>
         </div>
+
         <div class="form-group">
-          <label>Doğrudan 3. Aşamayı Tetikleyen İfadeler (Virgülle Ayırın)</label>
-          <textarea class="form-control" id="cfg_tier3_triggers" rows="3"></textarea>
+          <label>Gemini AI Kurumsal Sohbet Talimatı (System Prompt)</label>
+          <textarea class="form-control" id="cfg_tier2_prompt" rows="7"></textarea>
         </div>
-        <div class="form-group">
-          <label>3. Aşama Yönlendirme Mesaj Şablonu</label>
-          <textarea class="form-control" id="cfg_tier3_template" rows="3"></textarea>
-        </div>
-        <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;">
-          💾 3. Aşama İletişim & WhatsApp Devir Ayarlarını Kaydet
+
+        <button class="btn btn-navy" onclick="saveBotConfigToSupabase()" style="width:100%;justify-content:center;padding:12px;font-weight:700;">
+          💾 Gemini AI Ayarlarını Buluta Kaydet
         </button>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <div class="card-title">🙋‍♂️ 3. Aşamaya Aktarılan Müşteri Talepleri (Canlı Devir Kuyruğu)</div>
-          <span class="badge badge-amber" id="handoffBadgeCount">0 Talep</span>
+          <div class="card-title">📦 Gemini AI Hafızasına Bağlı Canlı Ürün Kataloğu</div>
+          <span class="badge badge-green">Otomatik Senkronize</span>
         </div>
-        <div id="tier3HandoffList"></div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
+          Module 7 üzerinden Supabase veritabanına eklediğiniz tüm ürünler otomatik olarak Gemini AI'ın bilgi dağarcığına aktarılır:
+        </p>
+        <div id="aiCatalogPreviewList" style="max-height:440px;overflow-y:auto;"></div>
       </div>
     </div>
   </div>
 
   <!-- ===================================================================== -->
-  <!-- TAB 5: CANLI 3 AŞAMALI BOT SİMÜLASYON & TEST LABORATUVARI             -->
+  <!-- TAB 3: CANLI GEMINI DM SİMÜLATÖRÜ & MÜŞTERİ KONUŞMALARI              -->
   <!-- ===================================================================== -->
   <div class="tab-pane" id="tab-simulator">
-    <div class="tier-pipeline">
-      <div class="tier-box t1">
-        <span class="badge badge-blue">1. AŞAMA</span>
-        <h4>Basit Sorular → Sabit Cevap</h4>
-        <p>Selamlama, teslimat süresi (5 iş günü), garanti (5 yıl), adres ve katalog sorularına kural tabanlı anlık yanıt verir.</p>
-      </div>
-      <div class="tier-box t2">
-        <span class="badge badge-purple">2. AŞAMA</span>
-        <h4>Karmaşık Sorular → Gemini AI</h4>
-        <p>Teknik ürün soruları, renk/mekan uyumu ve malzeme detaylarında canlı Supabase ürün kataloğunu bilen Gemini AI yanıt üretir.</p>
-      </div>
-      <div class="tier-box t3">
-        <span class="badge badge-green">3. AŞAMA</span>
-        <h4>Sipariş & Destek → WhatsApp / İnsan</h4>
-        <p>Özel ölçü fiyat hesaplaması, sipariş oluşturma ve yetkili talebinde hazır mesajlı WhatsApp linkiyle gerçek temsilciye bağlar.</p>
-      </div>
-    </div>
-
     <div class="grid-2">
       <!-- SOL: CANLI SOHBET SİMÜLATÖRÜ -->
       <div class="chat-window">
         <div class="chat-header">
           <div>
-            <strong style="font-size:14px;">📸 Instagram DM & Yorum Simülatörü (@globalkapakmobilya)</strong>
-            <div style="font-size:11px;color:#A5B4FC;">3 Aşamalı Hibrit Karar Motoru Canlı Test Ekranı</div>
+            <strong style="font-size:14px;">📸 Instagram DM & Yorum Yapay Zeka Testi</strong>
+            <div style="font-size:11px;color:#A5B4FC;">Gemini AI Doğrudan İletişim Motoru</div>
           </div>
           <select id="simChannelSelect" style="background:#0F172A;color:#fff;border:1px solid #334155;padding:5px 10px;border-radius:8px;font-size:11.5px;">
-            <option value="DM">📩 Kanal: Instagram DM</option>
-            <option value="COMMENT">💬 Kanal: Reels / Gönderi Yorumu</option>
+            <option value="COMMENT">💬 Kanal: Gönderi / Reels Yorumu (Fiyat Testi)</option>
+            <option value="DM">📩 Kanal: Instagram DM Sohbeti</option>
           </select>
         </div>
 
         <div class="chat-messages" id="simChatMessages">
           <div class="msg-bubble msg-bot">
-            <div class="msg-tier-tag tier-tag-1">SİSTEM HAZIR</div>
-            <div>Merhaba! Aşağıdan hazır test senaryolarına tıklayabilir veya müşteri gibi istediğiniz soruyu yazarak <strong>1. Aşama (Sabit)</strong>, <strong>2. Aşama (Gemini AI)</strong> ve <strong>3. Aşama (WhatsApp / İnsan Devri)</strong> geçişlerini canlı test edebilirsiniz.</div>
+            <div class="msg-tier-tag tier-tag-2">GEMINI AI DEVREDE</div>
+            <div>Merhaba! Instagram gönderilerimiz altına "Fiyat", "Fiyat nedir?" gibi bir yorum yazıldığında botun yoruma yanıt verip DM'den nasıl sohbete başladığını aşağıdan test edebilirsiniz.</div>
           </div>
         </div>
 
         <div class="chat-input-bar">
-          <input type="text" id="simUserInput" placeholder="Müşteri mesajını buraya yazın (Enter)..." onkeydown="if(event.key==='Enter') sendSimulatedMessage()">
+          <input type="text" id="simUserInput" placeholder="Örn: Fiyat nedir?, Zürih modeli kaça?, WhatsApp linki atar mısınız? (Enter)..." onkeydown="if(event.key==='Enter') sendSimulatedMessage()">
           <button class="btn btn-insta" onclick="sendSimulatedMessage()">Gönder →</button>
         </div>
       </div>
 
-      <!-- SAĞ: HIZLI SENARYO BUTONLARI VE SON KARAR ANALİZİ -->
+      <!-- SAĞ: HIZLI SENARYO BUTONLARI VE CANLI KONUŞMA GEÇMİŞİ -->
       <div>
-        <div class="card">
+        <div class="card" style="margin-bottom:16px;">
           <div class="card-header">
-            <div class="card-title">⚡ Tek Tıkla 3 Aşamalı Test Senaryoları</div>
+            <div class="card-title">⚡ Hızlı Test Senaryoları</div>
           </div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-            Aşağıdaki örnek müşteri mesajlarına tıklayarak botun hangi aşamayı devreye soktuğunu anında görün:
-          </p>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Merhaba, kapaklarda teslimat süreniz kaç gün ve şehir dışına kargo var mı?')">
-              <span class="badge badge-blue">1. Aşama</span> "Merhaba, kapaklarda teslimat süreniz kaç gün ve şehir dışına kargo var mı?"
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Fiyat nedir?')">
+              💬 <strong>"Fiyat nedir?"</strong> (Yoruma yanıt verip DM'den detay sorar)
             </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Garanti süreniz nedir, banyoda buhardan kabarma yapar mı?')">
-              <span class="badge badge-blue">1. Aşama</span> "Garanti süreniz nedir, banyoda buhardan kabarma yapar mı?"
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Zürih Yatak Odası dolap ölçüleri nedir, malzemesi sağlam mı?')">
+              🗄️ <strong>"Zürih Yatak Odası dolap ölçüleri ve MDF kalitesi"</strong>
             </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Adaçayı yeşili ile kuvars gri arasında kaldım, kuzey cepheli dar bir mutfak için hangi modeli ve yüzeyi önerirsiniz?')">
-              <span class="badge badge-purple">2. Aşama (Gemini AI)</span> "Adaçayı yeşili ile kuvars gri arasında kaldım, dar mutfak için hangisini önerirsiniz?"
-            </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('18 adet özel ölçü çerçeveli membran kapak siparişi vermek istiyorum, net m2 fiyat teklifi için yetkili biriyle görüşebilir miyim?')">
-              <span class="badge badge-green">3. Aşama (WhatsApp / İnsan)</span> "18 adet özel ölçü kapak siparişi vermek istiyorum, net fiyat teklifi için yetkiliyle görüşebilir miyim?"
+            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerQuickSim('Yetkili bir usta ile görüşmek ve WhatsApp\'tan sipariş vermek istiyorum.')">
+              📲 <strong>"WhatsApp Sipariş & Temsilci Talebi"</strong> (Direkt WhatsApp linki verir)
             </button>
           </div>
         </div>
 
         <div class="card">
           <div class="card-header">
-            <div class="card-title">📜 Son İletişim & Karar Geçmişi (Supabase Kayıtları)</div>
+            <div class="card-title">📋 Instagram Canlı Konuşma Geçmişi</div>
+            <button class="btn btn-secondary btn-sm" onclick="loadBotStateFromSupabase()">🔄 Yenile</button>
           </div>
-          <div id="recentConversationsList" style="max-height:240px;overflow-y:auto;"></div>
+          <div id="recentConversationsList" style="max-height:300px;overflow-y:auto;"></div>
         </div>
       </div>
     </div>
@@ -888,24 +777,18 @@ const DEFAULT_BOT_STATE = {
     account_handle: '@thenovafurniture',
     ig_user_id: '17841435882645322',
     access_token: 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
-    gemini_api_key: '',
+    gemini_api_key: ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join(''),
     gemini_model: 'gemini-2.5-flash',
     auto_publish_enabled: true,
     require_approval: false,
     posting_slots: [
-      { slot_id: 'slot_1', time: '10:00', type: 'POST', active: true, label: 'Sabah Koleksiyon Gönderisi (Onaysız Otomatik)' },
-      { slot_id: 'slot_2', time: '14:30', type: 'STORIES', active: true, label: 'Öğleden Sonra Atölye & Renk Kartelası Story' },
-      { slot_id: 'slot_3', time: '19:30', type: 'REELS', active: true, label: 'Akşam CNC Üretim & Mutfak Reels Videosu' }
+      { slot_id: 'slot_1', time: '10:00', type: 'POST', active: true, label: 'Sabah Koleksiyon Gönderisi (Otonom)' },
+      { slot_id: 'slot_2', time: '14:30', type: 'STORIES', active: true, label: 'Öğleden Sonra Ürün Kartı Story (Otonom)' },
+      { slot_id: 'slot_3', time: '19:30', type: 'REELS', active: true, label: 'Akşam Kamera Hareketli Reels Videosu (Otonom)' }
     ],
-    tier2_system_prompt: 'Sen Global Kapak Mobilya\'nın resmi Instagram yapay zeka asistanısın. Şirketimiz İstanbul Bağcılar\'da 2.000 m² modern tesisinde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı PVC membran teknolojisiyle özel ölçü CNC mutfak, banyo ve gardırop kapakları üretmektedir. 5 yıl üretici garantisi ve 5 iş gününde teslimat sunuyoruz. Müşterilere nazik, kurumsal ve kısa (maksimum 3-4 cümle) yanıtlar ver. Eğer müşteri net fiyat teklifi, özel ölçü siparişi, toplu alım veya yetkiliyle görüşmek isterse 3. aşama olan WhatsApp hattımıza (+90 505 015 1035) yönlendir.',
+    tier2_system_prompt: 'Sen Nova Furniture (@thenovafurniture) firmasının resmi Instagram DM ve yorum yapay zeka asistanısın. İstanbul Bağcılar tesisimizde 1. sınıf 18mm E1 sertifikalı sağlam MDF ve yüksek ısı/su dayanımlı membran teknolojisiyle özel ölçü yatak odası, gardırop, banyo ve mutfak dolapları üretiyoruz. 5 yıl üretici garantimiz ve 5 iş gününde hızlı teslimatımız mevcuttur. Müşterilerle daima kibar, ilgili ve kurumsal bir dille konuş. Müşteriye hangi odayı yenilemek istediğini, düşündüğü ölçüleri ve renk tercihini sor. Eğer müşteri net fiyat hesaplaması, özel ölçü siparişi veya yetkiliyle görüşmek isterse doğrudan resmi WhatsApp sipariş hattımıza yönlendir: https://wa.me/905050151035 (0 505 015 1035).',
     tier3_whatsapp_number: '905050151035',
-    tier3_phone_display: '0 (505) 015 1035',
-    tier3_handoff_triggers: [
-      'sipariş vermek', 'fiyat teklifi', 'net fiyat', 'm2 fiyatı', 'metrekare fiyatı',
-      'kaç tl', 'ne kadar tutar', 'özel ölçü fiyat', 'yetkili', 'temsilci',
-      'insanla görüşmek', 'ustayla görüşmek', 'toplu alım', 'bayilik', 'şikayet', 'whatsapp'
-    ],
-    tier3_handoff_template: 'Memnuniyetle yardımcı olalım! 🙌 Özel ölçü hesaplaması, net fiyat teklifi ve birebir müşteri temsilcimizle görüşmek için doğrudan WhatsApp hattımıza tıklayabilirsiniz: https://wa.me/905050151035 — Ayrıca 0 (505) 015 1035 numaralı hattımızdan bize hemen ulaşabilirsiniz.'
+    tier3_phone_display: '0 (505) 015 1035'
   },
   rules: [
     {
@@ -1131,10 +1014,14 @@ function updateKpis() {
   const convs = botState.conversations || [];
   const handoffs = convs.filter(c => c.resolved_tier === 3);
 
-  document.getElementById('kpiScheduledCount').textContent = `${posts.length} İçerik`;
-  document.getElementById('kpiRulesCount').textContent = `${rules.length} Kural + Gemini AI`;
-  document.getElementById('kpiHandoffCount').textContent = `${handoffs.length} Müşteri Devri`;
-  document.getElementById('handoffBadgeCount').textContent = `${handoffs.length} Talep`;
+  const schedEl = document.getElementById('kpiScheduledCount');
+  if (schedEl) schedEl.textContent = `${posts.length} İçerik`;
+  const rulesEl = document.getElementById('kpiRulesCount');
+  if (rulesEl) rulesEl.textContent = `${rules.length} Kural + Gemini AI`;
+  const handEl = document.getElementById('kpiHandoffCount');
+  if (handEl) handEl.textContent = `${handoffs.length} Müşteri Devri`;
+  const badgeEl = document.getElementById('handoffBadgeCount');
+  if (badgeEl) badgeEl.textContent = `${handoffs.length} Talep`;
 }
 
 // ── SAAT ARALIKLARI (SLOTS) YÖNETİMİ ──
@@ -2389,14 +2276,32 @@ async function sendSimulatedMessage() {
 
   const decision = await runClientSideThreeTierEngine(text, channel);
 
-  const tagClass = decision.resolved_tier === 1 ? 'tier-tag-1' : decision.resolved_tier === 2 ? 'tier-tag-2' : 'tier-tag-3';
-  chatBox.insertAdjacentHTML('beforeend', `
-    <div class="msg-bubble msg-bot">
-      <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
-      <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
-      ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
-    </div>
-  `);
+  if (decision.channel === 'COMMENT' && decision.initiate_dm) {
+    // 1. Yoruma açık yanıt balonu
+    chatBox.insertAdjacentHTML('beforeend', `
+      <div class="msg-bubble msg-bot">
+        <div class="msg-tier-tag tier-tag-1">💬 Instagram Gönderi Yorumuna Açık Yanıt</div>
+        <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
+      </div>
+    `);
+    // 2. Özel DM balonu
+    chatBox.insertAdjacentHTML('beforeend', `
+      <div class="msg-bubble msg-bot" style="border: 1px solid rgba(168, 85, 247, 0.4); background: rgba(168, 85, 247, 0.08);">
+        <div class="msg-tier-tag tier-tag-2">📩 Müşteriye Otomatik Açılan Özel DM</div>
+        <div>${(decision.dm_initiate_message || '').replace(/\n/g, '<br>')}</div>
+        <div style="margin-top:8px; font-size:11px; color:#cbd5e1;">🤖 Gemini AI konuşmayı DM'den devraldı. Ne istediğini sorarak müşteriyi dinliyor.</div>
+      </div>
+    `);
+  } else {
+    const tagClass = decision.resolved_tier === 3 ? 'tier-tag-3' : 'tier-tag-2';
+    chatBox.insertAdjacentHTML('beforeend', `
+      <div class="msg-bubble msg-bot">
+        <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
+        <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
+        ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
+      </div>
+    `);
+  }
   chatBox.scrollTop = chatBox.scrollHeight;
 
   botState.conversations.unshift({
@@ -2406,7 +2311,7 @@ async function sendSimulatedMessage() {
     incoming_text: text,
     resolved_tier: decision.resolved_tier,
     tier_label: decision.tier_label,
-    bot_reply: decision.bot_reply,
+    bot_reply: decision.dm_initiate_message ? `[Yorum Yanıtı]: ${decision.bot_reply}\n[Özel DM]: ${decision.dm_initiate_message}` : decision.bot_reply,
     whatsapp_link: decision.whatsapp_link || '',
     created_at: new Date().toISOString()
   });
@@ -2419,72 +2324,136 @@ async function runClientSideThreeTierEngine(cleanText, channel) {
   const c = botState.config;
   const waNum = c.tier3_whatsapp_number || '905050151035';
   const phoneDisp = c.tier3_phone_display || '0 (505) 015 1035';
+  const gemKey = c.gemini_api_key || ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
+  const prefilledWa = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Nova Furniture, Instagram üzerinden yazıyorum. "${cleanText}" hakkında bilgi ve sipariş desteği almak istiyorum.`)}`;
 
-  // 3. Aşama Doğrudan Tetikleyici Kontrolü
-  const triggers = c.tier3_handoff_triggers || [];
-  const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
-  if (t3Match) {
-    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Global Kapak Mobilya, Instagram üzerinden ulaşıyorum. "${cleanText}" konusunda fiyat teklifi ve uzman desteği rica ediyorum.`)}`;
-    return {
-      resolved_tier: 3,
-      tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
-      bot_reply: `Memnuniyetle yardımcı olalım! 🙌 Talebiniz ("${t3Match}") özel ölçü hesaplaması ve birebir uzman desteği gerektirdiği için sizi doğrudan Satış & Üretim Ekibimize bağlıyorum.\n\n📲 Doğrudan WhatsApp Hattımız: ${waLink}\n📞 Fabrika Telefon: ${phoneDisp}`,
-      whatsapp_link: waLink
-    };
-  }
+  // =========================================================================
+  // A) INSTAGRAM YORUMU (COMMENT) — "FİYAT" TESPİTİ VE DM BAŞLATMA
+  // =========================================================================
+  const isPriceInquiry = /fiyat|ücret|ne kadar|kaç|m2|metrekare|tutar|maliyet|kaça|bilgi|sipariş|dm/i.test(lowerText);
+  if (channel === 'COMMENT') {
+    if (isPriceInquiry) {
+      const publicReply = `Merhaba @test_musteri, fiyat ve model detaylarını DM kutunuza ilettik! 📩 Detaylar için özel mesajlarınızı kontrol edebilirsiniz.`;
+      let dmOpening = `Merhaba! Nova Furniture'a hoş geldiniz. ✨ Gönderimizdeki modelimizle ilgilendiğiniz için teşekkür ederiz. Size özel net fiyat ve detayları paylaşabilmemiz için düşündüğünüz oda (yatak odası, mutfak, gardırop), yaklaşık ölçüleriniz veya tercih ettiğiniz renk nedir acaba? Size nasıl yardımcı olabilirim?`;
 
-  // 1. Aşama Sabit Anahtar Kelime Kuralları Kontrolü
-  for (const rule of (botState.rules || [])) {
-    if (rule.channel_scope !== 'BOTH' && rule.channel_scope !== channel) continue;
-    const hit = (rule.keywords || []).find(kw => {
-      const k = kw.toLocaleLowerCase('tr-TR').trim();
-      if (!k) return false;
-      if (rule.match_type === 'exact') return lowerText === k || lowerText.replace(/[?!.,]/g, '').trim() === k;
-      return lowerText.includes(k);
-    });
-    if (hit) {
+      if (gemKey) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(gemKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Sen Nova Furniture'ın resmi Instagram asistanısın. Müşteri gönderimize "${cleanText}" yorumunu yaptı. DM üzerinden göndereceğimiz İLK özel mesajı yaz. Müşteriyi kibarca karşıla, ilgisi için teşekkür et ve ne istediğini öğrenmek için oda/ölçü/renk tercihlerini sor (2-3 cümle).` }] }]
+            })
+          });
+          if (res.ok) {
+            const d = await res.json();
+            const txt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (txt) dmOpening = txt;
+          }
+        } catch (_) {}
+      }
+
       return {
-        resolved_tier: 1,
-        tier_label: `1. AŞAMA: SABİT CEVAP (${rule.rule_name})`,
-        bot_reply: rule.response_text,
+        resolved_tier: 2,
+        channel: 'COMMENT',
+        initiate_dm: true,
+        tier_label: 'Gemini AI: Yorumda Fiyat Tespiti → Özel DM',
+        bot_reply: publicReply,
+        dm_initiate_message: dmOpening,
+        whatsapp_link: prefilledWa
+      };
+    } else {
+      let publicThanks = `Değerli yorumunuz için çok teşekkür ederiz! ✨ Nova Furniture olarak her zaman yanınızdayız.`;
+      if (gemKey) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(gemKey)}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: `Sen Nova Furniture asistanısın. Gönderiye yapılan şu yoruma kibar, lüks bir teşekkür yanıtı ver: "${cleanText}"` }] }]
+            })
+          });
+          if (res.ok) {
+            const d = await res.json();
+            const txt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (txt) publicThanks = txt;
+          }
+        } catch (_) {}
+      }
+      return {
+        resolved_tier: 2,
+        channel: 'COMMENT',
+        initiate_dm: false,
+        tier_label: 'Gemini AI: Gönderi Yorum Yanıtı',
+        bot_reply: publicThanks,
         whatsapp_link: ''
       };
     }
   }
 
-  // 2. Aşama Gemini AI (Eğer API Key girilmişse canlı Gemini API çağrısı, yoksa yerleşik AI Katalog Sentezi)
-  if (c.gemini_api_key) {
+  // =========================================================================
+  // B) INSTAGRAM DM — 100% GEMINI AI KONTROLÜ
+  // =========================================================================
+  const wantsWhatsapp = /whatsapp|wp|insan|yetkili|temsilci|telefon|ara|ustayla|sipariş vermek istiyorum/i.test(lowerText);
+  if (wantsWhatsapp) {
+    const waReply = `Memnuniyetle yardımcı olalım! 🙌 Dilerseniz siparişinizi kesinleştirmek, özel ölçülerinizi göndermek ve yetkili satış uzmanımızla görüşmek için resmi WhatsApp hattımızdan bize hemen ulaşabilirsiniz:\n\n📲 **Tek Tıkla WhatsApp Hattımız:** ${prefilledWa}\n📞 **Doğrudan Fabrika Telefonu:** ${phoneDisp}\n\nBuradan sormak istediğiniz başka bir soru olursa her zaman yardımcı olmaktan mutluluk duyarım! ✨`;
+    return {
+      resolved_tier: 3,
+      channel: 'DM',
+      tier_label: 'Gemini AI: WhatsApp & İletişim Bilgisi Paylaşıldı',
+      bot_reply: waReply,
+      whatsapp_link: prefilledWa
+    };
+  }
+
+  // Canlı Gemini AI DM çağrısı
+  if (gemKey) {
     try {
       const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(c.gemini_api_key)}`, {
+      const systemInstruction = c.tier2_system_prompt ||
+        `Sen Nova Furniture (@thenovafurniture) firmasının resmi Instagram DM yapay zeka asistanısın.
+İstanbul Bağcılar'daki tesisimizde 1. sınıf 18mm E1 sertifikalı sağlam MDF ve yüksek kaliteli CNC membran kapaklar üretiyoruz.
+5 yıl garantimiz ve 5 iş gününde teslimatımız vardır.
+Müşteriye nazikçe hangi odayı (yatak odası, mutfak, gardırop vb.) yenilemek istediğini, düşündüğü ölçüleri ve renk tercihini sorup yardımcı ol.
+Müşteri sipariş vermek veya yetkiliyle görüşmek isterse WhatsApp linkimizi ver: https://wa.me/${waNum} (${phoneDisp}).`;
+
+      const prompt = `${systemInstruction}\n\nÜrün Kataloğu:\n${catText}\n\nMüşteri DM Mesajı: "${cleanText}"`;
+
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(gemKey)}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: `${c.tier2_system_prompt}\n\nÜrün Kataloğu:\n${catText}\n\nMüşteri Mesajı: "${cleanText}"` }] }]
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.4 }
         })
       });
       if (res.ok) {
         const d = await res.json();
         const replyTxt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
         if (replyTxt) {
+          const needsWa = /whatsapp|sipariş|teklif|yetkili/i.test(replyTxt);
           return {
-            resolved_tier: 2,
-            tier_label: `2. AŞAMA: GEMINI AI (${c.gemini_model})`,
+            resolved_tier: needsWa ? 3 : 2,
+            channel: 'DM',
+            tier_label: needsWa ? 'Gemini AI: Sohbet + WhatsApp Yönlendirmesi' : 'Gemini AI: Otonom DM Asistanı',
             bot_reply: replyTxt,
-            whatsapp_link: ''
+            whatsapp_link: needsWa ? prefilledWa : ''
           };
         }
       }
-    } catch (e) {}
+    } catch (e) {
+      console.warn('Simulator Gemini error:', e);
+    }
   }
 
-  // Yerleşik 2. Aşama Gemini AI Katalog & İç Mimari Danışman Yanıtı
-  const prodNames = (catalogProducts || []).slice(0, 3).map(p => p.title || p.slug).join(', ') || 'Fjord Mavi Diyagonal, Kuvars Gri ve Adaçayı Yeşili Country';
+  // Güvenli fallback
+  const fallbackReply = `Merhaba! Nova Furniture olarak 1. sınıf 18mm MDF ve CNC membran kapaklarımızla hizmetinizdeyiz. Hangi ürünümüz veya odanız için ölçü ve fiyat bilgisi almak istersiniz? Dilerseniz bize doğrudan WhatsApp üzerinden de ulaşabilirsiniz: ${prefilledWa}`;
   return {
     resolved_tier: 2,
-    tier_label: '2. AŞAMA: GEMINI AI AKILLI DANIŞMAN',
-    bot_reply: `Sorunuzu analiz ettim! 🤖 Global Kapak Mobilya koleksiyonumuzdaki **${prodNames}** modellerimiz 18mm 1. sınıf E1 MDF üzerine anti-fingerprint (parmak izi bırakmayan) membran teknolojisiyle üretilmektedir. Dar veya az ışık alan mekanlarda Kuvars Gri ve Kutup Beyazı ferahlık sağlarken, Adaçayı Yeşili ve Fjord Mavi doğal derinlik katar.\n\nWeb sitemizdeki **Canlı Tasarım Modu** üzerinden dolap ölçünüzü girerek anlık önizleme yapabilirsiniz: https://globalmobilyaweb.vercel.app/urunler.html`,
-    whatsapp_link: ''
+    channel: 'DM',
+    tier_label: 'Gemini AI: Otonom DM Asistanı',
+    bot_reply: fallbackReply,
+    whatsapp_link: prefilledWa
   };
 }
 

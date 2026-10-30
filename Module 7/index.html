@@ -907,7 +907,8 @@
 
       // Açıklama Metnini Güncelle (Referans 2 Formatı)
       const caption = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
-      document.getElementById('captionPreviewText').textContent = caption;
+      const capEl = document.getElementById('captionPreviewText');
+      if (capEl) capEl.textContent = caption;
     }
 
     function toggleKenBurnsPreview() {

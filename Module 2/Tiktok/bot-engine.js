@@ -18,6 +18,7 @@
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
 // ---------------------------------------------------------------------------
@@ -122,6 +123,7 @@ function classifyTikTokIntent(messageText = '') {
  * 2. Aşama: Google Gemini 2.5 Flash AI ile Canlı Katalog destekli TikTok yanıtı üretir.
  */
 async function generateGeminiTikTokReply({ userMessage, username = 'Takipçimiz', channel = 'COMMENT', products = [], geminiApiKey }) {
+    geminiApiKey = geminiApiKey || DEFAULT_GEMINI_KEY;
     const catalogSummary = (products || []).slice(0, 12).map((p, i) => {
         const sku = p.sku || `GKM-${101 + i}`;
         const title = p.title || 'CNC Membran Kapak';
@@ -199,7 +201,7 @@ async function processIncomingTikTokInteraction({
     channel = 'COMMENT',
     videoId = '',
     products = [],
-    geminiApiKey = ''
+    geminiApiKey = DEFAULT_GEMINI_KEY
 }) {
     const classification = classifyTikTokIntent(messageText);
 

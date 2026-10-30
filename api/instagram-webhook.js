@@ -5,7 +5,11 @@
 import {
   evaluateThreeTierCommunication,
   sendInstagramDmReply,
-  sendInstagramCommentReply
+  sendInstagramCommentReply,
+  sendInstagramPrivateReplyFromComment,
+  DEFAULT_GEMINI_KEY,
+  DEFAULT_IG_USER_ID,
+  DEFAULT_META_ACCESS_TOKEN
 } from '../Module 2/Instagram/bot-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
@@ -101,8 +105,9 @@ export default async function handler(req, res) {
       const rules = state.rules || state.keyword_rules || [];
       const catalog = await loadProductsCatalog();
 
-      const igUserId = config.ig_user_id || process.env.IG_USER_ID || '';
-      const igAccessToken = config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || '';
+      const igUserId = config.ig_user_id || process.env.IG_USER_ID || DEFAULT_IG_USER_ID;
+      const igAccessToken = config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || DEFAULT_META_ACCESS_TOKEN;
+      if (!config.gemini_api_key) config.gemini_api_key = DEFAULT_GEMINI_KEY;
 
       // Direct simulation test call from panel
       if (payload.simulate_message) {
@@ -171,11 +176,22 @@ export default async function handler(req, res) {
                 });
 
                 if (igAccessToken && commentId) {
+                  // 1. Yoruma açık yanıt ver
                   await sendInstagramCommentReply({
                     accessToken: igAccessToken,
                     commentId,
                     replyText: decision.bot_reply
                   });
+
+                  // 2. Eğer fiyat yorumu veya DM başlatma kararı varsa doğrudan kullanıcıya özel DM gönder
+                  if (decision.initiate_dm && decision.dm_initiate_message && igUserId) {
+                    await sendInstagramPrivateReplyFromComment({
+                      igUserId,
+                      accessToken: igAccessToken,
+                      commentId,
+                      replyText: decision.dm_initiate_message
+                    });
+                  }
                 }
 
                 results.push({ channel: 'COMMENT', commentId, fromUsername, incomingText: commentText, decision });
