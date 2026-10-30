@@ -740,9 +740,9 @@
             </div>
           </div>
           <!-- Gizli girdi alanları (Arka plan bot motoru ve Supabase senkronizasyonu için korunmuştur) -->
-          <input type="hidden" id="cfg_page_name" value="Global Kapak Mobilya">
+          <input type="hidden" id="cfg_page_name" value="Nova Furniture">
           <input type="hidden" id="cfg_page_id" value="122127295833480422">
-          <input type="hidden" id="cfg_page_token">
+          <input type="hidden" id="cfg_page_token" value="EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi">
         </div>
       </div>
     </div>
@@ -985,9 +985,9 @@ const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
 
 const DEFAULT_FB_BOT_STATE = {
   config: {
-    page_name: 'Global Kapak Mobilya',
-    page_id: '',
-    page_access_token: '',
+    page_name: 'Nova Furniture',
+    page_id: '122127295833480422',
+    page_access_token: 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
     gemini_api_key: '',
     gemini_model: 'gemini-2.5-flash',
     auto_publish_enabled: true,
@@ -1099,15 +1099,43 @@ function switchTab(tabId) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tabId));
 }
 
+async function resolveFacebookCredentials() {
+  let pageId = fbState?.config?.page_id || document.getElementById('cfg_page_id')?.value?.trim();
+  let pageAccessToken = fbState?.config?.page_access_token || document.getElementById('cfg_page_token')?.value?.trim();
+
+  if (!pageId || !pageAccessToken) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data&limit=1`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        const conf = rows?.[0]?.data?.config;
+        if (conf) {
+          if (!pageId && conf.page_id) pageId = conf.page_id;
+          if (!pageAccessToken && conf.page_access_token) pageAccessToken = conf.page_access_token;
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (!pageId) pageId = '122127295833480422';
+  if (!pageAccessToken) pageAccessToken = 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi';
+
+  if (fbState && fbState.config) {
+    fbState.config.page_id = pageId;
+    fbState.config.page_access_token = pageAccessToken;
+  }
+  const idEl = document.getElementById('cfg_page_id');
+  const tokEl = document.getElementById('cfg_page_token');
+  if (idEl) idEl.value = pageId;
+  if (tokEl) tokEl.value = pageAccessToken;
+
+  return { pageId, pageAccessToken };
+}
+
 async function loadFbStateFromSupabase() {
   try {
-    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (prodRes.ok) {
-      catalogProducts = await prodRes.json();
-    }
-
     const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.fb_bot_state&limit=1`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
@@ -1116,8 +1144,6 @@ async function loadFbStateFromSupabase() {
       if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
         fbState = Object.assign({}, DEFAULT_FB_BOT_STATE, rows[0].data);
         fbState.config = Object.assign({}, DEFAULT_FB_BOT_STATE.config, rows[0].data.config || {});
-      } else {
-        await persistFbStateToSupabase(false);
       }
     }
   } catch (e) {
@@ -1125,6 +1151,18 @@ async function loadFbStateFromSupabase() {
   }
 
   populateFbFormsAndRenderAll();
+
+  try {
+    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (prodRes.ok) {
+      catalogProducts = await prodRes.json();
+      renderAiCatalogPreview();
+    }
+  } catch (e) {
+    console.warn('Supabase ürün kataloğu uyarısı:', e);
+  }
 }
 
 async function persistFbStateToSupabase(notify = true) {
@@ -1653,8 +1691,7 @@ async function addFbScheduledPost(publishImmediately = false) {
   renderFbScheduledQueue();
 
   if (publishImmediately) {
-    const pageId = fbState?.config?.page_id || document.getElementById('cfg_page_id')?.value?.trim();
-    const pageAccessToken = fbState?.config?.page_access_token || document.getElementById('cfg_page_token')?.value?.trim();
+    const { pageId, pageAccessToken } = await resolveFacebookCredentials();
     const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
 
     try {

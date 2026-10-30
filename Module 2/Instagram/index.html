@@ -712,7 +712,7 @@
           <!-- Gizli girdi alanları (Arka plan bot motoru için korunmuştur) -->
           <input type="hidden" id="cfg_handle" value="@thenovafurniture">
           <input type="hidden" id="cfg_ig_user_id" value="17841435882645322">
-          <input type="hidden" id="cfg_access_token">
+          <input type="hidden" id="cfg_access_token" value="EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi">
         </div>
       </div>
     </div>
@@ -967,9 +967,9 @@ const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
 
 const DEFAULT_BOT_STATE = {
   config: {
-    account_handle: '@globalkapakmobilya',
-    ig_user_id: '',
-    access_token: '',
+    account_handle: '@thenovafurniture',
+    ig_user_id: '17841435882645322',
+    access_token: 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi',
     gemini_api_key: '',
     gemini_model: 'gemini-2.5-flash',
     auto_publish_enabled: true,
@@ -1078,17 +1078,47 @@ function switchTab(tabId) {
 }
 
 // ── SUPABASE VERİ YÜKLEME VE KAYDETME ──
+async function resolveInstagramCredentials() {
+  let igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
+  let accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+
+  if (!igUserId || !accessToken) {
+    try {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data&limit=1`, {
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+      });
+      if (res.ok) {
+        const rows = await res.json();
+        const conf = rows?.[0]?.data?.config;
+        if (conf) {
+          if (!igUserId && conf.ig_user_id) igUserId = conf.ig_user_id;
+          if (!accessToken && conf.access_token) accessToken = conf.access_token;
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase credential fetch warning:', e);
+    }
+  }
+
+  // Güvenli kalıcı token ve ID yedeği
+  if (!igUserId) igUserId = '17841435882645322';
+  if (!accessToken) accessToken = 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi';
+
+  if (botState && botState.config) {
+    botState.config.ig_user_id = igUserId;
+    botState.config.access_token = accessToken;
+  }
+  const idEl = document.getElementById('cfg_ig_user_id');
+  const tokEl = document.getElementById('cfg_access_token');
+  if (idEl) idEl.value = igUserId;
+  if (tokEl) tokEl.value = accessToken;
+
+  return { igUserId, accessToken };
+}
+
 async function loadBotStateFromSupabase() {
   try {
-    // 1. Ürün kataloğunu çek (Gemini AI ve Otomatik Gönderi Üretici için)
-    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (prodRes.ok) {
-      catalogProducts = await prodRes.json();
-    }
-
-    // 2. site_settings içinden 'insta_bot_state' kaydını çek
+    // 1. Önce hızlıca site_settings içinden 'insta_bot_state' kaydını çek
     const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.insta_bot_state&limit=1`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
@@ -1097,15 +1127,27 @@ async function loadBotStateFromSupabase() {
       if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
         botState = Object.assign({}, DEFAULT_BOT_STATE, rows[0].data);
         botState.config = Object.assign({}, DEFAULT_BOT_STATE.config, rows[0].data.config || {});
-      } else {
-        await persistBotStateToSupabase(false);
       }
     }
   } catch (e) {
-    console.warn('Supabase yükleme uyarısı:', e);
+    console.warn('Supabase ayar yükleme uyarısı:', e);
   }
 
+  // Formları ve durumları anında göster (Gecikme olmadan)
   populateFormsAndRenderAll();
+
+  // 2. Ürün kataloğunu paralel olarak arka planda çek
+  try {
+    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (prodRes.ok) {
+      catalogProducts = await prodRes.json();
+      renderAiCatalogPreview();
+    }
+  } catch (e) {
+    console.warn('Supabase ürün kataloğu uyarısı:', e);
+  }
 }
 
 async function persistBotStateToSupabase(notify = true) {
@@ -1132,10 +1174,10 @@ async function persistBotStateToSupabase(notify = true) {
 }
 
 function populateFormsAndRenderAll() {
-  const c = botState.config;
-  document.getElementById('cfg_handle').value = c.account_handle || '@globalkapakmobilya';
-  document.getElementById('cfg_ig_user_id').value = c.ig_user_id || '';
-  document.getElementById('cfg_access_token').value = c.access_token || '';
+  const c = botState.config || {};
+  document.getElementById('cfg_handle').value = c.account_handle || '@thenovafurniture';
+  document.getElementById('cfg_ig_user_id').value = c.ig_user_id || '17841435882645322';
+  document.getElementById('cfg_access_token').value = c.access_token || 'EAAVytShbbJUBS6tyr3CzTGiCpHQtCdQ6ZBX4U6Djfk7PrXdZAENoGirkreW8AXxpkhGIcoJRbyeWm4c1e55GJYRkyybaSmzvGxkqZB6deaNjopdY2ZBHrKzt3s4ZC8mX9C0ne9uKjY6qIOH3QGCs8J7fq1VCEfCA1PfczxTC7t3Ps6E7mp4ujuaBPzmsQ5ZC0NLnmWjMn0a63fN7CtJind3aKTEZAtPrB8izZB1dAmhi';
   document.getElementById('cfg_gemini_model').value = c.gemini_model || 'gemini-2.5-flash';
   document.getElementById('cfg_gemini_key').value = c.gemini_api_key || '';
   document.getElementById('cfg_tier2_prompt').value = c.tier2_system_prompt || '';
@@ -1592,8 +1634,7 @@ async function addScheduledPost(publishImmediately = false) {
   const prod = currentSelectedProduct || { title: headline, kategori: subheadline };
   const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
 
-  const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
-  const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+  const { igUserId, accessToken } = await resolveInstagramCredentials();
 
   if (publishImmediately && (!igUserId || !accessToken)) {
     alert('❌ Instagram Business ID veya Meta Access Token eksik! Lütfen "API & Otomasyon Ayarları" sekmesinden bu bilgileri kaydedin.');
@@ -1871,8 +1912,7 @@ async function publishQueueItemNow(idx) {
   const post = botState.scheduled_posts[idx];
   if (!post) return;
 
-  const igUserId = botState?.config?.ig_user_id || document.getElementById('cfg_ig_user_id')?.value?.trim();
-  const accessToken = botState?.config?.access_token || document.getElementById('cfg_access_token')?.value?.trim();
+  const { igUserId, accessToken } = await resolveInstagramCredentials();
 
   if (!igUserId || !accessToken) {
     alert('❌ Instagram Business ID veya Meta Access Token eksik!');
@@ -2126,16 +2166,21 @@ function renderRecentConversations() {
 
 function saveBotConfigToSupabase() {
   const c = botState.config;
-  c.account_handle = document.getElementById('cfg_handle').value.trim();
-  c.ig_user_id = document.getElementById('cfg_ig_user_id').value.trim();
-  c.access_token = document.getElementById('cfg_access_token').value.trim();
-  c.gemini_model = document.getElementById('cfg_gemini_model').value;
-  c.gemini_api_key = document.getElementById('cfg_gemini_key').value.trim();
-  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt').value.trim();
-  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number').value.trim();
-  c.tier3_phone_display = document.getElementById('cfg_phone_display').value.trim();
-  c.tier3_handoff_triggers = document.getElementById('cfg_tier3_triggers').value.split(',').map(x => x.trim()).filter(Boolean);
-  c.tier3_handoff_template = document.getElementById('cfg_tier3_template').value.trim();
+  const inputHandle = document.getElementById('cfg_handle')?.value?.trim();
+  const inputUserId = document.getElementById('cfg_ig_user_id')?.value?.trim();
+  const inputToken = document.getElementById('cfg_access_token')?.value?.trim();
+
+  if (inputHandle) c.account_handle = inputHandle;
+  if (inputUserId) c.ig_user_id = inputUserId;
+  if (inputToken) c.access_token = inputToken;
+
+  c.gemini_model = document.getElementById('cfg_gemini_model')?.value || 'gemini-2.5-flash';
+  c.gemini_api_key = document.getElementById('cfg_gemini_key')?.value?.trim() || '';
+  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt')?.value?.trim() || '';
+  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number')?.value?.trim() || '905050151035';
+  c.tier3_phone_display = document.getElementById('cfg_phone_display')?.value?.trim() || '0 (505) 015 1035';
+  c.tier3_handoff_triggers = (document.getElementById('cfg_tier3_triggers')?.value || '').split(',').map(x => x.trim()).filter(Boolean);
+  c.tier3_handoff_template = document.getElementById('cfg_tier3_template')?.value?.trim() || '';
 
   persistBotStateToSupabase(true);
 }
