@@ -1043,25 +1043,64 @@ function updateKpis() {
 }
 
 // ── SAAT ARALIKLARI (SLOTS) YÖNETİMİ ──
+function getSlotStatusInfo(s) {
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  if (s.last_run_date === todayStr) {
+    return {
+      statusHtml: `<span style="color:#10b981;font-weight:600;">✅ Bugün ${s.last_run_time || s.time} itibarıyla otonom yayınlandı</span>`
+    };
+  }
+  const [h, m] = s.time.split(':').map(Number);
+  const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+  const diff = target.getTime() - now.getTime();
+  if (diff <= 0 && diff > -15 * 60 * 1000) {
+    return {
+      statusHtml: `<span style="color:#f59e0b;font-weight:700;">⚡ Saati geldi! Otonom paylaşım başlatılıyor...</span>`
+    };
+  }
+  if (diff > 0) {
+    const mins = Math.floor(diff / 60000);
+    const secs = Math.floor((diff % 60000) / 1000);
+    const countdown = mins > 60 ? `${Math.floor(mins / 60)} sa ${mins % 60} dk` : `${mins} dk ${secs} sn`;
+    return {
+      statusHtml: `<span style="color:#38bdf8;font-weight:600;">⏳ Kalan Süre: <strong>${countdown}</strong></span>`
+    };
+  }
+  return {
+    statusHtml: `<span style="color:#94a3b8;">Bir sonraki döngü: Yarın ${s.time}</span>`
+  };
+}
+
 function renderSlots() {
   const cont = document.getElementById('slotsContainer');
   if (!cont) return;
   const slots = botState.config.posting_slots || [];
-  cont.innerHTML = slots.map((s, idx) => `
-    <div class="slot-item">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span class="slot-time">⏰ ${s.time}</span>
-        <div>
-          <span class="badge ${s.type==='REELS'?'badge-pink':s.type==='STORIES'?'badge-purple':'badge-blue'}">${s.type}</span>
-          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label}</strong>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Onay İstemeden Buluttan Otomatik Paylaşılır</div>
+  if (slots.length === 0) {
+    cont.innerHTML = '<div style="padding:16px;color:var(--muted);font-size:13px;text-align:center;">Henüz bir yayın saati eklenmedi. Yukarıdan yeni bir saat ekleyebilirsiniz.</div>';
+    return;
+  }
+  cont.innerHTML = slots.map((s, idx) => {
+    const info = getSlotStatusInfo(s);
+    return `
+      <div class="slot-item" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(15,23,42,0.6);border:1px solid rgba(255,255,255,0.08);border-radius:12px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span class="slot-time" style="font-size:18px;font-weight:800;color:var(--gold,#d4af37);background:rgba(212,175,55,0.12);padding:6px 12px;border-radius:8px;">⏰ ${s.time}</span>
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span class="badge ${s.type==='REELS'?'badge-pink':s.type==='STORIES'?'badge-purple':'badge-blue'}">${s.type}</span>
+              <strong style="font-size:14px;color:#f8fafc;">${s.label}</strong>
+            </div>
+            <div style="font-size:12px;margin-top:4px;">${info.statusHtml}</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn btn-insta btn-sm" onclick="triggerSlotNow(${idx})" title="Bu saat dilimini hemen test et" style="padding:6px 12px;font-size:12px;font-weight:700;">⚡ Şimdi Paylaş</button>
+          <button class="btn btn-danger btn-sm" onclick="removeTimeSlot(${idx})" style="padding:6px 12px;font-size:12px;">Sil</button>
         </div>
       </div>
-      <div style="display:flex;align-items:center;gap:8px;">
-        <button class="btn btn-danger btn-sm" onclick="removeTimeSlot(${idx})">Sil</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function addNewTimeSlot() {
@@ -1073,7 +1112,9 @@ function addNewTimeSlot() {
     time,
     type,
     active: true,
-    label
+    label,
+    last_run_date: null,
+    last_run_time: null
   });
   document.getElementById('new_slot_label').value = '';
   persistBotStateToSupabase(true);
@@ -1083,6 +1124,32 @@ function removeTimeSlot(idx) {
   botState.config.posting_slots.splice(idx, 1);
   persistBotStateToSupabase(true);
 }
+
+async function triggerSlotNow(idx) {
+  const slot = botState?.config?.posting_slots?.[idx];
+  if (!slot) return;
+  const conf = confirm(`"${slot.label}" (${slot.time} - ${slot.type}) gönderisi şimdi otonom olarak üretilip Instagram'da canlı yayınlansın mı?`);
+  if (!conf) return;
+
+  const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const currentHHMM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+
+  slot.last_run_date = todayStr;
+  slot.last_run_time = currentHHMM;
+  await persistBotStateToSupabase(false);
+  renderSlots();
+
+  await runCloudAutonomousCycleNow(slot, false);
+}
+
+// Slot geri sayımını her 2 saniyede bir canlı güncelle
+setInterval(() => {
+  const cont = document.getElementById('slotsContainer');
+  if (cont && botState?.config?.posting_slots?.length > 0) {
+    renderSlots();
+  }
+}, 2000);
 
 // ── %100 OTONOM TASARIM MOTORU (FOTOĞRAF/VİDEO GİRİŞSİZ KENDİ TASARLAR VE ÜRETİR) ──
 const AUTO_THEMES = {
@@ -1404,12 +1471,15 @@ async function autonomousInventNewDesign() {
 
     // Ürün görselini yükle
     if (prod.ana_resim) {
-      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
-        ? prod.ana_resim
-        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+      let fullImg = prod.ana_resim;
+      if (!fullImg.startsWith('http') && !fullImg.startsWith('data:')) {
+        fullImg = `https://globalmobilyaweb.vercel.app${fullImg.startsWith('/') ? '' : '/'}${fullImg}`;
+      }
       
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!fullImg.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
       await new Promise(resolve => {
         img.onload = () => {
           currentProductImageEl = img;
@@ -1417,9 +1487,20 @@ async function autonomousInventNewDesign() {
           resolve();
         };
         img.onerror = () => {
-          currentProductImageEl = null;
-          renderAutonomousCanvasPreview();
-          resolve();
+          console.warn('Görsel yüklenemedi, fallback kullanılıyor:', fullImg);
+          const fb = new Image();
+          fb.crossOrigin = 'anonymous';
+          fb.onload = () => {
+            currentProductImageEl = fb;
+            renderAutonomousCanvasPreview();
+            resolve();
+          };
+          fb.onerror = () => {
+            currentProductImageEl = null;
+            renderAutonomousCanvasPreview();
+            resolve();
+          };
+          fb.src = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
         };
         img.src = fullImg;
       });
@@ -1471,14 +1552,23 @@ async function addScheduledPost(publishImmediately = false) {
 
     // Eğer ürün görseli henüz yüklenmediyse güvenli yükle
     if (!currentProductImageEl && prod.ana_resim) {
-      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
-        ? prod.ana_resim
-        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
+      let fullImg = prod.ana_resim;
+      if (!fullImg.startsWith('http') && !fullImg.startsWith('data:')) {
+        fullImg = `https://globalmobilyaweb.vercel.app${fullImg.startsWith('/') ? '' : '/'}${fullImg}`;
+      }
       const img = new Image();
-      img.crossOrigin = 'anonymous';
+      if (!fullImg.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
       await new Promise(r => {
         img.onload = () => { currentProductImageEl = img; r(); };
-        img.onerror = () => { r(); };
+        img.onerror = () => {
+          const fb = new Image();
+          fb.crossOrigin = 'anonymous';
+          fb.onload = () => { currentProductImageEl = fb; r(); };
+          fb.onerror = () => { r(); };
+          fb.src = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+        };
         img.src = fullImg;
       });
     }
@@ -1871,7 +1961,7 @@ function deleteQueueItem(idx) {
   persistBotStateToSupabase(true);
 }
 
-async function runCloudAutonomousCycleNow() {
+async function runCloudAutonomousCycleNow(slot = null, isAuto = false) {
   const btn = document.getElementById('btnRunAutonomousNow');
   if (btn) {
     btn.disabled = true;
@@ -1880,15 +1970,16 @@ async function runCloudAutonomousCycleNow() {
   showToast('🤖 Katalogdan ürün seçiliyor & otonom içerik tasarlanıyor...');
 
   try {
-    // 1. Ürün kataloğunu Supabase'den taze çek (Eğer boşsa)
-    if (!catalogProducts || catalogProducts.length === 0) {
+    // 1. Ürün kataloğunu Supabase'den taze çek
+    try {
       const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
         headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
       });
       if (prodRes.ok) {
-        catalogProducts = await prodRes.json();
+        const fresh = await prodRes.json();
+        if (Array.isArray(fresh) && fresh.length > 0) catalogProducts = fresh;
       }
-    }
+    } catch (_) {}
 
     // 2. Katalogdan ürün seç
     let prod = null;
@@ -1899,7 +1990,7 @@ async function runCloudAutonomousCycleNow() {
         title: 'NOVA ZÜRİH YATAK ODASI',
         kategori: '1. Sınıf MDF • CNC Membran Kapak',
         kisa_aciklama: '18mm E1 Sertifikalı MDF, 5 Yıl Garanti, Özel Ölçü Tasarım',
-        ana_resim: 'https://globalmobilyaweb.vercel.app/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png'
+        ana_resim: 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png'
       };
     }
 
@@ -1907,9 +1998,8 @@ async function runCloudAutonomousCycleNow() {
     const headline = rawTitle.startsWith('NOVA') ? rawTitle : `NOVA - ${rawTitle}`;
     const subheadline = prod.kisa_aciklama || `${prod.kategori || '1. Sınıf CNC Membran'} • 18mm E1 MDF • 5 Yıl Garanti`;
 
-    // Format rotasyonu: REELS (%40), POST (%40), STORIES (%20)
-    const mediaTypes = ['POST', 'REELS', 'POST', 'REELS', 'STORIES'];
-    const mediaType = mediaTypes[Math.floor(Math.random() * mediaTypes.length)];
+    // Medya tipi: Eğer belirli bir saat slotu tetiklendiyse onun tipini al, yoksa REELS
+    const mediaType = slot?.type || 'REELS';
     const isVertical = mediaType === 'REELS' || mediaType === 'STORIES';
 
     // 3. Gemini AI ile açıklama metni
@@ -1935,25 +2025,39 @@ async function runCloudAutonomousCycleNow() {
     const hashtags = '#novafurniture #thenovafurniture #mobilyatasarim #yatakodasi #yemekodasi #icmimari #luxuryfurniture #evdekorasyonu #membrankapak';
     const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
 
-    // 4. Ürünün görselini güvenli yükle
+    // 4. Ürünün görselini güvenli yükle (Asla "Katalog Fotoğrafı Hazırlanıyor" yazdırmaz)
     let imgEl = null;
-    if (prod.ana_resim) {
-      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
-        ? prod.ana_resim
-        : `https://globalmobilyaweb.vercel.app${prod.ana_resim.startsWith('/') ? '' : '/'}${prod.ana_resim}`;
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      await new Promise(r => {
-        img.onload = () => { imgEl = img; r(); };
-        img.onerror = () => { imgEl = null; r(); };
-        img.src = fullImg;
-      });
+    let targetImg = prod.ana_resim;
+    if (!targetImg || targetImg.length < 5) {
+      targetImg = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+    } else if (!targetImg.startsWith('http') && !targetImg.startsWith('data:')) {
+      targetImg = `https://globalmobilyaweb.vercel.app${targetImg.startsWith('/') ? '' : '/'}${targetImg}`;
     }
+
+    const loadImgPromise = new Promise((resolve) => {
+      const img = new Image();
+      if (!targetImg.startsWith('data:')) {
+        img.crossOrigin = 'anonymous';
+      }
+      img.onload = () => resolve(img);
+      img.onerror = () => {
+        console.warn('Ürün görseli yüklenemedi, varsayılan lüks görsel deneniyor:', targetImg);
+        const fb = new Image();
+        fb.crossOrigin = 'anonymous';
+        fb.onload = () => resolve(fb);
+        fb.onerror = () => resolve(null);
+        fb.src = 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+      };
+      img.src = targetImg;
+    });
+
+    const timeoutPromise = new Promise(resolve => setTimeout(() => resolve(null), 5000));
+    imgEl = await Promise.race([loadImgPromise, timeoutPromise]);
 
     // 5. Medya oluştur ve Supabase Storage'a yükle (PNG veya MP4)
     let finalMediaUrl = '';
     if (mediaType === 'REELS') {
-      showToast('🎬 Kamera hareketi kaydediliyor (MP4)...');
+      showToast('🎬 Kamera hareketi kaydediliyor (MP4 video üretiliyor)...');
       const offscreen = document.createElement('canvas');
       const mp4Blob = await window.NovaStudioEngine.recordCanvasVideo(
         offscreen,
@@ -2018,7 +2122,7 @@ async function runCloudAutonomousCycleNow() {
       const containerId = cData.id;
       let ready = false;
       for (let i = 0; i < 25; i++) {
-        showToast(`⏳ Reels Video İşleniyor (${i + 1}/25)...`);
+        showToast(`⏳ Reels Video Meta'da İşleniyor (${i + 1}/25)...`);
         await new Promise(r => setTimeout(r, 2500));
         const sRes = await fetch(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code,status&access_token=${accessToken}`);
         const sData = await sRes.json();
@@ -2092,17 +2196,32 @@ async function runCloudAutonomousCycleNow() {
     };
 
     botState.scheduled_posts.unshift(newItem);
+
+    // Slot tamamlanma durumunu güncelle
+    if (slot) {
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const currentHHMM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
+      slot.last_run_date = todayStr;
+      slot.last_run_time = currentHHMM;
+    }
+
     await persistBotStateToSupabase(false);
     renderScheduledQueue();
+    renderSlots();
     updateKpis();
 
-    alert(`🎉 Harika! "${headline}" adlı ürün veritabanı kataloğunuzdan çekildi ve ${mediaType === 'REELS' ? 'hareketli Reels videosu olarak' : 'lüks görsel olarak'} @thenovafurniture hesabınızda canlı yayınlandı!\n\nInstagram Medya ID: ${publishedId}`);
     showToast(`✅ Başarıyla Instagram'da yayınlandı! ID: ${publishedId}`);
+    if (!isAuto) {
+      alert(`🎉 Harika! "${headline}" adlı ürün veritabanı kataloğunuzdan çekildi ve ${mediaType === 'REELS' ? 'hareketli Reels videosu olarak' : 'lüks görsel olarak'} @thenovafurniture hesabınızda canlı yayınlandı!\n\nInstagram Medya ID: ${publishedId}`);
+    }
 
   } catch (err) {
     console.error('Otonom döngü hatası:', err);
-    alert(`❌ Otonom Yayınlama Hatası: ${err.message}`);
     showToast(`❌ Hata: ${err.message}`);
+    if (!isAuto) {
+      alert(`❌ Otonom Yayınlama Hatası: ${err.message}`);
+    }
   } finally {
     if (btn) {
       btn.disabled = false;
@@ -2111,24 +2230,63 @@ async function runCloudAutonomousCycleNow() {
   }
 }
 
-// ── OTOMATİK ARKA PLAN SAAT KONTROLÜ (DAKİKALIK ÇALIŞIR) ──
-let lastAutoSlotCheckTime = '';
-setInterval(async () => {
+// ── OTOMATİK ARKA PLAN SAAT KONTROLÜ (KESİNTİSİZ & ESNEK KONTROL) ──
+let isAutonomousCycleRunning = false;
+
+async function checkAndTriggerDueSlots() {
+  if (isAutonomousCycleRunning) return;
   if (!botState?.config?.auto_publish_enabled) return;
+
   const slots = botState?.config?.posting_slots || [];
+  if (!slots || slots.length === 0) return;
+
   const now = new Date();
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
   const currentHHMM = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0');
 
-  if (lastAutoSlotCheckTime === currentHHMM) return;
-  
-  const matched = slots.find(s => s.active && s.time === currentHHMM);
-  if (matched) {
-    lastAutoSlotCheckTime = currentHHMM;
-    console.log(`⏰ [Otonom Bot] Saat ${currentHHMM} dilimi geldi (${matched.label}), yayın başlatılıyor...`);
-    showToast(`⏰ [Otonom Bot] Saat ${currentHHMM} dilimi geldi! Otonom paylaşım yapılıyor...`);
-    await runCloudAutonomousCycleNow();
+  for (let i = 0; i < slots.length; i++) {
+    const s = slots[i];
+    if (!s.active) continue;
+    if (s.last_run_date === todayStr) continue;
+
+    const [h, m] = s.time.split(':').map(Number);
+    const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+    const diff = now.getTime() - target.getTime();
+
+    // Eğer saat tam olarak geldiyse veya son 15 dakika içinde geçmişse:
+    if (diff >= 0 && diff < 15 * 60 * 1000) {
+      console.log(`⏰ [Otonom Bot] Saat ${s.time} dilimi (${s.label}) tetikleniyor!`);
+      showToast(`⏰ [Otonom Bot] Saat ${s.time} dilimi geldi! ${s.type} otonom olarak paylaşılıyor...`);
+
+      // Çift tetiklemeyi önlemek için hemen işaretle ve kaydet
+      s.last_run_date = todayStr;
+      s.last_run_time = currentHHMM;
+      await persistBotStateToSupabase(false);
+      renderSlots();
+
+      try {
+        isAutonomousCycleRunning = true;
+        await runCloudAutonomousCycleNow(s, true);
+      } finally {
+        isAutonomousCycleRunning = false;
+      }
+      break;
+    }
   }
-}, 30000);
+}
+
+// 4 saniyede bir kesintisiz saat kontrolü
+setInterval(checkAndTriggerDueSlots, 4000);
+
+// Sekmeye dönüldüğünde hemen kontrol et
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') {
+    checkAndTriggerDueSlots();
+  }
+});
+window.addEventListener('focus', () => {
+  checkAndTriggerDueSlots();
+});
 
 // ── 1. AŞAMA SABİT KURALLAR ──
 function renderTier1Rules() {

@@ -328,8 +328,29 @@ export default async function handler(req, res) {
     // Eğer kuyrukta saati gelmiş gönderi yoksa (veya doğrudan otonom üretim tetiklendiyse):
     // Bot herhangi bir fotoğraf/video girişine ihtiyaç duymadan KENDİSİ TASARLAR ve yayın kuyruğuna alır!
     if (duePosts.length === 0) {
+      const slots = config.posting_slots || [];
+      const now = new Date();
+      // Türkiye Saati (UTC+3)
+      const istHour = (now.getUTCHours() + 3) % 24;
+      const istMin = now.getUTCMinutes();
+      const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
+      const todayStr = now.toISOString().slice(0, 10);
+
+      const activeSlot = slots.find(s => {
+        if (!s.active) return false;
+        if (s.last_run_date === todayStr) return false;
+        const [sh, sm] = s.time.split(':').map(Number);
+        const diffMin = (istHour * 60 + istMin) - (sh * 60 + sm);
+        return diffMin >= 0 && diffMin <= 60; // Son 60 dakika içinde saati gelmiş
+      });
+
       const typesRotation = ['POST', 'REELS', 'POST', 'STORIES'];
-      const chosenType = forceGenerateType || typesRotation[Math.floor(Math.random() * typesRotation.length)];
+      const chosenType = forceGenerateType || (activeSlot ? activeSlot.type : null) || typesRotation[Math.floor(Math.random() * typesRotation.length)];
+
+      if (activeSlot) {
+        activeSlot.last_run_date = todayStr;
+        activeSlot.last_run_time = currentHHMM;
+      }
       
       let pickedProduct = null;
       if (catalog && catalog.length > 0) {

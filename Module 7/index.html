@@ -855,9 +855,14 @@
 
       // Arka planda Image nesnesi yükle
       loadedImageEl = new Image();
-      loadedImageEl.crossOrigin = 'anonymous';
+      if (!src.startsWith('data:')) {
+        loadedImageEl.crossOrigin = 'anonymous';
+      }
       loadedImageEl.onload = () => {
         triggerLivePreviewUpdate();
+      };
+      loadedImageEl.onerror = () => {
+        console.warn('Görsel yüklenemedi:', src);
       };
       loadedImageEl.src = src;
     }
@@ -996,7 +1001,37 @@
           ];
 
       const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
-      const ana_resim = currentImageBase64 || document.getElementById('prod_image_url').value.trim() || '/resim/yonetilen/cerceveli-klasik-membran-kapak-yeni-1787670684996.png';
+      let ana_resim = currentImageBase64 || document.getElementById('prod_image_url').value.trim() || 'https://globalmobilyaweb.vercel.app/resim/anasayfa-resimleri/anasayfa1.png';
+
+      // Eğer görsel dosya seçimiyle (Base64) geldiyse Supabase Storage'a kalıcı PNG olarak yükle
+      if (currentImageBase64 && currentImageBase64.startsWith('data:image')) {
+        try {
+          btn.textContent = '☁️ Görsel Storage’a Yükleniyor...';
+          const ext = currentImageBase64.includes('jpeg') ? 'jpg' : 'png';
+          const cleanB64 = currentImageBase64.replace(/^data:image\/\w+;base64,/, '');
+          const byteChars = atob(cleanB64);
+          const byteNumbers = new Array(byteChars.length);
+          for (let i = 0; i < byteChars.length; i++) {
+            byteNumbers[i] = byteChars.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          const blob = new Blob([byteArray], { type: `image/${ext === 'jpg' ? 'jpeg' : 'png'}` });
+          const storagePath = `products/${slug}-${Date.now()}.${ext}`;
+
+          const { error: upErr } = await sb.storage.from('media').upload(storagePath, blob, {
+            contentType: `image/${ext === 'jpg' ? 'jpeg' : 'png'}`,
+            upsert: true
+          });
+          if (!upErr) {
+            const { data: pubData } = sb.storage.from('media').getPublicUrl(storagePath);
+            if (pubData?.publicUrl) {
+              ana_resim = pubData.publicUrl;
+            }
+          }
+        } catch (e) {
+          console.warn('Storage yükleme hatası:', e);
+        }
+      }
 
       const payload = {
         slug,

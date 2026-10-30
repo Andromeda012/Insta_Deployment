@@ -342,15 +342,37 @@ Sadece oluşturduğun metni döndür, başına veya sonuna markdown tırnakları
     } else {
       ctx.save();
       const phGrad = ctx.createLinearGradient(photoX, photoY, photoX, photoY + photoH);
-      phGrad.addColorStop(0, '#101726');
-      phGrad.addColorStop(1, '#0B0F19');
+      phGrad.addColorStop(0, '#131B2A');
+      phGrad.addColorStop(0.5, '#0B0F19');
+      phGrad.addColorStop(1, '#05070A');
       ctx.fillStyle = phGrad;
       ctx.fillRect(photoX, photoY, photoW, photoH);
 
-      ctx.fillStyle = 'rgba(212, 175, 55, 0.75)';
-      ctx.font = '700 24px "Plus Jakarta Sans", sans-serif';
+      // Lüks 3D CNC Shaker Kapak İllüstrasyonu
+      const dw = photoW * 0.65;
+      const dh = photoH * 0.78;
+      const dx = photoX + (photoW - dw) / 2;
+      const dy = photoY + (photoH - dh) / 2;
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.35)';
+      ctx.lineWidth = 2.5;
+      roundRect(ctx, dx, dy, dw, dh, 16, true, true);
+
+      // İç CNC Paneli
+      ctx.strokeStyle = 'rgba(212, 175, 55, 0.2)';
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, dx + 24, dy + 24, dw - 48, dh - 48, 8, false, true);
+
+      // Merkez Marka İmzası
+      ctx.fillStyle = 'rgba(212, 175, 55, 0.9)';
+      ctx.font = '700 22px "Plus Jakarta Sans", sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('📷 Katalog Fotoğrafı Hazırlanıyor...', targetW / 2, photoY + photoH / 2);
+      ctx.fillText('NOVA FURNITURE | ATÖLYE SERİSİ', targetW / 2, dy + dh / 2 - 12);
+
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = '500 15px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('18mm E1 Sertifikalı MDF • CNC Membran Kapak', targetW / 2, dy + dh / 2 + 18);
       ctx.restore();
     }
 
