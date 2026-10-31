@@ -28,6 +28,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import httpClient from './http-client.cjs';
+import { startAutonomousScheduler } from './scheduler.js';
 const { fetchWithTimeout } = httpClient;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -52,6 +53,7 @@ console.log(`[Nova Publisher] Başlatıldı. Worker ID: ${WORKER_ID} | DRY_RUN: 
 // Graceful Shutdown Kontrolleri
 let isShuttingDown = false;
 let isTaskRunning = false;
+let isClaimCycleRunning = false;
 let currentRunningTaskId = null;
 
 // Token ve Gizli Bilgileri Loglardan Ayıklayan Fonksiyon
@@ -223,6 +225,8 @@ async function executePublish(task) {
         throw new Error('Meta Facebook ortam değişkenleri (META_PAGE_ID, META_PAGE_ACCESS_TOKEN) eksik!');
       }
 
+      if (content_type === 'VIDEO_REELS' || content_type === 'REELS') return { status: 'unsupported', platformPostId: null, rawResponse: { note: 'Facebook Reels/video publisher is not implemented.' }, errorMessage: '[UNSUPPORTED] Facebook video task was not sent to the photo endpoint.' };
+      if (content_type !== 'PHOTO_POST' && content_type !== 'FB_STORIES' && content_type !== 'STORIES') return { status: 'unsupported', platformPostId: null, rawResponse: { note: `Unsupported Facebook content_type: ${content_type}` }, errorMessage: '[UNSUPPORTED] Facebook content type is not implemented.' };
       const isStory = content_type === 'FB_STORIES' || content_type === 'STORIES';
       if (isStory) {
         const upParams = new URLSearchParams({
@@ -427,9 +431,8 @@ async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, er
 
     let updated = false;
     for (const p of posts) {
-      const isMatch = p.queue_idempotency_key === task.idempotency_key ||
-                      p.queue_task_id === task.task_id ||
-                      (p.product_slug === task.product_slug && p.status === 'pending');
+      const isMatch = (p.queue_idempotency_key && p.queue_idempotency_key === task.idempotency_key) ||
+                      (p.queue_task_id && p.queue_task_id === task.task_id);
       if (isMatch) {
         p.status = finalStatus; // 'published', 'dry_run_completed', 'failed', 'reconciliation_required'
         if (platformPostId) p.platform_post_id = platformPostId;
@@ -453,7 +456,9 @@ async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, er
 }
 
 async function pollQueueCycle() {
-  if (isShuttingDown || isTaskRunning) return;
+  // Acquire the in-process mutex synchronously before the first await.
+  if (isShuttingDown || isTaskRunning || isClaimCycleRunning) return;
+  isClaimCycleRunning = true;
 
   try {
     // Adım 1: Atomik Görev Talebi (FOR UPDATE SKIP LOCKED)
@@ -489,9 +494,6 @@ async function pollQueueCycle() {
         p_backoff_minutes: 5
       });
 
-      // Admin Paneli Senkronizasyonu
-      await syncAdminPanelStatus(task, result.status, result.platformPostId, result.errorMessage);
-
       // KRİTİK DOĞRULAMA: Hem error hem de return değerini kontrol et
       if (completeError || completedSuccessfully !== true) {
         const errMsg = (completeError && completeError.message) || 'v_updated = 0';
@@ -499,6 +501,24 @@ async function pollQueueCycle() {
           `[RPC Başarısız] Görev veritabanında güncellenemedi (Kilit süresi dolmuş veya başka worker devralmış olabilir) - Görev ID: ${task.task_id} - Hata: ${sanitize(errMsg)}`
         );
       } else {
+        await syncAdminPanelStatus(task, result.status, result.platformPostId, result.errorMessage);
+        if (result.status === 'published' && task.product_slug) {
+          const trackerKey = `${task.platform}_published_tracker`;
+          const { data: trackerRow, error: trackerReadError } = await supabase
+            .from('site_settings').select('data').eq('key', trackerKey).maybeSingle();
+          if (trackerReadError) {
+            console.error(`[Tracker] Okunamadı (${trackerKey}): ${sanitize(trackerReadError.message)}`);
+          } else {
+            const tracker = trackerRow && trackerRow.data && typeof trackerRow.data === 'object' ? trackerRow.data : {};
+            const formats = Array.isArray(tracker[task.product_slug]) ? tracker[task.product_slug] : [];
+            if (!formats.includes(task.content_type)) formats.push(task.content_type);
+            tracker[task.product_slug] = formats;
+            const { error: trackerWriteError } = await supabase.from('site_settings').upsert({
+              key: trackerKey, data: tracker, updated_at: new Date().toISOString()
+            });
+            if (trackerWriteError) console.error(`[Tracker] Yazılamadı (${trackerKey}): ${sanitize(trackerWriteError.message)}`);
+          }
+        }
         console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
       }
     } catch (execErr) {
@@ -551,10 +571,15 @@ async function pollQueueCycle() {
     }
   } catch (cycleErr) {
     console.error('[Döngü Hatası]:', sanitize(cycleErr.message));
+  } finally {
+    isClaimCycleRunning = false;
   }
 }
 
-// Zamanlayıcıyı Başlat
+// Merkezi zamanlayıcı: paneldeki Supabase slot ayarlarını dinamik olarak izler.
+const schedulerHandle = startAutonomousScheduler(supabase, 30000, process.env.GEMINI_API_KEY || null);
+
+// Kuyruk tüketicisini başlat
 const pollIntervalHandle = setInterval(pollQueueCycle, POLL_INTERVAL_MS);
 pollQueueCycle();
 
@@ -563,6 +588,7 @@ async function handleShutdown(signal) {
   console.log(`\n[Shutdown] ${signal} sinyali alındı. Yeni görev alımı durduruldu. Kapanıyor...`);
   isShuttingDown = true;
   clearInterval(pollIntervalHandle);
+  if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
 
   if (isTaskRunning) {
     console.log('[Shutdown] Devam eden yayın görevinin tamamlanması bekleniyor (Maks 35 sn)...');

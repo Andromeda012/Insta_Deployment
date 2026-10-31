@@ -6,7 +6,7 @@
 <title>Modül 2 — Facebook Sayfa Bulut Botu & 3 Aşamalı Messenger/Yorum Merkezi</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/Module%202/nova-studio-engine.js"></script>
+
 <script src="/nova-studio-engine.js"></script>
 <style>
   :root {
@@ -1167,7 +1167,7 @@ async function loadFbStateFromSupabase() {
 
 async function persistFbStateToSupabase(notify = true) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -1181,11 +1181,16 @@ async function persistFbStateToSupabase(notify = true) {
         updated_at: new Date().toISOString()
       })
     });
+    if (!response.ok) throw new Error(`Supabase HTTP ${response.status}`);
     if (notify) showToast('☁️ Facebook Bulut Bot ayarları Supabase veritabanına kaydedildi!');
+    return true;
   } catch (e) {
-    if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');
+    console.warn('Facebook Bot kayıt engellendi:', e);
+    if (notify) showToast('🔒 Ayarlar kaydedilemedi. Yönetici girişi henüz etkin değil.');
+    return false;
+  } finally {
+    populateFbFormsAndRenderAll();
   }
-  populateFbFormsAndRenderAll();
 }
 
 function populateFbFormsAndRenderAll() {
@@ -1642,6 +1647,7 @@ async function exportFbAutonomousCanvasAndUpload(mediaType, headline, subheadlin
 }
 
 async function addFbScheduledPost(publishImmediately = false) {
+  if (publishImmediately) { showToast('🔒 Manuel yayınlama, güvenli yönetici API\'si hazır olana kadar kapalı.'); return; }
   const btn = document.getElementById('btnQueuePost');
   const mediaType = document.getElementById('post_media_type').value || 'PHOTO_POST';
   const themeKey = document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
@@ -1768,6 +1774,8 @@ async function addFbScheduledPost(publishImmediately = false) {
 }
 
 async function triggerFbDirectTestPost(btn) {
+  showToast('🔒 Manuel yayınlama, güvenli yönetici API\'si hazır olana kadar kapalı.');
+  return;
   if (btn) {
     btn.disabled = true;
     btn.innerHTML = '⏳ Yayınlanıyor...';
@@ -1817,6 +1825,8 @@ function renderFbScheduledQueue() {
 }
 
 function publishFbQueueItemNow(idx) {
+  showToast('🔒 Manuel yayınlama, güvenli yönetici API\'si hazır olana kadar kapalı.');
+  return;
   if (!fbState.scheduled_posts[idx]) return;
   fbState.scheduled_posts[idx].status = 'published';
   fbState.scheduled_posts[idx].published_at = new Date().toISOString();
@@ -1831,6 +1841,8 @@ function deleteFbQueueItem(idx) {
 }
 
 async function runFbAutonomousCycleNow() {
+  showToast('🔒 Manuel yayınlama, güvenli yönetici API\'si hazır olana kadar kapalı.');
+  return;
   let count = 0;
   (fbState.scheduled_posts || []).forEach(p => {
     if (p.status === 'scheduled') {

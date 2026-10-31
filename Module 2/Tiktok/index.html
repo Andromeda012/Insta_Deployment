@@ -7,7 +7,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/Module%202/nova-studio-engine.js"></script>
+
     <script src="/nova-studio-engine.js"></script>
     <style>
         :root {
@@ -503,7 +503,7 @@
             </div>
             <button class="btn" onclick="openApiModal()">🔑 TikTok API & Gemini Ayarları</button>
             <button class="btn btn-cyan" onclick="generateAutonomousTikTokScene()">✨ Otonom Yeni Sahne Tasarla</button>
-            <button class="btn btn-tiktok" onclick="publishTikTokNow()">🚀 Şimdi TikTok'ta Yayınla</button>
+            <button class="btn btn-tiktok" onclick="publishTikTokNow()">⏸️ TikTok entegrasyonu beklemede</button>
         </div>
     </header>
 
@@ -648,8 +648,8 @@
 
             <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
                 <button class="btn btn-cyan" onclick="addCurrentDraftToSchedule()">⏱️ Otonom Kuyruğa Ekle</button>
-                <button class="btn btn-tiktok" onclick="publishTikTokNow()">🚀 Sıfır Onayla Hemen Yayınla</button>
-                <button class="btn" onclick="triggerCloudCronNow()">☁️ Bulut Cron'u Şimdi Tetikle (/api/tiktok-cron)</button>
+                <button class="btn btn-tiktok" onclick="publishTikTokNow()">⏸️ TikTok entegrasyonu beklemede</button>
+                <button class="btn" onclick="triggerCloudCronNow()">⏸️ TikTok entegrasyonu beklemede</button>
             </div>
 
             <!-- 7/24 Zamanlanmış ve Yayınlanmış Gönderi Kuyruğu -->
@@ -1242,52 +1242,15 @@
         }
 
         async function addCurrentDraftToSchedule() {
-            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
-            const entry = {
-                id: `tt_sched_${Date.now()}`,
-                format: currentFormat,
-                productSku: p.sku || 'GKM-104',
-                productTitle: p.title || 'CNC Membran Kapak',
-                onScreenHook: document.getElementById('hookInput').value,
-                publishedAt: 'Sıradaki Otonom Saat (16:30)'
-            };
-            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
-            renderQueueList();
-            await saveStateToSupabase();
+            alert('TikTok entegrasyonu henüz etkinleştirilmedi. Taslak gerçek yayın kuyruğuna eklenmedi.');
         }
 
         async function publishTikTokNow() {
-            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
-            const entry = {
-                id: `tt_live_${Date.now()}`,
-                format: currentFormat,
-                productSku: p.sku || 'GKM-104',
-                productTitle: p.title || 'CNC Membran Kapak',
-                onScreenHook: document.getElementById('hookInput').value,
-                publishedAt: `Şimdi Yayınlandı (${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })})`
-            };
-            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
-            renderQueueList();
-            await saveStateToSupabase();
-            alert(`🚀 TikTok 9:16 Dikey Gönderi (${entry.productSku} - ${entry.productTitle}) sıfır medya girişiyle otonom olarak üretildi ve yayın kuyruğuna işlendi!`);
+            alert('TikTok entegrasyonu henüz etkinleştirilmedi. Gerçek yayın yapılmadı.');
         }
 
         async function triggerCloudCronNow() {
-            try {
-                const res = await fetch('/api/tiktok-cron', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ format: currentFormat })
-                });
-                const data = await res.json();
-                if (data.ok && data.publishedEntry) {
-                    botState.publishedHistory = [data.publishedEntry, ...(botState.publishedHistory || [])].slice(0, 30);
-                    renderQueueList();
-                    alert(`☁️ Bulut Cron (/api/tiktok-cron) başarıyla çalıştı! Üretilen: [${data.publishedEntry.productSku}] ${data.publishedEntry.productTitle}`);
-                }
-            } catch (e) {
-                await publishTikTokNow();
-            }
+            alert('TikTok entegrasyonu henüz etkinleştirilmedi. VPS yayın kuyruğuna görev gönderilmedi.');
         }
 
         // =====================================================================

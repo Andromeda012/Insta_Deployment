@@ -43,20 +43,10 @@ REVOKE ALL ON public.social_publish_queue FROM PUBLIC;
 -- Service role has full permissions (for VPS Publisher runner)
 GRANT ALL ON public.social_publish_queue TO service_role;
 
--- Anon and authenticated (used by Vercel cron endpoints) can ONLY select (for idempotency) and insert pending tasks
-GRANT SELECT, INSERT ON public.social_publish_queue TO anon, authenticated;
-
+-- Browser roles do not access the queue. Vercel cron and VPS Publisher use service_role only.
+REVOKE ALL ON public.social_publish_queue FROM anon, authenticated;
 DROP POLICY IF EXISTS "Allow anon check idempotency" ON public.social_publish_queue;
-CREATE POLICY "Allow anon check idempotency"
-ON public.social_publish_queue
-FOR SELECT TO anon, authenticated
-USING (true);
-
 DROP POLICY IF EXISTS "Allow anon enqueue pending tasks" ON public.social_publish_queue;
-CREATE POLICY "Allow anon enqueue pending tasks"
-ON public.social_publish_queue
-FOR INSERT TO anon, authenticated
-WITH CHECK (status = 'pending');
 
 CREATE OR REPLACE FUNCTION public.claim_next_publish_task(
   p_worker_id text, p_lock_duration_seconds int DEFAULT 180
@@ -81,16 +71,16 @@ BEGIN
       updated_at = now()
   WHERE q.status = 'processing' AND q.locked_until <= now();
 
-  -- YouTube binary upload is not implemented; park those tasks explicitly.
+  -- TikTok and YouTube are outside the current release scope; park their tasks explicitly.
   UPDATE public.social_publish_queue q
   SET status = 'unsupported', worker_id = NULL, locked_until = NULL,
       error_message = '[EXCLUDED] YouTube binary upload is not implemented.', updated_at = now()
-  WHERE q.status = 'pending' AND q.platform = 'youtube';
+  WHERE q.status = 'pending' AND q.platform IN ('tiktok','youtube');
 
   SELECT q.id INTO v_task_id
   FROM public.social_publish_queue q
   WHERE q.status = 'pending'
-    AND q.platform IN ('instagram','facebook','tiktok')
+    AND q.platform IN ('instagram','facebook')
     AND q.scheduled_for <= now()
   ORDER BY q.scheduled_for, q.created_at
   LIMIT 1

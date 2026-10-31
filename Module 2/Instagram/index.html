@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/Module%202/nova-studio-engine.js"></script>
+
   <script src="/nova-studio-engine.js"></script>
 
   <style>
@@ -1048,8 +1048,7 @@
         { type: 'REELS', time: document.getElementById('timeSlotReels').value || '19:30', enabled: document.getElementById('chkSlotReelsActive').checked }
       ];
 
-      await persistBotState();
-      showToast('✅ Yayın kuyruğu ve saat ayarları kaydedildi!');
+      if (await persistBotState()) showToast('✅ Yayın kuyruğu ve saat ayarları kaydedildi!');
     }
 
     async function saveMusicSettings() {
@@ -1059,8 +1058,7 @@
       botState.config.reels_music = selectedMusicKey;
       botState.config.custom_music_url = document.getElementById('customMusicUrl').value.trim();
 
-      await persistBotState();
-      showToast('✅ Reels fon müziği tercihi kaydedildi!');
+      if (await persistBotState()) showToast('✅ Reels fon müziği tercihi kaydedildi!');
     }
 
     async function saveSpecPostSettings() {
@@ -1078,8 +1076,7 @@
         cta_button: document.getElementById('spec_opt_cta_button').checked
       };
 
-      await persistBotState();
-      showToast('✅ Detaylı gönderi kapsül tercihleri kaydedildi!');
+      if (await persistBotState()) showToast('✅ Detaylı gönderi kapsül tercihleri kaydedildi!');
     }
 
     async function saveAssistantSettings() {
@@ -1087,20 +1084,23 @@
       if (!botState.config) botState.config = {};
 
       botState.config.gemini_model = document.getElementById('selGeminiModel').value;
-      await persistBotState();
-      showToast('✅ Asistan ayarları kaydedildi!');
+      if (await persistBotState()) showToast('✅ Asistan ayarları kaydedildi!');
     }
 
     async function persistBotState() {
       try {
-        await sb.from('site_settings').upsert({
+        if (!sb) throw new Error('Supabase istemcisi başlatılamadı.');
+        const { error } = await sb.from('site_settings').upsert({
           key: 'insta_bot_state',
           data: botState,
           updated_at: new Date().toISOString()
         });
+        if (error) throw error;
+        return true;
       } catch (err) {
         console.error('Bot state kaydetme hatası:', err);
-        showToast('❌ Ayarlar kaydedilemedi: ' + err.message);
+        showToast('🔒 Ayarlar kaydedilemedi. Yönetici girişi henüz etkin değil.');
+        return false;
       }
     }
 
@@ -1227,6 +1227,8 @@
     // OTONOM PAYLAŞIM DÖNGÜSÜNÜ ÇALIŞTIR
     // =========================================================================
     async function triggerAutonomousCycleNow() {
+      showToast('🔒 Manuel yayınlama geçici olarak kapalı. Güvenli yönetici API\'si şirket hesabı aşamasında etkinleştirilecek.');
+      return;
       if (isCycleRunning) return;
       isCycleRunning = true;
 
