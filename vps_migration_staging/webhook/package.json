@@ -1,0 +1,14 @@
+{
+  "name": "global-webhook-service",
+  "version": "1.0.0",
+  "description": "Global Mobilya Fast Meta Webhook Ingestion Service",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "@supabase/supabase-js": "^2.45.4"
+  }
+}

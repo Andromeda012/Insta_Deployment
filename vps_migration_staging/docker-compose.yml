@@ -1,0 +1,66 @@
+version: '3.8'
+
+# ============================================================================
+# GLOBAL MOBİLYA — VPS DOCKER COMPOSE YAPILANDIRMASI
+# ============================================================================
+# KAPSAM KURALI:
+# Bu aşamada YALNIZCA sosyal medya yayınlama sistemi (publisher-service)
+# çalıştırılır. Dışarıya hiçbir port AÇILMAZ (Sıfır port saldırı yüzeyi).
+# Webhook servisi 2. aşamaya ertelenmiş olup varsayılan olarak başlatılmaz.
+# ============================================================================
+
+services:
+  # 1. Merkezi Yayın Servisi (Instagram, Facebook, TikTok, YouTube)
+  # Varsayılan çalışan tek servistir (`docker compose up -d`).
+  publisher-service:
+    build:
+      context: ./publisher
+      dockerfile: Dockerfile
+    container_name: global_publisher
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=publisher-service
+      - TZ=Europe/Istanbul
+    # Dışarıya açık port YOKTUR. (Tüm iletişim güvenli dışa doğru HTTPS API üzerinden yapılır)
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - publish_net
+
+  # 2. Meta Webhook Servisi (Gelen Instagram DM & Yorum Bildirimleri)
+  # [2. AŞAMA ERTELENDİ] Yalnızca güvenlik denetimi için staging'de tutulur.
+  # 'docker compose up -d' komutuyla ÇALIŞMAZ (Profile: webhook-phase2).
+  webhook-service:
+    profiles:
+      - webhook-phase2
+    build:
+      context: ./webhook
+      dockerfile: Dockerfile
+    container_name: global_webhook
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080" # Yalnızca yerel ters vekile (Caddy/Nginx) bağlıdır
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=webhook-service
+      - PORT=8080
+      - TZ=Europe/Istanbul
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - publish_net
+
+networks:
+  publish_net:
+    driver: bridge
