@@ -685,9 +685,11 @@
               Seçilirse ürünün pikselleri, kulpları ve kapakları <strong>%100 korunur</strong>; eski yazı ve arka plan temizlenip arkaya lüks Venedik sıva grej duvar, ahşap çıtalar ve mimari stüdyo ışığı inşa edilir. Seçilmezse görsel olduğu gibi korunur.
             </p>
           </div>
-          <label class="switch-container">
-            <input type="checkbox" id="chk_transform_image" checked onchange="handleTransformToggle(this.checked)">
-            <span class="switch-slider"></span>
+          <label style="position:relative; display:inline-block; width:52px; height:28px; cursor:pointer; flex-shrink:0;">
+            <input type="checkbox" id="chk_transform_image" checked onchange="handleTransformToggle(this.checked)" style="opacity:0; width:0; height:0; position:absolute;">
+            <span id="switch_track" style="position:absolute; inset:0; background:#10b981; border-radius:28px; transition:all 0.25s ease; border:1px solid rgba(255,255,255,0.2); box-shadow:inset 0 1px 3px rgba(0,0,0,0.3);">
+              <span id="switch_thumb" style="position:absolute; top:3px; left:26px; width:20px; height:20px; background:#ffffff; border-radius:50%; transition:all 0.25s ease; box-shadow:0 2px 4px rgba(0,0,0,0.4);"></span>
+            </span>
           </label>
         </div>
         <div id="transform_status_badge" style="margin-top:10px; font-size:11px; color:#38bdf8; display:flex; align-items:center; gap:6px;">
@@ -764,15 +766,27 @@
     let isAnimPlaying = false;
     let productTransformSettings = {};
 
-    function handleTransformToggle(isChecked) {
+        function handleTransformToggle(isChecked) {
+      const track = document.getElementById('switch_track');
+      const thumb = document.getElementById('switch_thumb');
       const badge = document.getElementById('transform_status_badge');
-      if (!badge) return;
-      if (isChecked) {
-        badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü uygulanacak.</span>';
-        badge.style.color = '#38bdf8';
-      } else {
-        badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
-        badge.style.color = '#94a3b8';
+      if (track && thumb) {
+        if (isChecked) {
+          track.style.background = '#10b981';
+          thumb.style.left = '26px';
+        } else {
+          track.style.background = '#475569';
+          thumb.style.left = '4px';
+        }
+      }
+      if (badge) {
+        if (isChecked) {
+          badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü (%100 Sadakat) uygulanacak.</span>';
+          badge.style.color = '#38bdf8';
+        } else {
+          badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
+          badge.style.color = '#94a3b8';
+        }
       }
     }
 
@@ -1076,7 +1090,7 @@
       if (chkTransform) {
         const isEnabled = productTransformSettings[item.slug] !== false;
         chkTransform.checked = isEnabled;
-        chkTransform.dispatchEvent(new Event('change'));
+        handleTransformToggle(isEnabled);
       }
 
       triggerLivePreviewUpdate();
@@ -1104,6 +1118,7 @@
       btn.textContent = '⏳ Supabase\'e Kaydediliyor...';
 
       // Renkleri diziye çevir
+      const renkler = rawColors
         ? rawColors.split(',').map(s => s.trim()).filter(Boolean)
         : ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe'];
 
@@ -1263,7 +1278,11 @@
         .replace(/^-+|-+$/g, '') || 'model';
     }
 
-    window.addEventListener('DOMContentLoaded', loadCatalogFromSupabase);
+        if (document.readyState === 'loading') {
+      window.addEventListener('DOMContentLoaded', loadCatalogFromSupabase);
+    } else {
+      loadCatalogFromSupabase();
+    }
   </script>
 </body>
 </html>
