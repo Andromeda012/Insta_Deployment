@@ -1,6 +1,6 @@
 # NOVA FURNITURE — VPS MIGRATION CANLIYA GEÇİŞ KONTROL LİSTESİ (CHECKLIST)
 
-**Kapsam:** Yalnızca Instagram, Facebook, TikTok ve YouTube sosyal medya yayınlama sisteminin DigitalOcean VPS'ye taşınması.  
+**Kapsam:** Yalnızca Instagram, Facebook ve TikTok sosyal medya yayınlama sisteminin DigitalOcean VPS'ye taşınması. (YouTube gerçek binary upload desteği tamamlanana kadar 'unsupported' olarak devre dışıdır).  
 **Önemli:** CNC, Firebird, sipariş sistemleri, Gemini AI ve DM/Yorum otomasyonları bu aşamada kesinlikle kapsam dışıdır.
 
 ---

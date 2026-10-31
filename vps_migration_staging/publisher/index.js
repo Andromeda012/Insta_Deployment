@@ -1,33 +1,28 @@
 /**
  * NOVA FURNITURE — VPS PUBLISHER RUNNER (publisher/index.js)
  * ============================================================================
- * TEKNİK MİMARİ VE ÇALIŞMA KURALLARI:
- * 1. SQL RPC İmzalarıyla %100 Uyum:
- *    - `claim_next_publish_task(p_worker_id, p_lock_duration_seconds)`
- *    - `extend_publish_task_lock(p_task_id, p_worker_id, p_extra_seconds)`
- *    - `complete_publish_task(p_task_id, p_worker_id, p_status, ...)`
- * 2. Kilit Kaybı (Lease Loss) Koruması:
- *    `heartbeatLockExtension` 'false' döndüğünde worker kilidi kaybettiğini anlar
- *    ve işlemi derhal durdurarak mükerrer yayın yapmayı engeller.
- * 3. Dry-Run Modu:
- *    `DRY_RUN=true` iken sıfır dış API çağrısı yapılır; görevler kesinlikle
- *    'published' yapılmaz, 'dry_run_completed' olarak kaydedilir.
- * 4. TikTok Doğrulama Akışı:
- *    `publish_id` başlangıç biletidir; yayın durumu `/post/publish/status/fetch/`
- *    ile 'PUBLISH_COMPLETE' doğrulanmadan başarılı sayılmaz.
- * 5. Instagram Transcoding Beklemesi:
- *    Medya konteyneri 'FINISHED' olmadan asla `media_publish` çağrılmaz.
- *    Bekleme süresince `extend_publish_task_lock` ile kilit tazelenir.
- * 6. Reconciliation (Belirsiz Yanıt):
- *    Ağ zaman aşımı veya kilit kaybında 'reconciliation_required' atanır;
- *    otomatik tekrar deneme durdurularak çift paylaşım önlenir.
- * 7. YouTube İzolasyonu:
- *    Gerçek video binary upload geliştirilmediği için görevler asla 'published'
- *    yapılmaz; açıkça 'reconciliation_required' olarak işaretlenir.
- * 8. Log Maskeleme:
- *    Tüm token ve gizli bilgiler konsol çıktılarından temizlenir.
- * 9. Graceful Shutdown:
- *    SIGTERM / SIGINT sinyallerinde mevcut görev bitene kadar beklenir (Maks 35 sn).
+ * TEKNİK GÜVENLİK VE GÜVENİLİRLİK KURALLARI:
+ * 1. AbortController Tabanlı Timeout:
+ *    Tüm platform API çağrıları makul bir zaman aşımı (varsayılan 25 sn) ile
+ *    korunur; ağ kilitlenmelerinde worker askıda kalmaz.
+ * 2. Kilit Kaybında Akışın Durdurulması:
+ *    `heartbeatLockExtension` 'false' döndüğünde worker derhal hata fırlatır
+ *    ve `media_publish` gibi geri dönüşü olmayan adıma ASLA geçmez.
+ * 3. Instagram Token Güvenliği (Query String Önleme):
+ *    GET isteklerinde token URL query string yerine `Authorization: Bearer`
+ *    başlığında taşınır. POST isteklerinde body içinde iletilir.
+ * 4. TikTok Hata Kontrolleri:
+ *    HTTP durum kodları, JSON çözümleme ve API hata kodları (`error.code !== 'ok'`)
+ *    katı biçimde doğrulanır.
+ * 5. RPC Tamamlama Doğrulaması:
+ *    `complete_publish_task` çağrısının hem `error` hem de dönüş değeri (`data === true`)
+ *    denetlenir; güncelleme başarısızsa görev ASLA başarılı olarak loglanmaz.
+ * 6. Graceful Shutdown İzolasyonu:
+ *    35 saniyelik bekleme süresinde görev hala bitmediyse körlemesine exit(0)
+ *    çağrılmaz; kritik uyarı verilerek `process.exit(1)` ile sonlandırılır.
+ * 7. YouTube Kapsam Koruması:
+ *    Resumable binary video upload geliştirilene kadar YouTube görevleri
+ *    SQL enum uyumlu 'unsupported' durumuyla dondurulur; asla yayınlandı sayılmaz.
  * ============================================================================
  */
 
@@ -38,6 +33,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const DRY_RUN = process.env.DRY_RUN === 'true';
 const POLL_INTERVAL_MS = (parseInt(process.env.POLL_INTERVAL_SECONDS, 10) || 15) * 1000;
 const LOCK_DURATION_SEC = parseInt(process.env.LOCK_DURATION_SECONDS, 10) || 180;
+const API_TIMEOUT_MS = 25000;
 const WORKER_ID = `nova_worker_${process.pid}_${Math.random().toString(36).substring(2, 8)}`;
 
 if (!SUPABASE_URL || !SUPABASE_KEY) {
@@ -64,6 +60,22 @@ function sanitize(text) {
     .replace(/client_secret=[a-zA-Z0-9_\-\.]+/gi, 'client_secret=***')
     .replace(/client_key=[a-zA-Z0-9_\-\.]+/gi, 'client_key=***')
     .replace(/refresh_token=[a-zA-Z0-9_\-\.]+/gi, 'refresh_token=***');
+}
+
+// ── ABORTCONTROLLER TABANLI GÜVENLİ FETCH YARDIMCISI ─────────────────────────
+async function fetchWithTimeout(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
 }
 
 // ── KİLİT SÜRESİ UZATMA (HEARTBEAT) ──────────────────────────────────────────
@@ -112,6 +124,8 @@ async function executePublish(task) {
       }
 
       const isVideo = content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url);
+      
+      // Token URL yerine POST body içinde taşınır
       const containerParams = new URLSearchParams();
       containerParams.set('access_token', accessToken);
 
@@ -129,12 +143,12 @@ async function executePublish(task) {
         containerParams.set('caption', fullCaption);
       }
 
-      // Adım 1: Medya Konteyneri Başlat
-      const containerRes = await fetch(`https://graph.facebook.com/v21.0/${igUserId}/media`, {
+      // Adım 1: Medya Konteyneri Başlat (AbortController korumalı)
+      const containerRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media`, {
         method: 'POST',
         body: containerParams
       });
-      const containerData = await containerRes.json();
+      const containerData = await containerRes.json().catch(() => ({}));
       if (!containerRes.ok || !containerData.id) {
         throw new Error(`Meta Container Hatası: ${sanitize(containerData?.error?.message || 'Konteyner oluşturulamadı')}`);
       }
@@ -152,14 +166,22 @@ async function executePublish(task) {
         if (attempt % 3 === 0) {
           const lockOk = await heartbeatLockExtension(task_id, 120);
           if (!lockOk) {
-            throw new Error('[LeaseExpired] Kilit süresi doldu veya başka worker devraldı. İşlem durduruldu.');
+            // Heartbeat başarısız olursa akışı derhal durdur (media_publish'e geçme!)
+            throw new Error('[HeartbeatLost] Kilit süresi doldu veya uzatılamadı. Yayın akışı derhal durduruldu.');
           }
         }
 
-        const statusRes = await fetch(
-          `https://graph.facebook.com/v21.0/${creationId}?fields=status_code,status&access_token=${encodeURIComponent(accessToken)}`
+        // Token URL query string yerine Authorization: Bearer başlığında taşınır
+        const statusRes = await fetchWithTimeout(
+          `https://graph.facebook.com/v21.0/${creationId}?fields=status_code,status`,
+          {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${accessToken}`
+            }
+          }
         );
-        const statusData = await statusRes.json();
+        const statusData = await statusRes.json().catch(() => ({}));
 
         if (statusData.status_code === 'FINISHED') {
           isReady = true;
@@ -175,17 +197,17 @@ async function executePublish(task) {
         throw new Error('Instagram medya işleme zaman aşımı (Transcoding tamamlanamadı)');
       }
 
-      // Adım 3: Medyayı Yayınla (media_publish)
+      // Adım 3: Medyayı Yayınla (media_publish) — Token body içinde gönderilir
       const pubParams = new URLSearchParams({
         creation_id: creationId,
         access_token: accessToken
       });
 
-      const pubRes = await fetch(`https://graph.facebook.com/v21.0/${igUserId}/media_publish`, {
+      const pubRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media_publish`, {
         method: 'POST',
         body: pubParams
       });
-      const pubData = await pubRes.json();
+      const pubData = await pubRes.json().catch(() => ({}));
 
       if (!pubRes.ok || !pubData.id) {
         throw new Error(`Meta Publish Hatası: ${sanitize(pubData?.error?.message || 'Yayınlanamadı')}`);
@@ -213,15 +235,15 @@ async function executePublish(task) {
           published: 'false',
           access_token: pageAccessToken
         });
-        const upRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}/photos`, { method: 'POST', body: upParams });
-        const upData = await upRes.json();
+        const upRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photos`, { method: 'POST', body: upParams });
+        const upData = await upRes.json().catch(() => ({}));
         if (!upRes.ok || !upData.id) {
           throw new Error(`Facebook Story Yükleme Hatası: ${sanitize(upData?.error?.message)}`);
         }
 
         const stParams = new URLSearchParams({ photo_id: upData.id, access_token: pageAccessToken });
-        const stRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}/photo_stories`, { method: 'POST', body: stParams });
-        const stData = await stRes.json();
+        const stRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photo_stories`, { method: 'POST', body: stParams });
+        const stData = await stRes.json().catch(() => ({}));
         if (!stRes.ok || (!stData.post_id && !stData.success)) {
           throw new Error(`Facebook Story Yayın Hatası: ${sanitize(stData?.error?.message)}`);
         }
@@ -235,11 +257,11 @@ async function executePublish(task) {
         message: fullCaption,
         access_token: pageAccessToken
       });
-      const fbRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}/photos`, {
+      const fbRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photos`, {
         method: 'POST',
         body: photoParams
       });
-      const fbData = await fbRes.json();
+      const fbData = await fbRes.json().catch(() => ({}));
       if (!fbRes.ok || (!fbData.id && !fbData.post_id)) {
         throw new Error(`Facebook Gönderi Hatası: ${sanitize(fbData?.error?.message)}`);
       }
@@ -270,7 +292,7 @@ async function executePublish(task) {
       };
 
       // Adım 1: Gönderi Başlatma Talebi (Init)
-      const initRes = await fetch(initEndpoint, {
+      const initRes = await fetchWithTimeout(initEndpoint, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -278,10 +300,10 @@ async function executePublish(task) {
         },
         body: JSON.stringify(initPayload)
       });
-      const initData = await initRes.json();
+      const initData = await initRes.json().catch(() => ({}));
 
       if (!initRes.ok || initData.error?.code !== 'ok' || !initData.data?.publish_id) {
-        throw new Error(`TikTok Başlatma Hatası: ${sanitize(initData.error?.message || 'Bilinmeyen TikTok hatası')}`);
+        throw new Error(`TikTok Başlatma Hatası (HTTP ${initRes.status}): ${sanitize(initData.error?.message || 'Bilinmeyen TikTok hatası')}`);
       }
 
       const publishId = initData.data.publish_id;
@@ -296,11 +318,11 @@ async function executePublish(task) {
         if (attempt % 2 === 0) {
           const lockOk = await heartbeatLockExtension(task_id, 120);
           if (!lockOk) {
-            throw new Error('[LeaseExpired] Kilit süresi doldu veya başka worker devraldı. İşlem durduruldu.');
+            throw new Error('[HeartbeatLost] Kilit süresi doldu veya uzatılamadı. TikTok işlem akışı durduruldu.');
           }
         }
 
-        const statusRes = await fetch('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
+        const statusRes = await fetchWithTimeout('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -308,8 +330,18 @@ async function executePublish(task) {
           },
           body: JSON.stringify({ publish_id: publishId })
         });
-        const statusData = await statusRes.json();
+
+        if (!statusRes.ok) {
+          console.warn(`[TikTok Status HTTP ${statusRes.status}] Yeniden deneniyor...`);
+          continue;
+        }
+
+        const statusData = await statusRes.json().catch(() => ({}));
         statusDetails = statusData;
+
+        if (statusData?.error?.code !== 'ok') {
+          throw new Error(`TikTok Status API Hatası: ${sanitize(statusData?.error?.message || 'Hata kodu alındı')}`);
+        }
 
         const currentStatus = statusData?.data?.status;
         if (currentStatus === 'PUBLISH_COMPLETE') {
@@ -338,13 +370,15 @@ async function executePublish(task) {
       };
     }
 
-    // ── 4. YOUTUBE DATA API v3 (KAPSAM KORUMASI) ─────────────────────────────
+    // ── 4. YOUTUBE DATA API v3 (KAPSAM KORUMASI / UNSUPPORTED) ───────────────
     case 'youtube': {
+      // ÖNEMLİ: YouTube resumable binary video upload desteği geliştirilene kadar
+      // görevler açıkça 'unsupported' durumuna alınır; asla yayınlandı sayılmaz.
       return {
-        status: 'reconciliation_required',
+        status: 'unsupported',
         platformPostId: null,
-        rawResponse: { note: 'YouTube Data API v3 binary video upload geliştirme aşamasındadır.' },
-        errorMessage: '[EXCLUDED_FROM_DEPLOYMENT] YouTube gerçek binary upload geliştirilmemiştir. Görev bekletiliyor.'
+        rawResponse: { note: 'YouTube Data API v3 binary video upload desteği bu aşamada devre dışıdır.' },
+        errorMessage: '[EXCLUDED_FROM_DEPLOYMENT] YouTube gerçek binary video upload desteği tamamlanana kadar devre dışıdır.'
       };
     }
 
@@ -379,7 +413,7 @@ async function pollQueueCycle() {
     try {
       const result = await executePublish(task);
 
-      // Görev Başarıyla veya Tanımlı Durumla Tamamlandı
+      // Görev Sonucunu Kaydet
       const { data: completedSuccessfully, error: completeError } = await supabase.rpc('complete_publish_task', {
         p_task_id: task.task_id,
         p_worker_id: WORKER_ID,
@@ -390,17 +424,21 @@ async function pollQueueCycle() {
         p_backoff_minutes: 5
       });
 
-      if (completeError || completedSuccessfully === false) {
-        console.warn(`[Kilit Uyarısı] Görev ${task.task_id} tamamlanamadı (Kilit süresi dolmuş veya başka worker devralmış olabilir).`);
+      // KRİTİK DOĞRULAMA: Hem error hem de return değerini kontrol et
+      if (completeError || completedSuccessfully !== true) {
+        console.error(
+          `[RPC Başarısız] Görev veritabanında güncellenemedi (Kilit süresi dolmuş veya başka worker devralmış olabilir) - Görev ID: ${task.task_id} - Hata: ${sanitize(completeError?.message || 'v_updated = 0')}`
+        );
       } else {
         console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
       }
     } catch (execErr) {
+      const lowerMsg = (execErr.message || '').toLowerCase();
       const isTimeout = execErr.name === 'AbortError' ||
-                        execErr.message.includes('timeout') ||
-                        execErr.message.includes('ETIMEDOUT') ||
-                        execErr.message.includes('ECONNRESET') ||
-                        execErr.message.includes('LeaseExpired');
+                        lowerMsg.includes('timeout') ||
+                        lowerMsg.includes('etimedout') ||
+                        lowerMsg.includes('econnreset') ||
+                        lowerMsg.includes('heartbeatlost');
 
       // Ağ zaman aşımında veya kilit kaybında API'nin yayını yapıp yapmadığı belirsizdir:
       // Mükerrer yayını önlemek için 'reconciliation_required' yapılır!
@@ -409,7 +447,7 @@ async function pollQueueCycle() {
 
       console.error(`[Görev Sonucu: ${finalStatus.toUpperCase()}] ID: ${task.task_id} -> ${cleanErrMsg}`);
 
-      await supabase.rpc('complete_publish_task', {
+      const { data: failCompleteOk, error: failCompleteErr } = await supabase.rpc('complete_publish_task', {
         p_task_id: task.task_id,
         p_worker_id: WORKER_ID,
         p_status: finalStatus,
@@ -418,6 +456,10 @@ async function pollQueueCycle() {
         p_error_message: cleanErrMsg,
         p_backoff_minutes: 5
       });
+
+      if (failCompleteErr || failCompleteOk !== true) {
+        console.error(`[RPC Hata Kayıt Başarısız] Görev ID: ${task.task_id} veritabanına işlenemedi.`);
+      }
     } finally {
       isTaskRunning = false;
     }
@@ -432,7 +474,7 @@ pollQueueCycle();
 
 // ── GRACEFUL SHUTDOWN (KONTROLLÜ KAPATMA) ────────────────────────────────────
 async function handleShutdown(signal) {
-  console.log(`\n[Shutdown] ${signal} sinyali alındı. Servis güvenli biçimde kapatılıyor...`);
+  console.log(`\n[Shutdown] ${signal} sinyali alındı. Yeni görev alımı durduruldu. Kapanıyor...`);
   isShuttingDown = true;
   clearInterval(pollIntervalHandle);
 
@@ -442,6 +484,11 @@ async function handleShutdown(signal) {
     while (isTaskRunning && waitSeconds < 35) {
       await new Promise(r => setTimeout(r, 1000));
       waitSeconds++;
+    }
+
+    if (isTaskRunning) {
+      console.error('[CRITICAL] Devam eden görev 35 saniyede bitmedi. Süre aşımı nedeniyle process.exit(1) ile çıkılıyor.');
+      process.exit(1);
     }
   }
 
