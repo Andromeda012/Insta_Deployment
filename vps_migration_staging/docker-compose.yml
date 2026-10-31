@@ -1,66 +1,35 @@
-version: '3.8'
-
 # ============================================================================
-# GLOBAL MOBİLYA — VPS DOCKER COMPOSE YAPILANDIRMASI
+# NOVA FURNITURE — VPS DOCKER COMPOSE YAPILANDIRMASI
 # ============================================================================
-# KAPSAM KURALI:
-# Bu aşamada YALNIZCA sosyal medya yayınlama sistemi (publisher-service)
-# çalıştırılır. Dışarıya hiçbir port AÇILMAZ (Sıfır port saldırı yüzeyi).
-# Webhook servisi 2. aşamaya ertelenmiş olup varsayılan olarak başlatılmaz.
+# MİMARİ VE GÜVENLİK İLKELERİ:
+# 1. Kapsam İzolasyonu: Yalnızca sosyal medya yayın servisi ('nova-publisher') çalışır.
+# 2. Sıfır Dış Port: Hiçbir port açılmaz (Dışarıdan gelen atak yüzeyi yoktur).
+# 3. Log Boyut Sınırı: json-file sürücüsü ile disk dolması engellenir.
+# 4. Sürüm Tanımı: Kullanılmayan ve artık önerilmeyen 'version' alanı kaldırılmıştır.
 # ============================================================================
 
 services:
-  # 1. Merkezi Yayın Servisi (Instagram, Facebook, TikTok, YouTube)
-  # Varsayılan çalışan tek servistir (`docker compose up -d`).
-  publisher-service:
+  nova-publisher:
     build:
       context: ./publisher
       dockerfile: Dockerfile
-    container_name: global_publisher
+    container_name: nova_publisher
     restart: unless-stopped
     env_file:
       - .env
     environment:
       - NODE_ENV=production
-      - SERVICE_NAME=publisher-service
+      - SERVICE_NAME=nova-publisher
       - TZ=Europe/Istanbul
-    # Dışarıya açık port YOKTUR. (Tüm iletişim güvenli dışa doğru HTTPS API üzerinden yapılır)
+    # Dışarıya açık port YOKTUR. Tüm iletişim giden (outbound) HTTPS üzerindendir.
     logging:
       driver: "json-file"
       options:
         max-size: "10m"
-        max-file: "5"
+        max-file: "3"
     networks:
-      - publish_net
-
-  # 2. Meta Webhook Servisi (Gelen Instagram DM & Yorum Bildirimleri)
-  # [2. AŞAMA ERTELENDİ] Yalnızca güvenlik denetimi için staging'de tutulur.
-  # 'docker compose up -d' komutuyla ÇALIŞMAZ (Profile: webhook-phase2).
-  webhook-service:
-    profiles:
-      - webhook-phase2
-    build:
-      context: ./webhook
-      dockerfile: Dockerfile
-    container_name: global_webhook
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:8080:8080" # Yalnızca yerel ters vekile (Caddy/Nginx) bağlıdır
-    env_file:
-      - .env
-    environment:
-      - NODE_ENV=production
-      - SERVICE_NAME=webhook-service
-      - PORT=8080
-      - TZ=Europe/Istanbul
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "5"
-    networks:
-      - publish_net
+      - nova_internal_net
 
 networks:
-  publish_net:
+  nova_internal_net:
     driver: bridge
