@@ -245,6 +245,12 @@ async function executePublish(task) {
           throw new Error(`Facebook Story Yükleme Hatası: ${sanitize(errMsg)}`);
         }
 
+        // Heartbeat kontrolü: Multi-step Facebook Story yayınında kilit uzatma
+        const fbStoryLockOk = await heartbeatLockExtension(task_id, 120);
+        if (!fbStoryLockOk) {
+          throw new Error('[HeartbeatLost] Kilit süresi doldu veya uzatılamadı. Facebook Story akışı durduruldu.');
+        }
+
         const stParams = new URLSearchParams({ photo_id: upData.id, access_token: pageAccessToken });
         const stRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photo_stories`, { method: 'POST', body: stParams });
         const stData = await stRes.json().catch(() => ({}));

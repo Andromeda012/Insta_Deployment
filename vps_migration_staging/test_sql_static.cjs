@@ -25,6 +25,10 @@ function check(name, fn) {
 }
 
 // ── 01_security_rls_patch.sql Denetimleri ────────────────────────────────────
+check('01.sql: site_settings üzerinde RLS açıkça etkinleştirilmiş olmalı', () => {
+  assert.ok(/ALTER\s+TABLE\s+public\.site_settings\s+ENABLE\s+ROW\s+LEVEL\s+SECURITY;/i.test(patch01));
+});
+
 check('01.sql: FOR ALL TO public ifadesi KESİNLİKLE bulunmamalı', () => {
   const match = patch01.match(/FOR\s+ALL\s+TO\s+public/i);
   assert.strictEqual(match, null, 'FOR ALL TO public tespit edildi!');

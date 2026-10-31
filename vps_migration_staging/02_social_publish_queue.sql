@@ -85,6 +85,7 @@ RETURNS TABLE (
 ) AS $$
 DECLARE
     v_task_id UUID;
+    v_updated INT;
 BEGIN
     -- Adım 1: Kilit süresi dolmuş processing işleri ASLA pending yapma!
     -- Bunları doğrudan 'reconciliation_required' durumuna al (Mükerrer yayın koruması)
@@ -117,6 +118,11 @@ BEGIN
             retry_count = retry_count + 1,
             updated_at = NOW()
         WHERE id = v_task_id;
+
+        GET DIAGNOSTICS v_updated = ROW_COUNT;
+        IF v_updated = 0 THEN
+            RETURN;
+        END IF;
 
         RETURN QUERY
         SELECT 
@@ -278,9 +284,13 @@ BEGIN
         END IF;
     END IF;
 
-    -- Etkilenen satır sayısını kontrol et; satır güncellenmediyse FALSE dön
+    -- Etkilenen satır sayısını kontrol et; satır güncellenmediyse (ROW_COUNT = 0) kesinlikle FALSE dön
     GET DIAGNOSTICS v_updated = ROW_COUNT;
-    RETURN v_updated > 0;
+    IF v_updated = 0 THEN
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, pg_temp;
 

@@ -24,7 +24,9 @@
 --    kullanılarak yetki yükseltme (privilege escalation) açığı önlenmiştir.
 -- ============================================================================
 
--- ADIM 1: `site_settings` Üzerindeki Tüm Eski Politikaları Temizle (Idempotent)
+-- ADIM 1: `site_settings` Üzerinde RLS'yi Etkinleştir ve Tüm Eski Politikaları Temizle (Idempotent)
+ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
+
 DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_settings;
 DROP POLICY IF EXISTS "Public read access on safe site_settings" ON public.site_settings;
 DROP POLICY IF EXISTS "Public upsert access on safe site_settings" ON public.site_settings;
@@ -32,9 +34,13 @@ DROP POLICY IF EXISTS "Public read safe keys only" ON public.site_settings;
 DROP POLICY IF EXISTS "Public upsert safe keys only" ON public.site_settings;
 DROP POLICY IF EXISTS "Public read safe site_settings only" ON public.site_settings;
 DROP POLICY IF EXISTS "Public upsert safe site_settings only" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow all for authenticated" ON public.site_settings;
+DROP POLICY IF EXISTS "Allow public read" ON public.site_settings;
+DROP POLICY IF EXISTS "Enable all access for all users" ON public.site_settings;
 
 -- ADIM 2: Anonim ve Genel Kullanıcıların Yazma Yetkilerini Kesin Olarak Kaldır
 REVOKE INSERT, UPDATE, DELETE ON public.site_settings FROM anon, public, authenticated;
+GRANT ALL ON public.site_settings TO service_role;
 
 -- ADIM 3: Yalnızca Genel Vitrin Ayarları İçin Güvenli SELECT Politikası
 -- DİKKAT: 'insta_bot_state', 'fb_bot_state', 'tt_bot_state', 'yt_bot_state'
