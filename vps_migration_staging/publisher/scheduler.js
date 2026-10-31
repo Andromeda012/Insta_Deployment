@@ -198,10 +198,11 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
   let caption = `✨ ${product.title || 'Nova Furniture Özel Tasarım Koleksiyonu'} — Mekanınıza değer katan minimalist çizgiler ve kusursuz işçilik.`;
   let hashtags = '#novafurniture #minimalistmobilya #luxuryfurniture #icmimari #ozelolcumobilya';
 
-  // Gemini Banana Entegrasyonu (API anahtarı tanımlı ise canlı mimari kampanya)
+  // Gemini Banana: API anahtarı yoksa ürünün gerçek katalog görseli kullanılır.
+  let campaign = null;
   if (geminiApiKey) {
     try {
-      const campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
+      campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
         product,
         apiKey: geminiApiKey,
         allowFallback: false
@@ -235,6 +236,13 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
   if (contentType === 'FB_REELS') {
     throw new Error('Facebook Reels yayın desteği bu sürümde kapalıdır.');
   }
+
+  if (contentType === 'REELS') {
+    const videoUrl = (campaign && campaign.reels_video_url) || product.reels_video_url || product.video_url || '';
+    if (!/\\.(mp4|mov)(\\?.*)?$/i.test(videoUrl)) throw new Error('Instagram Reels için gerçek ürün videosu bulunamadı: ' + safeSlug);
+    mediaUrl = videoUrl;
+  }
+  if (contentType === 'FB_REELS') throw new Error('Facebook Reels yayın desteği henüz etkin değil.');
 
   // Meta API SVG formatını desteklemez; SVG gelirse daima PNG fallback kullan
   if (!mediaUrl || /\.svg(\?.*)?$/i.test(mediaUrl)) {
