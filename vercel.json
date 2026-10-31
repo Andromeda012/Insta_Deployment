@@ -2,6 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": null,
   "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/instagram-render", "destination": "/api/render?platform=instagram" },
+    { "source": "/api/facebook-render", "destination": "/api/render?platform=facebook" },
+    { "source": "/api/tiktok-render", "destination": "/api/render?platform=tiktok" },
+    { "source": "/api/youtube-render", "destination": "/api/render?platform=youtube" }
+  ],
   "crons": [
     {
       "path": "/api/instagram-cron",
