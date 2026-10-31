@@ -97,10 +97,12 @@ BEGIN
       AND locked_until < NOW();
 
     -- Adım 2: Zamanı gelmiş uygun GÖREVİ atomik kilitle (FOR UPDATE SKIP LOCKED)
-    -- YALNIZCA 'pending' durumundaki görevler seçilir!
+    -- YALNIZCA 'pending' durumundaki aktif platform görevleri seçilir!
+    -- KURAL: YouTube gerçek binary upload desteği tamamlanana kadar yayın kuyruğundan dışarıda tutulur!
     SELECT id INTO v_task_id
     FROM public.social_publish_queue
     WHERE status = 'pending'
+      AND platform <> 'youtube'
       AND scheduled_for <= NOW()
     ORDER BY scheduled_for ASC
     FOR UPDATE SKIP LOCKED
