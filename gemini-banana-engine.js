@@ -65,7 +65,23 @@ export async function generateBananaRecontextualizedImage({ product = {}, rawIma
   const prompt = buildGeminiBananaPrompt(product);
 
   // Eğer kullanıcı Module 7'de "Dönüştür" seçeneğini kapatmışsa: Orijinal fotoğrafı doğrudan kullan!
-  if (product.donusturulsun_mu === false) {
+  let shouldTransform = product.donusturulsun_mu;
+  if (shouldTransform === undefined) {
+    try {
+      const stRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/site_settings?key=eq.product_transform_settings&select=data`, {
+        headers: { 'apikey': SUPABASE_CONFIG.key, 'Authorization': `Bearer ${SUPABASE_CONFIG.key}` }
+      });
+      if (stRes.ok) {
+        const rows = await stRes.json();
+        const settings = rows?.[0]?.data || {};
+        if (product.slug && settings[product.slug] !== undefined) {
+          shouldTransform = settings[product.slug];
+        }
+      }
+    } catch (_) {}
+  }
+
+  if (shouldTransform === false) {
     console.log(`[Gemini Banana] ${product.title || product.slug} için 'Dönüştürme' kapatılmış, orijinal görsel korunuyor.`);
     return {
       ok: true,

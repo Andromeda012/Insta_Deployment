@@ -720,6 +720,37 @@
     let loadedImageEl = null;
     let animController = null;
     let isAnimPlaying = false;
+    let productTransformSettings = {};
+
+    // Toggle switch stilleri ve dinleyicileri
+    document.addEventListener('DOMContentLoaded', () => {
+      const styleEl = document.createElement('style');
+      styleEl.innerHTML = `
+        #chk_transform_image:checked + #slider_transform { background-color: #10b981 !important; }
+        #slider_transform:before {
+          position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+          background-color: white; transition: .3s; border-radius: 50%;
+        }
+        #chk_transform_image:checked + #slider_transform:before {
+          transform: translateX(22px);
+        }
+      `;
+      document.head.appendChild(styleEl);
+
+      const chkTransform = document.getElementById('chk_transform_image');
+      if (chkTransform) {
+        chkTransform.addEventListener('change', (e) => {
+          const badge = document.getElementById('transform_status_badge');
+          if (e.target.checked) {
+            badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü uygulanacak.</span>';
+            badge.style.color = '#38bdf8';
+          } else {
+            badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
+            badge.style.color = '#94a3b8';
+          }
+        });
+      }
+    });
 
     // =========================================================================
     // KATALOĞU SUPABASE'DEN ÇEKME
@@ -734,6 +765,16 @@
 
         if (error) throw error;
         catalogItems = data || [];
+        // Dönüştürme ayarlarını site_settings üzerinden çek
+        try {
+          const { data: stData } = await sb
+            .from('site_settings')
+            .select('data')
+            .eq('key', 'product_transform_settings')
+            .limit(1);
+          productTransformSettings = (stData && stData[0] && stData[0].data) || {};
+        } catch (_) {}
+
         renderCatalogGrid(catalogItems);
         updateKPIs(catalogItems);
         populateCategoryFilter(catalogItems);
@@ -987,7 +1028,8 @@
 
       const chkTransform = document.getElementById('chk_transform_image');
       if (chkTransform) {
-        chkTransform.checked = item.donusturulsun_mu !== false;
+        const isEnabled = productTransformSettings[item.slug] !== false;
+        chkTransform.checked = isEnabled;
         chkTransform.dispatchEvent(new Event('change'));
       }
 
@@ -1015,34 +1057,7 @@
       btn.disabled = true;
       btn.textContent = '⏳ Supabase\'e Kaydediliyor...';
 
-      // CSS Toggle Switch
-      const styleEl = document.createElement('style');
-      styleEl.innerHTML = `
-        #chk_transform_image:checked + #slider_transform { background-color: #10b981 !important; }
-        #slider_transform:before {
-          position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-          background-color: white; transition: .3s; border-radius: 50%;
-        }
-        #chk_transform_image:checked + #slider_transform:before {
-          transform: translateX(22px);
-        }
-      `;
-      document.head.appendChild(styleEl);
-
-      const chkTransform = document.getElementById('chk_transform_image');
-      if (chkTransform) {
-        chkTransform.addEventListener('change', (e) => {
-          const badge = document.getElementById('transform_status_badge');
-          if (e.target.checked) {
-            badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü uygulanacak.</span>';
-            badge.style.color = '#38bdf8';
-          } else {
-            badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
-            badge.style.color = '#94a3b8';
-          }
-        });
-      }
-      const renkler = rawColors
+      // Renkleri diziye çevir
         ? rawColors.split(',').map(s => s.trim()).filter(Boolean)
         : ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe'];
 
@@ -1098,7 +1113,6 @@
         renkler,
         ozellikler,
         body: rawDimensions || '',
-        donusturulsun_mu: document.getElementById('chk_transform_image') ? document.getElementById('chk_transform_image').checked : true,
         anasayfada_goster: true,
         updated_at: new Date().toISOString()
       };
@@ -1110,6 +1124,22 @@
 
         const { error } = await sb.from('products').upsert(payload);
         if (error) throw error;
+
+        // Dönüştürme tercihini site_settings içinde kalıcı olarak sakla
+        const shouldTransform = document.getElementById('chk_transform_image')
+          ? document.getElementById('chk_transform_image').checked
+          : true;
+        productTransformSettings[slug] = shouldTransform;
+
+        try {
+          await sb.from('site_settings').upsert({
+            key: 'product_transform_settings',
+            data: productTransformSettings,
+            updated_at: new Date().toISOString()
+          });
+        } catch (stErr) {
+          console.warn('Dönüştürme ayarı kaydedilirken uyarı:', stErr);
+        }
 
         alert(`✅ "${title}" başarıyla kaydedildi! 4 sosyal medya botu (Instagram, Facebook, YouTube, TikTok) bu fotoğrafı ve özellikleri lüks afiş formatında yayınlamaya hazır.`);
         resetFormForNew();
