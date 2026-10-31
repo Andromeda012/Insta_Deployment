@@ -46,7 +46,7 @@ await assert.rejects(
     product: catalog[0],
     geminiApiKey: null
   }),
-  /gerçek ürün videosu bulunamadı/
+  /ürün videosu bulunamadı/
 );
 
 console.log('NOVA scheduler unit tests: PASS');
