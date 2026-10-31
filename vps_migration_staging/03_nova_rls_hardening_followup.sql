@@ -43,22 +43,18 @@ ON public.site_settings FOR SELECT TO anon, authenticated
 USING (key = ANY (ARRAY[
   'company_info','contact_info','hero_banner','theme_settings',
   'product_transform_settings','social_campaign_assets',
-  'instagram_published_tracker','insta_bot_state','fb_bot_state'
+  'instagram_published_tracker'
 ]::text[]));
 REVOKE INSERT, UPDATE, DELETE ON public.site_settings FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.site_settings TO anon, authenticated;
 GRANT ALL ON public.site_settings TO service_role;
 
 -- The public bot view must obey the querying role's permissions and RLS.
-ALTER VIEW public.v_public_bot_ui_state SET (security_invoker = true);
-REVOKE ALL ON public.v_public_bot_ui_state FROM PUBLIC;
-GRANT SELECT ON public.v_public_bot_ui_state TO anon, authenticated;
-
 CREATE OR REPLACE FUNCTION public.get_public_bot_ui_state(p_key text)
 RETURNS jsonb
 LANGUAGE plpgsql
 STABLE
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $function$
 DECLARE
@@ -88,6 +84,14 @@ END;
 $function$;
 REVOKE ALL ON FUNCTION public.get_public_bot_ui_state(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_bot_ui_state(text) TO anon, authenticated, service_role;
+
+CREATE OR REPLACE VIEW public.v_public_bot_ui_state
+WITH (security_invoker = true)
+AS
+SELECT k.key, public.get_public_bot_ui_state(k.key) AS data, NULL::timestamptz AS updated_at
+FROM (VALUES ('insta_bot_state'::text), ('fb_bot_state'::text)) AS k(key);
+REVOKE ALL ON public.v_public_bot_ui_state FROM PUBLIC;
+GRANT SELECT ON public.v_public_bot_ui_state TO anon, authenticated;
 
 -- Queue and server-side secrets are never accessible to browser roles.
 ALTER TABLE public.social_publish_queue ENABLE ROW LEVEL SECURITY;
