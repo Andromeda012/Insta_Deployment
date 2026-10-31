@@ -38,5 +38,8 @@ jobs:
           node --check vps_migration_staging/publisher/index.js
           node --check vps_migration_staging/publisher/http-client.cjs
 
+      - name: Run scheduler unit tests
+        run: node vps_migration_staging/publisher/scheduler.test.mjs
+
       - name: Run queue and HTTP-client simulation suite
         run: node vps_migration_staging/test_simulation.cjs
