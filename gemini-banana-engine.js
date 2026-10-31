@@ -22,7 +22,7 @@
 
 const SUPABASE_CONFIG = {
   url: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_URL) || 'https://vrfujrpsjzqjthaqdalx.supabase.co',
-  key: (typeof process !== 'undefined' && process.env && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY)) || '',
+  key: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_SERVICE_ROLE_KEY) || '',
   mediaFallback: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
   defaultReelsMp4: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
 };
@@ -104,7 +104,7 @@ export async function generateBananaRecontextualizedImage({
           { type: 'text', text: prompt },
           { type: 'image', mime_type: mimeType, data: imageBase64 }
         ],
-        response_format: { type: 'image', aspect_ratio: aspectRatio, image_size: '1K' }
+        response_format: { type: 'image', mime_type: 'image/png', aspect_ratio: aspectRatio, image_size: '1K' }
       };
       const apiRes = await fetch(apiEndpoint, {
         method: 'POST',
