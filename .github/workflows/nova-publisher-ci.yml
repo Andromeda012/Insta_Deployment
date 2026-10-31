@@ -2,7 +2,7 @@ name: NOVA Publisher CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/nova-publisher-safety]
     paths:
       - "api/instagram-cron.js"
       - "api/facebook-cron.js"
@@ -10,7 +10,7 @@ on:
       - "vps_migration_staging/**"
       - ".github/workflows/nova-publisher-ci.yml"
   push:
-    branches: ["fix/nova-publisher-safety"]
+    branches: ["fix/nova-publisher-safety", "integration/nova-instagram-facebook"]
 
 permissions:
   contents: read
