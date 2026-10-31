@@ -15,9 +15,10 @@ import {
     generateAutonomousTikTokDraft,
     publishAutonomousTikTokPost
 } from '../Module 2/Tiktok/bot-engine.js';
+import PhotoroomEngine from '../photoroom-engine.js';
 
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nyvctdskhAbImlvgbnhx.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
 
 async function fetchSupabaseProducts() {
@@ -115,7 +116,12 @@ module.exports = async function handler(req, res) {
         });
 
         // 2. Otonom 9:16 Dikey Görsel Sahne URL'si Oluştur
-        const mediaUrl = `https://insta-deployment-rho.vercel.app/api/tiktok-render?raw=1&format=${encodeURIComponent(draft.format)}&sku=${encodeURIComponent(draft.productSku)}&title=${encodeURIComponent(draft.productTitle)}`;
+        // 2. Photoroom Mimari Üretim Varlığını Çek (9:16 Dikey Video / Hero)
+        let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase('tiktok');
+        if (!campaign && chosenProduct) {
+            campaign = await PhotoroomEngine.buildAndSaveProductCampaign({ product: chosenProduct });
+        }
+        const mediaUrl = campaign?.reels_video_url || campaign?.photoroom_hero_vertical_url || `https://insta-deployment-rho.vercel.app/api/tiktok-render?raw=1&format=${encodeURIComponent(draft.format)}&sku=${encodeURIComponent(draft.productSku)}&title=${encodeURIComponent(draft.productTitle)}`;
 
         // 3. TikTok Content Posting API v2 ile Yayınla (veya Bulut Simülasyonu Kaydet)
         const publishResult = await publishAutonomousTikTokPost({
@@ -140,6 +146,9 @@ module.exports = async function handler(req, res) {
             publishedAt: new Date().toISOString()
         };
 
+        if (campaign) {
+            await PhotoroomEngine.markPlatformPublished(campaign.id, 'tiktok', 'VIDEO');
+        }
         currentState.publishedHistory = [publishedEntry, ...(currentState.publishedHistory || [])].slice(0, 40);
 
         // Eğer test/webhook yorumu gönderildiyse onu da 3 Aşamalı Motor ile işle

@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const q = req.query || {};
 
   const mediaType = (q.type || 'PHOTO_POST').toUpperCase();
-  const badge = q.badge || 'GLOBAL KAPAK MOBİLYA • KURUMSAL FACEBOOK YAYINI';
+  const badge = q.badge || 'NOVA FURNITURE • MİMARİ KOLEKSİYON';
   const headline = q.headline || 'ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU';
   const subheadline = q.subheadline || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim';
   const doorStyle = q.door || 'shaker';

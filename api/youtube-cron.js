@@ -9,6 +9,7 @@ import {
   generateAutonomousYouTubeShortsContent,
   publishToYouTubeDataApi
 } from '../Module 2/Youtube Shorts/bot-engine.js';
+import PhotoroomEngine from '../photoroom-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -83,32 +84,39 @@ export default async function handler(req, res) {
         config
       });
 
-      const uploadedUrl = await uploadAutonomousYtSvgToStorage(
-        `${autoDesigned.id}.svg`,
-        autoDesigned.svg_markup
-      );
-      if (uploadedUrl) {
-        autoDesigned.media_url = uploadedUrl;
+      let pickedProduct = null;
+      if (catalog && catalog.length > 0) {
+        const now = new Date();
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
+        pickedProduct = catalog[dayOfYear % catalog.length];
       }
 
+      // Photoroom Mimari Üretim Varlığını Çek (9:16 Dikey Shorts)
+      let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase('youtube');
+      if (!campaign || campaign.product_slug !== pickedProduct?.slug) {
+        campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
+          product: pickedProduct,
+          apiKey: config.photoroom_api_key || process.env.PHOTOROOM_API_KEY
+        });
+      }
+
+      const targetMediaUrl = campaign.reels_video_url || campaign.photoroom_hero_vertical_url;
+
       const newShortRecord = {
-        id: autoDesigned.id,
-        media_type: autoDesigned.media_type,
-        title: autoDesigned.title,
-        badge: autoDesigned.badge,
-        headline: autoDesigned.headline,
-        subheadline: autoDesigned.subheadline,
-        door_style: autoDesigned.door_style,
-        theme_id: autoDesigned.theme_id,
-        scenes: autoDesigned.scenes,
-        description: autoDesigned.description,
-        tags: autoDesigned.tags,
-        pinned_comment: autoDesigned.pinned_comment,
-        target_link: autoDesigned.target_link,
-        media_url: autoDesigned.media_url,
+        id: campaign.id,
+        media_type: 'YOUTUBE_SHORTS',
+        title: `${campaign.product_title || 'Lüks Tasarım'} | Nova Furniture #Shorts`,
+        badge: 'NOVA FURNITURE • ARCHITECTURAL',
+        description: campaign.caption,
+        tags: '#novafurniture,#luxuryfurniture,#shorts,#icmimari,#mdfmobilya',
+        pinned_comment: 'Fiyat ve detaylı katalog için WhatsApp: 0 (505) 015 1035',
+        target_link: 'https://wa.me/905050151035',
+        media_url: targetMediaUrl,
         auto_designed: true,
         scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
+        status: 'scheduled',
+        photoroom_campaign_id: campaign.id
       };
 
       state.scheduled_posts.unshift(newShortRecord);
@@ -134,6 +142,10 @@ export default async function handler(req, res) {
       post.published_at = new Date().toISOString();
       post.yt_video_id = publishResult.publishedId;
       post.auto_approved = true;
+
+      if (post.photoroom_campaign_id) {
+        await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'youtube', 'SHORTS');
+      }
 
       publishedList.push({
         id: post.id,

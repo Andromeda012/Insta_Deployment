@@ -6,6 +6,7 @@ import {
   generateAutonomousFacebookContent,
   publishToFacebookPageGraphApi
 } from '../Module 2/Facebook/bot-engine.js';
+import PhotoroomEngine from '../photoroom-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -186,37 +187,38 @@ export default async function handler(req, res) {
         activeSlot.last_run_time = currentHHMM;
       }
 
-      const autoDesigned = await generateAutonomousFacebookContent({
-        mediaType: chosenType,
-        productsCatalog: catalog,
-        config
-      });
-
       let pickedProduct = null;
       if (catalog && catalog.length > 0) {
-        pickedProduct = catalog[Math.floor(Math.random() * catalog.length)];
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
+        pickedProduct = catalog[dayOfYear % catalog.length];
       }
 
-      const mediaImg = await ensurePublicImageUrl(pickedProduct?.ana_resim, pickedProduct?.slug);
-      autoDesigned.media_url = mediaImg;
+      // Photoroom Mimari Üretim Pipeline'ından Varlığı Çek
+      let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase('facebook');
+      if (!campaign || campaign.product_slug !== pickedProduct?.slug) {
+        campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
+          product: pickedProduct,
+          apiKey: config.photoroom_api_key || process.env.PHOTOROOM_API_KEY
+        });
+      }
+
+      const isVideo = chosenType === 'VIDEO_REELS' || chosenType === 'REELS';
+      const targetMediaUrl = isVideo ? (campaign.reels_video_url || campaign.photoroom_hero_vertical_url) : campaign.post_image_url;
 
       const newPostRecord = {
-        id: autoDesigned.id,
-        media_type: autoDesigned.media_type,
-        title: autoDesigned.title,
-        badge: autoDesigned.badge,
-        headline: autoDesigned.headline,
-        subheadline: autoDesigned.subheadline,
-        door_style: autoDesigned.door_style,
-        theme_id: autoDesigned.theme_id,
-        target_link: autoDesigned.target_link,
-        caption: autoDesigned.caption,
-        hashtags: autoDesigned.hashtags,
-        media_url: autoDesigned.media_url,
+        id: campaign.id,
+        media_type: isVideo ? 'VIDEO_REELS' : 'PHOTO_POST',
+        title: campaign.product_title || pickedProduct?.title || 'Lüks Koleksiyon',
+        target_link: 'https://wa.me/905050151035',
+        caption: campaign.caption,
+        hashtags: campaign.hashtags || '#novafurniture #minimalistmobilya #icmimari #luxuryfurniture',
+        media_url: targetMediaUrl,
         auto_designed: true,
         product_slug: pickedProduct?.slug || null,
         scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
+        status: 'scheduled',
+        photoroom_campaign_id: campaign.id
       };
 
       state.scheduled_posts.unshift(newPostRecord);
@@ -240,6 +242,10 @@ export default async function handler(req, res) {
         post.published_at = new Date().toISOString();
         post.fb_post_id = publishResult.publishedId;
         post.auto_approved = true;
+
+        if (post.photoroom_campaign_id) {
+          await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'facebook', post.media_type);
+        }
 
         publishedList.push({
           id: post.id,

@@ -13,7 +13,7 @@ export default async function handler(req, res) {
   const q = req.query || {};
 
   const format = (q.format || 'SHORTS_CNC').toUpperCase();
-  const badge = q.badge || '▶️ YOUTUBE SHORTS • GLOBAL KAPAK MOBİLYA';
+  const badge = q.badge || '▶️ YOUTUBE SHORTS • NOVA FURNITURE';
   const headline = q.headline || '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ';
   const subheadline = q.subheadline || '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim';
   const doorStyle = q.door || 'diagonal';

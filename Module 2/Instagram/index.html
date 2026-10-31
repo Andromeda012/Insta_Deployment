@@ -8,6 +8,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/Module%202/nova-studio-engine.js"></script>
 <script src="/nova-studio-engine.js"></script>
+<script src="/Module%202/photoroom-engine.js"></script>
+<script src="/photoroom-engine.js"></script>
 <style>
   :root {
     --navy: #0F253E;
@@ -591,13 +593,13 @@
       <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; border-bottom:1px solid rgba(212, 175, 55, 0.25); padding-bottom:16px; margin-bottom:18px;">
         <div>
           <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(212, 175, 55, 0.15); border:1px solid rgba(212, 175, 55, 0.4); color:#FDE68A; padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:0.5px; margin-bottom:8px;">
-            👑 TEK ÜRÜN • 3 GÜNLÜK FORMAT ÜRETİM SİSTEMİ
+            ✨ PHOTOROOM AI & 4-BOT ENTEGRASYON SİSTEMİ
           </div>
           <h2 style="font-size:20px; font-weight:900; color:#FFFFFF; letter-spacing:-0.3px;">
-            Yapay Zeka Destekli Mimari İçerik Stüdyosu
+            Photoroom AI Arka Plan Motoru & 4 Bot Dağıtım Merkezi
           </h2>
           <p style="font-size:13px; color:#94A3B8; margin-top:4px; max-width:850px; line-height:1.5;">
-            Katalogdaki dekupe ürün fotoğrafı alınır; yapay zeka mimari İskandinav oda arka planını ve zemin gölgesini sentezleyerek ürünü kusursuzca oturtur. Gün içinde yayınlanacak <strong>Sabah Reels (10:00)</strong>, <strong>Öğle Detay Maddeli Gönderi (14:30)</strong> ve <strong>Akşam Story (20:00)</strong> tek tıkla üretilir ve planlanır.
+            Katalogdaki işlenmemiş ürün fotoğrafı API ile <strong>Photoroom</strong>'a iletilir. Photoroom her ürün için <strong>sabit lüks mimari prompt + Supabase ürün detayları</strong> ile arka planı yeniden tasarlar. Buradan <strong>Reels Videosu</strong> ve <strong>Detay Maddeli Gönderi</strong> üretilip Supabase'e kaydedilir ve 4 botumuz (Instagram, Facebook, TikTok, YouTube) tarafından otonom dağıtılır. <em>(Gemini artık görsel üretmez, sadece gelen yorum ve DM'leri akıllıca yönetir).</em>
           </p>
         </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -629,6 +631,52 @@
             <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🪞 Çizilmez Membran</span>
             <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🛡️ 5 Yıl Garanti</span>
             <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🚚 5 İş Günü Sevkiyat</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- PHOTOROOM API BAĞLANTISI, SABİT PROMPT & 4-BOT DAĞITIM KARTI -->
+      <div style="background:rgba(15, 23, 42, 0.7); border:1px solid rgba(56, 189, 248, 0.25); border-radius:12px; padding:14px 16px; margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:16px;">⚡</span>
+            <strong style="font-size:13px; color:#38BDF8;">Photoroom API Entegrasyonu &amp; Sabit Prompt Mimarisi</strong>
+            <span id="photoroomApiBadge" style="background:rgba(16, 185, 129, 0.15); border:1px solid rgba(16, 185, 129, 0.35); color:#34D399; font-size:11px; font-weight:700; padding:3px 8px; border-radius:6px;">
+              🟢 Sandbox / Mock Motoru Aktif (API anahtarsız canlı simülasyon)
+            </span>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-size:11.5px; color:#94A3B8;">Photoroom API Key:</label>
+            <input type="password" id="photoroom_api_key_input" placeholder="İsteğe bağlı: Canlı API key girin..." style="background:#0B101B; border:1px solid rgba(255,255,255,0.15); color:#fff; padding:4px 10px; border-radius:6px; font-size:12px; width:220px;" onchange="localStorage.setItem('PHOTOROOM_API_KEY', this.value); updatePhotoroomBadge();">
+          </div>
+        </div>
+
+        <!-- Photoroom'a İletilen Prompt Önizlemesi -->
+        <details style="font-size:12px; color:#94A3B8; background:rgba(0,0,0,0.3); border-radius:8px; padding:8px 12px; margin-bottom:12px;">
+          <summary style="cursor:pointer; color:#FDE68A; font-weight:700;">
+            🔍 Photoroom'a API Yoluyla İletilen Sabit Prompt &amp; Supabase Bilgilerini Görüntüle
+          </summary>
+          <pre id="photoroomPromptPreview" style="white-space:pre-wrap; font-family:'JetBrains Mono', monospace; font-size:11.5px; color:#E2E8F0; margin-top:8px; line-height:1.5; background:#070A0F; padding:10px; border-radius:6px; border:1px solid rgba(255,255,255,0.06);"></pre>
+        </details>
+
+        <!-- 4 BOT DAĞITIM DURUMU -->
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; padding-top:10px; border-top:1px solid rgba(255,255,255,0.08);">
+          <div style="font-size:11.5px; font-weight:700; color:#CBD5E1; text-transform:uppercase;">
+            🚀 4 Bot Otonom Dağıtım Durumu (Supabase Entegre):
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <span style="background:rgba(225, 48, 108, 0.15); border:1px solid rgba(225, 48, 108, 0.35); color:#F472B6; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700;">
+              📸 Instagram: Reels (10:00) • Gönderi (14:30) • Story (20:00)
+            </span>
+            <span style="background:rgba(24, 119, 242, 0.15); border:1px solid rgba(24, 119, 242, 0.35); color:#60A5FA; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700;">
+              📘 Facebook: Detay Post &amp; Reels
+            </span>
+            <span style="background:rgba(0, 0, 0, 0.4); border:1px solid rgba(255, 255, 255, 0.2); color:#F8FAFC; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700;">
+              🎵 TikTok: 9:16 Dikey Sahne
+            </span>
+            <span style="background:rgba(255, 0, 0, 0.15); border:1px solid rgba(255, 0, 0, 0.35); color:#F87171; padding:4px 10px; border-radius:6px; font-size:11.5px; font-weight:700;">
+              🔴 YouTube: #Shorts Videosu
+            </span>
           </div>
         </div>
       </div>
@@ -667,14 +715,14 @@
           </div>
         </div>
 
-        <!-- SAĞ: GEMINI AI AÇIKLAMA METNİ & FORMAT EYLEMLERİ -->
+        <!-- SAĞ: NOVA FURNITURE LÜKS AÇIKLAMA METNİ & FORMAT EYLEMLERİ -->
         <div style="display:flex; flex-direction:column; gap:16px;">
           <div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
               <label style="font-size:12px; font-weight:800; color:#FDE68A; text-transform:uppercase; letter-spacing:0.5px;">
-                🤖 Google Gemini AI Açıklama Metni (Satış Odaklı):
+                📝 Nova Furniture Lüks Satış Metni &amp; Hashtag'ler:
               </label>
-              <button type="button" class="btn btn-sm" onclick="regenerateGeminiCaptionForCampaign()" style="background:rgba(212, 175, 55, 0.15); border:1px solid rgba(212, 175, 55, 0.35); color:#FDE68A; font-size:11px; padding:4px 10px;">
+              <button type="button" class="btn btn-sm" onclick="rebuildCampaignCaption()" style="background:rgba(212, 175, 55, 0.15); border:1px solid rgba(212, 175, 55, 0.35); color:#FDE68A; font-size:11px; padding:4px 10px;">
                 🔄 Metni Yenile
               </button>
             </div>
@@ -1658,8 +1706,15 @@ async function onCampaignProductChanged(slugOrId) {
   // Fotoğrafı yükle
   await loadCampaignProductImage(prod);
 
-  // Gemini AI Açıklamasını üret
-  await regenerateGeminiCaptionForCampaign();
+  // Photoroom Sabit Prompt & Supabase Bilgi Önizlemesini Güncelle
+  if (window.PhotoroomEngine) {
+    const prompt = window.PhotoroomEngine.buildPhotoroomPrompt(prod);
+    const pre = document.getElementById('photoroomPromptPreview');
+    if (pre) pre.textContent = prompt;
+  }
+
+  // Nova Lüks Satış Açıklamasını üret (Gemini'siz, bağımsız)
+  rebuildCampaignCaption();
 
   // Aktif format sekmesini ve butonları güncelle, tuvali çiz
   switchCampaignFormatTab(activeCampaignTab);
@@ -1677,9 +1732,9 @@ function selectRandomCampaignProduct() {
 
 async function rebuildCurrentCampaignScene() {
   if (!campaignSelectedProduct) return;
-  showToast('✨ Mimari Sahne & Gemini AI Metni Yeniden Tasarlanıyor...');
+  showToast('✨ Photoroom Sahnesi & Detay Metinleri Yenileniyor...');
   await loadCampaignProductImage(campaignSelectedProduct);
-  await regenerateGeminiCaptionForCampaign();
+  rebuildCampaignCaption();
   renderCampaignCanvasPreview();
   showToast('👑 Sahne ve açıklama metni güncellendi!');
 }
@@ -1720,24 +1775,31 @@ async function loadCampaignProductImage(prod) {
   });
 }
 
-async function regenerateGeminiCaptionForCampaign() {
+function rebuildCampaignCaption() {
   const capEl = document.getElementById('campaignPostCaption');
-  if (!capEl || !campaignSelectedProduct || !window.NovaStudioEngine) return;
+  if (!capEl || !campaignSelectedProduct) return;
 
-  const geminiKey = botState?.config?.gemini_api_key || '';
-  const geminiModel = botState?.config?.gemini_model || 'gemini-2.5-flash';
-  capEl.value = '✨ Gemini AI lüks İskandinav açıklama metnini hazırlıyor...';
-
-  try {
-    const text = await window.NovaStudioEngine.generateGeminiLuxuryCaption(
-      campaignSelectedProduct,
-      geminiKey,
-      geminiModel,
-      'instagram'
-    );
-    capEl.value = text;
-  } catch (err) {
+  if (window.PhotoroomEngine) {
+    capEl.value = window.PhotoroomEngine.generateNovaLuxuryCaption(campaignSelectedProduct, 'instagram');
+  } else if (window.NovaStudioEngine) {
     capEl.value = window.NovaStudioEngine.generateNovaLuxuryCaption(campaignSelectedProduct, 'instagram');
+  }
+}
+
+function updatePhotoroomBadge() {
+  const key = (document.getElementById('photoroom_api_key_input')?.value || localStorage.getItem('PHOTOROOM_API_KEY') || '').trim();
+  const badge = document.getElementById('photoroomApiBadge');
+  if (!badge) return;
+  if (key) {
+    badge.textContent = '🟢 Canlı Photoroom API Aktif';
+    badge.style.background = 'rgba(16, 185, 129, 0.2)';
+    badge.style.borderColor = 'rgba(16, 185, 129, 0.5)';
+    badge.style.color = '#10B981';
+  } else {
+    badge.textContent = '🟢 Sandbox / Mock Motoru Aktif (API anahtarsız canlı simülasyon)';
+    badge.style.background = 'rgba(56, 189, 248, 0.15)';
+    badge.style.borderColor = 'rgba(56, 189, 248, 0.35)';
+    badge.style.color = '#38BDF8';
   }
 }
 
@@ -2155,6 +2217,15 @@ async function scheduleFullDailyCampaign() {
     botState.scheduled_posts.unshift(post3);
     botState.scheduled_posts.unshift(post2);
     botState.scheduled_posts.unshift(post1);
+
+    // Photoroom Kampanyasını Supabase'e Kaydet (4 Bot Dağıtımı İçin)
+    if (window.PhotoroomEngine) {
+      try {
+        await window.PhotoroomEngine.buildAndSaveProductCampaign({ product: prod });
+      } catch (e) {
+        console.warn('Photoroom campaign bundle save warning:', e);
+      }
+    }
 
     await persistBotStateToSupabase(false);
     renderScheduledQueue();

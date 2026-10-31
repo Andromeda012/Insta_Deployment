@@ -11,6 +11,7 @@ import {
   DEFAULT_IG_USER_ID,
   DEFAULT_META_ACCESS_TOKEN
 } from '../Module 2/Instagram/bot-engine.js';
+import PhotoroomEngine from '../photoroom-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -389,33 +390,35 @@ export default async function handler(req, res) {
         pickedProduct = catalog[dayOfYear % catalog.length];
       }
 
-      const autoDesigned = await generateAutonomousInstagramContent({
-        mediaType: chosenType,
-        productsCatalog: catalog,
-        product: pickedProduct,
-        config
-      });
+      // Photoroom Mimari Üretim Pipeline'ından Varlıkları Al
+      let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase();
+      if (!campaign || campaign.product_slug !== pickedProduct?.slug) {
+        campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
+          product: pickedProduct,
+          apiKey: config.photoroom_api_key || process.env.PHOTOROOM_API_KEY
+        });
+      }
 
-      // Gerçek ürün görselini Meta Graph API için geçerli PNG/JPEG URL'ine dönüştür
-      const mediaImg = await ensurePublicImageUrl(pickedProduct?.ana_resim, pickedProduct?.slug);
-      autoDesigned.media_url = mediaImg;
+      // Slota göre doğru Photoroom varlığını seç
+      let targetMediaUrl = campaign.post_image_url;
+      if (chosenType === 'REELS') {
+        targetMediaUrl = campaign.reels_video_url || campaign.photoroom_hero_vertical_url || campaign.photoroom_hero_url;
+      } else if (chosenType === 'STORIES') {
+        targetMediaUrl = campaign.story_image_url || campaign.photoroom_hero_vertical_url;
+      }
 
       const newPostRecord = {
-        id: autoDesigned.id,
-        media_type: autoDesigned.media_type,
-        title: autoDesigned.title,
-        badge: autoDesigned.badge,
-        headline: autoDesigned.headline,
-        subheadline: autoDesigned.subheadline,
-        door_style: autoDesigned.door_style,
-        theme_id: autoDesigned.theme_id,
-        caption: autoDesigned.caption,
-        hashtags: autoDesigned.hashtags,
-        media_url: autoDesigned.media_url,
+        id: campaign.id,
+        media_type: chosenType,
+        title: campaign.product_title || pickedProduct?.title || 'Lüks Koleksiyon',
+        caption: campaign.caption,
+        hashtags: campaign.hashtags || '#novafurniture #minimalistmobilya #icmimari #luxuryfurniture',
+        media_url: targetMediaUrl,
         auto_designed: true,
         product_slug: pickedProduct?.slug || null,
         scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
+        status: 'scheduled',
+        photoroom_campaign_id: campaign.id
       };
 
       state.scheduled_posts.unshift(newPostRecord);
@@ -437,6 +440,10 @@ export default async function handler(req, res) {
       post.published_at = new Date().toISOString();
       post.ig_published_id = publishResult.publishedId;
       post.auto_approved = true;
+
+      if (post.photoroom_campaign_id) {
+        await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'instagram', post.media_type);
+      }
 
       publishedList.push({
         id: post.id,
