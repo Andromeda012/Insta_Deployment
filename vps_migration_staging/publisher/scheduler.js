@@ -212,7 +212,7 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
         if (campaign.hashtags) hashtags = campaign.hashtags;
 
         if (contentType === 'REELS' || contentType === 'FB_REELS') {
-          mediaUrl = campaign.reels_video_url || campaign.post_image_url || imageFallback;
+          mediaUrl = campaign.reels_video_url || '';
         } else if (contentType === 'STORIES' || contentType === 'FB_STORIES') {
           mediaUrl = campaign.story_image_url || campaign.post_image_url || imageFallback;
         } else {
@@ -223,6 +223,17 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
       console.error(`[Scheduler] Gemini Banana üretimi başarısız; görev kuyruğa alınmadı: ${genErr.message}`);
       throw genErr;
     }
+  }
+
+  if (contentType === 'REELS') {
+    const videoUrl = (campaign && campaign.reels_video_url) || product.reels_video_url || product.video_url || '';
+    if (!/\.(mp4|mov)(\?.*)?$/i.test(videoUrl)) {
+      throw new Error('Instagram Reels için ürün videosu bulunamadı: ' + safeSlug);
+    }
+    mediaUrl = videoUrl;
+  }
+  if (contentType === 'FB_REELS') {
+    throw new Error('Facebook Reels yayın desteği bu sürümde kapalıdır.');
   }
 
   // Meta API SVG formatını desteklemez; SVG gelirse daima PNG fallback kullan
@@ -297,11 +308,14 @@ export async function checkAndEnqueueSlot({
   // Yayınlanacak ürünü seç
   const trackerKey = `${platform}_published_tracker`;
   const tracker = (await fetchSiteSetting(supabase, trackerKey)) || {};
-  const selected = selectProductForPublish({
-    catalog,
-    tracker,
-    targetFormat: normalizeContentType(platform, slot.type)
-  });
+  const targetFormat = normalizeContentType(platform, slot.type);
+  const requiredFormats = platform === 'instagram' ? ['POST', 'STORIES', 'REELS'] : ['PHOTO_POST', 'FB_STORIES'];
+  const allProductsCompleted = catalog.length > 0 && catalog.every(p =>
+    requiredFormats.every(format => Array.isArray(tracker[p.slug]) && tracker[p.slug].includes(format))
+  );
+  const isStory = targetFormat === 'STORIES' || targetFormat === 'FB_STORIES';
+  if (allProductsCompleted && !isStory) return { status: 'skipped', reason: 'CYCLE_COMPLETE_STORY_ONLY' };
+  const selected = selectProductForPublish({ catalog, tracker, targetFormat });
 
   if (!selected || !selected.product) {
     return { status: 'error', error: 'Katalogda uygun ürün bulunamadı' };
