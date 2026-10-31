@@ -19,13 +19,13 @@
  * ============================================================================
  */
 
-(function (root, factory) {
-  if (typeof module === 'object' && module.exports) {
-    module.exports = factory();
-  } else {
-    root.PhotoroomEngine = factory();
-  }
-}(typeof self !== 'undefined' ? self : this, function () {
+// NOT: Bu dosya Vercel sunucu tarafında (package.json "type": "module") ES Module olarak
+// import edilir. Tarayıcı paneli ise "Module 2/photoroom-engine.js" kopyasını klasik
+// <script> olarak yükler. Bu yüzden burada UMD yerine ESM export kullanılır.
+const PhotoroomEngine = (function () {
+
+  // Meta Graph API yalnızca JPG/PNG görsel ve MP4/MOV video kabul eder (SVG reddedilir).
+  const DEFAULT_REELS_MP4 = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
 
   const BRAND = {
     name: 'NOVA FURNITURE',
@@ -153,16 +153,17 @@
     console.log(`[Photoroom Sandbox] API Key bulunamadı veya henüz eklenmedi. Sabit lüks prompt + Supabase mimari simülatörü çalışıyor.`);
     
     const isVertical = aspectRatio === '9:16';
+    const embeddedRaw = await fetchAsDataUri(validRawUrl);
     const simulatedSvg = renderSandboxHeroSvg({
       product,
-      rawImageUrl: validRawUrl,
+      rawImageUrl: embeddedRaw,
       prompt,
       isVertical
     });
 
     const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-    const fileName = `photoroom-sandbox-${safeSlug}-${aspectRatio.replace(':', 'x')}-${Date.now()}.svg`;
-    const uploadedUrl = await uploadStringToStorage(`photoroom/${fileName}`, simulatedSvg, 'image/svg+xml');
+    const basePath = `photoroom/photoroom-sandbox-${safeSlug}-${aspectRatio.replace(':', 'x')}-${Date.now()}`;
+    const uploadedUrl = await convertSvgToPngInStorage(simulatedSvg, basePath, 1080, isVertical ? 1920 : 1080, validRawUrl);
 
     return {
       ok: true,
@@ -181,11 +182,10 @@
    */
   async function generateDetailedSpecPost({ product = {}, heroImageUrl = '' }) {
     const cleanHeroUrl = (heroImageUrl && heroImageUrl.startsWith('http')) ? heroImageUrl : SUPABASE_CONFIG.mediaFallback;
-    const svg = renderDetailedSpecPostSvg({ product, heroImageUrl: cleanHeroUrl });
+    const svg = renderDetailedSpecPostSvg({ product, heroImageUrl: await fetchAsDataUri(cleanHeroUrl) });
 
     const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-    const fileName = `post-detailed-${safeSlug}-${Date.now()}.svg`;
-    const uploadedUrl = await uploadStringToStorage(`posts/${fileName}`, svg, 'image/svg+xml');
+    const uploadedUrl = await convertSvgToPngInStorage(svg, `posts/post-detailed-${safeSlug}-${Date.now()}`, 1080, 1080, cleanHeroUrl);
 
     return {
       ok: true,
@@ -202,11 +202,10 @@
    */
   async function generateStoryPost({ product = {}, heroImageUrl = '' }) {
     const cleanHeroUrl = (heroImageUrl && heroImageUrl.startsWith('http')) ? heroImageUrl : SUPABASE_CONFIG.mediaFallback;
-    const svg = renderStorySvg({ product, heroImageUrl: cleanHeroUrl });
+    const svg = renderStorySvg({ product, heroImageUrl: await fetchAsDataUri(cleanHeroUrl) });
 
     const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-    const fileName = `story-${safeSlug}-${Date.now()}.svg`;
-    const uploadedUrl = await uploadStringToStorage(`stories/${fileName}`, svg, 'image/svg+xml');
+    const uploadedUrl = await convertSvgToPngInStorage(svg, `stories/story-${safeSlug}-${Date.now()}`, 1080, 1920, cleanHeroUrl);
 
     return {
       ok: true,
@@ -333,8 +332,10 @@ ${hashtags}`;
       heroImageUrl: hero9x16.imageUrl
     });
 
-    // 4. Reels Videosu / Medya URL'si (Hero 9:16 görseli video/animasyon zeminidir)
-    const reelsMediaUrl = hero9x16.imageUrl;
+    // 4. Reels Videosu: Meta yalnızca gerçek video (MP4) kabul eder.
+    // Ürüne ait kayıtlı bir Reels videosu varsa kullanılır; yoksa bot ürün videosu kütüphanesine bakar.
+    const productVideo = product.reels_video_url || product.video_url || '';
+    const reelsMediaUrl = /\.(mp4|mov)(\?.*)?$/i.test(productVideo) ? productVideo : '';
 
     // 5. Lüks Açıklama (Gemini içermez)
     const caption = generateNovaLuxuryCaption(product, 'instagram');
@@ -491,6 +492,69 @@ ${hashtags}`;
   }
 
   async function saveAssetRecordToSupabase(record) {
+    return saveAssetRecordToSupabaseInner(record);
+  }
+
+  /**
+   * Uzak bir görseli base64 data URI'ye çevirir. SVG rasterleştirici (librsvg)
+   * harici URL'leri yüklemediği için ürün fotoğrafı SVG içine gömülür.
+   */
+  async function fetchAsDataUri(url) {
+    try {
+      if (!url || !/^https?:\/\//.test(url)) return url;
+      const r = await fetch(url);
+      if (!r.ok) return url;
+      const ct = (r.headers.get('content-type') || 'image/png').split(';')[0];
+      if (!ct.startsWith('image/') || ct.includes('svg')) return url;
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length > 4 * 1024 * 1024) return url; // çok büyükse gömme
+      return `data:${ct};base64,${buf.toString('base64')}`;
+    } catch (_) {
+      return url;
+    }
+  }
+
+  /** Emoji karakterleri rasterleştiricide kutucuk olarak görünmesin diye temizlenir. */
+  function stripEmojiForRaster(svg) {
+    try {
+      return svg.replace(/[\p{Extended_Pictographic}\uFE0F\u200D]/gu, '');
+    } catch (_) {
+      return svg;
+    }
+  }
+
+  /**
+   * SVG içeriğini gerçek PNG'ye çevirip Supabase Storage'a yükler.
+   * Meta Graph API SVG kabul etmediği için tüm otonom görseller PNG olarak kaydedilir.
+   * Başarısız olursa fallbackPngUrl döner (asla .svg dönmez).
+   */
+  async function convertSvgToPngInStorage(svgString, basePath, width, height, fallbackPngUrl) {
+    try {
+      const cleanSvg = stripEmojiForRaster(svgString);
+      const svgUrl = await uploadStringToStorage(`${basePath}.svg`, cleanSvg, 'image/svg+xml');
+      if (!svgUrl) return fallbackPngUrl;
+      return await convertSvgUrlToPngInStorage(svgUrl, `${basePath}.png`, width, height, fallbackPngUrl);
+    } catch (_) {
+      return fallbackPngUrl;
+    }
+  }
+
+  async function convertSvgUrlToPngInStorage(svgUrl, targetStoragePath, width = 1080, height = 1080, fallbackPngUrl = SUPABASE_CONFIG.mediaFallback) {
+    try {
+      const rasterUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgUrl)}&w=${width}&h=${height}&fit=cover&output=png`;
+      const r = await fetch(rasterUrl);
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok || !ct.includes('image/png')) return fallbackPngUrl;
+      const buf = Buffer.from(await r.arrayBuffer());
+      if (buf.length < 2000) return fallbackPngUrl;
+      const pngUrl = await uploadBufferToStorage(targetStoragePath, buf, 'image/png');
+      return pngUrl || fallbackPngUrl;
+    } catch (_) {
+      return fallbackPngUrl;
+    }
+  }
+
+  async function saveAssetRecordToSupabaseInner(record) {
     try {
       // 1. site_settings içine ekle/güncelle
       const getRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/site_settings?key=eq.social_campaign_assets&select=data`, {
@@ -862,6 +926,10 @@ ${hashtags}`;
     markPlatformPublished,
     renderDetailedSpecPostSvg,
     renderStorySvg,
-    renderSandboxHeroSvg
+    renderSandboxHeroSvg,
+    convertSvgUrlToPngInStorage,
+    DEFAULT_REELS_MP4
   };
-}));
+})();
+
+export default PhotoroomEngine;

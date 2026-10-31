@@ -9,7 +9,6 @@
 <script src="/Module%202/nova-studio-engine.js"></script>
 <script src="/nova-studio-engine.js"></script>
 <script src="/Module%202/photoroom-engine.js"></script>
-<script src="/photoroom-engine.js"></script>
 <style>
   :root {
     --navy: #0F253E;
@@ -3047,6 +3046,12 @@ async function runCloudAutonomousCycleNow(slot = null, isAuto = false) {
 
     botState.scheduled_posts.unshift(newItem);
 
+    // Ürüne ait Reels videosunu kütüphaneye kaydet: bulut sunucusu panel kapalıyken
+    // bu ürünün Reels slotunda aynı gerçek MP4 videoyu kullanır.
+    if (mediaType === 'REELS' && prod.slug && /\.(mp4|mov)(\?.*)?$/i.test(finalMediaUrl || '')) {
+      botState.reels_video_library = Object.assign({}, botState.reels_video_library || {}, { [prod.slug]: finalMediaUrl });
+    }
+
     // Slot tamamlanma durumunu güncelle
     if (slot) {
       const now = new Date();
@@ -3080,12 +3085,51 @@ async function runCloudAutonomousCycleNow(slot = null, isAuto = false) {
   }
 }
 
-// ── OTOMATİK ARKA PLAN SAAT KONTROLÜ (KESİNTİSİZ & ESNEK KONTROL) ──
+// ── OTOMATİK ARKA PLAN SAAT KONTROLÜ (YEDEK MOD) ──
+// Asıl yayıncı 7/24 bulut sunucusudur (Vercel Cron + GitHub Actions → /api/instagram-cron).
+// Panel açık olmasa da paylaşımlar yapılır. Panel açıksa yalnızca YEDEK olarak çalışır:
+// sunucu slot saatinden itibaren 3 dakika içinde paylaşmadıysa panel devralır.
 let isAutonomousCycleRunning = false;
+let lastServerSyncAt = 0;
+const PANEL_BACKUP_GRACE_MS = 3 * 60 * 1000;
+const SLOT_CATCH_UP_WINDOW_MS = 240 * 60 * 1000;
+
+// Sunucunun yaptığı paylaşımları ve slot kilitlerini panele sessizce senkronlar
+// (eski panel durumunun Supabase'deki güncel durumu ezmesini önler).
+async function syncServerStateQuietly() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.insta_bot_state&limit=1`, {
+      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+    });
+    if (!res.ok) return;
+    const rows = await res.json();
+    const remote = rows?.[0]?.data;
+    if (!remote) return;
+    if (Array.isArray(remote.scheduled_posts)) botState.scheduled_posts = remote.scheduled_posts;
+    if (remote.reels_video_library) botState.reels_video_library = remote.reels_video_library;
+    const remoteSlots = remote.config?.posting_slots || [];
+    (botState.config?.posting_slots || []).forEach(s => {
+      const r = remoteSlots.find(x => (x.slot_id && x.slot_id === s.slot_id) || (x.time === s.time && x.type === s.type));
+      if (r && r.last_run_date && r.last_run_date >= (s.last_run_date || '')) {
+        s.last_run_date = r.last_run_date;
+        s.last_run_time = r.last_run_time;
+      }
+    });
+    lastServerSyncAt = Date.now();
+    renderScheduledQueue();
+    renderSlots();
+    updateKpis();
+  } catch (_) {}
+}
 
 async function checkAndTriggerDueSlots() {
   if (isAutonomousCycleRunning) return;
   if (!botState?.config?.auto_publish_enabled) return;
+
+  // Her 60 saniyede bir sunucu durumunu çek
+  if (Date.now() - lastServerSyncAt > 60 * 1000) {
+    await syncServerStateQuietly();
+  }
 
   const slots = botState?.config?.posting_slots || [];
   if (!slots || slots.length === 0) return;
@@ -3103,10 +3147,14 @@ async function checkAndTriggerDueSlots() {
     const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
     const diff = now.getTime() - target.getTime();
 
-    // Eğer saat tam olarak geldiyse veya son 15 dakika içinde geçmişse:
-    if (diff >= 0 && diff < 15 * 60 * 1000) {
-      console.log(`⏰ [Otonom Bot] Saat ${s.time} dilimi (${s.label}) tetikleniyor!`);
-      showToast(`⏰ [Otonom Bot] Saat ${s.time} dilimi geldi! ${s.type} otonom olarak paylaşılıyor...`);
+    // Sunucuya 3 dk öncelik tanınır; sunucu paylaşmadıysa panel 4 saate kadar telafi eder
+    if (diff >= PANEL_BACKUP_GRACE_MS && diff < SLOT_CATCH_UP_WINDOW_MS) {
+      // Son kez sunucu durumunu kontrol et (sunucu zaten paylaştıysa çift paylaşım yapma)
+      await syncServerStateQuietly();
+      if (s.last_run_date === todayStr) continue;
+
+      console.log(`⏰ [Otonom Bot - Yedek] Saat ${s.time} dilimi sunucuda tamamlanmadı, panel devralıyor.`);
+      showToast(`⏰ [Yedek Mod] ${s.time} dilimi sunucuda tamamlanmadı, panel ${s.type} paylaşıyor...`);
 
       // Çift tetiklemeyi önlemek için hemen işaretle ve kaydet
       s.last_run_date = todayStr;

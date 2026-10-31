@@ -347,21 +347,39 @@ export default async function handler(req, res) {
         ? config.posting_slots
         : defaultSlots;
 
-      const now = new Date();
-      // Türkiye Saati (UTC+3)
-      const istHour = (now.getUTCHours() + 3) % 24;
-      const istMin = now.getUTCMinutes();
-      const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
-      const todayStr = now.toISOString().slice(0, 10);
-
-      // Slot kontrolü: Yalnızca kullanıcının ayarladığı saatte (veya son 15 dakika içinde) ve bugün henüz çalışmamışsa
-      const activeSlot = slots.find(s => {
-        if (!s.active || !s.time) return false;
-        if (s.last_run_date === todayStr) return false;
-        const [sh, sm] = s.time.split(':').map(Number);
-        const diffMin = (istHour * 60 + istMin) - (sh * 60 + sm);
-        return diffMin >= 0 && diffMin <= 15; // Belirlenen saatten itibaren maksimum 15 dakika tolerans
+      // Bozuk karakter kodlaması (ör. "Ã–ÄŸle", "â€”") içeren slot etiketlerini otomatik onar
+      const typeLabels = { REELS: 'Hareketli Reels Videosu', POST: 'Detay Maddeli Gönderi', STORIES: 'Detay Maddeli Hikaye' };
+      slots.forEach(s => {
+        if (s.label && /Ã|Ä|Å|â€/.test(s.label)) {
+          const h = parseInt(String(s.time).split(':')[0], 10);
+          const part = h < 12 ? 'Sabah' : h < 17 ? 'Öğle' : 'Akşam';
+          s.label = `${part} (${s.time}) — ${typeLabels[s.type] || 'Otonom Paylaşım'} (Otonom)`;
+        }
       });
+
+      const now = new Date();
+      // Türkiye Saati (UTC+3) — tarih de Türkiye saatine göre hesaplanır
+      const trNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+      const istHour = trNow.getUTCHours();
+      const istMin = trNow.getUTCMinutes();
+      const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
+      const todayStr = trNow.toISOString().slice(0, 10);
+
+      // Slot kontrolü: Belirlenen saatten itibaren 4 saat içinde ve bugün henüz çalışmamışsa.
+      // Geniş pencere sayesinde zamanlayıcı (GitHub Actions / Vercel Cron) gecikse bile paylaşım kaçmaz;
+      // last_run_date kilidi sayesinde her slot günde en fazla 1 kez çalışır.
+      const CATCH_UP_WINDOW_MIN = 240;
+      const nowTotalMin = istHour * 60 + istMin;
+      const activeSlot = slots
+        .filter(s => {
+          if (!s.active || !s.time) return false;
+          if (s.last_run_date === todayStr) return false;
+          const [sh, sm] = s.time.split(':').map(Number);
+          const diffMin = nowTotalMin - (sh * 60 + sm);
+          return diffMin >= 0 && diffMin <= CATCH_UP_WINDOW_MIN;
+        })
+        // Birden fazla slot gecikmişse en son saati gelen slot önceliklidir
+        .sort((a, b) => b.time.localeCompare(a.time))[0];
 
       // Eğer şu an planlanmış bir saat slotu değilse VE panelden zorla (forceGenerateType) tetiklenmediyse: ASLA PAYLAŞMA!
       if (!forceGenerateType && !activeSlot) {
@@ -380,6 +398,8 @@ export default async function handler(req, res) {
       if (activeSlot) {
         activeSlot.last_run_date = todayStr;
         activeSlot.last_run_time = currentHHMM;
+        // Kilidi hemen kaydet: eşzamanlı tetiklemelerde (GitHub Actions + Vercel Cron) çift paylaşım olmasın
+        await saveInstaState(state);
       }
       
       // Tek ürün 3 format: Gün boyunca aynı ürün kullanılır (Sabah 10:00 Reels, Öğle 14:30 Post, Akşam 20:00 Story)
@@ -392,24 +412,49 @@ export default async function handler(req, res) {
 
       // Photoroom Mimari Üretim Pipeline'ından Varlıkları Al
       let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase();
-      if (!campaign || campaign.product_slug !== pickedProduct?.slug) {
+      const hasInvalidMedia = c => !c
+        || /\.svg(\?.*)?$/i.test(c.post_image_url || '')
+        || /\.svg(\?.*)?$/i.test(c.story_image_url || '');
+      if (!campaign || campaign.product_slug !== pickedProduct?.slug || hasInvalidMedia(campaign)) {
         campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
           product: pickedProduct,
           apiKey: config.photoroom_api_key || process.env.PHOTOROOM_API_KEY
         });
       }
 
-      // Slota göre doğru Photoroom varlığını seç
-      let targetMediaUrl = campaign.post_image_url;
+      // Slota göre doğru Photoroom varlığını seç (Meta yalnızca PNG/JPG ve MP4 kabul eder)
+      const isVideoUrl = u => /\.(mp4|mov)(\?.*)?$/i.test(u || '');
+      const notSvg = u => (u && !/\.svg(\?.*)?$/i.test(u)) ? u : null;
+      const imageFallback = pickedProduct?.ana_resim && /^https?:\/\//.test(pickedProduct.ana_resim)
+        ? pickedProduct.ana_resim
+        : DEFAULT_MEDIA_FALLBACK;
+      let finalType = chosenType;
+      let targetMediaUrl = notSvg(campaign.post_image_url) || imageFallback;
       if (chosenType === 'REELS') {
-        targetMediaUrl = campaign.reels_video_url || campaign.photoroom_hero_vertical_url || campaign.photoroom_hero_url;
+        // Bu ürüne ait gerçek MP4 Reels videosu: 1) kampanya 2) ürün video kütüphanesi 3) geçmiş paylaşımlar
+        const slug = pickedProduct?.slug;
+        const library = state.reels_video_library || {};
+        const historyVideo = (state.scheduled_posts || []).find(p =>
+          p.product_slug === slug && (p.media_type === 'REELS') && isVideoUrl(p.media_url)
+        )?.media_url;
+        const productVideo = [campaign.reels_video_url, slug && library[slug], historyVideo].find(isVideoUrl);
+        if (productVideo) {
+          targetMediaUrl = productVideo;
+          if (slug) state.reels_video_library = { ...library, [slug]: productVideo };
+        } else {
+          // Bu ürün için henüz video yoksa yanlış ürün videosu paylaşmak yerine
+          // ürünün işlenmiş mimari görseli feed gönderisi olarak paylaşılır.
+          finalType = 'POST';
+          targetMediaUrl = notSvg(campaign.photoroom_hero_url) || notSvg(campaign.post_image_url) || imageFallback;
+        }
       } else if (chosenType === 'STORIES') {
-        targetMediaUrl = campaign.story_image_url || campaign.photoroom_hero_vertical_url;
+        targetMediaUrl = notSvg(campaign.story_image_url) || notSvg(campaign.post_image_url) || imageFallback;
       }
 
       const newPostRecord = {
         id: campaign.id,
-        media_type: chosenType,
+        media_type: finalType,
+        slot_type: chosenType,
         title: campaign.product_title || pickedProduct?.title || 'Lüks Koleksiyon',
         caption: campaign.caption,
         hashtags: campaign.hashtags || '#novafurniture #minimalistmobilya #icmimari #luxuryfurniture',
@@ -426,37 +471,76 @@ export default async function handler(req, res) {
     }
 
     const publishedList = [];
+    const failedList = [];
     for (const post of duePosts) {
       const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
-      const publishResult = await publishToInstagramGraphApi({
-        igUserId: config.ig_user_id || process.env.IG_USER_ID || '17841435882645322',
-        accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD',
-        mediaType: post.media_type || post.content_type || 'POST',
-        mediaUrl: post.media_url,
-        caption: fullCaption
-      });
+      try {
+        let mType = (post.media_type || post.content_type || 'POST').toUpperCase();
+        let mediaUrl = post.media_url;
+        if (!mediaUrl || /\.svg(\?.*)?$/i.test(mediaUrl) || mediaUrl.includes('instagram-render')) {
+          mediaUrl = DEFAULT_MEDIA_FALLBACK;
+        }
+        // Reels için video yoksa görsel feed gönderisi olarak paylaşılır (Meta görselli Reels kabul etmez)
+        if (mType === 'REELS' && !/\.(mp4|mov)(\?.*)?$/i.test(mediaUrl)) {
+          mType = 'POST';
+          post.media_type = 'POST';
+        }
+        post.media_url = mediaUrl;
 
-      post.status = 'published';
-      post.published_at = new Date().toISOString();
-      post.ig_published_id = publishResult.publishedId;
-      post.auto_approved = true;
+        const publishResult = await publishToInstagramGraphApi({
+          igUserId: config.ig_user_id || process.env.IG_USER_ID || '17841435882645322',
+          accessToken: config.access_token || config.ig_access_token || process.env.IG_ACCESS_TOKEN || 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD',
+          mediaType: mType,
+          mediaUrl,
+          caption: fullCaption
+        });
 
-      if (post.photoroom_campaign_id) {
-        await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'instagram', post.media_type);
+        post.status = 'published';
+        post.published_at = new Date().toISOString();
+        post.ig_published_id = publishResult.publishedId;
+        post.auto_approved = true;
+
+        if (post.photoroom_campaign_id) {
+          await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'instagram', post.media_type);
+        }
+
+        publishedList.push({
+          id: post.id,
+          title: post.title,
+          media_type: post.media_type,
+          auto_designed: !!post.auto_designed,
+          media_url: post.media_url,
+          publishedId: publishResult.publishedId,
+          mode: publishResult.mode
+        });
+      } catch (pubErr) {
+        console.error('Instagram publish error:', pubErr.message);
+        post.status = 'failed';
+        post.error_message = pubErr.message;
+        post.failed_at = new Date().toISOString();
+        failedList.push({ id: post.id, media_type: post.media_type, error: pubErr.message });
       }
-
-      publishedList.push({
-        id: post.id,
-        title: post.title,
-        media_type: post.media_type,
-        auto_designed: !!post.auto_designed,
-        media_url: post.media_url,
-        publishedId: publishResult.publishedId,
-        mode: publishResult.mode
-      });
     }
 
     state.scheduled_posts = state.scheduled_posts.slice(0, 60);
+    await saveInstaState(state);
+
+    return res.status(200).json({
+      ok: failedList.length === 0,
+      checked_at: new Date().toISOString(),
+      autonomous_design: true,
+      require_approval: false,
+      published_count: publishedList.length,
+      published: publishedList,
+      failed: failedList
+    });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+}
+
+async function saveInstaState(state) {
+  try {
     await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
       method: 'POST',
       headers: {
@@ -471,16 +555,7 @@ export default async function handler(req, res) {
         updated_at: new Date().toISOString()
       })
     });
-
-    return res.status(200).json({
-      ok: true,
-      checked_at: new Date().toISOString(),
-      autonomous_design: true,
-      require_approval: false,
-      published_count: publishedList.length,
-      published: publishedList
-    });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
+  } catch (e) {
+    console.warn('insta_bot_state kaydetme hatası:', e.message);
   }
 }

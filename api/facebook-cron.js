@@ -154,18 +154,20 @@ export default async function handler(req, res) {
     if (duePosts.length === 0) {
       const slots = config.posting_slots || [];
       const now = new Date();
-      // Türkiye Saati (UTC+3)
-      const istHour = (now.getUTCHours() + 3) % 24;
-      const istMin = now.getUTCMinutes();
+      // Türkiye Saati (UTC+3) — tarih de Türkiye saatine göre hesaplanır
+      const trNow = new Date(now.getTime() + 3 * 60 * 60 * 1000);
+      const istHour = trNow.getUTCHours();
+      const istMin = trNow.getUTCMinutes();
       const currentHHMM = String(istHour).padStart(2, '0') + ':' + String(istMin).padStart(2, '0');
-      const todayStr = now.toISOString().slice(0, 10);
+      const todayStr = trNow.toISOString().slice(0, 10);
 
+      // 4 saatlik telafi penceresi: zamanlayıcı gecikse bile paylaşım kaçmaz (last_run_date kilidi ile günde 1 kez)
       const activeSlot = slots.find(s => {
         if (!s.active || !s.time) return false;
         if (s.last_run_date === todayStr) return false;
         const [sh, sm] = s.time.split(':').map(Number);
         const diffMin = (istHour * 60 + istMin) - (sh * 60 + sm);
-        return diffMin >= 0 && diffMin <= 15; // Belirlenen saatten itibaren maksimum 15 dakika tolerans
+        return diffMin >= 0 && diffMin <= 240;
       });
 
       // Eğer şu an planlanmış bir saat slotu değilse VE panelden zorla (forceGenerateType) tetiklenmediyse: ASLA PAYLAŞMA!

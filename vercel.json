@@ -8,14 +8,14 @@
     { "source": "/api/tiktok-render", "destination": "/api/render?platform=tiktok" },
     { "source": "/api/youtube-render", "destination": "/api/render?platform=youtube" }
   ],
+  "functions": {
+    "api/instagram-cron.js": { "maxDuration": 60 },
+    "api/facebook-cron.js": { "maxDuration": 60 }
+  },
   "crons": [
-    {
-      "path": "/api/instagram-cron",
-      "schedule": "0 12 * * *"
-    },
-    {
-      "path": "/api/facebook-cron",
-      "schedule": "0 15 * * *"
-    }
+    { "path": "/api/instagram-cron?slot=reels", "schedule": "0 7 * * *" },
+    { "path": "/api/instagram-cron?slot=post", "schedule": "30 11 * * *" },
+    { "path": "/api/instagram-cron?slot=story", "schedule": "0 17 * * *" },
+    { "path": "/api/facebook-cron", "schedule": "0 9 * * *" }
   ]
 }
