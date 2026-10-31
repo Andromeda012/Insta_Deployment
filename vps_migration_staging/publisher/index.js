@@ -6,8 +6,9 @@
  *    - `claim_next_publish_task(p_worker_id, p_lock_duration_seconds)`
  *    - `extend_publish_task_lock(p_task_id, p_worker_id, p_extra_seconds)`
  *    - `complete_publish_task(p_task_id, p_worker_id, p_status, ...)`
- * 2. Worker Sahiplik Garantisi:
- *    Tüm RPC çağrılarına bu iş parçacığının tekil `WORKER_ID` değeri geçirilir.
+ * 2. Kilit Kaybı (Lease Loss) Koruması:
+ *    `heartbeatLockExtension` 'false' döndüğünde worker kilidi kaybettiğini anlar
+ *    ve işlemi derhal durdurarak mükerrer yayın yapmayı engeller.
  * 3. Dry-Run Modu:
  *    `DRY_RUN=true` iken sıfır dış API çağrısı yapılır; görevler kesinlikle
  *    'published' yapılmaz, 'dry_run_completed' olarak kaydedilir.
@@ -18,15 +19,15 @@
  *    Medya konteyneri 'FINISHED' olmadan asla `media_publish` çağrılmaz.
  *    Bekleme süresince `extend_publish_task_lock` ile kilit tazelenir.
  * 6. Reconciliation (Belirsiz Yanıt):
- *    Ağ zaman aşımı veya doğrulanamayan API yanıtlarında 'reconciliation_required'
- *    atanır; otomatik tekrar deneme durdurularak çift paylaşım önlenir.
+ *    Ağ zaman aşımı veya kilit kaybında 'reconciliation_required' atanır;
+ *    otomatik tekrar deneme durdurularak çift paylaşım önlenir.
  * 7. YouTube İzolasyonu:
  *    Gerçek video binary upload geliştirilmediği için görevler asla 'published'
  *    yapılmaz; açıkça 'reconciliation_required' olarak işaretlenir.
  * 8. Log Maskeleme:
- *    Tüm token ve gizli bilgiler loglardan temizlenir.
+ *    Tüm token ve gizli bilgiler konsol çıktılarından temizlenir.
  * 9. Graceful Shutdown:
- *    SIGTERM / SIGINT sinyallerinde mevcut görev bitene kadar beklenir.
+ *    SIGTERM / SIGINT sinyallerinde mevcut görev bitene kadar beklenir (Maks 35 sn).
  * ============================================================================
  */
 
@@ -74,12 +75,12 @@ async function heartbeatLockExtension(taskId, extraSeconds = 120) {
       p_extra_seconds: extraSeconds
     });
     if (error) {
-      console.warn(`[Heartbeat] Kilit uzatma uyarısı (${taskId}):`, sanitize(error.message));
+      console.warn(`[Heartbeat Uyarısı] Görev ${taskId}:`, sanitize(error.message));
       return false;
     }
     return Boolean(extended);
   } catch (err) {
-    console.warn(`[Heartbeat] İstisna (${taskId}):`, sanitize(err.message));
+    console.warn(`[Heartbeat İstisnası] Görev ${taskId}:`, sanitize(err.message));
     return false;
   }
 }
@@ -149,7 +150,10 @@ async function executePublish(task) {
 
         // Transcoding sürerken her 12 saniyede bir kuyruk kilidini uzat
         if (attempt % 3 === 0) {
-          await heartbeatLockExtension(task_id, 120);
+          const lockOk = await heartbeatLockExtension(task_id, 120);
+          if (!lockOk) {
+            throw new Error('[LeaseExpired] Kilit süresi doldu veya başka worker devraldı. İşlem durduruldu.');
+          }
         }
 
         const statusRes = await fetch(
@@ -204,7 +208,6 @@ async function executePublish(task) {
 
       const isStory = content_type === 'FB_STORIES' || content_type === 'STORIES';
       if (isStory) {
-        // Önce unpublished fotoğraf yükle, sonra photo_stories üzerinden yayınla
         const upParams = new URLSearchParams({
           url: media_url,
           published: 'false',
@@ -284,7 +287,6 @@ async function executePublish(task) {
       const publishId = initData.data.publish_id;
 
       // Adım 2: Yayın Durumunu (/status/fetch/) Sorgulayarak Doğrula
-      // TikTok publish_id yalnızca işlem biletidir; gerçek başarı PUBLISH_COMPLETE olmalıdır.
       let verifiedStatus = 'PROCESSING';
       let statusDetails = null;
 
@@ -292,7 +294,10 @@ async function executePublish(task) {
         await new Promise(r => setTimeout(r, 4000));
 
         if (attempt % 2 === 0) {
-          await heartbeatLockExtension(task_id, 120);
+          const lockOk = await heartbeatLockExtension(task_id, 120);
+          if (!lockOk) {
+            throw new Error('[LeaseExpired] Kilit süresi doldu veya başka worker devraldı. İşlem durduruldu.');
+          }
         }
 
         const statusRes = await fetch('https://open.tiktokapis.com/v2/post/publish/status/fetch/', {
@@ -318,12 +323,11 @@ async function executePublish(task) {
       }
 
       if (verifiedStatus !== 'PUBLISH_COMPLETE') {
-        // Durum henüz kesinleşmediyse belirsiz yanıt olarak işaretle
         return {
           status: 'reconciliation_required',
           platformPostId: publishId,
           rawResponse: statusDetails,
-          errorMessage: 'TikTok yayın durumu henüz PUBLISH_COMPLETE olmadı. Durum doğrulama bekliyor.'
+          errorMessage: 'TikTok yayın durumu henüz PUBLISH_COMPLETE olmadı. Durum mutabakatı gerekiyor.'
         };
       }
 
@@ -336,8 +340,6 @@ async function executePublish(task) {
 
     // ── 4. YOUTUBE DATA API v3 (KAPSAM KORUMASI) ─────────────────────────────
     case 'youtube': {
-      // ÖNEMLİ KURAL: YouTube resumable binary video upload akışı bu aşamada
-      // geliştirilmemiştir. Sahte ID ile 'published' yapılması engellenmiştir.
       return {
         status: 'reconciliation_required',
         platformPostId: null,
@@ -378,7 +380,7 @@ async function pollQueueCycle() {
       const result = await executePublish(task);
 
       // Görev Başarıyla veya Tanımlı Durumla Tamamlandı
-      await supabase.rpc('complete_publish_task', {
+      const { data: completedSuccessfully, error: completeError } = await supabase.rpc('complete_publish_task', {
         p_task_id: task.task_id,
         p_worker_id: WORKER_ID,
         p_status: result.status,
@@ -388,14 +390,19 @@ async function pollQueueCycle() {
         p_backoff_minutes: 5
       });
 
-      console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
+      if (completeError || completedSuccessfully === false) {
+        console.warn(`[Kilit Uyarısı] Görev ${task.task_id} tamamlanamadı (Kilit süresi dolmuş veya başka worker devralmış olabilir).`);
+      } else {
+        console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
+      }
     } catch (execErr) {
       const isTimeout = execErr.name === 'AbortError' ||
                         execErr.message.includes('timeout') ||
                         execErr.message.includes('ETIMEDOUT') ||
-                        execErr.message.includes('ECONNRESET');
+                        execErr.message.includes('ECONNRESET') ||
+                        execErr.message.includes('LeaseExpired');
 
-      // Ağ zaman aşımında API'nin yayını yapıp yapmadığı belirsizdir:
+      // Ağ zaman aşımında veya kilit kaybında API'nin yayını yapıp yapmadığı belirsizdir:
       // Mükerrer yayını önlemek için 'reconciliation_required' yapılır!
       const finalStatus = isTimeout ? 'reconciliation_required' : 'failed';
       const cleanErrMsg = sanitize(execErr.message);
@@ -421,7 +428,7 @@ async function pollQueueCycle() {
 
 // Zamanlayıcıyı Başlat
 const pollIntervalHandle = setInterval(pollQueueCycle, POLL_INTERVAL_MS);
-pollQueueCycle(); // İlk açılışta hemen tara
+pollQueueCycle();
 
 // ── GRACEFUL SHUTDOWN (KONTROLLÜ KAPATMA) ────────────────────────────────────
 async function handleShutdown(signal) {
