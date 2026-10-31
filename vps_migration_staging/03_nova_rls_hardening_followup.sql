@@ -50,29 +50,19 @@ GRANT SELECT ON public.site_settings TO anon, authenticated;
 GRANT ALL ON public.site_settings TO service_role;
 
 -- The public bot view must obey the querying role's permissions and RLS.
-CREATE OR REPLACE FUNCTION public.get_public_bot_ui_state(p_key text)
-RETURNS jsonb
-LANGUAGE plpgsql
-STABLE
-SECURITY DEFINER
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC;
+GRANT USAGE ON SCHEMA private TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION private.get_public_bot_ui_state(p_key text)
+RETURNS jsonb LANGUAGE plpgsql STABLE SECURITY DEFINER
 SET search_path = pg_catalog, public
 AS $function$
-DECLARE
-  v_data jsonb;
+DECLARE v_data jsonb;
 BEGIN
-  IF p_key IS NULL OR p_key NOT IN ('insta_bot_state','fb_bot_state') THEN
-    RETURN NULL;
-  END IF;
-
-  SELECT s.data INTO v_data
-  FROM public.site_settings AS s
-  WHERE s.key = p_key
-  LIMIT 1;
-
-  IF v_data IS NULL THEN
-    RETURN NULL;
-  END IF;
-
+  IF p_key IS NULL OR p_key NOT IN ('insta_bot_state','fb_bot_state') THEN RETURN NULL; END IF;
+  SELECT s.data INTO v_data FROM public.site_settings AS s WHERE s.key = p_key LIMIT 1;
+  IF v_data IS NULL THEN RETURN NULL; END IF;
   RETURN jsonb_build_object(
     'key', p_key,
     'posting_slots', COALESCE(v_data->'config'->'posting_slots','[]'::jsonb),
@@ -81,6 +71,15 @@ BEGIN
     'scheduled_posts', COALESCE(v_data->'scheduled_posts','[]'::jsonb)
   );
 END;
+$function$;
+REVOKE ALL ON FUNCTION private.get_public_bot_ui_state(text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION private.get_public_bot_ui_state(text) TO anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION public.get_public_bot_ui_state(p_key text)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY INVOKER
+SET search_path = pg_catalog, public, private
+AS $function$
+  SELECT private.get_public_bot_ui_state(p_key);
 $function$;
 REVOKE ALL ON FUNCTION public.get_public_bot_ui_state(text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_public_bot_ui_state(text) TO anon, authenticated, service_role;
@@ -97,10 +96,14 @@ GRANT SELECT ON public.v_public_bot_ui_state TO anon, authenticated;
 ALTER TABLE public.social_publish_queue ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.social_publish_queue FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.social_publish_queue TO service_role;
+DROP POLICY IF EXISTS "service_role_full_access_social_publish_queue" ON public.social_publish_queue;
+CREATE POLICY "service_role_full_access_social_publish_queue" ON public.social_publish_queue FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 ALTER TABLE public.server_secrets ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.server_secrets FROM PUBLIC, anon, authenticated;
 GRANT ALL ON public.server_secrets TO service_role;
+DROP POLICY IF EXISTS "service_role_full_access_server_secrets" ON public.server_secrets;
+CREATE POLICY "service_role_full_access_server_secrets" ON public.server_secrets FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 -- Cover the queue's product foreign key to avoid unnecessary scans.
 CREATE INDEX IF NOT EXISTS idx_social_publish_queue_product_slug
