@@ -50,6 +50,7 @@ console.log(`[Nova Publisher] Başlatıldı. Worker ID: ${WORKER_ID} | DRY_RUN: 
 // Graceful Shutdown Kontrolleri
 let isShuttingDown = false;
 let isTaskRunning = false;
+let currentRunningTaskId = null;
 
 // Token ve Gizli Bilgileri Loglardan Ayıklayan Fonksiyon
 function sanitize(text) {
@@ -150,7 +151,8 @@ async function executePublish(task) {
       });
       const containerData = await containerRes.json().catch(() => ({}));
       if (!containerRes.ok || !containerData.id) {
-        throw new Error(`Meta Container Hatası: ${sanitize(containerData?.error?.message || 'Konteyner oluşturulamadı')}`);
+        const errMsg = (containerData && containerData.error && containerData.error.message) || 'Konteyner oluşturulamadı';
+        throw new Error(`Meta Container Hatası: ${sanitize(errMsg)}`);
       }
 
       const creationId = containerData.id;
@@ -210,7 +212,8 @@ async function executePublish(task) {
       const pubData = await pubRes.json().catch(() => ({}));
 
       if (!pubRes.ok || !pubData.id) {
-        throw new Error(`Meta Publish Hatası: ${sanitize(pubData?.error?.message || 'Yayınlanamadı')}`);
+        const errMsg = (pubData && pubData.error && pubData.error.message) || 'Yayınlanamadı';
+        throw new Error(`Meta Publish Hatası: ${sanitize(errMsg)}`);
       }
 
       return {
@@ -238,14 +241,16 @@ async function executePublish(task) {
         const upRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photos`, { method: 'POST', body: upParams });
         const upData = await upRes.json().catch(() => ({}));
         if (!upRes.ok || !upData.id) {
-          throw new Error(`Facebook Story Yükleme Hatası: ${sanitize(upData?.error?.message)}`);
+          const errMsg = (upData && upData.error && upData.error.message) || 'Bilinmeyen hata';
+          throw new Error(`Facebook Story Yükleme Hatası: ${sanitize(errMsg)}`);
         }
 
         const stParams = new URLSearchParams({ photo_id: upData.id, access_token: pageAccessToken });
         const stRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photo_stories`, { method: 'POST', body: stParams });
         const stData = await stRes.json().catch(() => ({}));
         if (!stRes.ok || (!stData.post_id && !stData.success)) {
-          throw new Error(`Facebook Story Yayın Hatası: ${sanitize(stData?.error?.message)}`);
+          const errMsg = (stData && stData.error && stData.error.message) || 'Bilinmeyen hata';
+          throw new Error(`Facebook Story Yayın Hatası: ${sanitize(errMsg)}`);
         }
 
         return { status: 'published', platformPostId: stData.post_id || upData.id, rawResponse: stData };
@@ -263,7 +268,8 @@ async function executePublish(task) {
       });
       const fbData = await fbRes.json().catch(() => ({}));
       if (!fbRes.ok || (!fbData.id && !fbData.post_id)) {
-        throw new Error(`Facebook Gönderi Hatası: ${sanitize(fbData?.error?.message)}`);
+        const errMsg = (fbData && fbData.error && fbData.error.message) || 'Bilinmeyen hata';
+        throw new Error(`Facebook Gönderi Hatası: ${sanitize(errMsg)}`);
       }
 
       return {
@@ -302,11 +308,14 @@ async function executePublish(task) {
       });
       const initData = await initRes.json().catch(() => ({}));
 
-      if (!initRes.ok || initData.error?.code !== 'ok' || !initData.data?.publish_id) {
-        throw new Error(`TikTok Başlatma Hatası (HTTP ${initRes.status}): ${sanitize(initData.error?.message || 'Bilinmeyen TikTok hatası')}`);
+      const initErrCode = initData && initData.error ? initData.error.code : null;
+      const initPublishId = initData && initData.data ? initData.data.publish_id : null;
+      if (!initRes.ok || initErrCode !== 'ok' || !initPublishId) {
+        const errMsg = (initData && initData.error && initData.error.message) || 'Bilinmeyen TikTok hatası';
+        throw new Error(`TikTok Başlatma Hatası (HTTP ${initRes.status}): ${sanitize(errMsg)}`);
       }
 
-      const publishId = initData.data.publish_id;
+      const publishId = initPublishId;
 
       // Adım 2: Yayın Durumunu (/status/fetch/) Sorgulayarak Doğrula
       let verifiedStatus = 'PROCESSING';
@@ -339,18 +348,21 @@ async function executePublish(task) {
         const statusData = await statusRes.json().catch(() => ({}));
         statusDetails = statusData;
 
-        if (statusData?.error?.code !== 'ok') {
-          throw new Error(`TikTok Status API Hatası: ${sanitize(statusData?.error?.message || 'Hata kodu alındı')}`);
+        const statErrCode = statusData && statusData.error ? statusData.error.code : null;
+        if (statErrCode !== 'ok') {
+          const errMsg = (statusData && statusData.error && statusData.error.message) || 'Hata kodu alındı';
+          throw new Error(`TikTok Status API Hatası: ${sanitize(errMsg)}`);
         }
 
-        const currentStatus = statusData?.data?.status;
+        const currentStatus = statusData && statusData.data ? statusData.data.status : null;
         if (currentStatus === 'PUBLISH_COMPLETE') {
           verifiedStatus = 'PUBLISH_COMPLETE';
           break;
         }
 
         if (currentStatus === 'FAILED') {
-          throw new Error(`TikTok yayın işleme hatası: ${sanitize(statusData?.data?.fail_reason || 'Bilinmeyen neden')}`);
+          const failReason = (statusData && statusData.data && statusData.data.fail_reason) || 'Bilinmeyen neden';
+          throw new Error(`TikTok yayın işleme hatası: ${sanitize(failReason)}`);
         }
       }
 
@@ -409,6 +421,7 @@ async function pollQueueCycle() {
 
     const task = tasks[0];
     isTaskRunning = true;
+    currentRunningTaskId = task.task_id;
 
     try {
       const result = await executePublish(task);
@@ -426,8 +439,9 @@ async function pollQueueCycle() {
 
       // KRİTİK DOĞRULAMA: Hem error hem de return değerini kontrol et
       if (completeError || completedSuccessfully !== true) {
+        const errMsg = (completeError && completeError.message) || 'v_updated = 0';
         console.error(
-          `[RPC Başarısız] Görev veritabanında güncellenemedi (Kilit süresi dolmuş veya başka worker devralmış olabilir) - Görev ID: ${task.task_id} - Hata: ${sanitize(completeError?.message || 'v_updated = 0')}`
+          `[RPC Başarısız] Görev veritabanında güncellenemedi (Kilit süresi dolmuş veya başka worker devralmış olabilir) - Görev ID: ${task.task_id} - Hata: ${sanitize(errMsg)}`
         );
       } else {
         console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
@@ -462,6 +476,7 @@ async function pollQueueCycle() {
       }
     } finally {
       isTaskRunning = false;
+      currentRunningTaskId = null;
     }
   } catch (cycleErr) {
     console.error('[Döngü Hatası]:', sanitize(cycleErr.message));
@@ -487,7 +502,23 @@ async function handleShutdown(signal) {
     }
 
     if (isTaskRunning) {
-      console.error('[CRITICAL] Devam eden görev 35 saniyede bitmedi. Süre aşımı nedeniyle process.exit(1) ile çıkılıyor.');
+      console.error('[CRITICAL] Devam eden görev 35 saniyede bitmedi. Zorunlu kapatma öncesi belirsiz görev reconciliation_required durumuna alınıyor...');
+      if (currentRunningTaskId) {
+        try {
+          await supabase.rpc('complete_publish_task', {
+            p_task_id: currentRunningTaskId,
+            p_worker_id: WORKER_ID,
+            p_status: 'reconciliation_required',
+            p_platform_post_id: null,
+            p_platform_response: null,
+            p_error_message: '[Shutdown Timeout] Süreç zorunlu kapatıldı (SIGTERM/SIGINT zaman aşımı). Görev durumu belirsiz.',
+            p_backoff_minutes: 5
+          });
+        } catch (termRpcErr) {
+          const errMsg = termRpcErr && termRpcErr.message ? termRpcErr.message : 'Bilinmeyen hata';
+          console.error('[Shutdown RPC Hatası]:', sanitize(errMsg));
+        }
+      }
       process.exit(1);
     }
   }

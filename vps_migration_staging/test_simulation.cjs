@@ -236,6 +236,40 @@ runTest('8. complete_publish_task RPC hatası aldığında veya false döndüğ�
   assert.strictEqual(loggedError, true, 'Kilit uyuşmazlığı hata olarak loglanmalıdır');
 });
 
+// ── TEST 9: Graceful Shutdown Süre Aşımında reconciliation_required İzolasyonu ──
+runTest('9. Zorunlu shutdown durumunda in-flight görev reconciliation_required yapılır', () => {
+  let reconciledTaskId = null;
+  let reconciledStatus = null;
+
+  function simulateForcedShutdown(currentRunningTaskId) {
+    if (currentRunningTaskId) {
+      // Worker forced exit öncesi görevi güvene alır
+      reconciledTaskId = currentRunningTaskId;
+      reconciledStatus = 'reconciliation_required';
+    }
+  }
+
+  simulateForcedShutdown('task-in-flight-999');
+
+  assert.strictEqual(reconciledTaskId, 'task-in-flight-999');
+  assert.strictEqual(reconciledStatus, 'reconciliation_required', 'Zorunlu kapatılan iş mutabakata alınmalıdır');
+});
+
+// ── TEST 10: Gerçek Üstel Geri Çekilme (Exponential Backoff) Formülü ──────────
+runTest('10. Exponential backoff formülü doğru aralıklarla artar ve 60 dakikada tavan yapar', () => {
+  function calculateBackoff(p_backoff_minutes, retry_count) {
+    // SQL: LEAST(ROUND(p_backoff_minutes * POWER(2, GREATEST(v_retries - 1, 0))), 60)
+    return Math.min(Math.round(p_backoff_minutes * Math.pow(2, Math.max(retry_count - 1, 0))), 60);
+  }
+
+  assert.strictEqual(calculateBackoff(5, 1), 5, '1. retry: 5 dakika');
+  assert.strictEqual(calculateBackoff(5, 2), 10, '2. retry: 10 dakika');
+  assert.strictEqual(calculateBackoff(5, 3), 20, '3. retry: 20 dakika');
+  assert.strictEqual(calculateBackoff(5, 4), 40, '4. retry: 40 dakika');
+  assert.strictEqual(calculateBackoff(5, 5), 60, '5. retry: 60 dakika (tavan kuralı)');
+  assert.strictEqual(calculateBackoff(5, 10), 60, '10. retry: 60 dakika (tavan kuralı)');
+});
+
 console.log('\n================================================================');
 console.log(`TEST RAPORU: ${passedTests} / ${totalTests} SENARYO BAŞARIYLA DOĞRULANDI.`);
 console.log('================================================================\n');

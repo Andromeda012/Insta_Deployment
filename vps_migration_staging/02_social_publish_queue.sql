@@ -203,6 +203,7 @@ BEGIN
     IF v_current_status IS NULL 
        OR v_current_status <> 'processing' 
        OR v_current_worker <> p_worker_id 
+       OR v_locked_until IS NULL
        OR v_locked_until < NOW() THEN
         RETURN FALSE;
     END IF;
