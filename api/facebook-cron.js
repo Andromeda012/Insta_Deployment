@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto';
 // ============================================================================
 // Nova Furniture (@thenovafurniture) — Facebook Autonomous Scheduler
 // Endpoint: https://insta-deployment-rho.vercel.app/api/facebook-cron
@@ -47,12 +48,26 @@ async function saveFbState(state) {
   } catch (_) {}
 }
 
-export default async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+function isAuthorizedCronRequest(req) {
+  const secret = process.env.CRON_SECRET || '';
+  const authorization = req.headers?.authorization || '';
+  if (!secret || !authorization.startsWith('Bearer ')) return false;
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  const supplied = Buffer.from(authorization.slice(7));
+  const expected = Buffer.from(secret);
+  return supplied.length === expected.length && timingSafeEqual(supplied, expected);
+}
+
+export default async function handler(req, res) {
+  if (req.method !== 'GET') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed.' });
+  }
+  if (!process.env.CRON_SECRET) {
+    return res.status(503).json({ ok: false, error: 'CRON_SECRET yapılandırılmamış; zamanlayıcı güvenlik nedeniyle kapalı.' });
+  }
+  if (!isAuthorizedCronRequest(req)) {
+    return res.status(401).json({ ok: false, error: 'Unauthorized.' });
+  }
 
   try {
     if (!SUPABASE_KEY) return res.status(500).json({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil; kuyruk işlemi durduruldu.' });
