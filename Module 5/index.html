@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modül 5 — Altyapı, Entegrasyonlar & Teknoloji Envanteri</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0F1D;
+      --card-bg: #111B2E;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --accent-blue: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-purple: #A855F7;
+      --accent-pink: #EC4899;
+      --accent-gold: #D4AF37;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --navy-dark: #0B1120;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.08), transparent 30%),
+                  radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 32px 60px;
+    }
+
+    /* Üst Navigasyon & Header */
+    .header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      padding: 20px 28px;
+      background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(56, 189, 248, 0.28);
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #38BDF8, #6366F1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
+    }
+
+    .header-titles h1 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+
+    .header-titles p {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 700;
+      transition: all 0.2s ease;
+    }
+
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: translateY(-1px);
+    }
+
+    /* Mimari Bilgi Bannerı */
+    .arch-banner {
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.9));
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-left: 6px solid #D4AF37;
+      border-radius: 14px;
+      padding: 18px 24px;
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .arch-banner-text h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: #FDE68A;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .arch-banner-text p {
+      font-size: 13px;
+      color: #E2E8F0;
+      line-height: 1.6;
+      max-width: 950px;
+    }
+
+    /* KPI Metrik Kartları */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 18px;
+      margin-bottom: 32px;
+    }
+
+    .kpi-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, #38BDF8, #A855F7);
+    }
+
+    .kpi-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .kpi-val {
+      font-size: 26px;
+      font-weight: 900;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .kpi-sub {
+      font-size: 12px;
+      color: #94A3B8;
+      margin-top: 6px;
+    }
+
+    /* Filtre ve Arama Barı */
+    .filter-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .filter-tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #94A3B8;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-tab:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .filter-tab.active {
+      background: #38BDF8;
+      color: #0B1120;
+      border-color: #38BDF8;
+    }
+
+    .search-input {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: #fff;
+      font-size: 13px;
+      font-family: inherit;
+      width: 280px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border-color: #38BDF8;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+    }
+
+    /* Teknoloji Kartları Grid */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+
+    .tech-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .tech-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 32px rgba(0,0,0,0.5);
+      border-color: rgba(56, 189, 248, 0.4);
+    }
+
+    .tech-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tech-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tech-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .tech-title-wrap h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .tech-category {
+      font-size: 11px;
+      font-weight: 700;
+      color: #94A3B8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 2px;
+    }
+
+    /* Durum Rozetleri */
+    .status-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+
+    .status-badge.active {
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+
+    .status-badge.ready {
+      background: rgba(212, 175, 55, 0.15);
+      color: #FDE68A;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+    }
+
+    .status-badge.integrated {
+      background: rgba(56, 189, 248, 0.15);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+
+    .status-badge.planned {
+      background: rgba(168, 85, 247, 0.15);
+      color: #C084FC;
+      border: 1px solid rgba(168, 85, 247, 0.35);
+    }
+
+    .tech-desc {
+      font-size: 13px;
+      color: #CBD5E1;
+      line-height: 1.55;
+      margin-bottom: 16px;
+    }
+
+    .tech-meta-list {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tech-meta-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tech-meta-label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    .tech-meta-val {
+      font-weight: 700;
+      color: #F1F5F9;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    /* Mimari Akış Şeması Kartı */
+    .arch-flow-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 26px 30px;
+      margin-bottom: 40px;
+    }
+
+    .arch-flow-card h2 {
+      font-size: 18px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .flow-step {
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+
+    .flow-num {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(56, 189, 248, 0.2);
+      color: #38BDF8;
+      border: 1px solid #38BDF8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .flow-step-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .flow-step-desc {
+      font-size: 12px;
+      color: #94A3B8;
+      line-height: 1.5;
+    }
+
+    /* Güvenlik & Not Alanı */
+    .security-note {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 16px 20px;
+      font-size: 12.5px;
+      color: #94A3B8;
+      line-height: 1.6;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .security-icon {
+      font-size: 24px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER BAR -->
+  <header class="header-bar">
+    <div class="header-left">
+      <div class="header-icon">🛡️</div>
+      <div class="header-titles">
+        <h1>Modül 5: Altyapı, Entegrasyonlar &amp; Teknoloji Envanteri</h1>
+        <p>Global Mobilya &amp; Nova Furniture operasyonunda kullanılan ve planlanan tüm donanım, bulut ve API ekosistemi.</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="/index.html#dashboard" class="back-btn">
+        <span>←</span> Ana Platforma Dön
+      </a>
+    </div>
+  </header>
+
+  <!-- MİMARİ ÖZET BANNER -->
+  <div class="arch-banner">
+    <div class="arch-banner-text">
+      <h3>🏛️ Kurumsal Mimari &amp; Entegrasyon Standartları</h3>
+      <p>
+        Bu panel şirket yöneticilerinin, yazılımcıların ve operasyon ekiplerinin sistemde hangi teknolojilerin ne amaçla çalıştığını şeffafça görebilmesi için tasarlanmıştır. Güvenlik politikaları gereği canlı API anahtarları doğrudan sunulmaz; her servisin üstlendiği görev, bağlantı protokolü ve mevcut operasyonel durumu aşağıda listelenmiştir.
+      </p>
+    </div>
+    <div>
+      <span class="status-badge active" style="font-size:12px; padding:6px 14px;">
+        🟢 16 Servis &amp; Teknoloji Kayıtlı
+      </span>
+    </div>
+  </div>
+
+  <!-- KPI KARTLARI -->
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-label">Aktif &amp; Canlı Servisler</div>
+      <div class="kpi-val" style="color:#10B981;">7 <span style="font-size:14px; color:#34D399;">/ 16</span></div>
+      <div class="kpi-sub">GitHub, Vercel, Supabase, Gemini, WhatsApp vb.</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Hazır &amp; Otomasyonda</div>
+      <div class="kpi-val" style="color:#38BDF8;">4 <span style="font-size:14px; color:#7DD3FC;">/ 16</span></div>
+      <div class="kpi-sub">Photoroom (Mock Aktif), TikTok, YouTube, FB</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Yol Haritası (Planlanan)</div>
+      <div class="kpi-val" style="color:#A855F7;">5 <span style="font-size:14px; color:#D8B4FE;">Gelecek</span></div>
+      <div class="kpi-sub">Cloudflare, Sentry, PayTR, Resend e-posta</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Aylık Altyapı Maliyeti</div>
+      <div class="kpi-val" style="color:#FDE68A;">₺0 <span style="font-size:13px; font-weight:600; color:#94A3B8;">(Free Tier Optimize)</span></div>
+      <div class="kpi-sub">Vercel Hobby + Supabase Free + Gemini Kota</div>
+    </div>
+  </div>
+
+  <!-- MİMARİ VERİ AKIŞ ŞEMASI -->
+  <div class="arch-flow-card">
+    <h2>🔄 Uçtan Uca Sistem Entegrasyon Akışı</h2>
+    <p style="font-size:13px; color:#94A3B8;">Bir ürünün sisteme eklenmesinden müşteriye satışa dönüşmesine kadarki teknoloji zinciri:</p>
+    
+    <div class="flow-steps">
+      <div class="flow-step">
+        <div class="flow-num">1</div>
+        <div class="flow-step-title">Katalog &amp; Veritabanı</div>
+        <div class="flow-step-desc"><strong>Supabase DB &amp; Storage</strong> ham ürün fotoğraflarını ve ölçü/özellik detaylarını saklar.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">2</div>
+        <div class="flow-step-title">Görsel Sentezi</div>
+        <div class="flow-step-desc"><strong>Photoroom API</strong> sabit İskandinav prompt'u ile mobilyayı lüks odaya oturtur ve detay post üretir.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">3</div>
+        <div class="flow-step-title">Sunucusuz Dağıtım</div>
+        <div class="flow-step-desc"><strong>Vercel Serverless &amp; Cron</strong> 4 bota (IG, FB, TT, YT) saatinde yayın komutu verir.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">4</div>
+        <div class="flow-step-title">Sosyal Yayın &amp; Botlar</div>
+        <div class="flow-step-desc"><strong>Meta, TikTok, YouTube APIs</strong> Reels, Post ve Story formatlarını takipçilere iletir.</div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-num">5</div>
+        <div class="flow-step-title">Yapay Zeka &amp; Satış</div>
+        <div class="flow-step-desc"><strong>Gemini AI</strong> yorum ve DM'leri yanıtlar; özel ölçüde <strong>WhatsApp</strong> hattına devreder.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FİLTRE VE ARAMA -->
+  <div class="filter-bar">
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="filterTech('all')">Tüm Ekipmanlar (16)</button>
+      <button class="filter-tab" onclick="filterTech('active')">🟢 Aktif &amp; Canlıda (7)</button>
+      <button class="filter-tab" onclick="filterTech('ready')">🟡 Hazır / Entegre (4)</button>
+      <button class="filter-tab" onclick="filterTech('planned')">🟣 Gelecek / Planlanan (5)</button>
+    </div>
+    <div>
+      <input type="text" class="search-input" id="techSearch" placeholder="Teknoloji, servis veya işlev ara..." oninput="searchTech(this.value)">
+    </div>
+  </div>
+
+  <!-- TEKNOLOJİ KARTLARI -->
+  <div class="tech-grid" id="techGrid">
+    <!-- JS İLE DİNAMİK LİSTELENİR -->
+  </div>
+
+  <!-- GÜVENLİK VE ETİKET NOTU -->
+  <div class="security-note">
+    <div class="security-icon">🔒</div>
+    <div>
+      <strong>Güvenlik ve İzolasyon Notu:</strong> 
+      Tüm harici API anahtarları Vercel Environment Variables (`process.env`) üzerinde şifrelenmiştir ve istemci tarafına (frontend) asla açık edilmez. Sosyal medya botları kurumsal web sitesinden bağımsız olarak <strong>Nova Furniture</strong> kimliğiyle çalışır.
+    </div>
+  </div>
+
+  <script>
+    const TECH_STACK = [
+      // 1. DAĞITIM, KOD & BARINDIRMA
+      {
+        id: 'github',
+        name: 'GitHub',
+        category: 'Kod & CI/CD Dağıtımı',
+        icon: '🐙',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: 'Tüm platformun ve web sitesinin kaynak kod versiyon kontrolü, branch yönetimi ve Vercel otomatik deployment tetikleyicisi.',
+        module: 'Tüm Modüller',
+        protocol: 'Git / Webhook / CI-CD',
+        role: 'Kaynak Kod & Sürekli Entegrasyon'
+      },
+      {
+        id: 'vercel',
+        name: 'Vercel Serverless Platform',
+        category: 'Barındırma & Edge API',
+        icon: '▲',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: '7/24 kesintisiz web barındırma, 10 adet Serverless Function (Hobby Plan optimize), otomatik Cron Jobs ve küresel CDN dağıtımı.',
+        module: 'Modül 1, 2, 5',
+        protocol: 'Serverless Functions / Edge CDN',
+        role: 'Bulut Altyapısı & Zamanlayıcı Motor'
+      },
+      {
+        id: 'custom_domain',
+        name: 'Custom Domain & SSL (DNS)',
+        category: 'Alan Adı & Ağ Güvenliği',
+        icon: '🌐',
+        status: 'planned',
+        statusLabel: '🟣 Gelecek / Planlanan',
+        desc: 'Global Mobilya ve Nova Furniture için kurumsal alan adlarının (domain), CNAME kayıtlarının ve Let\'s Encrypt SSL sertifikalarının yönlendirilmesi.',
+        module: 'Modül 1, Modül 2',
+        protocol: 'DNS / TLS 1.3 / HTTPS',
+        role: 'Marka Alan Adı & Güvenli Bağlantı'
+      },
+
+      // 2. VERİTABANI & DEPOLAMA
+      {
+        id: 'supabase_db',
+        name: 'Supabase (PostgreSQL)',
+        category: 'Merkezi Veritabanı',
+        icon: '⚡',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: 'Ürün kataloğu (90-100 model), bot durumları, kampanya varlıkları, müşteri etkileşimleri ve sipariş kayıtlarının saklandığı bulut PostgreSQL veri tabanı.',
+        module: 'Modül 1, 2, 4, 7',
+        protocol: 'RESTful API / PostgREST / RLS',
+        role: 'Merkezi İlişkisel Veri Deposu'
+      },
+      {
+        id: 'supabase_storage',
+        name: 'Supabase Storage Buckets',
+        category: 'Medya & Dosya Depolama',
+        icon: '📦',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: 'Ham ürün fotoğrafları, Photoroom mimari renderları, Reels MP4 videoları ve SVG şablonlarının barındırıldığı genel erişimli medya bulutu.',
+        module: 'Modül 2, Modül 7',
+        protocol: 'S3 Uyumlu Object Storage',
+        role: 'Sosyal Medya Medya CDN Havuzu'
+      },
+
+      // 3. YAPAY ZEKA & GÖRSEL MOTORLARI
+      {
+        id: 'photoroom_api',
+        name: 'Photoroom API',
+        category: 'Yapay Zeka Görsel Sentezi',
+        icon: '✨',
+        status: 'ready',
+        statusLabel: '🟡 Hazır (Sandbox Aktif)',
+        desc: 'Katalogdaki dekupe fotoğrafları alıp sabit lüks İskandinav promptu + Supabase verileriyle arka planını yeniden tasarlayan görsel motoru. API key eklendiğinde doğrudan canlı API devralır.',
+        module: 'Modül 2 (Tüm Botlar)',
+        protocol: 'REST API / Multipart Image API',
+        role: 'Otonom Oda Arka Planı Tasarımı'
+      },
+      {
+        id: 'gemini_ai',
+        name: 'Google Gemini 2.5 Flash / Pro',
+        category: 'Yapay Zeka Sohbet & Yorum',
+        icon: '🧠',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: 'Görsel üretiminden bağımsız olarak gönderi altına gelen yorumları ("Fiyat nedir?") anında algılar, kurumsal yanıt üretir ve DM kutusunda canlı satış danışmanı gibi sohbet eder.',
+        module: 'Modül 2 (DM & Yorumlar)',
+        protocol: 'Generative Language API (REST)',
+        role: 'Müşteri İletişim & DM Satış Danışmanı'
+      },
+      {
+        id: 'canvas_recorder',
+        name: 'HTML5 Canvas & MediaRecorder',
+        category: 'Tarayıcı Video/Görsel Motoru',
+        icon: '🎬',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: '60 FPS Ken Burns kamera hareketi (zoom/pan) ile doğrudan istemcide ve sunucuda sıfır maliyetle gerçek MP4 Reels videosu ve 1080x1080 split-spec post grafik kaydı üretir.',
+        module: 'Modül 2 (Reels & Post)',
+        protocol: 'Web MediaRecorder API / 2D Canvas',
+        role: 'Dinamik Video & Post Oluşturucu'
+      },
+
+      // 4. SOSYAL MEDYA & BOT GRAFİK APILERİ
+      {
+        id: 'meta_instagram',
+        name: 'Meta Graph API (Instagram)',
+        category: 'Sosyal Medya Otomasyonu',
+        icon: '📸',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: '@thenovafurniture hesabına Reels video konteyneri, 1080x1080 detay post ve story otomatik yayınlama, yorum/DM webhooks dinleme.',
+        module: 'Modül 2 (Instagram Bot)',
+        protocol: 'Meta Graph API v20.0',
+        role: 'Instagram Otonom Yayın & DM Botu'
+      },
+      {
+        id: 'meta_facebook',
+        name: 'Facebook Pages & Messenger API',
+        category: 'Sosyal Medya Otomasyonu',
+        icon: '📘',
+        status: 'ready',
+        statusLabel: '🟡 Entegre & Yayında',
+        desc: 'Kurumsal Facebook sayfasına detay post ve reels videoları paylaşımı, Messenger üzerinden gelen müşteri sorularını 3 aşamalı yanıtlama.',
+        module: 'Modül 2 (Facebook Bot)',
+        protocol: 'Facebook Graph API / Webhooks',
+        role: 'Facebook Sayfa & Messenger Botu'
+      },
+      {
+        id: 'tiktok_api',
+        name: 'TikTok Content Posting API (v2)',
+        category: 'Sosyal Medya Otomasyonu',
+        icon: '🎵',
+        status: 'ready',
+        statusLabel: '🟡 Entegre & Yayında',
+        desc: '9:16 dikey sahne ve üretim videolarını TikTok kanalında paylaşma, B2B ve tüketici kanca (hook) başlıklarını otomatik yayınlama.',
+        module: 'Modül 2 (TikTok Bot)',
+        protocol: 'TikTok Open API v2 / Webhooks',
+        role: 'TikTok Otonom Video Yayıncısı'
+      },
+      {
+        id: 'youtube_api',
+        name: 'YouTube Data API v3',
+        category: 'Sosyal Medya Otomasyonu',
+        icon: '🔴',
+        status: 'ready',
+        statusLabel: '🟡 Entegre & Yayında',
+        desc: 'YouTube Shorts kanalına 9:16 dikey video yükleme, SEO etiketleme (#Shorts) ve WhatsApp sipariş hattı içeren ilk yorumu otomatik sabitleme.',
+        module: 'Modül 2 (YouTube Bot)',
+        protocol: 'Google Cloud YouTube Data v3',
+        role: 'YouTube Shorts Otonom Yayıncısı'
+      },
+
+      // 5. İLETİŞİM & SATIŞ
+      {
+        id: 'whatsapp_direct',
+        name: 'WhatsApp Business (Click-to-Chat)',
+        category: 'Müşteri Devir (Handoff)',
+        icon: '💬',
+        status: 'active',
+        statusLabel: '🟢 Aktif & Canlıda',
+        desc: 'Yapay zekanın müşteriye özel fiyat veya usta görüşmesi gerektiğinde doğrudan fabrika satış hattına (0 505 015 1035) yönlendirdiği 3. Aşama İnsan Devir köprüsü.',
+        module: 'Modül 1, 2, 3',
+        protocol: 'wa.me Deep-link / WhatsApp API',
+        role: '3. Aşama Satış & İnsan Devir Hattı'
+      },
+
+      // 6. PLANLANAN GELECEK TEKNOLOJİLER
+      {
+        id: 'cloudflare',
+        name: 'Cloudflare WAF & Security',
+        category: 'Siber Güvenlik & DDoS',
+        icon: '🛡️',
+        status: 'planned',
+        statusLabel: '🟣 Gelecek / Planlanan',
+        desc: 'Web sitesi ve API uç noktalarını zararlı botlardan, brute-force saldırılarından ve DDoS tehditlerinden koruyan kurumsal güvenlik kalkanı.',
+        module: 'Tüm Platform',
+        protocol: 'Cloudflare Edge Proxy / WAF',
+        role: 'Altyapı Güvenliği & Hızlandırma'
+      },
+      {
+        id: 'sentry_apm',
+        name: 'Sentry / APM Monitoring',
+        category: 'Hata İzleme & Analitik',
+        icon: '🚨',
+        status: 'planned',
+        statusLabel: '🟣 Gelecek / Planlanan',
+        desc: 'Arka planda çalışan Vercel Cron işlerinde veya Meta/TikTok API çağrılarında oluşabilecek istisnaları anında yakalayan hata izleme servisi.',
+        module: 'Modül 2, Modül 5',
+        protocol: 'Sentry SDK / Log Ingestion',
+        role: 'Otomasyon Hata Yakalama & Loglama'
+      },
+      {
+        id: 'paytr_stripe',
+        name: 'PayTR / İyzico / Stripe',
+        category: 'Online Ödeme & Tahsilat',
+        icon: '💳',
+        status: 'planned',
+        statusLabel: '🟣 Gelecek / Planlanan',
+        desc: 'Web sitesi üzerinden veya WhatsApp siparişlerinde müşterilerden güvenli kaparo ve online kredi kartı tahsilatı alma altyapısı.',
+        module: 'Modül 1, Modül 3, Modül 4',
+        protocol: '3D Secure Hosted Payment API',
+        role: 'Güvenli Çevrim İçi Tahsilat Sistemi'
+      },
+      {
+        id: 'resend_mail',
+        name: 'Resend / SendGrid E-posta',
+        category: 'İşlem E-postaları & Bildirim',
+        icon: '✉️',
+        status: 'planned',
+        statusLabel: '🟣 Gelecek / Planlanan',
+        desc: 'Fabrika atölyesine yeni sipariş PDF iş emirlerinin iletilmesi ve yönetime günlük bot performans özetlerinin e-postalanması.',
+        module: 'Modül 4, Modül 6',
+        protocol: 'SMTP / Transactional REST API',
+        role: 'Otomatik İş Emri & Rapor Bildirimi'
+      }
+    ];
+
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    function renderTechGrid() {
+      const grid = document.getElementById('techGrid');
+      if (!grid) return;
+
+      const filtered = TECH_STACK.filter(item => {
+        const matchesFilter = (currentFilter === 'all') || (item.status === currentFilter);
+        const matchesSearch = !searchQuery || 
+          item.name.toLowerCase().includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery) ||
+          item.desc.toLowerCase().includes(searchQuery) ||
+          item.role.toLowerCase().includes(searchQuery);
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 48px; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px dashed rgba(255,255,255,0.1);">
+            <div style="font-size: 32px; margin-bottom: 10px;">🔍</div>
+            <h3 style="color:#fff; font-size:16px;">Aradığınız kriterlere uygun teknoloji bulunamadı.</h3>
+            <p style="color:#94A3B8; font-size:13px; margin-top:4px;">Arama terimini değiştirin veya filtreyi sıfırlayın.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map(item => `
+        <div class="tech-card">
+          <div>
+            <div class="tech-top">
+              <div class="tech-brand">
+                <div class="tech-logo">${item.icon}</div>
+                <div class="tech-title-wrap">
+                  <h3>${item.name}</h3>
+                  <div class="tech-category">${item.category}</div>
+                </div>
+              </div>
+              <span class="status-badge ${item.status}">
+                ${item.statusLabel}
+              </span>
+            </div>
+
+            <p class="tech-desc">${item.desc}</p>
+          </div>
+
+          <div class="tech-meta-list">
+            <div class="tech-meta-item">
+              <span class="tech-meta-label">Sistemdeki Görevi:</span>
+              <span class="tech-meta-val" style="color:#38BDF8;">${item.role}</span>
+            </div>
+            <div class="tech-meta-item">
+              <span class="tech-meta-label">İlgili Modül:</span>
+              <span class="tech-meta-val">${item.module}</span>
+            </div>
+            <div class="tech-meta-item">
+              <span class="tech-meta-label">Protokol / Tür:</span>
+              <span class="tech-meta-val" style="color:#CBD5E1;">${item.protocol}</span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function filterTech(status) {
+      currentFilter = status;
+      document.querySelectorAll('.filter-tab').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('onclick').includes(`'${status}'`));
+      });
+      renderTechGrid();
+    }
+
+    function searchTech(val) {
+      searchQuery = (val || '').trim().toLowerCase();
+      renderTechGrid();
+    }
+
+    // İlk Yükleme
+    renderTechGrid();
+  </script>
+</body>
+</html>
