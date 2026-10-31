@@ -34,6 +34,8 @@ jobs:
           node --check api/facebook-cron.js
           node --check gemini-banana-engine.js
           node --check vps_migration_staging/publisher/scheduler.js
+          node --check vps_migration_staging/publisher/gemini-banana-engine.js
+          node --check vps_migration_staging/publisher/scheduler.js
           node --check vps_migration_staging/publisher/index.js
           node --check vps_migration_staging/publisher/http-client.cjs
 
