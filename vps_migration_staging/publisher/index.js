@@ -53,6 +53,7 @@ console.log(`[Nova Publisher] Başlatıldı. Worker ID: ${WORKER_ID} | DRY_RUN: 
 // Graceful Shutdown Kontrolleri
 let isShuttingDown = false;
 let isTaskRunning = false;
+let isClaimCycleRunning = false;
 let currentRunningTaskId = null;
 
 // Token ve Gizli Bilgileri Loglardan Ayıklayan Fonksiyon
@@ -455,7 +456,9 @@ async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, er
 }
 
 async function pollQueueCycle() {
-  if (isShuttingDown || isTaskRunning) return;
+  // Acquire the in-process mutex synchronously before the first await.
+  if (isShuttingDown || isTaskRunning || isClaimCycleRunning) return;
+  isClaimCycleRunning = true;
 
   try {
     // Adım 1: Atomik Görev Talebi (FOR UPDATE SKIP LOCKED)
@@ -516,20 +519,6 @@ async function pollQueueCycle() {
             if (trackerWriteError) console.error(`[Tracker] Yazılamadı (${trackerKey}): ${sanitize(trackerWriteError.message)}`);
           }
         }
-        await syncAdminPanelStatus(task, result.status, result.platformPostId, result.errorMessage);
-        if (result.status === 'published' && task.product_slug) {
-          const trackerKey = `${task.platform}_published_tracker`;
-          const { data: trackerRow, error: trackerReadError } = await supabase.from('site_settings').select('data').eq('key', trackerKey).maybeSingle();
-          if (trackerReadError) console.error('[Tracker] Okunamadı: ' + sanitize(trackerReadError.message));
-          else {
-            const tracker = trackerRow && trackerRow.data && typeof trackerRow.data === 'object' ? trackerRow.data : {};
-            const formats = Array.isArray(tracker[task.product_slug]) ? tracker[task.product_slug] : [];
-            if (!formats.includes(task.content_type)) formats.push(task.content_type);
-            tracker[task.product_slug] = formats;
-            const { error: trackerWriteError } = await supabase.from('site_settings').upsert({ key: trackerKey, data: tracker, updated_at: new Date().toISOString() });
-            if (trackerWriteError) console.error('[Tracker] Yazılamadı: ' + sanitize(trackerWriteError.message));
-          }
-        }
         console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
       }
     } catch (execErr) {
@@ -582,6 +571,8 @@ async function pollQueueCycle() {
     }
   } catch (cycleErr) {
     console.error('[Döngü Hatası]:', sanitize(cycleErr.message));
+  } finally {
+    isClaimCycleRunning = false;
   }
 }
 
@@ -597,7 +588,6 @@ async function handleShutdown(signal) {
   console.log(`\n[Shutdown] ${signal} sinyali alındı. Yeni görev alımı durduruldu. Kapanıyor...`);
   isShuttingDown = true;
   clearInterval(pollIntervalHandle);
-  if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
   if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
 
   if (isTaskRunning) {

@@ -110,6 +110,10 @@ export default async function handler(req, res) {
       return res.status(200).json({ ok: true, commentResults, dmResults });
     }
 
+    // Publishing is owned exclusively by the VPS scheduler. Keep this endpoint
+    // only for the explicitly requested comment/DM scan actions above.
+    return res.status(410).json({ ok: false, code: 'VPS_SCHEDULER_OWNS_PUBLISHING', message: 'Instagram yayın planlaması yalnızca VPS scheduler tarafından yürütülür.' });
+
     // ── OTONOM PLANLAMA VE SOCIAL_PUBLISH_QUEUE KUYRUĞUNA EKLEME ─────────────
     const catalog = await fetchProductsCatalog();
     if (!catalog || catalog.length === 0) {

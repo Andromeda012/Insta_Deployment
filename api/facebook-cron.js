@@ -59,6 +59,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ ok: false, error: 'Unauthorized.' });
   }
 
+  return res.status(410).json({ ok: false, code: 'VPS_SCHEDULER_OWNS_PUBLISHING', message: 'Facebook yayın planlaması yalnızca VPS scheduler tarafından yürütülür.' });
+
   try {
     if (!SUPABASE_KEY) return res.status(500).json({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil; kuyruk işlemi durduruldu.' });
     const stateRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data`, {

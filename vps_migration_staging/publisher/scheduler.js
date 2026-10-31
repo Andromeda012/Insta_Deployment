@@ -267,15 +267,18 @@ export async function checkAndEnqueueSlot({
   }
 
   const slotTime = (slot.time || '').trim();
-  if (!slotTime || !slotTime.includes(':')) {
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(slotTime)) {
     return { status: 'skipped', reason: 'INVALID_SLOT_TIME' };
   }
 
   const { dateStr, timeStr } = istanbulNow;
 
-  // Saat eşleşme kontrolü: Mevcut dakika slot dakikasıyla eşleşiyor mu?
-  if (timeStr !== slotTime) {
-    return { status: 'skipped', reason: 'TIME_NOT_MATCHED', expected: slotTime, current: timeStr };
+  // Catch up briefly if a scheduler tick is delayed; never enqueue stale slots.
+  const slotDate = new Date(getIstanbulSlotIso(dateStr, slotTime));
+  const nowDate = new Date(istanbulNow.isoIstanbul);
+  const minutesSinceSlot = (nowDate.getTime() - slotDate.getTime()) / 60000;
+  if (!Number.isFinite(minutesSinceSlot) || minutesSinceSlot < 0 || minutesSinceSlot > 10) {
+    return { status: 'skipped', reason: 'OUTSIDE_SLOT_WINDOW', expected: slotTime, current: timeStr, minutesSinceSlot };
   }
 
   // Bugün bu slot için bu platformda zaten bir görev oluşturulmuş mu?
@@ -464,11 +467,19 @@ export function startAutonomousScheduler(supabase, intervalMs = 30000, geminiApi
   const stateCache = {};
   console.log(`[Nova Scheduler Engine] Başlatıldı. Döngü aralığı: ${intervalMs / 1000} sn. Saat dilimi: Europe/Istanbul (UTC+3)`);
 
+  let cycleRunning = false;
   const runSafeCycle = async () => {
+    if (cycleRunning) {
+      console.warn('[Scheduler] Önceki döngü tamamlanmadığı için çakışan tetikleme atlandı.');
+      return;
+    }
+    cycleRunning = true;
     try {
       await runSchedulerCycle(supabase, stateCache, geminiApiKey);
     } catch (cycleErr) {
       console.error('[Scheduler Döngü Hatası]:', cycleErr.message);
+    } finally {
+      cycleRunning = false;
     }
   };
 
