@@ -12,7 +12,7 @@
 import GeminiBananaEngine from '../gemini-banana-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const DEFAULT_MEDIA_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
 async function fetchProductsCatalog() {
@@ -55,6 +55,7 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
+    if (!SUPABASE_KEY) return res.status(500).json({ ok: false, error: 'SUPABASE_SERVICE_ROLE_KEY tanımlı değil; kuyruk işlemi durduruldu.' });
     const stateRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data`, {
       headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
     });
@@ -68,16 +69,15 @@ export default async function handler(req, res) {
     }
 
     const now = new Date();
-    // Türkiye Yerel Saati (UTC+3)
-    const trOffset = 3 * 60;
-    const localNow = new Date(now.getTime() + (trOffset + now.getTimezoneOffset()) * 60000);
-    const todayStr = localNow.toISOString().slice(0, 10);
-    const currentHHMM = `${String(localNow.getHours()).padStart(2, '0')}:${String(localNow.getMinutes()).padStart(2, '0')}`;
+    const trParts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(now).reduce((a,p) => (a[p.type]=p.value,a), {});
+    const todayStr = `${trParts.year}-${trParts.month}-${trParts.day}`;
+    const currentHHMM = `${trParts.hour}:${trParts.minute}`;
+    const dayOfYear = Math.floor((Date.UTC(+trParts.year,+trParts.month-1,+trParts.day)-Date.UTC(+trParts.year,0,1))/86400000);
 
     const slots = [
       { name: 'fb_morning_post', time: '11:00', type: 'PHOTO_POST' },
       { name: 'fb_midday_post',  time: '14:00', type: 'PHOTO_POST' },
-      { name: 'fb_reels_video',  time: '18:00', type: 'VIDEO_REELS' }
+      { name: 'fb_evening_post', time: '18:00', type: 'PHOTO_POST' }
     ];
 
     const forceType = req.query && req.query.type ? String(req.query.type).toUpperCase() : null;
@@ -96,10 +96,9 @@ export default async function handler(req, res) {
     }
 
     const chosenType = activeSlot.type || 'PHOTO_POST';
+    if (chosenType === 'VIDEO_REELS' || chosenType === 'REELS') return res.status(400).json({ ok: false, error: 'Facebook Reels/video publisher henüz desteklenmediği için görev oluşturulmadı.' });
 
     // Günün ürünü seçimi: Yılın gününe göre deterministik dağılım
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
     const pickedProduct = catalog[dayOfYear % catalog.length];
 
     if (!pickedProduct || !pickedProduct.slug) {
@@ -117,7 +116,7 @@ export default async function handler(req, res) {
         campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
           product: pickedProduct,
           apiKey: process.env.GEMINI_API_KEY,
-          allowFallback: true
+          allowFallback: false
         });
       } catch (genErr) {
         console.error('[Facebook Cron] Gemini Banana görsel üretimi başarısız:', genErr.message);
@@ -129,17 +128,18 @@ export default async function handler(req, res) {
       }
     }
 
-    const isVideo = chosenType === 'VIDEO_REELS' || chosenType === 'REELS';
-    const finalType = isVideo ? 'VIDEO_REELS' : 'PHOTO_POST';
-    const targetMediaUrl = isVideo
-      ? (campaign.reels_video_url || campaign.banana_hero_vertical_url || campaign.post_image_url)
-      : campaign.post_image_url;
+    const finalType = 'PHOTO_POST';
+    const targetMediaUrl = campaign.post_image_url;
 
     // ── GERÇEK PLANLANAN YAYIN SAATİ HESAPLAMASI ────────────────────────────
-    const targetDate = new Date();
-    const [slotH, slotM] = (activeSlot.time || '12:00').split(':').map(Number);
-    targetDate.setHours(slotH || 12, slotM || 0, 0, 0);
-    const scheduledForIso = targetDate.toISOString();
+    const slotTime = activeSlot.time || '12:00';
+    const slotIso = (dateStr) => new Date(`${dateStr}T${slotTime}:00+03:00`).toISOString();
+    let scheduledForIso = slotIso(todayStr);
+    if (new Date(scheduledForIso).getTime() <= now.getTime()) {
+      const nextDay = new Date(Date.UTC(+trParts.year,+trParts.month-1,+trParts.day+1));
+      const nextDate = `${nextDay.getUTCFullYear()}-${String(nextDay.getUTCMonth()+1).padStart(2,'0')}-${String(nextDay.getUTCDate()).padStart(2,'0')}`;
+      scheduledForIso = slotIso(nextDate);
+    }
 
     // ── DETERMINİSTİK IDEMPOTENCY KEY OLUŞTURMA ─────────────────────────────
     const slotCode = (activeSlot.time || '1200').replace(':', '');
@@ -153,7 +153,8 @@ export default async function handler(req, res) {
       }
     });
 
-    const existingRows = checkRes.ok ? await checkRes.json() : [];
+    if (!checkRes.ok) throw new Error(`Idempotency kontrolü başarısız (HTTP ${checkRes.status}).`);
+    const existingRows = await checkRes.json();
     if (Array.isArray(existingRows) && existingRows.length > 0) {
       console.log(`[Facebook Cron] Idempotency: Görev zaten kuyrukta (${idempotencyKey}), mükerrer eklenmedi.`);
       return res.status(200).json({
@@ -193,6 +194,9 @@ export default async function handler(req, res) {
 
     if (!insertRes.ok) {
       const errTxt = await insertRes.text().catch(() => '');
+      if (insertRes.status === 409 || /23505|duplicate key/i.test(errTxt)) {
+        return res.status(200).json({ ok: true, duplicate_prevented: true, idempotency_key: idempotencyKey, message: 'Eşzamanlı istek nedeniyle mükerrer görev engellendi.' });
+      }
       console.error('[Facebook Cron] Kuyruğa yazma hatası:', errTxt);
       return res.status(500).json({ ok: false, error: `social_publish_queue ekleme hatası: ${errTxt}` });
     }
