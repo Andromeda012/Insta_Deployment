@@ -949,10 +949,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   <!-- ══════════════════════════════════════════════════════════ -->
   <div class="tab-section active" id="tab-products">
     
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px;">
-      <div style="display:flex; gap:8px;">
-        <button class="btn-primary btn-sm" id="btnSubList" onclick="switchProductSubTab('list')">📋 Ürün Listesi</button>
-        <button class="btn-gold btn-sm" id="btnSubAdd" onclick="startNewProduct()">➕ Yeni Ürün Ekle</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+      <div style="display:flex; gap:10px; align-items:center;">
+        <span class="btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; cursor:default;">📋 Web Sitesi Ürün Listesi</span>
+        <a href="/Module%207/index.html" class="btn-secondary btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
+          🛋️ Detaylar &amp; Database Kontrolü (Modül 7) →
+        </a>
       </div>
       <div style="display:flex; gap:10px;">
         <input type="text" class="form-control" id="productSearchBox" placeholder="🔍 Ürün ara..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="filterProductList()">
@@ -964,6 +966,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
           <option value="Akrilik Kapak">Akrilik Kapak</option>
         </select>
       </div>
+    </div>
+
+    <!-- MİMARİ BİLGİ KARTI: DÜZENLEME MODÜL 7'DE, BURADA SADECE SİTEDE GÖRÜNÜRLÜK -->
+    <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-left:4px solid #10B981; border-radius:10px; padding:12px 18px; margin-bottom:18px; font-size:12.5px; color:#166534; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+      <div>
+        <strong>🌐 Web Sitesi Görünürlük Kontrol Paneli:</strong>
+        Ürün ekleme, silme, fotoğraf yükleme ve detaylı teknik özellik düzenlemeleri <strong>Modül 7 (Katalog Yönetimi)</strong> üzerinden yapılmaktadır. Bu ekrandan ürünlerin kurumsal web sitenizde görünüp görünmeyeceğini ve ana sayfa vitrin durumunu tek tıkla açıp kapatabilirsiniz.
+      </div>
+      <a href="/Module%207/index.html" class="btn-gold btn-sm" style="text-decoration:none; font-weight:800; padding:6px 14px; white-space:nowrap;">Modül 7'yi Aç →</a>
     </div>
 
     <!-- LIST VIEW -->
@@ -2004,23 +2015,101 @@ function renderProductGrid(products) {
   empty.style.display = 'none';
   grid.style.display = 'grid';
 
-  grid.innerHTML = products.map(p => `
-    <div class="product-card">
-      <img class="product-card-img" src="${resolveAssetUrl(p.ana_resim)}" alt="${p.title}" onerror="this.src='/resim/logo.png'">
+  grid.innerHTML = products.map(p => {
+    const isShown = p.web_gorunur !== false;
+    const isShowcase = p.anasayfada_goster !== false;
+
+    return `
+    <div class="product-card" style="border:1px solid ${isShown ? '#E2E8F0' : 'rgba(239,68,68,0.35)'}; opacity:${isShown ? '1' : '0.8'}; transition:all 0.2s ease;">
+      <div style="position:relative;">
+        <img class="product-card-img" src="${resolveAssetUrl(p.ana_resim)}" alt="${p.title}" onerror="this.src='/resim/logo.png'">
+        <span style="position:absolute; top:10px; right:10px; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; ${isShown ? 'background:rgba(16,185,129,0.95); color:#fff;' : 'background:rgba(239,68,68,0.95); color:#fff;'} box-shadow:0 2px 8px rgba(0,0,0,0.25);">
+          ${isShown ? '👁️ Sitede Yayında' : '🙈 Sitede Gizli'}
+        </span>
+      </div>
       <div class="product-card-body">
         <div class="product-card-cat">${p.kategori || 'Membran Kapak'}</div>
         <div class="product-card-title">${p.title}</div>
-        <div class="product-card-desc">${p.kisa_aciklama || 'Açıklama belirtilmemiş.'}</div>
-        <div style="font-size:11px; color:var(--text-muted); margin-bottom:10px;">
-          ${p.anasayfada_goster !== false ? '🏠 Ana Sayfa Vitrininde Aktif' : '📁 Sadece Katalogda'}
+        <div class="product-card-desc" style="max-height:40px; overflow:hidden; text-overflow:ellipsis;">${p.kisa_aciklama || 'Açıklama belirtilmemiş.'}</div>
+
+        <!-- TEK TIKLA WEB SİTESİNDE GÖSTER / GİZLE -->
+        <div style="margin-top:14px; margin-bottom:8px;">
+          <button type="button" 
+                  class="btn-sm" 
+                  style="width:100%; justify-content:center; padding:10px 12px; font-weight:800; font-size:12.5px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer; transition:all 0.2s ease; ${isShown ? 'background:#ECFDF5; border:1px solid #10B981; color:#047857;' : 'background:#FEF2F2; border:1px solid #EF4444; color:#B91C1C;'}" 
+                  onclick="toggleProductWebVisibility('${p.slug}', ${!isShown})">
+            ${isShown ? '✅ Web Sitesinde Görünüyor (Tıklayarak Gizle)' : '❌ Web Sitesinde Gizli (Tıklayarak Yayınla)'}
+          </button>
         </div>
-        <div class="product-card-actions">
-          <button class="btn-secondary btn-sm" style="flex:1;" onclick="editProduct('${p.slug}')">✏️ Düzenle</button>
-          <button class="btn-danger btn-sm" onclick="deleteProduct('${p.slug}')">🗑️ Sil</button>
+
+        <!-- ANA SAYFA VİTRİNİ AÇ / KAPA -->
+        <div style="display:flex; justify-content:space-between; align-items:center; padding-top:8px; border-top:1px solid #F1F5F9; font-size:11.5px;">
+          <span style="color:var(--text-muted);">Ana Sayfa Vitrini:</span>
+          <button type="button" 
+                  class="btn-link btn-sm" 
+                  style="font-weight:700; color:${isShowcase ? '#10B981' : '#94A3B8'}; cursor:pointer; padding:2px 6px; text-decoration:none;" 
+                  onclick="toggleProductShowcase('${p.slug}', ${!isShowcase})">
+            ${isShowcase ? '🏠 Vitrinde Açık' : '📁 Vitrinde Kapalı'}
+          </button>
+        </div>
+
+        <!-- DETAY DÜZENLEME MODÜL 7 BAĞLANTISI -->
+        <div style="text-align:center; margin-top:10px; padding-top:8px; border-top:1px dashed #E2E8F0;">
+          <a href="/Module%207/index.html" style="font-size:11px; font-weight:600; color:#64748B; text-decoration:none;" title="Model adı, resim, ölçü ve teknik detaylar Modül 7'de yönetilir">
+            ⚙️ Detay &amp; Database Kontrolü (Modül 7) →
+          </a>
         </div>
       </div>
     </div>
-  `).join('');
+    `;
+  }).join('');
+}
+
+async function toggleProductWebVisibility(slug, newStatus) {
+  const prod = allProducts.find(p => p.slug === slug);
+  if (!prod) return;
+
+  prod.web_gorunur = newStatus;
+  renderProductGrid(allProducts);
+
+  showToast(`⏳ "${prod.title || prod.slug}" web sitesi durumu güncelleniyor...`);
+
+  try {
+    if (isSupabaseReady()) {
+      const { error } = await supabaseClient
+        .from('products')
+        .update({ web_gorunur: newStatus })
+        .eq('slug', slug);
+
+      if (error) {
+        console.warn('Supabase update warning, falling back to local state:', error);
+      }
+    }
+
+    showToast(newStatus ? `👁️ "${prod.title}" web sitesinde yayına alındı!` : `🙈 "${prod.title}" web sitesinde gizlendi!`, 'success');
+  } catch (err) {
+    showToast('Güncelleme sırasında hata oluştu: ' + err.message, 'error');
+  }
+}
+
+async function toggleProductShowcase(slug, newStatus) {
+  const prod = allProducts.find(p => p.slug === slug);
+  if (!prod) return;
+
+  prod.anasayfada_goster = newStatus;
+  renderProductGrid(allProducts);
+
+  try {
+    if (isSupabaseReady()) {
+      await supabaseClient
+        .from('products')
+        .update({ anasayfada_goster: newStatus })
+        .eq('slug', slug);
+    }
+    showToast(newStatus ? `🏠 "${prod.title}" ana sayfa vitrinine eklendi!` : `📁 "${prod.title}" vitrinden kaldırıldı.`, 'success');
+  } catch (err) {
+    showToast('Vitrin ayarı güncellenemedi: ' + err.message, 'error');
+  }
 }
 
 function filterProductList() {
