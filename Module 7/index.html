@@ -10,6 +10,48 @@
   <script src="/Module%202/nova-studio-engine.js"></script>
   <script src="/nova-studio-engine.js"></script>
   <style>
+    /* Gemini Banana Toggle Switch Stilleri */
+    .switch-container {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+    .switch-container input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #334155;
+      transition: .3s;
+      border-radius: 28px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: #ffffff;
+      transition: .3s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+    }
+    input:checked + .switch-slider {
+      background-color: #10b981 !important;
+    }
+    input:checked + .switch-slider:before {
+      transform: translateX(22px);
+    }
+
     :root {
       --bg: #0A0F1D;
       --card-bg: #111B2E;
@@ -643,9 +685,9 @@
               Seçilirse ürünün pikselleri, kulpları ve kapakları <strong>%100 korunur</strong>; eski yazı ve arka plan temizlenip arkaya lüks Venedik sıva grej duvar, ahşap çıtalar ve mimari stüdyo ışığı inşa edilir. Seçilmezse görsel olduğu gibi korunur.
             </p>
           </div>
-          <label style="position:relative; display:inline-block; width:48px; height:26px; flex-shrink:0; cursor:pointer;">
-            <input type="checkbox" id="chk_transform_image" checked style="opacity:0; width:0; height:0;">
-            <span id="slider_transform" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#334155; transition:.3s; border-radius:26px; border:1px solid rgba(255,255,255,0.2);"></span>
+          <label class="switch-container">
+            <input type="checkbox" id="chk_transform_image" checked onchange="handleTransformToggle(this.checked)">
+            <span class="switch-slider"></span>
           </label>
         </div>
         <div id="transform_status_badge" style="margin-top:10px; font-size:11px; color:#38bdf8; display:flex; align-items:center; gap:6px;">
@@ -722,57 +764,61 @@
     let isAnimPlaying = false;
     let productTransformSettings = {};
 
-    // Toggle switch stilleri ve dinleyicileri
-    document.addEventListener('DOMContentLoaded', () => {
-      const styleEl = document.createElement('style');
-      styleEl.innerHTML = `
-        #chk_transform_image:checked + #slider_transform { background-color: #10b981 !important; }
-        #slider_transform:before {
-          position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
-          background-color: white; transition: .3s; border-radius: 50%;
-        }
-        #chk_transform_image:checked + #slider_transform:before {
-          transform: translateX(22px);
-        }
-      `;
-      document.head.appendChild(styleEl);
-
-      const chkTransform = document.getElementById('chk_transform_image');
-      if (chkTransform) {
-        chkTransform.addEventListener('change', (e) => {
-          const badge = document.getElementById('transform_status_badge');
-          if (e.target.checked) {
-            badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü uygulanacak.</span>';
-            badge.style.color = '#38bdf8';
-          } else {
-            badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
-            badge.style.color = '#94a3b8';
-          }
-        });
+    function handleTransformToggle(isChecked) {
+      const badge = document.getElementById('transform_status_badge');
+      if (!badge) return;
+      if (isChecked) {
+        badge.innerHTML = '<span>⚡ Aktif: Bu ürün için Gemini Banana mimari stüdyo dönüşümü uygulanacak.</span>';
+        badge.style.color = '#38bdf8';
+      } else {
+        badge.innerHTML = '<span>⚪ Pasif: Görsel olduğu gibi korunacak, yapay zeka dönüşümü yapılmayacak.</span>';
+        badge.style.color = '#94a3b8';
       }
-    });
+    }
 
     // =========================================================================
-    // KATALOĞU SUPABASE'DEN ÇEKME
+    // KATALOĞU SUPABASE'DEN ÇEKME (ÇİFT KATMANLI: REST API + SDK FALLBACK)
     // =========================================================================
     async function loadCatalogFromSupabase() {
-      if (!sb) return;
       try {
-        const { data, error } = await sb
-          .from('products')
-          .select('*')
-          .order('created_at', { ascending: false });
+        let data = null;
 
-        if (error) throw error;
-        catalogItems = data || [];
+        // 1. Doğrudan Hızlı Supabase REST API Çağrısı (CDN SDK gecikmelerinden bağımsız)
+        try {
+          const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+          if (res.ok) {
+            data = await res.json();
+          }
+        } catch (fetchErr) {
+          console.warn('REST API çağrısı başarısız, SDK deneniyor:', fetchErr);
+        }
+
+        // 2. Eğer REST yanıt vermediyse Supabase SDK Client ile dene
+        if (!data && sb) {
+          const { data: sdkData, error } = await sb
+            .from('products')
+            .select('*')
+            .order('created_at', { ascending: false });
+          if (!error) data = sdkData;
+        }
+
+        if (!data) throw new Error('Veritabanına bağlanılamadı');
+        catalogItems = Array.isArray(data) ? data : [];
+
         // Dönüştürme ayarlarını site_settings üzerinden çek
         try {
-          const { data: stData } = await sb
-            .from('site_settings')
-            .select('data')
-            .eq('key', 'product_transform_settings')
-            .limit(1);
-          productTransformSettings = (stData && stData[0] && stData[0].data) || {};
+          const stRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.product_transform_settings&select=data`, {
+            headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+          });
+          if (stRes.ok) {
+            const stRows = await stRes.json();
+            productTransformSettings = (stRows && stRows[0] && stRows[0].data) || {};
+          }
         } catch (_) {}
 
         renderCatalogGrid(catalogItems);
