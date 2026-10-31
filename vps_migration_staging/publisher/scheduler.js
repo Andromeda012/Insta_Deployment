@@ -316,6 +316,10 @@ export async function checkAndEnqueueSlot({
   );
   const isStory = targetFormat === 'STORIES' || targetFormat === 'FB_STORIES';
   if (allProductsCompleted && !isStory) return { status: 'skipped', reason: 'CYCLE_COMPLETE_STORY_ONLY' };
+  const hasUnpublishedProductForFormat = catalog.some(p => !Array.isArray(tracker[p.slug]) || !tracker[p.slug].includes(targetFormat));
+  if (!hasUnpublishedProductForFormat && !allProductsCompleted) {
+    return { status: 'skipped', reason: 'FORMAT_ALREADY_PUBLISHED_FOR_ALL_PRODUCTS' };
+  }
   const selected = selectProductForPublish({ catalog, tracker, targetFormat });
 
   if (!selected || !selected.product) {
