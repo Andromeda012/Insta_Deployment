@@ -1,18 +1,15 @@
 name: 7/24 Cloud Bot Autonomous Heartbeat
 
-# Panel (tarayici) kapali olsa bile botlarin 7/24 calismasini saglayan bulut tetikleyicisi.
-# Sunucu tarafinda her slot icin 4 saatlik telafi penceresi + gunluk kilit (last_run_date) vardir;
-# bu yuzden tetikleyici gecikse bile paylasim kacmaz ve ayni slot gunde 1 kereden fazla calismaz.
-# Ek guvence: Vercel Cron (vercel.json) da her slotu gunde bir kez ayrica tetikler.
+# ============================================================================
+# NOVA PUBLISHER VPS MİGRASYONU SONRASI DURUM:
+# Otonom sosyal medya yayınlama (Instagram ve Facebook post/story/reels)
+# zamanlaması artık VPS Publisher (nova-publisher) üzerindeki merkezi
+# otonom scheduler tarafından yönetilmektedir.
+# Mükerrer yayın ve slot çakışmalarını önlemek için GitHub Actions üzerinden
+# otomatik zamanlanmış yayın curl tetikleyicileri devre dışı bırakılmıştır.
+# ============================================================================
 
 on:
-  schedule:
-    # Genel nabiz: her 10 dakikada bir (GitHub yogunlukta geciktirebilir)
-    - cron: '*/10 * * * *'
-    # Slot saatlerine ozel tetikleyiciler (UTC) -> Turkiye (UTC+3): 10:00, 14:30, 20:00
-    - cron: '2 7 * * *'
-    - cron: '32 11 * * *'
-    - cron: '2 17 * * *'
   workflow_dispatch:
 
 concurrency:
@@ -27,26 +24,3 @@ jobs:
       - name: Trigger Instagram Comment & DM Scanner (Gemini AI Responder)
         run: |
           curl -s -m 50 "https://insta-deployment-rho.vercel.app/api/instagram-cron?action=scan_dms" || true
-
-      - name: Trigger Instagram Scheduled Post Publisher
-        run: |
-          curl -s -m 70 "https://insta-deployment-rho.vercel.app/api/instagram-cron" || true
-
-      - name: Smart pre-slot wait (GitHub erken uyandiysa slot dakikasini bekle)
-        run: |
-          # Turkiye saati (UTC+3) ile dakika cinsinden su an
-          NOW_MIN=$(( ( $(date -u +%-H) * 60 + $(date -u +%-M) + 180 ) % 1440 ))
-          for SLOT in 600 870 1200; do   # 10:00, 14:30, 20:00
-            WAIT=$(( SLOT - NOW_MIN ))
-            if [ $WAIT -ge 1 ] && [ $WAIT -le 10 ]; then
-              SECS=$(( WAIT * 60 - $(date -u +%-S) + 20 ))
-              echo "Slot ${SLOT} dk icin ${SECS} sn bekleniyor..."
-              sleep $SECS
-              curl -s -m 70 "https://insta-deployment-rho.vercel.app/api/instagram-cron" || true
-              break
-            fi
-          done
-
-      - name: Trigger Facebook Scheduled Post Publisher
-        run: |
-          curl -s -m 70 "https://insta-deployment-rho.vercel.app/api/facebook-cron" || true

@@ -117,7 +117,10 @@ export default async function handler(req, res) {
     const todayStr = localNow.toISOString().slice(0, 10); // YYYY-MM-DD
     const currentHHMM = `${String(localNow.getHours()).padStart(2, '0')}:${String(localNow.getMinutes()).padStart(2, '0')}`;
 
-    const slots = [
+    const dynamicSlots = (config && Array.isArray(config.posting_slots) && config.posting_slots.length > 0)
+      ? config.posting_slots.filter(s => s.enabled !== false && s.active !== false).map(s => ({ name: s.type, time: s.time, type: s.type }))
+      : [];
+    const slots = dynamicSlots.length > 0 ? dynamicSlots : [
       { name: 'morning_reels', time: '10:00', type: 'REELS' },
       { name: 'midday_post',   time: '14:30', type: 'POST' },
       { name: 'evening_story', time: '20:00', type: 'STORIES' }

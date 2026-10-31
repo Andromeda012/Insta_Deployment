@@ -571,7 +571,7 @@
           </div>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-outline" onclick="loadScheduleSettings()">🔄 Ayarları Yenile</button>
+          <button class="btn btn-outline" onclick="loadAllData()">🔄 Ayarları Yenile</button>
           <button class="btn btn-gold" onclick="saveScheduleSettings()">💾 Saatleri Kaydet</button>
         </div>
       </div>
@@ -1042,14 +1042,74 @@
       if (!botState) botState = { config: {}, rules: [], scheduled_posts: [] };
       if (!botState.config) botState.config = {};
 
-      botState.config.posting_slots = [
-        { type: 'POST', time: document.getElementById('timeSlotPost').value || '10:00', enabled: document.getElementById('chkSlotPostActive').checked },
-        { type: 'STORIES', time: document.getElementById('timeSlotStory').value || '14:30', enabled: document.getElementById('chkSlotStoryActive').checked },
-        { type: 'REELS', time: document.getElementById('timeSlotReels').value || '19:30', enabled: document.getElementById('chkSlotReelsActive').checked }
+      const postTime = document.getElementById('timeSlotPost').value || '10:00';
+      const postActive = document.getElementById('chkSlotPostActive').checked;
+      const storyTime = document.getElementById('timeSlotStory').value || '14:30';
+      const storyActive = document.getElementById('chkSlotStoryActive').checked;
+      const reelsTime = document.getElementById('timeSlotReels').value || '19:30';
+      const reelsActive = document.getElementById('chkSlotReelsActive').checked;
+
+      const newSlots = [
+        { type: 'POST', time: postTime, enabled: postActive },
+        { type: 'STORIES', time: storyTime, enabled: storyActive },
+        { type: 'REELS', time: reelsTime, enabled: reelsActive }
       ];
 
-      await persistBotState();
-      showToast('✅ Yayın kuyruğu ve saat ayarları kaydedildi!');
+      botState.config.posting_slots = newSlots;
+      showToast('⏳ Saatler Supabase veritabanına yazılıyor...');
+
+      try {
+        // 1. Supabase'e kalıcı olarak kaydet
+        const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            key: 'insta_bot_state',
+            data: botState,
+            updated_at: new Date().toISOString()
+          })
+        });
+
+        if (!saveRes.ok) {
+          const errText = await saveRes.text();
+          throw new Error(`Supabase kayıt hatası (${saveRes.status}): ${errText}`);
+        }
+
+        // 2. Doğrulama: Kaydedilen veriyi veritabanından tekrar oku
+        const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+
+        if (!verifyRes.ok) {
+          throw new Error('Kayıt sonrası doğrulama okuması başarısız oldu.');
+        }
+
+        const verifyRows = await verifyRes.json();
+        const verifiedSlots = verifyRows && verifyRows[0]?.data?.config?.posting_slots;
+
+        if (!Array.isArray(verifiedSlots)) {
+          throw new Error('Veritabanından okunan saat bilgisi beklenen dizi formatında değil.');
+        }
+
+        const postVerified = verifiedSlots.find(s => s.type === 'POST');
+        if (!postVerified || postVerified.time !== postTime || postVerified.enabled !== postActive) {
+          throw new Error('Veritabanı doğrulama uyuşmazlığı tespit edildi.');
+        }
+
+        updateSlotVisuals();
+        showToast(`✅ Yayın saatleri Supabase'e kaydedildi ve başarıyla doğrulandı! (Gönderi: ${postTime}, Story: ${storyTime}, Reels: ${reelsTime})`);
+      } catch (err) {
+        console.error('Yayın saatleri kaydetme hatası:', err);
+        showToast(`❌ Hata: ${err.message}`);
+      }
     }
 
     async function saveMusicSettings() {

@@ -28,7 +28,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import httpClient from './http-client.cjs';
+
 const { fetchWithTimeout } = httpClient;
+
+import { startAutonomousScheduler } from './scheduler.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -554,14 +557,25 @@ async function pollQueueCycle() {
   }
 }
 
-// Zamanlayıcıyı Başlat
+// Otonom Zamanlayıcıyı Başlat (Dinamik Ayar Dinleyicisi)
+
+const schedulerHandle = startAutonomousScheduler(supabase, 30000, process.env.GEMINI_API_KEY);
+
+
+
+// Kuyruk Tüketici Zamanlayıcısını Başlat
+
 const pollIntervalHandle = setInterval(pollQueueCycle, POLL_INTERVAL_MS);
+
 pollQueueCycle();
 
 // ── GRACEFUL SHUTDOWN (KONTROLLÜ KAPATMA) ────────────────────────────────────
 async function handleShutdown(signal) {
   console.log(`\n[Shutdown] ${signal} sinyali alındı. Yeni görev alımı durduruldu. Kapanıyor...`);
   isShuttingDown = true;
+
+  if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
+
   clearInterval(pollIntervalHandle);
 
   if (isTaskRunning) {

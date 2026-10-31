@@ -74,7 +74,11 @@ export default async function handler(req, res) {
     const todayStr = localNow.toISOString().slice(0, 10);
     const currentHHMM = `${String(localNow.getHours()).padStart(2, '0')}:${String(localNow.getMinutes()).padStart(2, '0')}`;
 
-    const slots = [
+    const config = state.config || {};
+    const dynamicSlots = (Array.isArray(config.posting_slots) && config.posting_slots.length > 0)
+      ? config.posting_slots.filter(s => s.enabled !== false && s.active !== false).map(s => ({ name: s.label || s.type, time: s.time, type: s.type }))
+      : [];
+    const slots = dynamicSlots.length > 0 ? dynamicSlots : [
       { name: 'fb_morning_post', time: '11:00', type: 'PHOTO_POST' },
       { name: 'fb_midday_post',  time: '14:00', type: 'PHOTO_POST' },
       { name: 'fb_reels_video',  time: '18:00', type: 'VIDEO_REELS' }

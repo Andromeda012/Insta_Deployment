@@ -1167,7 +1167,9 @@ async function loadFbStateFromSupabase() {
 
 async function persistFbStateToSupabase(notify = true) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+    if (notify) showToast('⏳ Facebook ayarları Supabase veritabanına yazılıyor...');
+
+    const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
       method: 'POST',
       headers: {
         'apikey': SUPABASE_KEY,
@@ -1181,9 +1183,33 @@ async function persistFbStateToSupabase(notify = true) {
         updated_at: new Date().toISOString()
       })
     });
-    if (notify) showToast('☁️ Facebook Bulut Bot ayarları Supabase veritabanına kaydedildi!');
+
+    if (!saveRes.ok) {
+      const errText = await saveRes.text();
+      throw new Error(`Supabase kayıt hatası (${saveRes.status}): ${errText}`);
+    }
+
+    // Doğrulama: Supabase'den tekrar oku
+    const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data`, {
+      headers: {
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`
+      }
+    });
+
+    if (!verifyRes.ok) {
+      throw new Error('Kayıt sonrası veritabanı doğrulama okuması başarısız oldu.');
+    }
+
+    const verifyRows = await verifyRes.json();
+    if (!verifyRows || !verifyRows[0]?.data) {
+      throw new Error('Veritabanında kayıt doğrulanamadı.');
+    }
+
+    if (notify) showToast('✅ Facebook Bulut Bot ayarları ve saatleri Supabase\'e kaydedildi ve başarıyla doğrulandı!');
   } catch (e) {
-    if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');
+    console.error('FB state kaydetme hatası:', e);
+    if (notify) showToast('❌ Kayıt hatası: ' + e.message);
   }
   populateFbFormsAndRenderAll();
 }
@@ -1242,18 +1268,36 @@ function renderFbSlots() {
   const cont = document.getElementById('slotsContainer');
   const slots = fbState.config.posting_slots || [];
   cont.innerHTML = slots.map((s, idx) => `
-    <div class="slot-item">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <span class="slot-time">⏰ ${s.time}</span>
+    <div class="slot-item" style="${s.active === false ? 'opacity:0.55;background:#f1f5f9;' : ''}">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+          <input type="checkbox" ${s.active !== false ? 'checked' : ''} onchange="toggleFbSlotActive(${idx})">
+          <span style="font-size:11px;font-weight:700;color:var(--navy);">Aktif</span>
+        </label>
+        <input type="time" class="form-control" value="${s.time || '12:00'}" style="width:110px;font-weight:700;" onchange="updateFbSlotTime(${idx}, this.value)">
         <div>
           <span class="badge badge-blue">${s.type}</span>
-          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label}</strong>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Foto/Video İstemeden Kendi Tasarlar ve Facebook Sayfasında Yayınlar</div>
+          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label || s.type}</strong>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Otomatik Tasarlar ve Facebook Sayfasında Yayınlar</div>
         </div>
       </div>
       <button class="btn btn-danger btn-sm" onclick="removeFbTimeSlot(${idx})">Sil</button>
     </div>
   `).join('');
+}
+
+function toggleFbSlotActive(idx) {
+  if (fbState.config.posting_slots[idx]) {
+    fbState.config.posting_slots[idx].active = !fbState.config.posting_slots[idx].active;
+    persistFbStateToSupabase(true);
+  }
+}
+
+function updateFbSlotTime(idx, newTime) {
+  if (fbState.config.posting_slots[idx] && newTime) {
+    fbState.config.posting_slots[idx].time = newTime;
+    persistFbStateToSupabase(true);
+  }
 }
 
 function addNewFbTimeSlot() {
