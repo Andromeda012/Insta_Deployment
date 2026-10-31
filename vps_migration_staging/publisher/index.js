@@ -29,7 +29,6 @@
 import { createClient } from '@supabase/supabase-js';
 import httpClient from './http-client.cjs';
 import { startAutonomousScheduler } from './scheduler.js';
-import { startAutonomousScheduler } from './scheduler.js';
 const { fetchWithTimeout } = httpClient;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
