@@ -11,13 +11,43 @@ class HttpRequestError extends Error {
   }
 }
 
+class SimpleAbortSignal {
+  constructor() {
+    this.aborted = false;
+    this._listeners = [];
+  }
+  addEventListener(event, fn) {
+    if (event === 'abort') {
+      if (this.aborted) fn();
+      else this._listeners.push(fn);
+    }
+  }
+  removeEventListener(event, fn) {
+    this._listeners = this._listeners.filter(l => l !== fn);
+  }
+}
+
+class SimpleAbortController {
+  constructor() {
+    this.signal = new SimpleAbortSignal();
+  }
+  abort() {
+    this.signal.aborted = true;
+    for (const fn of this.signal._listeners) {
+      try { fn(); } catch (_) {}
+    }
+  }
+}
+
+const SafeAbortController = typeof AbortController !== 'undefined' ? AbortController : SimpleAbortController;
+
 /**
  * Fetch helper that keeps the timeout active until the entire response body is read.
  * Successful POST responses with unreadable/invalid bodies are marked uncertain because
  * the remote platform may already have accepted the side effect.
  */
 async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
-  const controller = new AbortController();
+  const controller = new SafeAbortController();
   const method = String(options.method || 'GET').toUpperCase();
   let timedOut = false;
   const timeoutHandle = setTimeout(() => {
@@ -30,14 +60,14 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
     try {
       response = await fetch(url, { ...options, signal: controller.signal });
     } catch (err) {
-      if (timedOut || err?.name === 'AbortError') {
+      if (timedOut || (err && err.name === 'AbortError')) {
         throw new HttpRequestError(`İstek zaman aşımına uğradı (${timeoutMs} ms)`, {
           name: 'TimeoutError', code: 'ETIMEDOUT', method,
           uncertain: method === 'POST', cause: err
         });
       }
-      const code = err?.cause?.code || err?.code || null;
-      throw new HttpRequestError(err?.message || 'Ağ isteği başarısız oldu', {
+      const code = (err && err.cause && err.cause.code) || (err && err.code) || null;
+      throw new HttpRequestError((err && err.message) || 'Ağ isteği başarısız oldu', {
         name: 'NetworkRequestError', code, method,
         uncertain: method === 'POST', cause: err
       });
@@ -47,13 +77,13 @@ async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
     try {
       rawText = await response.text();
     } catch (err) {
-      if (timedOut || err?.name === 'AbortError') {
+      if (timedOut || (err && err.name === 'AbortError')) {
         throw new HttpRequestError(`Yanıt gövdesi zaman aşımına uğradı (${timeoutMs} ms)`, {
           name: 'TimeoutError', code: 'ETIMEDOUT', method,
           uncertain: method === 'POST' && response.ok, status: response.status, cause: err
         });
       }
-      throw new HttpRequestError(`Yanıt gövdesi okunamadı: ${err?.message || 'bilinmeyen hata'}`, {
+      throw new HttpRequestError(`Yanıt gövdesi okunamadı: ${(err && err.message) || 'bilinmeyen hata'}`, {
         name: 'ResponseBodyError', method,
         uncertain: method === 'POST' && response.ok, status: response.status, cause: err
       });

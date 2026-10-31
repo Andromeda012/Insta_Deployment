@@ -6,7 +6,7 @@ import {
   generateAutonomousFacebookContent,
   publishToFacebookPageGraphApi
 } from '../Module 2/Facebook/bot-engine.js';
-import PhotoroomEngine from '../photoroom-engine.js';
+import GeminiBananaEngine from '../gemini-banana-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -196,17 +196,29 @@ export default async function handler(req, res) {
         pickedProduct = catalog[dayOfYear % catalog.length];
       }
 
-      // Photoroom Mimari Üretim Pipeline'ından Varlığı Çek
-      let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase('facebook');
-      if (!campaign || campaign.product_slug !== pickedProduct?.slug) {
-        campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
-          product: pickedProduct,
-          apiKey: config.photoroom_api_key || process.env.PHOTOROOM_API_KEY
-        });
+      // Gemini Banana Mimari Üretim Pipeline'ından Varlığı Çek
+      let campaign = await GeminiBananaEngine.fetchActiveCampaignFromSupabase('facebook');
+      const hasInvalidMedia = c => !c
+        || /\.svg(\?.*)?$/i.test(c.post_image_url || '')
+        || !c.post_image_url;
+      if (!campaign || campaign.product_slug !== pickedProduct?.slug || hasInvalidMedia(campaign)) {
+        try {
+          campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
+            product: pickedProduct,
+            apiKey: process.env.GEMINI_API_KEY
+          });
+        } catch (genErr) {
+          console.error('[Facebook Cron] Gemini Banana görsel üretimi başarısız:', genErr.message);
+          return res.status(500).json({
+            ok: false,
+            error: `Görsel üretimi başarısız: ${genErr.message}`,
+            product_slug: pickedProduct?.slug
+          });
+        }
       }
 
       const isVideo = chosenType === 'VIDEO_REELS' || chosenType === 'REELS';
-      const targetMediaUrl = isVideo ? (campaign.reels_video_url || campaign.photoroom_hero_vertical_url) : campaign.post_image_url;
+      const targetMediaUrl = isVideo ? (campaign.reels_video_url || campaign.banana_hero_vertical_url || campaign.photoroom_hero_vertical_url) : campaign.post_image_url;
 
       const newPostRecord = {
         id: campaign.id,
@@ -220,6 +232,7 @@ export default async function handler(req, res) {
         product_slug: pickedProduct?.slug || null,
         scheduled_for: new Date().toISOString(),
         status: 'scheduled',
+        banana_campaign_id: campaign.id,
         photoroom_campaign_id: campaign.id
       };
 
@@ -245,8 +258,9 @@ export default async function handler(req, res) {
         post.fb_post_id = publishResult.publishedId;
         post.auto_approved = true;
 
-        if (post.photoroom_campaign_id) {
-          await PhotoroomEngine.markPlatformPublished(post.photoroom_campaign_id, 'facebook', post.media_type);
+        const campaignId = post.banana_campaign_id || post.photoroom_campaign_id;
+        if (campaignId) {
+          await GeminiBananaEngine.markPlatformPublished(campaignId, 'facebook', post.media_type);
         }
 
         publishedList.push({
