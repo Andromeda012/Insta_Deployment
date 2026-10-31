@@ -350,14 +350,15 @@ export function renderAutonomousSvgCard({
 export async function generateAutonomousInstagramContent({
   mediaType = 'POST', // 'POST' | 'STORIES' | 'REELS'
   productsCatalog = [],
+  product = null,
   config = {},
   slotLabel = ''
 } = {}) {
   const theme = AUTONOMOUS_DESIGN_THEMES[Math.floor(Math.random() * AUTONOMOUS_DESIGN_THEMES.length)];
   const hasProducts = Array.isArray(productsCatalog) && productsCatalog.length > 0;
-  const pickedProduct = hasProducts
+  const pickedProduct = product || (hasProducts
     ? productsCatalog[Math.floor(Math.random() * productsCatalog.length)]
-    : null;
+    : null);
   const fallbackConcept = AUTONOMOUS_CONCEPT_LIBRARY[Math.floor(Math.random() * AUTONOMOUS_CONCEPT_LIBRARY.length)];
 
   let badge = mediaType === 'REELS'

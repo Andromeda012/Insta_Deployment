@@ -227,6 +227,34 @@
     color: #fff;
     box-shadow: 0 4px 12px rgba(15,37,62,0.18);
   }
+  .campaign-format-btn {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.05);
+    color: #94A3B8;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .campaign-format-btn:hover {
+    color: #FFFFFF;
+    border-color: rgba(212, 175, 55, 0.4);
+    background: rgba(212, 175, 55, 0.1);
+  }
+  .campaign-format-btn.active {
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.25) 0%, rgba(212, 175, 55, 0.1) 100%);
+    border-color: #D4AF37;
+    color: #FDE68A;
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
+  }
+  @media (max-width: 900px) {
+    .campaign-studio-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
   .tab-pane { display: none; }
   .tab-pane.active { display: block; }
 
@@ -558,6 +586,134 @@
   <!-- TAB 1: OTONOM REELS, STORY & GÖNDERİ ZAMANLAMA VE YAYIN KUYRUĞU       -->
   <!-- ===================================================================== -->
   <div class="tab-pane active" id="tab-scheduler">
+    <!-- 👑 GÜNLÜK 3'LÜ KAMPANYA ÜRETİM STÜDYOSU (TEK ÜRÜN -> REELS + GÖNDERİ + STORY) -->
+    <div class="card" style="background: linear-gradient(135deg, #0B111E 0%, #111827 50%, #161F30 100%); border: 1px solid rgba(212, 175, 55, 0.45); box-shadow: 0 16px 40px rgba(0,0,0,0.35); margin-bottom: 24px; color: #fff;">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; border-bottom:1px solid rgba(212, 175, 55, 0.25); padding-bottom:16px; margin-bottom:18px;">
+        <div>
+          <div style="display:inline-flex; align-items:center; gap:8px; background:rgba(212, 175, 55, 0.15); border:1px solid rgba(212, 175, 55, 0.4); color:#FDE68A; padding:5px 12px; border-radius:20px; font-size:11.5px; font-weight:800; letter-spacing:0.5px; margin-bottom:8px;">
+            👑 TEK ÜRÜN • 3 GÜNLÜK FORMAT ÜRETİM SİSTEMİ
+          </div>
+          <h2 style="font-size:20px; font-weight:900; color:#FFFFFF; letter-spacing:-0.3px;">
+            Yapay Zeka Destekli Mimari İçerik Stüdyosu
+          </h2>
+          <p style="font-size:13px; color:#94A3B8; margin-top:4px; max-width:850px; line-height:1.5;">
+            Katalogdaki dekupe ürün fotoğrafı alınır; yapay zeka mimari İskandinav oda arka planını ve zemin gölgesini sentezleyerek ürünü kusursuzca oturtur. Gün içinde yayınlanacak <strong>Sabah Reels (10:00)</strong>, <strong>Öğle Detay Maddeli Gönderi (14:30)</strong> ve <strong>Akşam Story (20:00)</strong> tek tıkla üretilir ve planlanır.
+          </p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="selectRandomCampaignProduct()" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:#fff;">
+            🎲 Rastgele Ürün Seç
+          </button>
+          <button type="button" class="btn btn-sm" onclick="rebuildCurrentCampaignScene()" style="background:#D4AF37; color:#0A0E17; font-weight:800; border:none;">
+            ✨ Sahneyi & Metni Yenile
+          </button>
+        </div>
+      </div>
+
+      <!-- Ürün Seçimi & Meta Bar -->
+      <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 16px; margin-bottom:20px;">
+        <div style="flex:1; min-width:260px;">
+          <label style="display:block; font-size:11px; font-weight:700; color:#FDE68A; text-transform:uppercase; margin-bottom:5px; letter-spacing:0.5px;">
+            📦 Kataloğunuzdan Ürün Seçin (90-100 Ürün Entegre):
+          </label>
+          <select id="campaignProductSelect" class="form-control" onchange="onCampaignProductChanged(this.value)" style="background:#0E131F; color:#fff; border:1px solid rgba(212, 175, 55, 0.35); font-weight:600;">
+            <option value="">Ürünler yükleniyor...</option>
+          </select>
+        </div>
+        <div style="flex:2; min-width:280px;" id="campaignProductMetaBar">
+          <div style="font-size:11px; font-weight:700; color:#94A3B8; text-transform:uppercase; margin-bottom:5px;">
+            Öne Çıkan Malzeme & Üretim Standartları:
+          </div>
+          <div id="campaignProductBadges" style="display:flex; gap:8px; flex-wrap:wrap; font-size:11.5px; font-weight:700;">
+            <span style="background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.35); color:#FDE68A; padding:4px 10px; border-radius:8px;">🪵 18mm E1 MDF</span>
+            <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🪞 Çizilmez Membran</span>
+            <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🛡️ 5 Yıl Garanti</span>
+            <span style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15); color:#E2E8F0; padding:4px 10px; border-radius:8px;">🚚 5 İş Günü Sevkiyat</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORMAT GEÇİŞ SEKMELERİ (3 AYRI GÜNLÜK FORMAT) -->
+      <div style="display:flex; gap:10px; margin-bottom:18px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; flex-wrap:wrap;">
+        <button type="button" class="campaign-format-btn active" id="btnFmtReels" onclick="switchCampaignFormatTab('REELS')">
+          🎬 1. Sabah (10:00) — Reels Videosu (1080x1920)
+        </button>
+        <button type="button" class="campaign-format-btn" id="btnFmtPost" onclick="switchCampaignFormatTab('POST')">
+          🖼️ 2. Öğle (14:30) — Detay Maddeli Gönderi (1080x1080)
+        </button>
+        <button type="button" class="campaign-format-btn" id="btnFmtStory" onclick="switchCampaignFormatTab('STORIES')">
+          📱 3. Akşam (20:00) — Hikaye / Story (1080x1920)
+        </button>
+      </div>
+
+      <!-- FORMAT DETAYI & AÇIKLAMASI -->
+      <div id="campaignFormatBanner" style="background:rgba(255,255,255,0.04); border-left:4px solid #D4AF37; padding:10px 14px; border-radius:0 8px 8px 0; margin-bottom:18px; font-size:12.5px; color:#E2E8F0;">
+        🎬 <strong>Sabah Yayını (10:00) Reels Videosu:</strong> Sinematik Ken Burns kamera hareketiyle mimari odada sergilenen ürün, altın rozetler ve WhatsApp/DM yönlendirmesi.
+      </div>
+
+      <!-- İKİ KOLONLU ÇALIŞMA ALANI: SOL CANLI CANVAS, SAĞ GEMINI METNİ VE EYLEMLER -->
+      <div style="display:grid; grid-template-columns: minmax(320px, 480px) 1fr; gap:24px; align-items:start;" class="campaign-studio-grid">
+        <!-- SOL: CANLI ÇÖZÜNÜRLÜKLÜ CANVAS ÖNİZLEME -->
+        <div style="background:#070A0F; border:1px solid rgba(212, 175, 55, 0.3); border-radius:16px; padding:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:inset 0 0 40px rgba(0,0,0,0.6);">
+          <div id="canvasWrapper" style="display:flex; justify-content:center; align-items:center; width:100%; min-height:480px;">
+            <canvas id="campaignPreviewCanvas" style="max-height:520px; max-width:100%; width:auto; height:auto; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.7);"></canvas>
+          </div>
+          
+          <!-- Hareketi Başlat / Durdur (Reels İçin) -->
+          <div id="reelsAnimationControls" style="display:flex; gap:10px; margin-top:14px; width:100%; justify-content:center;">
+            <button type="button" class="btn btn-secondary btn-sm" id="btnCampaignKenBurns" onclick="toggleCampaignKenBurns()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff;">
+              ▶️ Kamera Hareketi (Ken Burns)
+            </button>
+          </div>
+        </div>
+
+        <!-- SAĞ: GEMINI AI AÇIKLAMA METNİ & FORMAT EYLEMLERİ -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <label style="font-size:12px; font-weight:800; color:#FDE68A; text-transform:uppercase; letter-spacing:0.5px;">
+                🤖 Google Gemini AI Açıklama Metni (Satış Odaklı):
+              </label>
+              <button type="button" class="btn btn-sm" onclick="regenerateGeminiCaptionForCampaign()" style="background:rgba(212, 175, 55, 0.15); border:1px solid rgba(212, 175, 55, 0.35); color:#FDE68A; font-size:11px; padding:4px 10px;">
+                🔄 Metni Yenile
+              </button>
+            </div>
+            <textarea id="campaignPostCaption" class="form-control" rows="9" style="background:#0A0E17; color:#E2E8F0; border:1px solid rgba(255,255,255,0.12); font-size:12.5px; font-family:'JetBrains Mono', monospace; line-height:1.6; resize:vertical;" placeholder="Lüks açıklama metni hazırlanıyor..."></textarea>
+            <div style="font-size:11px; color:#94A3B8; margin-top:4px;">
+              🛡️ Kural Garantisi: Sıfır web sitesi linki, sıfır #globalkapak. Yalnızca <strong>Nova Furniture</strong>, DM ve WhatsApp: 0 (505) 015 1035.
+            </div>
+          </div>
+
+          <!-- Seçili Formata Özel Butonlar (İndir / Anında Paylaş) -->
+          <div style="background:rgba(0,0,0,0.25); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:14px;">
+            <div style="font-size:11.5px; font-weight:800; color:#CBD5E1; margin-bottom:10px; text-transform:uppercase;">
+              ⚡ Seçili Format Eylemleri:
+            </div>
+            <div id="formatSpecificButtons" style="display:flex; gap:10px; flex-wrap:wrap;">
+              <!-- Dinamik olarak JS ile doldurulur (İndir & Anında Test Yayını) -->
+            </div>
+          </div>
+
+          <!-- BÜYÜK ALTIN KAMPANYA PLANLAMA BUTONU -->
+          <div style="background: linear-gradient(135deg, rgba(212,175,55,0.22) 0%, rgba(184,134,11,0.12) 100%); border: 2px solid #D4AF37; border-radius:16px; padding:18px; text-align:center;">
+            <div style="font-size:12px; font-weight:800; color:#FDE68A; text-transform:uppercase; margin-bottom:6px; letter-spacing:0.8px;">
+              🌟 Tam Günlük 3'lü Kampanya Planlama
+            </div>
+            <div style="font-size:13px; color:#FFFFFF; margin-bottom:14px; line-height:1.5;">
+              Bu ürünü tek tıkla bugünün (veya yarının) yayın takvimine ekleyin:
+              <br><strong style="color:#FDE68A;">10:00 Reels • 14:30 Gönderi (Detay Maddeli) • 20:00 Hikaye</strong>
+            </div>
+            <button type="button" class="btn" id="btnScheduleFullCampaign" onclick="scheduleFullDailyCampaign()" style="width:100%; justify-content:center; padding:16px 24px; font-size:15px; font-weight:900; background:linear-gradient(135deg, #FDE68A 0%, #D4AF37 50%, #B8860B 100%); color:#0B0F19; border:none; border-radius:12px; box-shadow:0 8px 24px rgba(212,175,55,0.35); cursor:pointer;">
+              ⏰ 3 Formatı da Otomatik Planla (10:00 • 14:30 • 20:00)
+            </button>
+            <div style="font-size:11px; color:#CBD5E1; margin-top:8px;">
+              3 içerik de yüksek çözünürlüklü olarak üretilip yayın kuyruğuna kaydedilir ve saatleri geldiğinde Instagram hesabınızda yayınlanır.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="grid-2">
       <!-- SOL: GÜNLÜK OTONOM PAYLAŞIM SAAT ARALIKLARI (ZAMANLAMA PANELİ) -->
       <div>
@@ -795,9 +951,9 @@ const DEFAULT_BOT_STATE = {
     auto_publish_enabled: true,
     require_approval: false,
     posting_slots: [
-      { slot_id: 'slot_1', time: '10:00', type: 'POST', active: true, label: 'Sabah Koleksiyon Gönderisi (Otonom)' },
-      { slot_id: 'slot_2', time: '14:30', type: 'STORIES', active: true, label: 'Öğleden Sonra Ürün Kartı Story (Otonom)' },
-      { slot_id: 'slot_3', time: '19:30', type: 'REELS', active: true, label: 'Akşam Kamera Hareketli Reels Videosu (Otonom)' }
+      { slot_id: 'slot_1', time: '10:00', type: 'REELS', active: true, label: 'Sabah (10:00) — Hareketli Reels Videosu (Otonom)' },
+      { slot_id: 'slot_2', time: '14:30', type: 'POST', active: true, label: 'Öğle (14:30) — Detay Maddeli Gönderi (Otonom)' },
+      { slot_id: 'slot_3', time: '20:00', type: 'STORIES', active: true, label: 'Akşam (20:00) — Detay Maddeli Hikaye (Otonom)' }
     ],
     tier2_system_prompt: 'Sen Nova Furniture (@thenovafurniture) firmasının resmi Instagram DM ve yorum yapay zeka asistanısın. İstanbul Bağcılar tesisimizde 1. sınıf 18mm E1 sertifikalı sağlam MDF ve yüksek ısı/su dayanımlı membran teknolojisiyle özel ölçü yatak odası, gardırop, banyo ve mutfak dolapları üretiyoruz. 5 yıl üretici garantimiz ve 5 iş gününde hızlı teslimatımız mevcuttur. Müşterilerle daima kibar, ilgili ve kurumsal bir dille konuş. Müşteriye hangi odayı yenilemek istediğini, düşündüğü ölçüleri ve renk tercihini sor. Eğer müşteri net fiyat hesaplaması, özel ölçü siparişi veya yetkiliyle görüşmek isterse doğrudan resmi WhatsApp sipariş hattımıza yönlendir: https://wa.me/905050151035 (0 505 015 1035).',
     tier3_whatsapp_number: '905050151035',
@@ -877,6 +1033,11 @@ let currentSelectedProduct = null;
 let currentProductImageEl = null;
 let igAnimController = null;
 let isIgAnimPlaying = false;
+let activeCampaignTab = 'REELS';
+let campaignSelectedProduct = null;
+let campaignProductImageEl = null;
+let campaignKenBurnsController = null;
+let isCampaignKenBurnsPlaying = false;
 
 function showToast(msg) {
   const el = document.getElementById('toastEl');
@@ -957,6 +1118,7 @@ async function loadBotStateFromSupabase() {
     });
     if (prodRes.ok) {
       catalogProducts = await prodRes.json();
+      populateCampaignProductSelect();
       renderAiCatalogPreview();
     }
   } catch (e) {
@@ -1015,6 +1177,7 @@ function populateFormsAndRenderAll() {
   renderSlots();
   renderScheduledQueue();
   renderTier1Rules();
+  populateCampaignProductSelect();
   renderAiCatalogPreview();
   renderTier3Handoffs();
   renderRecentConversations();
@@ -1219,15 +1382,35 @@ function drawAutonomousGraphicOnCanvas(canvas, opts = {}) {
       ]
     };
 
-    window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
-      productImageEl: currentProductImageEl,
-      product: prod,
-      isVertical,
-      zoomScale: opts.zoomScale || 1.0,
-      panX: opts.panX || 0,
-      panY: opts.panY || 0,
-      fullRes: opts.fullRes !== false
-    });
+    if (mediaType === 'POST') {
+      window.NovaStudioEngine.drawNovaSplitSpecPost(canvas, {
+        productImageEl: currentProductImageEl,
+        product: prod,
+        zoomScale: opts.zoomScale || 1.0,
+        panX: opts.panX || 0,
+        panY: opts.panY || 0,
+        fullRes: opts.fullRes !== false
+      });
+    } else if (mediaType === 'STORIES') {
+      window.NovaStudioEngine.drawNovaStoryPost(canvas, {
+        productImageEl: currentProductImageEl,
+        product: prod,
+        zoomScale: opts.zoomScale || 1.0,
+        panX: opts.panX || 0,
+        panY: opts.panY || 0,
+        fullRes: opts.fullRes !== false
+      });
+    } else {
+      window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+        productImageEl: currentProductImageEl,
+        product: prod,
+        isVertical: true,
+        zoomScale: opts.zoomScale || 1.0,
+        panX: opts.panX || 0,
+        panY: opts.panY || 0,
+        fullRes: opts.fullRes !== false
+      });
+    }
     return;
   }
 
@@ -1422,6 +1605,574 @@ function renderAutonomousCanvasPreview() {
   drawAutonomousGraphicOnCanvas(previewCanvas, { fullRes: false });
 }
 
+// ═════════════════════════════════════════════════════════════════════════════
+// 👑 GÜNLÜK 3'LÜ KAMPANYA ÜRETİM MOTORU (1 ÜRÜN -> REELS + GÖNDERİ + STORY)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function populateCampaignProductSelect() {
+  const sel = document.getElementById('campaignProductSelect');
+  if (!sel) return;
+  if (!catalogProducts || catalogProducts.length === 0) {
+    sel.innerHTML = '<option value="">Supabase ürün kataloğu yükleniyor...</option>';
+    return;
+  }
+
+  const prevVal = sel.value;
+  sel.innerHTML = catalogProducts.map(p => {
+    const val = p.slug || String(p.id);
+    const cat = p.kategori || '1. Sınıf MDF';
+    const title = p.title || p.slug;
+    return `<option value="${val}">${title} — (${cat})</option>`;
+  }).join('');
+
+  if (prevVal && catalogProducts.some(p => (p.slug === prevVal || String(p.id) === prevVal))) {
+    sel.value = prevVal;
+  } else if (!campaignSelectedProduct && catalogProducts.length > 0) {
+    const first = catalogProducts[0];
+    onCampaignProductChanged(first.slug || first.id);
+  }
+}
+
+async function onCampaignProductChanged(slugOrId) {
+  if (!catalogProducts || catalogProducts.length === 0) return;
+  const prod = catalogProducts.find(p => (p.slug === slugOrId || String(p.id) === String(slugOrId))) || catalogProducts[0];
+  if (!prod) return;
+  campaignSelectedProduct = prod;
+
+  const sel = document.getElementById('campaignProductSelect');
+  if (sel && sel.value !== (prod.slug || String(prod.id))) {
+    sel.value = prod.slug || String(prod.id);
+  }
+
+  // Rozetleri ve meta bilgiyi güncelle
+  const badgesCont = document.getElementById('campaignProductBadges');
+  if (badgesCont && window.NovaStudioEngine) {
+    const specs = window.NovaStudioEngine.extractProductSpecsList(prod);
+    badgesCont.innerHTML = specs.slice(0, 4).map(s => `
+      <span style="background:rgba(212,175,55,0.14); border:1px solid rgba(212,175,55,0.35); color:#FDE68A; padding:4px 10px; border-radius:8px;">
+        ${s.icon} ${s.title}: ${s.desc}
+      </span>
+    `).join('');
+  }
+
+  // Fotoğrafı yükle
+  await loadCampaignProductImage(prod);
+
+  // Gemini AI Açıklamasını üret
+  await regenerateGeminiCaptionForCampaign();
+
+  // Aktif format sekmesini ve butonları güncelle, tuvali çiz
+  switchCampaignFormatTab(activeCampaignTab);
+}
+
+function selectRandomCampaignProduct() {
+  if (!catalogProducts || catalogProducts.length === 0) {
+    showToast('Katalog henüz yüklenmedi');
+    return;
+  }
+  const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
+  onCampaignProductChanged(prod.slug || prod.id);
+  showToast(`🎲 Seçildi: ${prod.title || prod.slug}`);
+}
+
+async function rebuildCurrentCampaignScene() {
+  if (!campaignSelectedProduct) return;
+  showToast('✨ Mimari Sahne & Gemini AI Metni Yeniden Tasarlanıyor...');
+  await loadCampaignProductImage(campaignSelectedProduct);
+  await regenerateGeminiCaptionForCampaign();
+  renderCampaignCanvasPreview();
+  showToast('👑 Sahne ve açıklama metni güncellendi!');
+}
+
+async function loadCampaignProductImage(prod) {
+  let fullImg = prod?.ana_resim;
+  if (!fullImg || (!fullImg.startsWith('http') && !fullImg.startsWith('data:'))) {
+    fullImg = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+  }
+
+  const img = new Image();
+  if (!fullImg.startsWith('data:')) {
+    img.crossOrigin = 'anonymous';
+  }
+  return new Promise(resolve => {
+    img.onload = () => {
+      campaignProductImageEl = img;
+      renderCampaignCanvasPreview();
+      resolve();
+    };
+    img.onerror = () => {
+      console.warn('Ürün görseli yüklenemedi fallback kullanılıyor:', fullImg);
+      const fb = new Image();
+      fb.crossOrigin = 'anonymous';
+      fb.onload = () => {
+        campaignProductImageEl = fb;
+        renderCampaignCanvasPreview();
+        resolve();
+      };
+      fb.onerror = () => {
+        campaignProductImageEl = null;
+        renderCampaignCanvasPreview();
+        resolve();
+      };
+      fb.src = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+    };
+    img.src = fullImg;
+  });
+}
+
+async function regenerateGeminiCaptionForCampaign() {
+  const capEl = document.getElementById('campaignPostCaption');
+  if (!capEl || !campaignSelectedProduct || !window.NovaStudioEngine) return;
+
+  const geminiKey = botState?.config?.gemini_api_key || '';
+  const geminiModel = botState?.config?.gemini_model || 'gemini-2.5-flash';
+  capEl.value = '✨ Gemini AI lüks İskandinav açıklama metnini hazırlıyor...';
+
+  try {
+    const text = await window.NovaStudioEngine.generateGeminiLuxuryCaption(
+      campaignSelectedProduct,
+      geminiKey,
+      geminiModel,
+      'instagram'
+    );
+    capEl.value = text;
+  } catch (err) {
+    capEl.value = window.NovaStudioEngine.generateNovaLuxuryCaption(campaignSelectedProduct, 'instagram');
+  }
+}
+
+function switchCampaignFormatTab(tab) {
+  activeCampaignTab = tab;
+
+  // Sekme butonlarını güncelle
+  document.getElementById('btnFmtReels')?.classList.toggle('active', tab === 'REELS');
+  document.getElementById('btnFmtPost')?.classList.toggle('active', tab === 'POST');
+  document.getElementById('btnFmtStory')?.classList.toggle('active', tab === 'STORIES');
+
+  // Açıklama bannerını güncelle
+  const banner = document.getElementById('campaignFormatBanner');
+  if (banner) {
+    if (tab === 'REELS') {
+      banner.innerHTML = `🎬 <strong>Sabah Yayını (10:00) Reels Videosu:</strong> 1080x1920 dikey video, sinematik Ken Burns kamera hareketiyle mimari odada sergilenen ürün, altın rozetler ve WhatsApp/DM yönlendirmesi.`;
+    } else if (tab === 'POST') {
+      banner.innerHTML = `🖼️ <strong>Öğle Yayını (14:30) Detay Maddeli Gönderi:</strong> 1080x1080 kare gönderi, sol yarıda mimari odada oturtulmuş ürün, sağ yarıda madde madde dizilmiş lüks özellik kartları (MDF, membran, raylar, ölçüler) ve altın WhatsApp butonu.`;
+    } else {
+      banner.innerHTML = `📱 <strong>Akşam Yayını (20:00) Hikaye / Story:</strong> 1080x1920 tam ekran dikey hikaye, üstte oturtulmuş mobilya, altta özellik kartları ve Instagram DM çıkartması formatında buton.`;
+    }
+  }
+
+  // Format eylem butonlarını güncelle
+  const btnCont = document.getElementById('formatSpecificButtons');
+  const animControls = document.getElementById('reelsAnimationControls');
+
+  if (animControls) {
+    animControls.style.display = tab === 'REELS' ? 'flex' : 'none';
+  }
+
+  if (btnCont) {
+    if (tab === 'REELS') {
+      btnCont.innerHTML = `
+        <button type="button" class="btn btn-secondary btn-sm" onclick="downloadCampaignReelsVideo()" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff;">
+          🎬 Reels Videosu (MP4) İndir
+        </button>
+        <button type="button" class="btn btn-insta btn-sm" onclick="publishCurrentCampaignFormatNow('REELS')" style="font-weight:800;">
+          🚀 Şimdi Reels Olarak Paylaş
+        </button>
+      `;
+    } else if (tab === 'POST') {
+      btnCont.innerHTML = `
+        <button type="button" class="btn btn-secondary btn-sm" onclick="downloadCampaignPng('POST')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff;">
+          🖼️ 1080p Gönderi (PNG) İndir
+        </button>
+        <button type="button" class="btn btn-insta btn-sm" onclick="publishCurrentCampaignFormatNow('POST')" style="font-weight:800;">
+          🚀 Şimdi Gönderi Olarak Paylaş
+        </button>
+      `;
+    } else {
+      btnCont.innerHTML = `
+        <button type="button" class="btn btn-secondary btn-sm" onclick="downloadCampaignPng('STORIES')" style="background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.25); color:#fff;">
+          📱 1080p Hikaye (PNG) İndir
+        </button>
+        <button type="button" class="btn btn-insta btn-sm" onclick="publishCurrentCampaignFormatNow('STORIES')" style="font-weight:800;">
+          🚀 Şimdi Hikaye Olarak Paylaş
+        </button>
+      `;
+    }
+  }
+
+  // Eğer animasyon devam ediyorsa durdur
+  if (isCampaignKenBurnsPlaying && tab !== 'REELS') {
+    toggleCampaignKenBurns();
+  }
+
+  renderCampaignCanvasPreview();
+}
+
+function renderCampaignCanvasPreview() {
+  const canvas = document.getElementById('campaignPreviewCanvas');
+  if (!canvas || !window.NovaStudioEngine) return;
+
+  const prod = campaignSelectedProduct || {
+    title: 'NOVA - ZÜRİH YATAK ODASI',
+    kategori: '1. Sınıf MDF • CNC Membran Kapak'
+  };
+
+  if (activeCampaignTab === 'POST') {
+    window.NovaStudioEngine.drawNovaSplitSpecPost(canvas, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: false
+    });
+  } else if (activeCampaignTab === 'STORIES') {
+    window.NovaStudioEngine.drawNovaStoryPost(canvas, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: false
+    });
+  } else { // REELS
+    window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      isVertical: true,
+      fullRes: false
+    });
+  }
+}
+
+function toggleCampaignKenBurns() {
+  if (!window.NovaStudioEngine) return;
+  const canvas = document.getElementById('campaignPreviewCanvas');
+  const btn = document.getElementById('btnCampaignKenBurns');
+
+  if (isCampaignKenBurnsPlaying) {
+    if (campaignKenBurnsController) campaignKenBurnsController.stop();
+    isCampaignKenBurnsPlaying = false;
+    if (btn) btn.textContent = '▶️ Kamera Hareketi (Ken Burns)';
+    renderCampaignCanvasPreview();
+  } else {
+    isCampaignKenBurnsPlaying = true;
+    if (btn) btn.textContent = '⏹️ Hareketi Durdur';
+    campaignKenBurnsController = window.NovaStudioEngine.animateKenBurns(
+      canvas,
+      campaignProductImageEl,
+      campaignSelectedProduct || {},
+      true
+    );
+  }
+}
+
+async function downloadCampaignPng(mediaType) {
+  if (!window.NovaStudioEngine) return;
+  showToast('🎨 1080p Tam Çözünürlüklü Tasarım Hazırlanıyor...');
+  const offscreen = document.createElement('canvas');
+  const prod = campaignSelectedProduct || { title: 'NOVA KOLEKSİYONU' };
+
+  if (mediaType === 'POST') {
+    window.NovaStudioEngine.drawNovaSplitSpecPost(offscreen, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: true
+    });
+  } else {
+    window.NovaStudioEngine.drawNovaStoryPost(offscreen, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: true
+    });
+  }
+
+  const blob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.98));
+  const cleanTitle = (prod.title || 'Urun').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `NovaFurniture-${cleanTitle}-${mediaType}.png`;
+  a.click();
+  showToast('📥 Görsel başarıyla indirildi!');
+}
+
+async function downloadCampaignReelsVideo() {
+  if (!window.NovaStudioEngine) return;
+  showToast('🎬 5 Saniyelik Sinematik Reels Videosu Hazırlanıyor (MediaRecorder)...');
+  const prod = campaignSelectedProduct || { title: 'NOVA KOLEKSİYONU' };
+
+  try {
+    const blob = await window.NovaStudioEngine.recordCanvasVideo(
+      null,
+      campaignProductImageEl,
+      prod,
+      true,
+      5000
+    );
+    const cleanTitle = (prod.title || 'Urun').replace(/[^a-zA-Z0-9_-]/g, '_');
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `NovaFurniture-${cleanTitle}-Reels.mp4`;
+    a.click();
+    showToast('📥 Reels videosu başarıyla indirildi!');
+  } catch (err) {
+    alert('Video kaydı sırasında hata oluştu: ' + err.message);
+  }
+}
+
+async function publishCurrentCampaignFormatNow(mediaType) {
+  const { igUserId, accessToken } = await resolveInstagramCredentials();
+  if (!igUserId || !accessToken) {
+    alert('❌ Instagram Business ID veya Meta Access Token eksik!');
+    return;
+  }
+
+  const prod = campaignSelectedProduct || { title: 'NOVA KOLEKSİYONU' };
+  const caption = document.getElementById('campaignPostCaption')?.value ||
+    window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
+
+  showToast(`🚀 ${mediaType} Meta Graph API (@thenovafurniture) ile yayınlanıyor...`);
+
+  try {
+    let finalMediaUrl = '';
+    const sbClient = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    if (mediaType === 'REELS') {
+      showToast('🎬 Reels MP4 videosu kodlanıyor...');
+      const mp4Blob = await window.NovaStudioEngine.recordCanvasVideo(
+        null,
+        campaignProductImageEl,
+        prod,
+        true,
+        5000
+      );
+      const fileName = `reels-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.mp4`;
+      const filePath = `instagram/${fileName}`;
+      if (sbClient) {
+        const { error: upErr } = await sbClient.storage.from('media').upload(filePath, mp4Blob, {
+          contentType: 'video/mp4',
+          upsert: true
+        });
+        if (upErr) throw new Error(`Video Storage Hatası: ${upErr.message}`);
+        const { data: pubData } = sbClient.storage.from('media').getPublicUrl(filePath);
+        finalMediaUrl = pubData?.publicUrl;
+      } else {
+        finalMediaUrl = prod.ana_resim;
+      }
+
+      const cParams = new URLSearchParams();
+      cParams.set('access_token', accessToken);
+      cParams.set('media_type', 'REELS');
+      cParams.set('video_url', finalMediaUrl);
+      cParams.set('caption', caption);
+      cParams.set('share_to_feed', 'true');
+
+      const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, { method: 'POST', body: cParams });
+      const cData = await cRes.json();
+      if (!cRes.ok || !cData.id) throw new Error(cData?.error?.message || 'Reels oluşturulamadı');
+
+      let ready = false;
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 2500));
+        const stRes = await fetch(`https://graph.facebook.com/v20.0/${cData.id}?fields=status_code&access_token=${accessToken}`);
+        const stData = await stRes.json();
+        if (stData.status_code === 'FINISHED') { ready = true; break; }
+      }
+      if (!ready) throw new Error('Meta Reels işleme zaman aşımı, lütfen tekrar deneyin.');
+
+      const pParams = new URLSearchParams();
+      pParams.set('creation_id', cData.id);
+      pParams.set('access_token', accessToken);
+      const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, { method: 'POST', body: pParams });
+      const pData = await pRes.json();
+      if (!pRes.ok || !pData.id) throw new Error(pData?.error?.message || 'Yayınlanamadı');
+
+      showToast('🎉 Reels videosu Instagram hesabınızda yayınlandı!');
+      alert(`🎉 Başarılı!\n\nReels videosu @thenovafurniture hesabınızda yayınlandı.\nMeta Post ID: ${pData.id}`);
+
+    } else {
+      const offscreen = document.createElement('canvas');
+      if (mediaType === 'POST') {
+        window.NovaStudioEngine.drawNovaSplitSpecPost(offscreen, {
+          productImageEl: campaignProductImageEl,
+          product: prod,
+          fullRes: true
+        });
+      } else {
+        window.NovaStudioEngine.drawNovaStoryPost(offscreen, {
+          productImageEl: campaignProductImageEl,
+          product: prod,
+          fullRes: true
+        });
+      }
+
+      const pngBlob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.96));
+      const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.png`;
+      const filePath = `instagram/${fileName}`;
+
+      if (sbClient) {
+        const { error: upErr } = await sbClient.storage.from('media').upload(filePath, pngBlob, {
+          contentType: 'image/png',
+          upsert: true
+        });
+        if (upErr) throw new Error(`Görsel Storage Hatası: ${upErr.message}`);
+        const { data: pubData } = sbClient.storage.from('media').getPublicUrl(filePath);
+        finalMediaUrl = pubData?.publicUrl;
+      } else {
+        finalMediaUrl = prod.ana_resim;
+      }
+
+      const cParams = new URLSearchParams();
+      cParams.set('access_token', accessToken);
+      cParams.set('image_url', finalMediaUrl);
+      cParams.set('caption', caption);
+      if (mediaType === 'STORIES') cParams.set('media_type', 'STORIES');
+
+      const cRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media`, { method: 'POST', body: cParams });
+      const cData = await cRes.json();
+      if (!cRes.ok || !cData.id) throw new Error(cData?.error?.message || 'Medya konteyneri oluşturulamadı');
+
+      const pParams = new URLSearchParams();
+      pParams.set('creation_id', cData.id);
+      pParams.set('access_token', accessToken);
+      const pRes = await fetch(`https://graph.facebook.com/v20.0/${igUserId}/media_publish`, { method: 'POST', body: pParams });
+      const pData = await pRes.json();
+      if (!pRes.ok || !pData.id) throw new Error(pData?.error?.message || 'Yayınlanamadı');
+
+      showToast(`🎉 ${mediaType === 'POST' ? 'Gönderi' : 'Hikaye'} Instagram hesabınızda yayınlandı!`);
+      alert(`🎉 Başarılı!\n\n${mediaType === 'POST' ? 'Gönderi' : 'Hikaye'} @thenovafurniture hesabınızda yayınlandı.\nMeta Post ID: ${pData.id}`);
+    }
+  } catch (err) {
+    alert(`❌ Instagram Yayın Hatası: ${err.message}`);
+  }
+}
+
+async function scheduleFullDailyCampaign() {
+  if (!campaignSelectedProduct) {
+    alert('Lütfen önce bir ürün seçin.');
+    return;
+  }
+  const btn = document.getElementById('btnScheduleFullCampaign');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ 3 Format Hazırlanıyor & Planlanıyor...';
+  }
+
+  showToast('⏰ Günlük 3’lü kampanya paketinin (10:00 Reels • 14:30 Gönderi • 20:00 Story) görselleri işleniyor...');
+
+  try {
+    const prod = campaignSelectedProduct;
+    const baseTitle = (prod.title || prod.slug || 'ZÜRİH').trim().toUpperCase();
+    const cleanTitle = baseTitle.replace(/^NOVA\s*[-–—:]*\s*/i, '');
+    const sbClient = window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    // 1. POST Görselini Üret ve Yükle (1080x1080 Kare Split Card)
+    const postCanvas = document.createElement('canvas');
+    window.NovaStudioEngine.drawNovaSplitSpecPost(postCanvas, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: true
+    });
+    const postBlob = await new Promise(r => postCanvas.toBlob(r, 'image/png', 0.95));
+    const postFileName = `campaign-post-${Date.now()}.png`;
+    let postMediaUrl = prod.ana_resim;
+    if (sbClient) {
+      await sbClient.storage.from('media').upload(`instagram/${postFileName}`, postBlob, { contentType: 'image/png', upsert: true });
+      const { data } = sbClient.storage.from('media').getPublicUrl(`instagram/${postFileName}`);
+      postMediaUrl = data?.publicUrl || prod.ana_resim;
+    }
+
+    // 2. STORY Görselini Üret ve Yükle (1080x1920 Dikey Story Card)
+    const storyCanvas = document.createElement('canvas');
+    window.NovaStudioEngine.drawNovaStoryPost(storyCanvas, {
+      productImageEl: campaignProductImageEl,
+      product: prod,
+      fullRes: true
+    });
+    const storyBlob = await new Promise(r => storyCanvas.toBlob(r, 'image/png', 0.95));
+    const storyFileName = `campaign-story-${Date.now()}.png`;
+    let storyMediaUrl = prod.ana_resim;
+    if (sbClient) {
+      await sbClient.storage.from('media').upload(`instagram/${storyFileName}`, storyBlob, { contentType: 'image/png', upsert: true });
+      const { data } = sbClient.storage.from('media').getPublicUrl(`instagram/${storyFileName}`);
+      storyMediaUrl = data?.publicUrl || prod.ana_resim;
+    }
+
+    // 3. REELS Görsel / Video URL'si
+    let reelsMediaUrl = prod.ana_resim;
+    if (!reelsMediaUrl || reelsMediaUrl.includes('.svg')) {
+      reelsMediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+    }
+
+    const caption = document.getElementById('campaignPostCaption')?.value ||
+      window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
+
+    const now = new Date();
+    function computeScheduledDate(targetHour, targetMinute) {
+      const d = new Date();
+      d.setHours(targetHour, targetMinute, 0, 0);
+      if (d.getTime() <= now.getTime()) {
+        d.setDate(d.getDate() + 1);
+      }
+      return d.toISOString();
+    }
+
+    const reelsTime = computeScheduledDate(10, 0);
+    const postTime = computeScheduledDate(14, 30);
+    const storyTime = computeScheduledDate(20, 0);
+
+    const post1 = {
+      id: `camp-${Date.now()}-1`,
+      media_type: 'REELS',
+      title: `Sabah (10:00) — NOVA ${cleanTitle} Reels Videosu`,
+      caption: caption,
+      hashtags: '#novafurniture #thenovafurniture #reels #luxuryfurniture #yatakodası',
+      media_url: reelsMediaUrl,
+      scheduled_for: reelsTime,
+      status: 'scheduled',
+      auto_designed: true
+    };
+
+    const post2 = {
+      id: `camp-${Date.now()}-2`,
+      media_type: 'POST',
+      title: `Öğle (14:30) — NOVA ${cleanTitle} Detay Maddeli Gönderi`,
+      caption: caption,
+      hashtags: '#novafurniture #thenovafurniture #mobilyatasarim #mdfmobilya #icmimari',
+      media_url: postMediaUrl,
+      scheduled_for: postTime,
+      status: 'scheduled',
+      auto_designed: true
+    };
+
+    const post3 = {
+      id: `camp-${Date.now()}-3`,
+      media_type: 'STORIES',
+      title: `Akşam (20:00) — NOVA ${cleanTitle} Detay Maddeli Hikaye`,
+      caption: caption,
+      hashtags: '#novafurniture #thenovafurniture #story #fiyat #whatsapp',
+      media_url: storyMediaUrl,
+      scheduled_for: storyTime,
+      status: 'scheduled',
+      auto_designed: true
+    };
+
+    botState.scheduled_posts = botState.scheduled_posts || [];
+    botState.scheduled_posts.unshift(post3);
+    botState.scheduled_posts.unshift(post2);
+    botState.scheduled_posts.unshift(post1);
+
+    await persistBotStateToSupabase(false);
+    renderScheduledQueue();
+    updateKpis();
+
+    showToast('🎉 3 Format da başarıyla planlandı (10:00 Reels • 14:30 Gönderi • 20:00 Story)!');
+    alert(`👑 Günlük 3'lü Kampanya Başarıyla Planlandı!\n\nÜrün: NOVA - ${cleanTitle}\n\n1. 🎬 10:00 — Reels Videosu (Planlandı)\n2. 🖼️ 14:30 — Detay Maddeli Gönderi (Planlandı)\n3. 📱 20:00 — Detay Maddeli Hikaye (Planlandı)\n\nTüm içerikler yayın kuyruğuna eklendi ve Supabase veritabanına kaydedildi.`);
+
+  } catch (err) {
+    alert('Planlama sırasında hata oluştu: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⏰ 3 Formatı da Otomatik Planla (10:00 • 14:30 • 20:00)';
+    }
+  }
+}
+
 function toggleInstagramKenBurns() {
   if (!window.NovaStudioEngine) return;
   const btn = document.getElementById('btnIgKenBurns');
@@ -1608,12 +2359,26 @@ async function addScheduledPost(publishImmediately = false) {
         btn.textContent = '🎨 1080p Görsel Hazırlanıyor...';
       }
       const offscreen = document.createElement('canvas');
-      window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
-        productImageEl: currentProductImageEl,
-        product: prod,
-        isVertical,
-        fullRes: true
-      });
+      if (mediaType === 'POST') {
+        window.NovaStudioEngine.drawNovaSplitSpecPost(offscreen, {
+          productImageEl: currentProductImageEl,
+          product: prod,
+          fullRes: true
+        });
+      } else if (mediaType === 'STORIES') {
+        window.NovaStudioEngine.drawNovaStoryPost(offscreen, {
+          productImageEl: currentProductImageEl,
+          product: prod,
+          fullRes: true
+        });
+      } else {
+        window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
+          productImageEl: currentProductImageEl,
+          product: prod,
+          isVertical,
+          fullRes: true
+        });
+      }
 
       const pngBlob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.95));
       const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.png`;
@@ -2078,12 +2843,26 @@ async function runCloudAutonomousCycleNow(slot = null, isAuto = false) {
     } else {
       showToast('🎨 1080p Lüks Tasarım Kartı Hazırlanıyor...');
       const offscreen = document.createElement('canvas');
-      window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
-        productImageEl: imgEl,
-        product: prod,
-        isVertical,
-        fullRes: true
-      });
+      if (mediaType === 'POST') {
+        window.NovaStudioEngine.drawNovaSplitSpecPost(offscreen, {
+          productImageEl: imgEl,
+          product: prod,
+          fullRes: true
+        });
+      } else if (mediaType === 'STORIES') {
+        window.NovaStudioEngine.drawNovaStoryPost(offscreen, {
+          productImageEl: imgEl,
+          product: prod,
+          fullRes: true
+        });
+      } else {
+        window.NovaStudioEngine.drawNovaLuxuryPoster(offscreen, {
+          productImageEl: imgEl,
+          product: prod,
+          isVertical,
+          fullRes: true
+        });
+      }
       const pngBlob = await new Promise(r => offscreen.toBlob(r, 'image/png', 0.95));
       const fileName = `post-${Date.now()}-${Math.random().toString(36).substring(2, 6)}.png`;
       const filePath = `instagram/${fileName}`;

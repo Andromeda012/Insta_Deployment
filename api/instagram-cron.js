@@ -337,7 +337,15 @@ export default async function handler(req, res) {
     // Eğer kuyrukta kullanıcı tarafından planlanmış bekleyen gönderi yoksa:
     // SADECE ve SADECE tanımlanmış zaman slotu (posting_slots) geldiyse otonom üret!
     if (duePosts.length === 0) {
-      const slots = config.posting_slots || [];
+      const defaultSlots = [
+        { slot_id: 'slot_1', time: '10:00', type: 'REELS', active: true, label: 'Sabah (10:00) — Hareketli Reels Videosu (Otonom)' },
+        { slot_id: 'slot_2', time: '14:30', type: 'POST', active: true, label: 'Öğle (14:30) — Detay Maddeli Gönderi (Otonom)' },
+        { slot_id: 'slot_3', time: '20:00', type: 'STORIES', active: true, label: 'Akşam (20:00) — Detay Maddeli Hikaye (Otonom)' }
+      ];
+      const slots = (Array.isArray(config.posting_slots) && config.posting_slots.length > 0)
+        ? config.posting_slots
+        : defaultSlots;
+
       const now = new Date();
       // Türkiye Saati (UTC+3)
       const istHour = (now.getUTCHours() + 3) % 24;
@@ -373,14 +381,18 @@ export default async function handler(req, res) {
         activeSlot.last_run_time = currentHHMM;
       }
       
+      // Tek ürün 3 format: Gün boyunca aynı ürün kullanılır (Sabah 10:00 Reels, Öğle 14:30 Post, Akşam 20:00 Story)
       let pickedProduct = null;
       if (catalog && catalog.length > 0) {
-        pickedProduct = catalog[Math.floor(Math.random() * catalog.length)];
+        const startOfYear = new Date(now.getFullYear(), 0, 1);
+        const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
+        pickedProduct = catalog[dayOfYear % catalog.length];
       }
 
       const autoDesigned = await generateAutonomousInstagramContent({
         mediaType: chosenType,
         productsCatalog: catalog,
+        product: pickedProduct,
         config
       });
 
