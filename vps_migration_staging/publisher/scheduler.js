@@ -237,13 +237,6 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
     throw new Error('Facebook Reels yayın desteği bu sürümde kapalıdır.');
   }
 
-  if (contentType === 'REELS') {
-    const videoUrl = (campaign && campaign.reels_video_url) || product.reels_video_url || product.video_url || '';
-    if (!/\\.(mp4|mov)(\\?.*)?$/i.test(videoUrl)) throw new Error('Instagram Reels için gerçek ürün videosu bulunamadı: ' + safeSlug);
-    mediaUrl = videoUrl;
-  }
-  if (contentType === 'FB_REELS') throw new Error('Facebook Reels yayın desteği henüz etkin değil.');
-
   // Meta API SVG formatını desteklemez; SVG gelirse daima PNG fallback kullan
   if (!mediaUrl || /\.svg(\?.*)?$/i.test(mediaUrl)) {
     throw new Error(`Yayın için geçerli medya URL'i hazırlanamadı: ${safeSlug}`);
