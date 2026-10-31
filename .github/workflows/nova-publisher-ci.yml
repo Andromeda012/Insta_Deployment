@@ -1,0 +1,40 @@
+name: NOVA Publisher CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "api/instagram-cron.js"
+      - "api/facebook-cron.js"
+      - "gemini-banana-engine.js"
+      - "vps_migration_staging/**"
+      - ".github/workflows/nova-publisher-ci.yml"
+  push:
+    branches: ["fix/nova-publisher-safety"]
+
+permissions:
+  contents: read
+
+jobs:
+  static-and-dry-run-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Syntax-check changed JavaScript entry points
+        run: |
+          node --check api/instagram-cron.js
+          node --check api/facebook-cron.js
+          node --check gemini-banana-engine.js
+          node --check vps_migration_staging/publisher/index.js
+          node --check vps_migration_staging/publisher/http-client.cjs
+
+      - name: Run queue and HTTP-client simulation suite
+        run: node vps_migration_staging/test_simulation.cjs

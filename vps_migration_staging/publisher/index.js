@@ -223,6 +223,8 @@ async function executePublish(task) {
         throw new Error('Meta Facebook ortam değişkenleri (META_PAGE_ID, META_PAGE_ACCESS_TOKEN) eksik!');
       }
 
+      if (content_type === 'VIDEO_REELS' || content_type === 'REELS') return { status: 'unsupported', platformPostId: null, rawResponse: { note: 'Facebook Reels/video publisher is not implemented.' }, errorMessage: '[UNSUPPORTED] Facebook video task was not sent to the photo endpoint.' };
+      if (content_type !== 'PHOTO_POST' && content_type !== 'FB_STORIES' && content_type !== 'STORIES') return { status: 'unsupported', platformPostId: null, rawResponse: { note: `Unsupported Facebook content_type: ${content_type}` }, errorMessage: '[UNSUPPORTED] Facebook content type is not implemented.' };
       const isStory = content_type === 'FB_STORIES' || content_type === 'STORIES';
       if (isStory) {
         const upParams = new URLSearchParams({
@@ -427,9 +429,8 @@ async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, er
 
     let updated = false;
     for (const p of posts) {
-      const isMatch = p.queue_idempotency_key === task.idempotency_key ||
-                      p.queue_task_id === task.task_id ||
-                      (p.product_slug === task.product_slug && p.status === 'pending');
+      const isMatch = (p.queue_idempotency_key && p.queue_idempotency_key === task.idempotency_key) ||
+                      (p.queue_task_id && p.queue_task_id === task.task_id);
       if (isMatch) {
         p.status = finalStatus; // 'published', 'dry_run_completed', 'failed', 'reconciliation_required'
         if (platformPostId) p.platform_post_id = platformPostId;
