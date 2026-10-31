@@ -10,7 +10,7 @@ import { processIncomingTikTokInteraction } from '../Module 2/Tiktok/bot-engine.
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nyvctdskhAbImlvgbnhx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 async function fetchCatalogProducts() {
     if (!SUPABASE_KEY) return [];

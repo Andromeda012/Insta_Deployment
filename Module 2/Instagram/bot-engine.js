@@ -19,9 +19,9 @@
  */
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
-export const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
-export const DEFAULT_IG_USER_ID = '17841435882645322';
-export const DEFAULT_META_ACCESS_TOKEN = 'EAAVytShbbJUBSZBpjyQk9JEpsliUSVgEGdZCyBl2bnzwN5SJgBJj0GsKArgux7QZAlLBbQcgykaoax6UoDiiZBiYRvAeZC0C9Mq06mal2NPPaJ2ZCUOZANPlwj3WWL6iFeIEH6KmOrW2GMann2cPD7MogvaYpvuKZCsZB7DmuUj87ZBRBnS3oVqi2umjEfh6NwGA6mMwZDZD';
+export const DEFAULT_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
+export const DEFAULT_IG_USER_ID = process.env.META_IG_USER_ID || process.env.IG_USER_ID || '';
+export const DEFAULT_META_ACCESS_TOKEN = process.env.META_IG_ACCESS_TOKEN || process.env.IG_ACCESS_TOKEN || '';
 export const DEFAULT_SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 export const DEFAULT_SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 
@@ -422,7 +422,7 @@ Lütfen görsel tasarım kartının üzerine yazılacak başlıkları ve Instagr
       );
       if (gRes.ok) {
         const gData = await gRes.json();
-        const parsed = JSON.parse(gData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+        const parsed = JSON.parse((((((gData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}');
         if (parsed.badge) badge = parsed.badge;
         if (parsed.headline) headline = parsed.headline;
         if (parsed.subheadline) subheadline = parsed.subheadline;
@@ -469,7 +469,7 @@ Lütfen görsel tasarım kartının üzerine yazılacak başlıkları ve Instagr
     svg_markup: svgContent,
     media_url: dynamicRenderUrl,
     auto_designed: true,
-    product_slug: pickedProduct?.slug || null
+    product_slug: (pickedProduct && pickedProduct.slug) || null
   };
 }
 
@@ -537,7 +537,7 @@ export async function publishToInstagramGraphApi({
   });
   const containerData = await containerRes.json();
   if (!containerRes.ok || !containerData.id) {
-    throw new Error(containerData?.error?.message || 'Instagram medya konteyneri oluşturulamadı');
+    throw new Error((containerData && containerData.error && containerData.error.message) || 'Instagram medya konteyneri oluşturulamadı');
   }
 
   const creationId = containerData.id;
@@ -579,14 +579,14 @@ export async function publishToInstagramGraphApi({
     pubData = await pubRes.json();
     if (pubRes.ok && pubData.id) break;
     // Eğer "Media ID is not available" hatası geldiyse 4 saniye daha bekle ve tekrar dene
-    if (pubData?.error?.message?.includes('Media ID is not available') && retry < 2) {
+    if (pubData && pubData.error && pubData.error.message && pubData.error.message.includes('Media ID is not available') && retry < 2) {
       await new Promise(r => setTimeout(r, 4000));
       continue;
     }
     break;
   }
   if (!pubRes.ok || !pubData.id) {
-    throw new Error(pubData?.error?.message || 'Instagram medya yayınlama başarısız oldu');
+    throw new Error((pubData && pubData.error && pubData.error.message) || 'Instagram medya yayınlama başarısız oldu');
   }
 
   return {
@@ -700,7 +700,7 @@ Kurallar:
           );
           if (gRes.ok) {
             const gData = await gRes.json();
-            const parsed = JSON.parse(gData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+            const parsed = JSON.parse((((((gData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}');
             if (parsed.dm_opening) dmOpeningText = parsed.dm_opening;
           }
         } catch (e) {
@@ -744,7 +744,7 @@ Buna uygun kibar, lüks ve sıcak bir teşekkür cevabı yaz (1-2 cümle). JSON 
           );
           if (gRes.ok) {
             const gData = await gRes.json();
-            const parsed = JSON.parse(gData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+            const parsed = JSON.parse((((((gData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}');
             if (parsed.reply) commentReply = parsed.reply;
           }
         } catch (_) {}
@@ -833,7 +833,7 @@ Lütfen JSON formatında yanıt ver:
 
       if (geminiRes.ok) {
         const geminiData = await geminiRes.json();
-        const rawJson = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const rawJson = (((((geminiData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}';
         const parsed = JSON.parse(rawJson);
 
         let finalReply = parsed.reply || '';
@@ -890,21 +890,21 @@ export async function scanAndReplyInstagramComments({
   const res = await fetch(url);
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || 'Instagram medya listesi alınamadı');
+    throw new Error((err && err.error && err.error.message) || 'Instagram medya listesi alınamadı');
   }
 
   const mediaData = await res.json();
-  const mediaList = mediaData?.data || [];
+  const mediaList = (mediaData && mediaData.data) || [];
   const repliedList = [];
 
   for (const media of mediaList) {
-    const comments = media.comments?.data || [];
+    const comments = (media && media.comments && media.comments.data) || [];
     for (const comment of comments) {
-      const fromUsername = comment.from?.username || '';
+      const fromUsername = (comment && comment.from && comment.from.username) || '';
       if (!fromUsername || fromUsername === 'thenovafurniture' || fromUsername === 'globalkapak' || fromUsername === 'globalkapakmobilya') continue;
 
-      const existingReplies = comment.replies?.data || [];
-      const alreadyReplied = existingReplies.some(r => r.from?.username === 'thenovafurniture' || r.from?.id === igUserId);
+      const existingReplies = (comment && comment.replies && comment.replies.data) || [];
+      const alreadyReplied = existingReplies.some(r => (r && r.from && r.from.username) === 'thenovafurniture' || (r && r.from && r.from.id) === igUserId);
       if (alreadyReplied) continue;
 
       const decision = await evaluateThreeTierCommunication({
@@ -936,7 +936,7 @@ export async function scanAndReplyInstagramComments({
             commentId: comment.id,
             replyText: decision.dm_initiate_message
           });
-          dmSent = !dmRes?.error;
+          dmSent = !(dmRes && dmRes.error);
         } catch (e) {
           console.warn('Private DM error:', e);
         }
@@ -973,7 +973,7 @@ export async function ensureInstagramAppSubscribed({
       method: 'POST'
     });
     const d = await res.json();
-    return !!d?.success;
+    return !!(d && d.success);
   } catch (_) {
     return false;
   }
@@ -994,20 +994,20 @@ export async function scanAndReplyInstagramDms({
     if (!res.ok) return { scanned_conversations: 0, replied_count: 0, replies: [] };
 
     const data = await res.json();
-    const convList = data?.data || [];
+    const convList = (data && data.data) || [];
     const repliedList = [];
 
     for (const conv of convList) {
-      const participants = conv.participants?.data || [];
+      const participants = (conv && conv.participants && conv.participants.data) || [];
       const otherUser = participants.find(p => p.id !== igUserId && p.username !== 'thenovafurniture');
       if (!otherUser) continue;
 
-      const messages = conv.messages?.data || [];
+      const messages = (conv && conv.messages && conv.messages.data) || [];
       if (messages.length === 0) continue;
 
       const latestMsg = messages[0];
       // Eğer en son mesaj zaten bizden gittiyse cevap verme (kendi kendimize döngüye girmemek için)
-      if (latestMsg.from?.id === igUserId || latestMsg.from?.username === 'thenovafurniture') {
+      if ((latestMsg && latestMsg.from && latestMsg.from.id) === igUserId || (latestMsg && latestMsg.from && latestMsg.from.username) === 'thenovafurniture') {
         continue;
       }
 

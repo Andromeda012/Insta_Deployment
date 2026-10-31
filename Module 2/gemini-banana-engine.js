@@ -4,27 +4,25 @@
  * PRENSİP: %100 ÜRÜN SADAKATİ (PRODUCT FREEZING & BACKGROUND RECONTEXTUALIZATION)
  * 1. Ürünün kendi pikselleri (kapaklar, kulplar, aynalar, vidalar, ahşap çıtalar)
  *    %100 KORUNUR, yapay zekaya ürünü yeniden çizdirilmez!
- * 2. Eski reklam yazıları, eski duvar ve tavan armatürleri temizlenir.
- * 3. Arkaya tam olarak Bahar Portmanto'da onaylanan LÜKS İSKANDİNAV MİMARİ SAHNESİ
- *    inşa edilir:
+ * 2. Referans ürün görseli API çağrısına base64 olarak dahil edilir.
+ * 3. API anahtarı URL query string parametresinde değil, 'x-goog-api-key' başlığında taşınır.
+ * 4. Arka plan mimari dönüşümü:
  *    - Sıcak koyu grej-füme dokulu Venedik sıva mikro-çimento duvar
  *    - Bir tarafta doğal meşe akustik ahşap çıta panelleri
  *    - Tavandan duvara süzülen yumuşak mimari spot ışık konisi
  *    - Soldaki pencereden hafif süzülen altın saat (golden-hour) gün ışığı huzmesi
  *    - Sağ tarafta mobilyayı kapatmayan dokulu seramik vazo ve zeytin dalı
  *    - Zeminde balıksırtı meşe parke ve üzerine serilmiş natürel dokuma kilim
- * 4. Detay Maddeli Gönderi (Output 2):
- *    Sol: Üretilen/işlenen lüks katalog görseli,
- *    Sağ: Supabase'den çekilen 1. sınıf MDF, ölçü, renk maddeleri ve altın WhatsApp butonu (KOD İLE ÇİZİLİR).
- * 5. Reels Videosu (Output 1):
- *    Bu görsel zemin alınarak Ken Burns kamera hareketi ve lüks kurumsal ses/müzik ile
- *    9:16 video olarak üretilir.
+ * 5. Fallback Politikası:
+ *    API başarısız olduğunda önceden hazırlanmış mock görsellere sessizce dönülmez.
+ *    Fallback açıkça 'isFallback: true' ve 'mode: ORIGINAL_IMAGE_FALLBACK' olarak
+ *    raporlanır; asla başarılı canlı üretim sayılmaz.
  * ============================================================================
  */
 
 const SUPABASE_CONFIG = {
-  url: (typeof process !== 'undefined' && (process.env && process.env.SUPABASE_URL)) || 'https://vrfujrpsjzqjthaqdalx.supabase.co',
-  key: (typeof process !== 'undefined' && (process.env && process.env.SUPABASE_KEY)) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4',
+  url: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_URL) || 'https://vrfujrpsjzqjthaqdalx.supabase.co',
+  key: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4',
   mediaFallback: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
   defaultReelsMp4: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
 };
@@ -39,12 +37,11 @@ const BRAND = {
 
 /**
  * Onaylanan Bahar Portmanto'da kullanılan KUSURSUZ MİMARİ PROMPT ŞABLONU.
- * Her ürün için birebir aynı prompt yapısı çalıştırılır.
+ * %100 Ürün Sadakati ve İskandinav Sahnesi Kuralı
  */
 export function buildGeminiBananaPrompt(product = {}) {
   const title = (product.title || product.baslik || 'Lüks Tasarım Mobilya').trim();
   const cleanName = title.replace(/^NOVA\s*[-–—:]*\s*/i, '');
-  const category = product.kategori || product.category || '1. Sınıf MDF • CNC Membran Kapak';
 
   return `Modify the environment around the furniture unit from the reference image while keeping the exact ${cleanName} furniture unit completely identical and untouched. Maintain the exact same proportions, door layout, surface reliefs, handles, knobs, niche features, outer casing, and base legs. Do NOT redraw, alter, or redesign the furniture piece in any way.
 
@@ -58,122 +55,129 @@ Architectural Digest quality, perfectly centered, straight-on front view, photor
 }
 
 /**
- * Gemini Banana ile Ürün Görselini Dönüştürür (veya dönüştürülmeyecekse orijinali korur)
+ * Gemini Banana ile Ürün Görselini Düzenler
+ * - Orijinal görsel referans olarak base64 eklenir
+ * - API anahtarı 'x-goog-api-key' başlığında taşınır (URL'e eklenmez)
+ * - Fallback açıkça raporlanır, sessiz mock dönülmez
  */
-export async function generateBananaRecontextualizedImage({ product = {}, rawImageUrl = '', aspectRatio = '1:1', apiKey = '' }) {
-  const validRawUrl = (rawImageUrl && rawImageUrl.startsWith('http')) ? rawImageUrl : null;
-  const prompt = buildGeminiBananaPrompt(product);
-
-  // Eğer kullanıcı Module 7'de "Dönüştür" seçeneğini kapatmışsa: Orijinal fotoğrafı doğrudan kullan!
-  let shouldTransform = product.donusturulsun_mu;
-  if (shouldTransform === undefined) {
-    try {
-      const stRes = await fetch(`${SUPABASE_CONFIG.url}/rest/v1/site_settings?key=eq.product_transform_settings&select=data`, {
-        headers: { 'apikey': SUPABASE_CONFIG.key, 'Authorization': `Bearer ${SUPABASE_CONFIG.key}` }
-      });
-      if (stRes.ok) {
-        const rows = await stRes.json();
-        const settings = (rows && rows[0] && rows[0].data) || {};
-        if (product.slug && settings[product.slug] !== undefined) {
-          shouldTransform = settings[product.slug];
-        }
-      }
-    } catch (_) {}
-  }
-
-  if (shouldTransform === false) {
-    console.log(`[Gemini Banana] ${product.title || product.slug} için 'Dönüştürme' kapatılmış, orijinal görsel korunuyor.`);
-    return {
-      ok: true,
-      mode: 'DIRECT_ORIGINAL',
-      imageUrl: validRawUrl,
-      prompt: 'Orijinal görsel korundu (Dönüştürme pasif)',
-      aspectRatio
-    };
-  }
-
-  // Gemini API Anahtarı mevcutsa doğrudan canlı Imagen 3 çağrısı yapılır
-  const geminiKey = (apiKey || (typeof process !== 'undefined' && (process.env && process.env.GEMINI_API_KEY)) || '').trim();
+export async function generateBananaRecontextualizedImage({
+  product = {},
+  rawImageUrl = '',
+  aspectRatio = '1:1',
+  apiKey = '',
+  allowFallback = true
+}) {
   const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
+  const prompt = buildGeminiBananaPrompt(product);
+  const inputImageUrl = (rawImageUrl && rawImageUrl.startsWith('http')) ? rawImageUrl : (product.ana_resim || null);
 
-  if (geminiKey) {
+  // Gemini API Anahtarı: Yalnızca sunucu ortamından okunur
+  const geminiKey = (apiKey || (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) || '').trim();
+
+  // 1. Canlı Gemini API Çağrısı (API anahtarı ve girdi görseli varsa)
+  if (geminiKey && inputImageUrl) {
     try {
-      console.log(`[Gemini Banana API] Canli Imagen 3 cagrisi yapiliyor (${aspectRatio})...`);
-      const apiEndpoint = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${geminiKey}`;
+      console.log(`[Gemini Banana API] Canlı görsel düzenleme isteği başlatılıyor (${aspectRatio})...`);
+      
+      // Referans ürün görselini base64 olarak al
+      let imageBase64 = null;
+      let mimeType = 'image/jpeg';
+      try {
+        const imgFetch = await fetch(inputImageUrl);
+        if (imgFetch.ok) {
+          const ct = (imgFetch.headers && imgFetch.headers.get('content-type')) || '';
+          if (ct.includes('png')) mimeType = 'image/png';
+          else if (ct.includes('webp')) mimeType = 'image/webp';
+          const arrBuf = await imgFetch.arrayBuffer();
+          imageBase64 = Buffer.from(arrBuf).toString('base64');
+        }
+      } catch (fetchErr) {
+        console.warn(`[Gemini Banana API] Referans görsel çekilemedi: ${fetchErr.message}`);
+      }
+
+      // Güvenlik: API anahtarı URL parametresinde DEĞİL, 'x-goog-api-key' başlığında taşınır!
+      const apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
+      
+      const parts = [{ text: prompt }];
+      if (imageBase64) {
+        parts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: imageBase64
+          }
+        });
+      }
+
       const payload = {
-        instances: [{ prompt }],
-        parameters: {
-          sampleCount: 1,
-          aspectRatio: aspectRatio === '9:16' ? '9:16' : '1:1',
-          outputOptions: { mimeType: 'image/jpeg' }
+        contents: [{ role: 'user', parts }],
+        generationConfig: {
+          temperature: 0.3
         }
       };
 
       const apiRes = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': geminiKey
+        },
         body: JSON.stringify(payload)
       });
 
       if (apiRes.ok) {
         const data = await apiRes.json();
-        const base64Data = (data && data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded);
-        if (base64Data) {
-          const buffer = Buffer.from(base64Data, 'base64');
+        const candidates = data && data.candidates && data.candidates[0];
+        const generatedPart = candidates && candidates.content && candidates.content.parts && candidates.content.parts[0];
+        const outBase64 = (generatedPart && generatedPart.inlineData && generatedPart.inlineData.data) ||
+                          (data && data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded);
+
+        if (outBase64) {
+          const buffer = Buffer.from(outBase64, 'base64');
           const fileName = `banana-${safeSlug}-${aspectRatio.replace(':', 'x')}-${Date.now()}.jpg`;
           const uploadedUrl = await uploadBufferToStorage(`products/${fileName}`, buffer, 'image/jpeg');
           if (uploadedUrl) {
-            console.log(`[Gemini Banana API] Canli gorsel uretildi ve Supabase Storage'a kaydedildi: ${uploadedUrl}`);
+            console.log(`[Gemini Banana API] Canlı görsel üretildi ve Supabase Storage'a kaydedildi: ${uploadedUrl}`);
             return {
               ok: true,
               mode: 'LIVE_GEMINI_BANANA',
+              isFallback: false,
               imageUrl: uploadedUrl,
               prompt,
               aspectRatio,
-              width: aspectRatio === '9:16' ? 1080 : 1080,
+              referenceImageIncluded: Boolean(imageBase64),
+              width: 1080,
               height: aspectRatio === '9:16' ? 1920 : 1080
             };
           }
         }
       } else {
         const errText = await apiRes.text().catch(() => '');
-        console.warn(`[Gemini Banana API] HTTP ${apiRes.status} hatasi (API anahtari maskelendi): ${errText.slice(0, 120)}`);
+        console.warn(`[Gemini Banana API] HTTP ${apiRes.status} hatası (API anahtarı maskelendi): ${errText.slice(0, 120)}`);
       }
     } catch (apiErr) {
-      console.warn(`[Gemini Banana API] Canli istek basarisiz oldu: ${apiErr.message}`);
+      console.warn(`[Gemini Banana API] İstek hatası: ${apiErr.message}`);
     }
   }
 
-  // Onaylanmış Studio Master Görselleri (Gemini Banana ile üretilip test edilmiş yüksek çözünürlüklü çıktılar)
-  if (safeSlug.includes('porto')) {
+  // 2. Fallback Politikası (Sessiz mock dönülmez, fallback açıkça işaretlenir!)
+  if (!allowFallback) {
     return {
-      ok: true,
-      mode: 'GEMINI_BANANA_APPROVED_MASTER',
-      imageUrl: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-banana-hero.jpg',
-      prompt,
-      aspectRatio,
-      width: 1080,
-      height: 1080
+      ok: false,
+      isFallback: false,
+      error: `[Gemini Banana] Canlı API üretimi başarısız oldu (allowFallback=false).`
     };
   }
 
-  if (safeSlug.includes('bahar')) {
+  // Orijinal ürüne dönme fallback politikası
+  if (inputImageUrl) {
     return {
       ok: true,
-      mode: 'GEMINI_BANANA_APPROVED_MASTER',
-      imageUrl: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/samples/bahar-banana-sample.jpg',
-      prompt,
-      aspectRatio,
-      width: 1080,
-      height: 1080
-    };
-  }
-
-  if (validRawUrl && validRawUrl.startsWith('http')) {
-    return {
-      ok: true,
-      mode: 'GEMINI_BANANA_ORIGINAL_FALLBACK',
-      imageUrl: validRawUrl,
+      mode: 'ORIGINAL_IMAGE_FALLBACK',
+      isFallback: true,
+      fallbackReason: geminiKey
+        ? 'Gemini API çağrısı başarısız oldu veya görsel verisi dönmedi'
+        : 'GEMINI_API_KEY ortam değişkeni tanımlanmamış',
+      imageUrl: inputImageUrl,
       prompt,
       aspectRatio,
       width: 1080,
@@ -183,31 +187,19 @@ export async function generateBananaRecontextualizedImage({ product = {}, rawIma
 
   return {
     ok: false,
-    error: `[Gemini Banana] ${product.title || product.slug} icin gecerli gorsel temin edilemedi.`
+    isFallback: false,
+    error: `[Gemini Banana] ${product.title || product.slug} için ne canlı API çıktısı ne de geçerli orijinal ürün görseli temin edilemedi.`
   };
 }
 
 /**
- * 2. FORMAT: DETAY MADDELİ GÖNDERİ (Sol: İşlenmiş Katalog Görseli, Sağ: Supabase Detayları)
- * Yazılar ve maddeler KOD İLE ÇİZİLİR (Yapay zekaya yazdırılmaz, sıfır yazım hatası!).
+ * 2. FORMAT: DETAY MADDELİ GÖNDERİ (Sol: Katalog Görseli, Sağ: Supabase Detayları)
  */
 export async function generateDetailedSpecPost({ product = {}, heroImageUrl = '' }) {
   const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-
-  // Porto Portmanto için önceden render edilmiş onaylı 1080x1080 master post görseli
-  if (safeSlug.includes('porto')) {
-    return {
-      ok: true,
-      format: 'DETAILED_POST',
-      width: 1080,
-      height: 1080,
-      imageUrl: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/posts/post-detailed-porto-portmanto-final.png',
-      title: product.title || 'Porto Portmanto Detaylı Gönderi'
-    };
-  }
-
   const cleanHeroUrl = (heroImageUrl && heroImageUrl.startsWith('http')) ? heroImageUrl : SUPABASE_CONFIG.mediaFallback;
   const svg = renderDetailedSpecPostSvg({ product, heroImageUrl: await fetchAsDataUri(cleanHeroUrl) });
+
   const uploadedUrl = await convertSvgToPngInStorage(svg, `posts/post-detailed-${safeSlug}-${Date.now()}`, 1080, 1080, cleanHeroUrl);
 
   return {
@@ -221,24 +213,13 @@ export async function generateDetailedSpecPost({ product = {}, heroImageUrl = ''
 }
 
 /**
- * 3. FORMAT: 9:16 STORY FORMATI (Üstte İşlenmiş Görsel, Altta Detay Kartları ve WhatsApp Butonu)
+ * 3. FORMAT: 9:16 STORY FORMATI (Üstte Görsel, Altta Detay Kartları ve WhatsApp Butonu)
  */
 export async function generateStoryPost({ product = {}, heroImageUrl = '' }) {
   const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-
-  // Porto Portmanto için önceden render edilmiş onaylı 1080x1920 master story görseli
-  if (safeSlug.includes('porto')) {
-    return {
-      ok: true,
-      format: 'STORY',
-      width: 1080,
-      height: 1920,
-      imageUrl: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/stories/story-porto-portmanto-final.png'
-    };
-  }
-
   const cleanHeroUrl = (heroImageUrl && heroImageUrl.startsWith('http')) ? heroImageUrl : SUPABASE_CONFIG.mediaFallback;
   const svg = renderStorySvg({ product, heroImageUrl: await fetchAsDataUri(cleanHeroUrl) });
+
   const uploadedUrl = await convertSvgToPngInStorage(svg, `stories/story-${safeSlug}-${Date.now()}`, 1080, 1920, cleanHeroUrl);
 
   return {
@@ -253,8 +234,8 @@ export async function generateStoryPost({ product = {}, heroImageUrl = '' }) {
 /**
  * TÜM KAMPANYA PAKETİNİ OLUŞTURUR VE SUPABASE'E KAYDEDER
  */
-export async function buildAndSaveProductCampaign({ product = {}, apiKey = '' }) {
-  console.log(`[Gemini Banana Pipeline] ${product.title || product.slug} için üretim başlatıldı...`);
+export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', allowFallback = true }) {
+  console.log(`[Gemini Banana Pipeline] ${product.title || product.slug} için kampanya hazırlığı başlatıldı...`);
   const prompt = buildGeminiBananaPrompt(product);
 
   // 1. Gemini Banana ile 1:1 ve 9:16 Katalog Görselini Hazırla
@@ -262,33 +243,35 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '' })
     product,
     rawImageUrl: product.ana_resim,
     aspectRatio: '1:1',
-    apiKey
+    apiKey,
+    allowFallback
   });
 
   if (!hero1x1 || !hero1x1.ok || !hero1x1.imageUrl) {
-    throw new Error('[Gemini Banana] 1:1 gorsel uretimi basarisiz oldu: ' + (hero1x1 ? hero1x1.error : 'Bilinmeyen'));
+    throw new Error(`[Gemini Banana] 1:1 görsel hazırlığı başarısız oldu: ${(hero1x1 && hero1x1.error) || 'Bilinmeyen hata'}`);
   }
 
   const hero9x16 = await generateBananaRecontextualizedImage({
     product,
     rawImageUrl: product.ana_resim,
     aspectRatio: '9:16',
-    apiKey
+    apiKey,
+    allowFallback
   });
 
-  // 2. Detay Maddeli Gönderi (Kod ile maddeler ve WhatsApp butonu eklenir)
+  // 2. Detay Maddeli Gönderi (1080x1080)
   const detailedPost = await generateDetailedSpecPost({
     product,
     heroImageUrl: hero1x1.imageUrl
   });
 
-  // 3. Story Formatı
+  // 3. Story Formatı (1080x1920)
   const storyPost = await generateStoryPost({
     product,
-    heroImageUrl: hero9x16.imageUrl
+    heroImageUrl: (hero9x16 && hero9x16.ok && hero9x16.imageUrl) ? hero9x16.imageUrl : hero1x1.imageUrl
   });
 
-  // 4. Reels Videosu: Ürüne ait MP4 veya Ken Burns hareketli kamera videosu
+  // 4. Reels Videosu
   const productVideo = product.reels_video_url || product.video_url || '';
   const reelsMediaUrl = /\.(mp4|mov)(\?.*)?$/i.test(productVideo) ? productVideo : '';
 
@@ -311,10 +294,10 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '' })
     caption,
     hashtags: '#novafurniture #minimalistmobilya #icmimari #mdfmobilya #cnckapak #luxuryfurniture',
     distribution_status: {
-      instagram: { status: 'scheduled', reels_at: '10:00', post_at: '14:30', story_at: '20:00', published: false },
-      facebook: { status: 'scheduled', post_at: '12:00', published: false },
-      tiktok: { status: 'scheduled', video_at: '16:00', published: false },
-      youtube: { status: 'scheduled', shorts_at: '18:00', published: false }
+      instagram: { status: 'pending', reels_at: '10:00', post_at: '14:30', story_at: '20:00', published: false },
+      facebook: { status: 'pending', post_at: '12:00', published: false },
+      tiktok: { status: 'pending', video_at: '16:00', published: false },
+      youtube: { status: 'pending', shorts_at: '18:00', published: false }
     },
     engine: 'GEMINI_BANANA',
     created_at: new Date().toISOString()
@@ -361,7 +344,7 @@ export async function markPlatformPublished(campaignId, platformName = 'instagra
     });
     if (stateRes.ok) {
       const rows = await stateRes.json();
-      const list = Array.isArray((rows && rows[0] && rows[0].data)) ? rows[0].data : [];
+      const list = Array.isArray(rows && rows[0] && rows[0].data) ? rows[0].data : [];
       const item = list.find(c => c.id === campaignId) || list[0];
       if (item && item.distribution_status) {
         if (!item.distribution_status[platformName]) item.distribution_status[platformName] = {};
@@ -482,7 +465,7 @@ async function convertSvgUrlToPngInStorage(svgUrl, targetStoragePath, width = 10
   try {
     const rasterUrl = `https://wsrv.nl/?url=${encodeURIComponent(svgUrl)}&w=${width}&h=${height}&fit=cover&output=png`;
     const r = await fetch(rasterUrl);
-    const ct = r.headers.get('content-type') || '';
+    const ct = (r.headers && r.headers.get('content-type')) || '';
     if (!r.ok || !ct.includes('image/png')) return fallbackPngUrl;
     const buf = Buffer.from(await r.arrayBuffer());
     if (buf.length < 2000) return fallbackPngUrl;
@@ -537,7 +520,7 @@ async function saveAssetRecordToSupabase(record) {
       headers: { 'apikey': SUPABASE_CONFIG.key, 'Authorization': `Bearer ${SUPABASE_CONFIG.key}` }
     });
     const rows = getRes.ok ? await getRes.json() : [];
-    let list = Array.isArray((rows && rows[0] && rows[0].data)) ? rows[0].data : [];
+    let list = Array.isArray(rows && rows[0] && rows[0].data) ? rows[0].data : [];
     list.unshift(record);
     list = list.slice(0, 50);
 
@@ -576,105 +559,74 @@ function renderDetailedSpecPostSvg({ product = {}, heroImageUrl = '' }) {
     } else {
       dimStr = String(rawDims).trim().slice(0, 46);
     }
-  } else {
-    dimStr = 'Genişlik: 160 cm | Yükseklik: 210 cm';
   }
 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
   <defs>
-    <linearGradient id="specBg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0B0E14"/>
-      <stop offset="100%" stop-color="#141822"/>
+    <linearGradient id="detBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F1318"/>
+      <stop offset="100%" stop-color="#181D24"/>
     </linearGradient>
-    <linearGradient id="cardGrad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="rgba(255, 255, 255, 0.04)"/>
-      <stop offset="100%" stop-color="rgba(255, 255, 255, 0.01)"/>
-    </linearGradient>
-    <linearGradient id="goldButton" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0%" stop-color="#D4AF37"/>
-      <stop offset="100%" stop-color="#F3E5AB"/>
-    </linearGradient>
-    <clipPath id="leftFrame">
+    <clipPath id="leftHeroClip">
       <rect x="36" y="36" width="480" height="1008" rx="20"/>
     </clipPath>
+    <linearGradient id="goldBtn" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
   </defs>
 
-  <rect width="${w}" height="${h}" fill="url(#specBg)"/>
+  <rect width="${w}" height="${h}" fill="url(#detBg)"/>
 
-  <!-- SOL PANEL: Gemini Banana ile İşlenmiş Gerçekçi Mimari Sahne -->
-  <g clip-path="url(#leftFrame)">
+  <g clip-path="url(#leftHeroClip)">
     <rect x="36" y="36" width="480" height="1008" fill="#151922"/>
     <image href="${heroImageUrl}" x="36" y="36" width="480" height="1008" preserveAspectRatio="xMidYMid slice"/>
-    <rect x="36" y="36" width="480" height="1008" fill="none" stroke="rgba(212, 175, 55, 0.45)" stroke-width="2"/>
-    
-    <rect x="56" y="56" width="220" height="34" rx="17" fill="rgba(10, 14, 22, 0.88)" stroke="#D4AF37" stroke-width="1"/>
-    <text x="166" y="78" fill="#D4AF37" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="800" text-anchor="middle" letter-spacing="1">✨ NOVA ATELIER AI</text>
+    <rect x="36" y="36" width="480" height="1008" fill="none" stroke="rgba(212, 175, 55, 0.4)" stroke-width="2" rx="20"/>
   </g>
 
-  <!-- SAĞ PANEL: SUPABASE DETAYLARI VE LÜKS ÖZELLİK MADDELERİ -->
-  <g transform="translate(548, 60)">
-    <rect x="0" y="0" width="180" height="28" rx="6" fill="rgba(212, 175, 55, 0.14)"/>
-    <text x="12" y="19" fill="#D4AF37" font-family="'Plus Jakarta Sans', sans-serif" font-size="11" font-weight="800" letter-spacing="1.5">${category}</text>
-    
-    <text x="0" y="72" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="34" font-weight="900" letter-spacing="0.5">${cleanName}</text>
-    <text x="0" y="100" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="500">Kusursuz İskandinav Hatları • 1. Sınıf Mimari İmalat</text>
+  <g transform="translate(548, 80)">
+    <text x="0" y="24" fill="#D4AF37" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="800" letter-spacing="3">NOVA FURNITURE ARCHITECTURE</text>
+    <text x="0" y="70" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="34" font-weight="900">${cleanName}</text>
+    <text x="0" y="102" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="14" font-weight="600">${category}</text>
 
-    <line x1="0" y1="124" x2="480" y2="124" stroke="rgba(212, 175, 55, 0.28)" stroke-width="1"/>
-
-    <!-- 1. Madde: MDF Gövde -->
-    <g transform="translate(0, 146)">
-      <rect width="480" height="84" rx="14" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      <circle cx="44" cy="42" r="22" fill="rgba(212, 175, 55, 0.12)"/>
-      <text x="44" y="48" font-size="20" text-anchor="middle">🪵</text>
-      <text x="82" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">1. Sınıf Sağlam Gövde</text>
-      <text x="82" y="58" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500">18mm E1 Sertifikalı Dayanıklı MDF</text>
+    <g transform="translate(0, 150)">
+      <rect width="496" height="74" rx="14" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)"/>
+      <text x="24" y="44" font-size="22">🪵</text>
+      <text x="64" y="36" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">1. Sınıf Sağlam E1 MDF Gövde</text>
+      <text x="64" y="56" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="12">Kanserojen madde içermeyen sertifikalı lüks panel</text>
     </g>
 
-    <!-- 2. Madde: İthal Membran Kapak -->
-    <g transform="translate(0, 244)">
-      <rect width="480" height="84" rx="14" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      <circle cx="44" cy="42" r="22" fill="rgba(212, 175, 55, 0.12)"/>
-      <text x="44" y="48" font-size="20" text-anchor="middle">🪞</text>
-      <text x="82" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">İthal Membran Kapaklar</text>
-      <text x="82" y="58" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500">Çizilmeye &amp; neme dayanıklı CNC yüzey</text>
+    <g transform="translate(0, 240)">
+      <rect width="496" height="74" rx="14" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)"/>
+      <text x="24" y="44" font-size="22">🪞</text>
+      <text x="64" y="36" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">CNC İşlemeli Çizilmez Membran</text>
+      <text x="64" y="56" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="12">Neme ve sararmaya karşı yüksek mukavemet</text>
     </g>
 
-    <!-- 3. Madde: Donanım ve Fren Sistemi -->
-    <g transform="translate(0, 342)">
-      <rect width="480" height="84" rx="14" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      <circle cx="44" cy="42" r="22" fill="rgba(212, 175, 55, 0.12)"/>
-      <text x="44" y="48" font-size="20" text-anchor="middle">🗄️</text>
-      <text x="82" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">Frenli Donanım Sistemi</text>
-      <text x="82" y="58" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500">Sessiz kapanan teleskopik ray &amp; menteşe</text>
+    <g transform="translate(0, 330)">
+      <rect width="496" height="74" rx="14" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)"/>
+      <text x="24" y="44" font-size="22">🗄️</text>
+      <text x="64" y="36" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">Sessiz Frenli Teleskopik Ray &amp; Menteşe</text>
+      <text x="64" y="56" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="12">Çarpmayan, yumuşak kapanan üst segment donanım</text>
     </g>
 
-    <!-- 4. Madde: Ölçüler (Supabase'den) -->
-    <g transform="translate(0, 440)">
-      <rect width="480" height="84" rx="14" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      <circle cx="44" cy="42" r="22" fill="rgba(212, 175, 55, 0.12)"/>
-      <text x="44" y="48" font-size="20" text-anchor="middle">📐</text>
-      <text x="82" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">Net Katalog Ölçüleri</text>
-      <text x="82" y="58" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500">${dimStr}</text>
+    <g transform="translate(0, 420)">
+      <rect width="496" height="74" rx="14" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)"/>
+      <text x="24" y="44" font-size="22">📐</text>
+      <text x="64" y="36" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">Ölçü ve Renk Özelleştirme</text>
+      <text x="64" y="56" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="12">${dimStr}</text>
     </g>
 
-    <!-- 5. Madde: Renk ve Garanti -->
-    <g transform="translate(0, 538)">
-      <rect width="480" height="84" rx="14" fill="url(#cardGrad)" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1"/>
-      <circle cx="44" cy="42" r="22" fill="rgba(212, 175, 55, 0.12)"/>
-      <text x="44" y="48" font-size="20" text-anchor="middle">🎨</text>
-      <text x="82" y="34" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">50+ Renk &amp; Özel Ölçü</text>
-      <text x="82" y="58" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="500">Mat, soft ve doğal ahşap alternatifleri</text>
+    <g transform="translate(0, 520)">
+      <rect width="496" height="74" rx="14" fill="rgba(255, 255, 255, 0.04)" stroke="rgba(255, 255, 255, 0.08)"/>
+      <text x="24" y="44" font-size="22">🛡️</text>
+      <text x="64" y="36" fill="#FFFFFF" font-family="'Plus Jakarta Sans', sans-serif" font-size="15" font-weight="700">5 Yıl Üretici Garantisi &amp; Hızlı Teslimat</text>
+      <text x="64" y="56" fill="#94A3B8" font-family="'Plus Jakarta Sans', sans-serif" font-size="12">Doğrudan imalattan güvenli kapıya teslim</text>
     </g>
 
-    <!-- 6. ALTIN WHATSAPP SİPARİŞ & FİYAT BUTONU -->
-    <g transform="translate(0, 650)">
-      <rect width="480" height="64" rx="32" fill="url(#goldButton)"/>
-      <text x="240" y="39" fill="#0A0E14" font-family="'Plus Jakarta Sans', sans-serif" font-size="16" font-weight="900" text-anchor="middle" letter-spacing="0.5">📲 FİYAT İÇİN: 0 (505) 015 1035</text>
-    </g>
-
-    <g transform="translate(0, 735)">
-      <text x="240" y="20" fill="#E2E8F0" font-family="'Plus Jakarta Sans', sans-serif" font-size="13" font-weight="700" text-anchor="middle">🛡️ 5 Yıl Fabrika Garantisi   •   🚚 5 İş Gününde Teslim</text>
-      <text x="240" y="46" fill="#D4AF37" font-family="'Plus Jakarta Sans', sans-serif" font-size="12" font-weight="700" text-anchor="middle">💬 Yoruma "FİYAT" yazın, anında DM gönderelim!</text>
+    <g transform="translate(0, 640)">
+      <rect width="496" height="84" rx="42" fill="url(#goldBtn)"/>
+      <text x="248" y="51" fill="#0A0E14" font-family="'Plus Jakarta Sans', sans-serif" font-size="17" font-weight="900" text-anchor="middle" letter-spacing="1">💬 FİYAT İÇİN DM GÖNDERİN</text>
     </g>
   </g>
 </svg>`;
@@ -689,8 +641,8 @@ function renderStorySvg({ product = {}, heroImageUrl = '' }) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}">
   <defs>
     <linearGradient id="storyBg" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%" stop-color="#0E121A"/>
-      <stop offset="100%" stop-color="#07090D"/>
+      <stop offset="0%" stop-color="#0D1117"/>
+      <stop offset="100%" stop-color="#1A202C"/>
     </linearGradient>
     <clipPath id="storyTopFrame">
       <rect x="40" y="140" width="1000" height="980" rx="28"/>

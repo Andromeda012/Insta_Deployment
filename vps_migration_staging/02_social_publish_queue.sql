@@ -38,8 +38,25 @@ CREATE INDEX IF NOT EXISTS idx_publish_queue_platform
 ON public.social_publish_queue(platform, status);
 
 ALTER TABLE public.social_publish_queue ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.social_publish_queue FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.social_publish_queue FROM PUBLIC;
+
+-- Service role has full permissions (for VPS Publisher runner)
 GRANT ALL ON public.social_publish_queue TO service_role;
+
+-- Anon and authenticated (used by Vercel cron endpoints) can ONLY select (for idempotency) and insert pending tasks
+GRANT SELECT, INSERT ON public.social_publish_queue TO anon, authenticated;
+
+DROP POLICY IF EXISTS "Allow anon check idempotency" ON public.social_publish_queue;
+CREATE POLICY "Allow anon check idempotency"
+ON public.social_publish_queue
+FOR SELECT TO anon, authenticated
+USING (true);
+
+DROP POLICY IF EXISTS "Allow anon enqueue pending tasks" ON public.social_publish_queue;
+CREATE POLICY "Allow anon enqueue pending tasks"
+ON public.social_publish_queue
+FOR INSERT TO anon, authenticated
+WITH CHECK (status = 'pending');
 
 CREATE OR REPLACE FUNCTION public.claim_next_publish_task(
   p_worker_id text, p_lock_duration_seconds int DEFAULT 180

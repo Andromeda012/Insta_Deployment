@@ -742,7 +742,7 @@
           <!-- Gizli girdi alanları (Arka plan bot motoru ve Supabase senkronizasyonu için korunmuştur) -->
           <input type="hidden" id="cfg_page_name" value="Thenovafurniture">
           <input type="hidden" id="cfg_page_id" value="1436666706190366">
-          <input type="hidden" id="cfg_page_token" value="EAAVytShbbJUBS8UfPHT8aacyWnUEJAd1pVOfheayPPUoFTgzIXy9PVhATjHuytePm9xJHSXbvZCC3wq9H88Nj0vJl5AParFBPJcmUnUBYAEnxShy3O1T3qh6bWQDvS3TC5ZBRcngYHSMZBjESkMUKDLCuyWCC0mTnxSd4gb0iWZAunwZBpdqWpZC2DKDrrsb6LFpbk3y8Y">
+          <input type="hidden" id="cfg_page_token" value="">
         </div>
       </div>
     </div>
@@ -987,8 +987,8 @@ const DEFAULT_FB_BOT_STATE = {
   config: {
     page_name: 'Thenovafurniture',
     page_id: '1436666706190366',
-    page_access_token: 'EAAVytShbbJUBS8UfPHT8aacyWnUEJAd1pVOfheayPPUoFTgzIXy9PVhATjHuytePm9xJHSXbvZCC3wq9H88Nj0vJl5AParFBPJcmUnUBYAEnxShy3O1T3qh6bWQDvS3TC5ZBRcngYHSMZBjESkMUKDLCuyWCC0mTnxSd4gb0iWZAunwZBpdqWpZC2DKDrrsb6LFpbk3y8Y',
-    gemini_api_key: ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join(''),
+    page_access_token: '',
+    gemini_api_key: '',
     gemini_model: 'gemini-2.5-flash',
     auto_publish_enabled: true,
     require_approval: false,
@@ -1120,7 +1120,7 @@ async function resolveFacebookCredentials() {
   }
 
   if (!pageId) pageId = '1436666706190366';
-  if (!pageAccessToken) pageAccessToken = 'EAAVytShbbJUBS8UfPHT8aacyWnUEJAd1pVOfheayPPUoFTgzIXy9PVhATjHuytePm9xJHSXbvZCC3wq9H88Nj0vJl5AParFBPJcmUnUBYAEnxShy3O1T3qh6bWQDvS3TC5ZBRcngYHSMZBjESkMUKDLCuyWCC0mTnxSd4gb0iWZAunwZBpdqWpZC2DKDrrsb6LFpbk3y8Y';
+  if (!pageAccessToken) pageAccessToken = '';
 
   if (fbState && fbState.config) {
     fbState.config.page_id = pageId;
@@ -2071,7 +2071,7 @@ async function runFbClientSideThreeTierEngine(cleanText, channel) {
   }
 
   // 2. Aşama Gemini AI
-  const gemKey = c.gemini_api_key || ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
+  const gemKey = c.gemini_api_key || '';
   if (gemKey) {
     try {
       const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');

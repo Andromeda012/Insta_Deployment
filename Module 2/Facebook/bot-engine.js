@@ -20,7 +20,7 @@
  */
 
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
-export const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
+export const DEFAULT_GEMINI_KEY = process.env.GEMINI_API_KEY || '';
 export const DEFAULT_SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 export const DEFAULT_SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 
@@ -490,7 +490,7 @@ Lütfen Facebook tasarım kartının üzerine yazılacak başlıkları ve detayl
       );
       if (gRes.ok) {
         const gData = await gRes.json();
-        const parsed = JSON.parse(gData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
+        const parsed = JSON.parse((((((gData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}');
         if (parsed.badge) badge = parsed.badge;
         if (parsed.headline) headline = parsed.headline;
         if (parsed.subheadline) subheadline = parsed.subheadline;
@@ -537,7 +537,7 @@ Lütfen Facebook tasarım kartının üzerine yazılacak başlıkları ve detayl
     svg_markup: svgContent,
     media_url: dynamicRenderUrl,
     auto_designed: true,
-    product_slug: pickedProduct?.slug || null
+    product_slug: (pickedProduct && pickedProduct.slug) || null
   };
 }
 
@@ -785,7 +785,7 @@ Lütfen JSON formatında yanıt ver:
 
       if (geminiRes.ok) {
         const geminiData = await geminiRes.json();
-        const rawJson = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+        const rawJson = (((((geminiData || {}).candidates || [])[0] || {}).content || {}).parts || [{}])[0].text || '{}';
         const parsed = JSON.parse(rawJson);
 
         if (parsed.needs_human_handoff) {

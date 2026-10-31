@@ -18,7 +18,7 @@
 
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
 const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
-const DEFAULT_GEMINI_KEY = ['AQ.Ab8RN6LZjph', '0uabWTE25fDUZhRMwR', '1yUb6ln8s-4ldjxZNvBBw'].join('');
+const DEFAULT_GEMINI_KEY = '';
 const TIKTOK_API_BASE = 'https://open.tiktokapis.com/v2';
 
 // ---------------------------------------------------------------------------

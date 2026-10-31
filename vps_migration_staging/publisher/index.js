@@ -410,6 +410,48 @@ async function executePublish(task) {
 }
 
 // ── ANA KUYRUK DÖNGÜSÜ ───────────────────────────────────────────────────────
+
+// Admin Paneli Durum Senkronizasyonu Helper Fonksiyonu
+async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, errorMsg = null) {
+  try {
+    const stateKey = task.platform === 'facebook' ? 'fb_bot_state' : 'insta_bot_state';
+    const { data: rows, error: getErr } = await supabase
+      .from('site_settings')
+      .select('data')
+      .eq('key', stateKey)
+      .limit(1);
+
+    if (getErr || !rows || rows.length === 0) return;
+    const state = (rows[0] && rows[0].data) || {};
+    const posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
+
+    let updated = false;
+    for (const p of posts) {
+      const isMatch = p.queue_idempotency_key === task.idempotency_key ||
+                      p.queue_task_id === task.task_id ||
+                      (p.product_slug === task.product_slug && p.status === 'pending');
+      if (isMatch) {
+        p.status = finalStatus; // 'published', 'dry_run_completed', 'failed', 'reconciliation_required'
+        if (platformPostId) p.platform_post_id = platformPostId;
+        if (errorMsg) p.error_message = errorMsg;
+        p.worker_processed_at = new Date().toISOString();
+        updated = true;
+        break;
+      }
+    }
+
+    if (updated) {
+      await supabase
+        .from('site_settings')
+        .update({ data: state, updated_at: new Date().toISOString() })
+        .eq('key', stateKey);
+      console.log(`[Admin Panel Senkronizasyonu] ${stateKey} -> ${finalStatus}`);
+    }
+  } catch (syncErr) {
+    console.warn('[Admin Panel Senkronizasyon Uyarısı]:', syncErr.message);
+  }
+}
+
 async function pollQueueCycle() {
   if (isShuttingDown || isTaskRunning) return;
 
@@ -446,6 +488,9 @@ async function pollQueueCycle() {
         p_error_message: result.errorMessage || null,
         p_backoff_minutes: 5
       });
+
+      // Admin Paneli Senkronizasyonu
+      await syncAdminPanelStatus(task, result.status, result.platformPostId, result.errorMessage);
 
       // KRİTİK DOĞRULAMA: Hem error hem de return değerini kontrol et
       if (completeError || completedSuccessfully !== true) {
