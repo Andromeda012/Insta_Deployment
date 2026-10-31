@@ -270,6 +270,189 @@ runTest('10. Exponential backoff formülü doğru aralıklarla artar ve 60 dakik
   assert.strictEqual(calculateBackoff(5, 10), 60, '10. retry: 60 dakika (tavan kuralı)');
 });
 
+// ── TEST 11: Instagram Token Ayrıştırması ve Kesin İzolasyon (No Fallback) ───
+runTest('11. Instagram yalnızca META_IG_ACCESS_TOKEN kullanır; eksikse META_PAGE_ACCESS_TOKEN fallback yapmaz', () => {
+  function getInstagramToken(env) {
+    const igUserId = env.META_IG_USER_ID;
+    const igAccessToken = env.META_IG_ACCESS_TOKEN;
+    if (!igUserId || !igAccessToken) {
+      throw new Error('Meta Instagram ortam değişkenleri (META_IG_USER_ID, META_IG_ACCESS_TOKEN) eksik!');
+    }
+    return { igUserId, igAccessToken };
+  }
+
+  // Senaryo A: META_IG_ACCESS_TOKEN yok ama META_PAGE_ACCESS_TOKEN var -> HATA VERMELİ!
+  const envWithoutIgToken = {
+    META_IG_USER_ID: '17841435882645322',
+    META_PAGE_ACCESS_TOKEN: 'EAAG_FB_PAGE_TOKEN_123'
+  };
+
+  assert.throws(
+    () => getInstagramToken(envWithoutIgToken),
+    /META_IG_ACCESS_TOKEN/,
+    'Instagram eksik token durumunda META_PAGE_ACCESS_TOKEN tokenına fallback yapamaz!'
+  );
+
+  // Senaryo B: Doğru token sağlandığında token döner
+  const envValid = {
+    META_IG_USER_ID: '17841435882645322',
+    META_IG_ACCESS_TOKEN: 'EAAG_IG_USER_TOKEN_456',
+    META_PAGE_ACCESS_TOKEN: 'EAAG_FB_PAGE_TOKEN_123'
+  };
+  const resolved = getInstagramToken(envValid);
+  assert.strictEqual(resolved.igAccessToken, 'EAAG_IG_USER_TOKEN_456');
+});
+
+// ── TEST 12: Facebook Token Ayrıştırması ve Kesin İzolasyon (No Fallback) ────
+runTest('12. Facebook yalnızca META_PAGE_ACCESS_TOKEN kullanır; eksikse META_IG_ACCESS_TOKEN fallback yapmaz', () => {
+  function getFacebookToken(env) {
+    const pageId = env.META_PAGE_ID;
+    const pageAccessToken = env.META_PAGE_ACCESS_TOKEN;
+    if (!pageId || !pageAccessToken) {
+      throw new Error('Meta Facebook ortam değişkenleri (META_PAGE_ID, META_PAGE_ACCESS_TOKEN) eksik!');
+    }
+    return { pageId, pageAccessToken };
+  }
+
+  // Senaryo A: META_PAGE_ACCESS_TOKEN yok ama META_IG_ACCESS_TOKEN var -> HATA VERMELİ!
+  const envWithoutFbToken = {
+    META_PAGE_ID: '100234567890',
+    META_IG_ACCESS_TOKEN: 'EAAG_IG_USER_TOKEN_456'
+  };
+
+  assert.throws(
+    () => getFacebookToken(envWithoutFbToken),
+    /META_PAGE_ACCESS_TOKEN/,
+    'Facebook eksik token durumunda META_IG_ACCESS_TOKEN tokenına fallback yapamaz!'
+  );
+
+  // Senaryo B: Doğru token sağlandığında token döner
+  const envValid = {
+    META_PAGE_ID: '100234567890',
+    META_PAGE_ACCESS_TOKEN: 'EAAG_FB_PAGE_TOKEN_123',
+    META_IG_ACCESS_TOKEN: 'EAAG_IG_USER_TOKEN_456'
+  };
+  const resolved = getFacebookToken(envValid);
+  assert.strictEqual(resolved.pageAccessToken, 'EAAG_FB_PAGE_TOKEN_123');
+});
+
 console.log('\n================================================================');
 console.log(`TEST RAPORU: ${passedTests} / ${totalTests} SENARYO BAŞARIYLA DOĞRULANDI.`);
 console.log('================================================================\n');
+
+// ── HTTP CLIENT GERÇEK BİRİM TESTLERİ ───────────────────────────────────────
+// Bu testler doğrudan publisher/http-client.cjs içindeki gerçek fetchWithTimeout
+// fonksiyonunu çalıştırır; fetch yalnızca kontrollü senaryolar için mock edilir.
+(async () => {
+  const { fetchWithTimeout } = require('./publisher/http-client.cjs');
+  let httpPassed = 0;
+  let httpTotal = 0;
+  const originalFetch = global.fetch;
+
+  async function runAsyncTest(name, fn) {
+    httpTotal++;
+    try {
+      await fn();
+      httpPassed++;
+      console.log(`[PASS] HTTP ${httpTotal}. ${name}`);
+    } catch (err) {
+      console.error(`[FAIL] HTTP ${httpTotal}. ${name}: ${err.stack || err.message}`);
+    } finally {
+      global.fetch = originalFetch;
+    }
+  }
+
+  try {
+    await runAsyncTest('Normal JSON response body doğru parse edilir', async () => {
+      global.fetch = async () => ({
+        ok: true, status: 200, headers: {},
+        text: async () => '{"id":"post_123"}'
+      });
+      const response = await fetchWithTimeout('https://unit.test/ok', { method: 'GET' }, 100);
+      assert.strictEqual(response.data.id, 'post_123');
+      assert.strictEqual(response.ok, true);
+    });
+
+    await runAsyncTest('Başlıklar geldikten sonra asılı kalan response body timeout ile iptal edilir', async () => {
+      let abortObserved = false;
+      global.fetch = async (_url, options) => ({
+        ok: true, status: 200, headers: {},
+        text: () => new Promise((_resolve, reject) => {
+          options.signal.addEventListener('abort', () => {
+            abortObserved = true;
+            const error = new Error('aborted');
+            error.name = 'AbortError';
+            reject(error);
+          }, { once: true });
+        })
+      });
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/hanging-body', { method: 'POST' }, 20),
+        err => err.name === 'TimeoutError' && err.uncertain === true
+      );
+      assert.strictEqual(abortObserved, true, 'AbortController body okumasını iptal etmeliydi');
+    });
+
+    await runAsyncTest('2xx POST bozuk JSON yanıtı belirsiz olarak sınıflandırılır', async () => {
+      global.fetch = async () => ({ ok: true, status: 200, headers: {}, text: async () => '<html>ok</html>' });
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/malformed-post', { method: 'POST' }, 100),
+        err => err.name === 'ResponseParseError' && err.uncertain === true && err.status === 200
+      );
+    });
+
+    await runAsyncTest('4xx POST bozuk JSON yanıtı kesin HTTP reddi olarak döner', async () => {
+      global.fetch = async () => ({ ok: false, status: 400, headers: {}, text: async () => 'bad request' });
+      const response = await fetchWithTimeout('https://unit.test/rejected-post', { method: 'POST' }, 100);
+      assert.strictEqual(response.ok, false);
+      assert.strictEqual(response.status, 400);
+      assert.ok(response.data._parseError);
+    });
+
+    await runAsyncTest('5xx POST yanıtı belirsiz; 5xx GET yanıtı yan etkisiz olarak sınıflandırılır', async () => {
+      global.fetch = async () => ({ ok: false, status: 503, headers: {}, text: async () => '{\"error\":\"temporary\"}' });
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/server-post', { method: 'POST' }, 100),
+        err => err.name === 'HttpServerError' && err.uncertain === true && err.status === 503
+      );
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/server-get', { method: 'GET' }, 100),
+        err => err.name === 'HttpServerError' && err.uncertain === false && err.status === 503
+      );
+    });
+
+    await runAsyncTest('2xx POST boş response body belirsiz kabul edilir', async () => {
+      global.fetch = async () => ({ ok: true, status: 200, headers: {}, text: async () => '' });
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/empty-post', { method: 'POST' }, 100),
+        err => err.name === 'ResponseBodyError' && err.uncertain === true && err.code === 'EMPTY_BODY'
+      );
+    });
+
+    await runAsyncTest('GET ağ hatası yan etkili POST gibi belirsiz işaretlenmez', async () => {
+      global.fetch = async () => { throw new TypeError('fetch failed'); };
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/network-get', { method: 'GET' }, 100),
+        err => err.name === 'NetworkRequestError' && err.uncertain === false
+      );
+    });
+
+    await runAsyncTest('POST response body okuma hatası belirsiz kabul edilir', async () => {
+      global.fetch = async () => ({
+        ok: true, status: 201, headers: {},
+        text: async () => { throw new Error('stream reset'); }
+      });
+      await assert.rejects(
+        () => fetchWithTimeout('https://unit.test/body-error', { method: 'POST' }, 100),
+        err => err.name === 'ResponseBodyError' && err.uncertain === true && err.status === 201
+      );
+    });
+  } finally {
+    global.fetch = originalFetch;
+  }
+
+  console.log('\n================================================================');
+  console.log(`HTTP CLIENT TEST RAPORU: ${httpPassed} / ${httpTotal} BAŞARILI`);
+  console.log('================================================================\n');
+  if (httpPassed !== httpTotal || passedTests !== totalTests) process.exitCode = 1;
+})();

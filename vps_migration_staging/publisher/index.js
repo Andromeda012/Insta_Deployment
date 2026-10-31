@@ -27,6 +27,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import httpClient from './http-client.cjs';
+const { fetchWithTimeout } = httpClient;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -63,21 +65,7 @@ function sanitize(text) {
     .replace(/refresh_token=[a-zA-Z0-9_\-\.]+/gi, 'refresh_token=***');
 }
 
-// ── ABORTCONTROLLER TABANLI GÜVENLİ FETCH YARDIMCISI ─────────────────────────
-async function fetchWithTimeout(url, options = {}, timeoutMs = API_TIMEOUT_MS) {
-  const controller = new AbortController();
-  const timeoutHandle = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(url, {
-      ...options,
-      signal: controller.signal
-    });
-    return response;
-  } finally {
-    clearTimeout(timeoutHandle);
-  }
-}
+// HTTP timeout ve response-body güvenliği http-client.cjs içinde merkezi olarak uygulanır.
 
 // ── KİLİT SÜRESİ UZATMA (HEARTBEAT) ──────────────────────────────────────────
 async function heartbeatLockExtension(taskId, extraSeconds = 120) {
@@ -119,16 +107,16 @@ async function executePublish(task) {
     // ── 1. INSTAGRAM GRAPH API ──────────────────────────────────────────────
     case 'instagram': {
       const igUserId = process.env.META_IG_USER_ID;
-      const accessToken = process.env.META_PAGE_ACCESS_TOKEN;
-      if (!igUserId || !accessToken) {
-        throw new Error('Meta Instagram ortam değişkenleri (META_IG_USER_ID, META_PAGE_ACCESS_TOKEN) eksik!');
+      const igAccessToken = process.env.META_IG_ACCESS_TOKEN;
+      if (!igUserId || !igAccessToken) {
+        throw new Error('Meta Instagram ortam değişkenleri (META_IG_USER_ID, META_IG_ACCESS_TOKEN) eksik!');
       }
 
       const isVideo = content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url);
       
       // Token URL yerine POST body içinde taşınır
       const containerParams = new URLSearchParams();
-      containerParams.set('access_token', accessToken);
+      containerParams.set('access_token', igAccessToken);
 
       if (content_type === 'REELS') {
         containerParams.set('media_type', 'REELS');
@@ -149,9 +137,11 @@ async function executePublish(task) {
         method: 'POST',
         body: containerParams
       });
-      const containerData = await containerRes.json().catch(() => ({}));
+      const containerData = containerRes.data;
       if (!containerRes.ok || !containerData.id) {
-        const errMsg = (containerData && containerData.error && containerData.error.message) || 'Konteyner oluşturulamadı';
+        const errMsg = (containerData && containerData.error && containerData.error.message) ||
+                       (containerData && containerData._rawText) ||
+                       'Konteyner oluşturulamadı';
         throw new Error(`Meta Container Hatası: ${sanitize(errMsg)}`);
       }
 
@@ -179,11 +169,11 @@ async function executePublish(task) {
           {
             method: 'GET',
             headers: {
-              'Authorization': `Bearer ${accessToken}`
+              'Authorization': `Bearer ${igAccessToken}`
             }
           }
         );
-        const statusData = await statusRes.json().catch(() => ({}));
+        const statusData = statusRes.data;
 
         if (statusData.status_code === 'FINISHED') {
           isReady = true;
@@ -191,7 +181,7 @@ async function executePublish(task) {
         }
 
         if (statusData.status_code === 'ERROR') {
-          throw new Error(`Instagram medya işleme hatası: ${sanitize(statusData.status || 'Bilinmeyen hata')}`);
+          throw new Error(`Instagram medya işleme hatası: ${sanitize(statusData.status || statusData._rawText || 'Bilinmeyen hata')}`);
         }
       }
 
@@ -202,17 +192,19 @@ async function executePublish(task) {
       // Adım 3: Medyayı Yayınla (media_publish) — Token body içinde gönderilir
       const pubParams = new URLSearchParams({
         creation_id: creationId,
-        access_token: accessToken
+        access_token: igAccessToken
       });
 
       const pubRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media_publish`, {
         method: 'POST',
         body: pubParams
       });
-      const pubData = await pubRes.json().catch(() => ({}));
+      const pubData = pubRes.data;
 
       if (!pubRes.ok || !pubData.id) {
-        const errMsg = (pubData && pubData.error && pubData.error.message) || 'Yayınlanamadı';
+        const errMsg = (pubData && pubData.error && pubData.error.message) ||
+                       (pubData && pubData._rawText) ||
+                       'Yayınlanamadı';
         throw new Error(`Meta Publish Hatası: ${sanitize(errMsg)}`);
       }
 
@@ -239,9 +231,11 @@ async function executePublish(task) {
           access_token: pageAccessToken
         });
         const upRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photos`, { method: 'POST', body: upParams });
-        const upData = await upRes.json().catch(() => ({}));
+        const upData = upRes.data;
         if (!upRes.ok || !upData.id) {
-          const errMsg = (upData && upData.error && upData.error.message) || 'Bilinmeyen hata';
+          const errMsg = (upData && upData.error && upData.error.message) ||
+                         (upData && upData._rawText) ||
+                         'Bilinmeyen hata';
           throw new Error(`Facebook Story Yükleme Hatası: ${sanitize(errMsg)}`);
         }
 
@@ -253,9 +247,11 @@ async function executePublish(task) {
 
         const stParams = new URLSearchParams({ photo_id: upData.id, access_token: pageAccessToken });
         const stRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photo_stories`, { method: 'POST', body: stParams });
-        const stData = await stRes.json().catch(() => ({}));
+        const stData = stRes.data;
         if (!stRes.ok || (!stData.post_id && !stData.success)) {
-          const errMsg = (stData && stData.error && stData.error.message) || 'Bilinmeyen hata';
+          const errMsg = (stData && stData.error && stData.error.message) ||
+                         (stData && stData._rawText) ||
+                         'Bilinmeyen hata';
           throw new Error(`Facebook Story Yayın Hatası: ${sanitize(errMsg)}`);
         }
 
@@ -272,9 +268,11 @@ async function executePublish(task) {
         method: 'POST',
         body: photoParams
       });
-      const fbData = await fbRes.json().catch(() => ({}));
+      const fbData = fbRes.data;
       if (!fbRes.ok || (!fbData.id && !fbData.post_id)) {
-        const errMsg = (fbData && fbData.error && fbData.error.message) || 'Bilinmeyen hata';
+        const errMsg = (fbData && fbData.error && fbData.error.message) ||
+                       (fbData && fbData._rawText) ||
+                       'Bilinmeyen hata';
         throw new Error(`Facebook Gönderi Hatası: ${sanitize(errMsg)}`);
       }
 
@@ -312,12 +310,14 @@ async function executePublish(task) {
         },
         body: JSON.stringify(initPayload)
       });
-      const initData = await initRes.json().catch(() => ({}));
+      const initData = initRes.data;
 
       const initErrCode = initData && initData.error ? initData.error.code : null;
       const initPublishId = initData && initData.data ? initData.data.publish_id : null;
       if (!initRes.ok || initErrCode !== 'ok' || !initPublishId) {
-        const errMsg = (initData && initData.error && initData.error.message) || 'Bilinmeyen TikTok hatası';
+        const errMsg = (initData && initData.error && initData.error.message) ||
+                       (initData && initData._rawText) ||
+                       'Bilinmeyen TikTok hatası';
         throw new Error(`TikTok Başlatma Hatası (HTTP ${initRes.status}): ${sanitize(errMsg)}`);
       }
 
@@ -351,12 +351,14 @@ async function executePublish(task) {
           continue;
         }
 
-        const statusData = await statusRes.json().catch(() => ({}));
+        const statusData = statusRes.data;
         statusDetails = statusData;
 
         const statErrCode = statusData && statusData.error ? statusData.error.code : null;
         if (statErrCode !== 'ok') {
-          const errMsg = (statusData && statusData.error && statusData.error.message) || 'Hata kodu alındı';
+          const errMsg = (statusData && statusData.error && statusData.error.message) ||
+                         (statusData && statusData._rawText) ||
+                         'Hata kodu alındı';
           throw new Error(`TikTok Status API Hatası: ${sanitize(errMsg)}`);
         }
 
@@ -367,7 +369,9 @@ async function executePublish(task) {
         }
 
         if (currentStatus === 'FAILED') {
-          const failReason = (statusData && statusData.data && statusData.data.fail_reason) || 'Bilinmeyen neden';
+          const failReason = (statusData && statusData.data && statusData.data.fail_reason) ||
+                             (statusData && statusData._rawText) ||
+                             'Bilinmeyen neden';
           throw new Error(`TikTok yayın işleme hatası: ${sanitize(failReason)}`);
         }
       }
@@ -454,15 +458,31 @@ async function pollQueueCycle() {
       }
     } catch (execErr) {
       const lowerMsg = (execErr.message || '').toLowerCase();
-      const isTimeout = execErr.name === 'AbortError' ||
-                        lowerMsg.includes('timeout') ||
-                        lowerMsg.includes('etimedout') ||
-                        lowerMsg.includes('econnreset') ||
-                        lowerMsg.includes('heartbeatlost');
+      const isUncertainNetworkState =
+        execErr.uncertain === true ||
+        execErr.name === 'AbortError' ||
+        execErr.name === 'TimeoutError' ||
+        execErr.name === 'NetworkRequestError' ||
+        execErr.name === 'ResponseBodyError' ||
+        execErr.name === 'ResponseParseError' ||
+        lowerMsg.includes('timeout') ||
+        lowerMsg.includes('abort') ||
+        lowerMsg.includes('etimedout') ||
+        lowerMsg.includes('econnreset') ||
+        lowerMsg.includes('econnrefused') ||
+        lowerMsg.includes('enotfound') ||
+        lowerMsg.includes('socket hang up') ||
+        lowerMsg.includes('network') ||
+        lowerMsg.includes('fetch failed') ||
+        lowerMsg.includes('heartbeatlost') ||
+        lowerMsg.includes('502') ||
+        lowerMsg.includes('503') ||
+        lowerMsg.includes('504');
 
-      // Ağ zaman aşımında veya kilit kaybında API'nin yayını yapıp yapmadığı belirsizdir:
-      // Mükerrer yayını önlemek için 'reconciliation_required' yapılır!
-      const finalStatus = isTimeout ? 'reconciliation_required' : 'failed';
+      // Ağ zaman aşımında, bağlantı kopmalarında veya kilit kaybında:
+      // Gönderilmiş olan HTTP POST isteğinin platform tarafından işlenip işlenmediği belirsizdir.
+      // Mükerrer yayını KESİNLİKLE önlemek için görev 'reconciliation_required' yapılır; otomatik retry engellenir!
+      const finalStatus = isUncertainNetworkState ? 'reconciliation_required' : 'failed';
       const cleanErrMsg = sanitize(execErr.message);
 
       console.error(`[Görev Sonucu: ${finalStatus.toUpperCase()}] ID: ${task.task_id} -> ${cleanErrMsg}`);
