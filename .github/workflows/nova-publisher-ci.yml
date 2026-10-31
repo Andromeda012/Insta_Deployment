@@ -2,7 +2,7 @@ name: NOVA Publisher CI
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, fix/nova-publisher-safety]
     paths:
       - "api/instagram-cron.js"
       - "api/facebook-cron.js"
@@ -10,7 +10,7 @@ on:
       - "vps_migration_staging/**"
       - ".github/workflows/nova-publisher-ci.yml"
   push:
-    branches: ["fix/nova-publisher-safety"]
+    branches: ["fix/nova-publisher-safety", "integration/nova-instagram-facebook"]
 
 permissions:
   contents: read
@@ -33,8 +33,13 @@ jobs:
           node --check api/instagram-cron.js
           node --check api/facebook-cron.js
           node --check gemini-banana-engine.js
+          node --check vps_migration_staging/publisher/gemini-banana-engine.js
+          node --check vps_migration_staging/publisher/scheduler.js
           node --check vps_migration_staging/publisher/index.js
           node --check vps_migration_staging/publisher/http-client.cjs
+
+      - name: Run scheduler unit tests
+        run: node vps_migration_staging/publisher/scheduler.test.mjs
 
       - name: Run queue and HTTP-client simulation suite
         run: node vps_migration_staging/test_simulation.cjs
