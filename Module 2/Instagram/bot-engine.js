@@ -542,29 +542,49 @@ export async function publishToInstagramGraphApi({
 
   const creationId = containerData.id;
 
-  // Adım 2: Video/Reels/Story ise işlenme durumunu bekle (FINISHED olana kadar)
-  if (resolvedType === 'REELS' || resolvedType === 'STORIES' || isVideoFile) {
-    for (let attempt = 0; attempt < 12; attempt++) {
-      await new Promise(r => setTimeout(r, 4000));
+  // Adım 2: Medyanın Instagram sunucularında işlenmesini bekle (FINISHED olana kadar)
+  // NOT: Meta Graph API fotoğraflarda da işleme gecikmesi yaşayabilir ("Media ID is not available" hatasını önlemek için)
+  const isVideoOrStory = resolvedType === 'REELS' || resolvedType === 'STORIES' || isVideoFile;
+  const maxAttempts = isVideoOrStory ? 15 : 6;
+  const pollIntervalMs = isVideoOrStory ? 4000 : 2500;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    await new Promise(r => setTimeout(r, pollIntervalMs));
+    try {
       const statusRes = await fetch(`${GRAPH_API_BASE}/${creationId}?fields=status_code,status&access_token=${encodeURIComponent(accessToken)}`);
-      const statusData = await statusRes.json();
-      if (statusData.status_code === 'FINISHED') break;
-      if (statusData.status_code === 'ERROR') {
-        throw new Error(`Instagram medya işleme hatası: ${statusData.status || 'Bilinmeyen hata'}`);
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.status_code === 'FINISHED') break;
+        if (statusData.status_code === 'ERROR') {
+          throw new Error(`Instagram medya işleme hatası: ${statusData.status || 'Bilinmeyen hata'}`);
+        }
       }
+    } catch (pollErr) {
+      if (pollErr.message.includes('Instagram medya işleme hatası')) throw pollErr;
     }
   }
 
-  // Adım 3: Onay Beklemeden Doğrudan Yayınla (media_publish)
+  // Adım 3: Onay Beklemeden Doğrudan Yayınla (media_publish) - Retry mekanizmasıyla
   const publishParams = new URLSearchParams();
   publishParams.set('creation_id', creationId);
   publishParams.set('access_token', accessToken);
 
-  const pubRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media_publish`, {
-    method: 'POST',
-    body: publishParams
-  });
-  const pubData = await pubRes.json();
+  let pubRes = null;
+  let pubData = null;
+  for (let retry = 0; retry < 3; retry++) {
+    pubRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media_publish`, {
+      method: 'POST',
+      body: publishParams
+    });
+    pubData = await pubRes.json();
+    if (pubRes.ok && pubData.id) break;
+    // Eğer "Media ID is not available" hatası geldiyse 4 saniye daha bekle ve tekrar dene
+    if (pubData?.error?.message?.includes('Media ID is not available') && retry < 2) {
+      await new Promise(r => setTimeout(r, 4000));
+      continue;
+    }
+    break;
+  }
   if (!pubRes.ok || !pubData.id) {
     throw new Error(pubData?.error?.message || 'Instagram medya yayınlama başarısız oldu');
   }
