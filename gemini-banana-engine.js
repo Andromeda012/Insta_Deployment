@@ -22,7 +22,7 @@
 
 const SUPABASE_CONFIG = {
   url: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_URL) || 'https://vrfujrpsjzqjthaqdalx.supabase.co',
-  key: (typeof process !== 'undefined' && process.env && process.env.SUPABASE_KEY) || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4',
+  key: (typeof process !== 'undefined' && process.env && (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY)) || '',
   mediaFallback: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
   defaultReelsMp4: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
 };
@@ -75,6 +75,7 @@ export async function generateBananaRecontextualizedImage({
   const geminiKey = (apiKey || (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) || '').trim();
 
   // 1. Canlı Gemini API Çağrısı (API anahtarı ve girdi görseli varsa)
+  if (!SUPABASE_CONFIG.key) throw new Error('Supabase server key is not configured; image upload is disabled.');
   if (geminiKey && inputImageUrl) {
     try {
       console.log(`[Gemini Banana API] Canlı görsel düzenleme isteği başlatılıyor (${aspectRatio})...`);
@@ -95,65 +96,48 @@ export async function generateBananaRecontextualizedImage({
         console.warn(`[Gemini Banana API] Referans görsel çekilemedi: ${fetchErr.message}`);
       }
 
-      // Güvenlik: API anahtarı URL parametresinde DEĞİL, 'x-goog-api-key' başlığında taşınır!
-      const apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
-      
-      const parts = [{ text: prompt }];
-      if (imageBase64) {
-        parts.push({
-          inlineData: {
-            mimeType: mimeType,
-            data: imageBase64
-          }
-        });
-      }
-
+      if (!imageBase64) throw new Error('Referans ürün görseli indirilemedi; düzenleme durduruldu.');
+      const apiEndpoint = 'https://generativelanguage.googleapis.com/v1beta/interactions';
       const payload = {
-        contents: [{ role: 'user', parts }],
-        generationConfig: {
-          temperature: 0.3
-        }
+        model: process.env.GEMINI_IMAGE_MODEL || 'gemini-nano-banana-2.1',
+        input: [
+          { type: 'text', text: prompt },
+          { type: 'image', mime_type: mimeType, data: imageBase64 }
+        ],
+        response_format: { type: 'image', aspect_ratio: aspectRatio, image_size: '1K' }
       };
-
       const apiRes = await fetch(apiEndpoint, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': geminiKey
-        },
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': geminiKey },
         body: JSON.stringify(payload)
       });
-
-      if (apiRes.ok) {
-        const data = await apiRes.json();
-        const candidates = data && data.candidates && data.candidates[0];
-        const generatedPart = candidates && candidates.content && candidates.content.parts && candidates.content.parts[0];
-        const outBase64 = (generatedPart && generatedPart.inlineData && generatedPart.inlineData.data) ||
-                          (data && data.predictions && data.predictions[0] && data.predictions[0].bytesBase64Encoded);
-
-        if (outBase64) {
-          const buffer = Buffer.from(outBase64, 'base64');
-          const fileName = `banana-${safeSlug}-${aspectRatio.replace(':', 'x')}-${Date.now()}.jpg`;
-          const uploadedUrl = await uploadBufferToStorage(`products/${fileName}`, buffer, 'image/jpeg');
-          if (uploadedUrl) {
-            console.log(`[Gemini Banana API] Canlı görsel üretildi ve Supabase Storage'a kaydedildi: ${uploadedUrl}`);
-            return {
-              ok: true,
-              mode: 'LIVE_GEMINI_BANANA',
-              isFallback: false,
-              imageUrl: uploadedUrl,
-              prompt,
-              aspectRatio,
-              referenceImageIncluded: Boolean(imageBase64),
-              width: 1080,
-              height: aspectRatio === '9:16' ? 1920 : 1080
-            };
-          }
-        }
-      } else {
+      if (!apiRes.ok) {
         const errText = await apiRes.text().catch(() => '');
-        console.warn(`[Gemini Banana API] HTTP ${apiRes.status} hatası (API anahtarı maskelendi): ${errText.slice(0, 120)}`);
+        throw new Error(`Gemini Interactions API HTTP ${apiRes.status}: ${errText.slice(0, 300)}`);
       }
+      const data = await apiRes.json();
+      let outBase64 = data && data.output_image && data.output_image.data;
+      if (!outBase64 && Array.isArray(data && data.output)) {
+        const block = data.output.find(x => x && x.type === 'image' && x.data);
+        outBase64 = block && block.data;
+      }
+      if (!outBase64 && Array.isArray(data && data.steps)) {
+        for (const step of data.steps) {
+          const block = (step.content || []).find(x => x && x.type === 'image' && x.data);
+          if (block) { outBase64 = block.data; break; }
+        }
+      }
+      if (!outBase64) throw new Error('Nano Banana yanıtında görsel verisi bulunamadı.');
+      const buffer = Buffer.from(outBase64, 'base64');
+      const fileName = `banana-${safeSlug}-${aspectRatio.replace(':', 'x')}-${Date.now()}.png`;
+      const uploadedUrl = await uploadBufferToStorage(`products/${fileName}`, buffer, 'image/png');
+      if (!uploadedUrl) throw new Error('Üretilen görsel Supabase Storage alanına yüklenemedi.');
+      return {
+        ok: true, mode: 'LIVE_GEMINI_BANANA', isFallback: false,
+        imageUrl: uploadedUrl, prompt, aspectRatio, referenceImageIncluded: true,
+        width: aspectRatio === '9:16' ? 768 : 1024,
+        height: aspectRatio === '9:16' ? 1376 : 1024
+      };
     } catch (apiErr) {
       console.warn(`[Gemini Banana API] İstek hatası: ${apiErr.message}`);
     }
@@ -247,7 +231,7 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     allowFallback
   });
 
-  if (!hero1x1 || !hero1x1.ok || !hero1x1.imageUrl) {
+  if (!hero1x1 || !hero1x1.ok || !hero1x1.imageUrl || hero1x1.isFallback) {
     throw new Error(`[Gemini Banana] 1:1 görsel hazırlığı başarısız oldu: ${(hero1x1 && hero1x1.error) || 'Bilinmeyen hata'}`);
   }
 
@@ -258,6 +242,8 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     apiKey,
     allowFallback
   });
+
+  if (!hero9x16 || !hero9x16.ok || !hero9x16.imageUrl || hero9x16.isFallback) throw new Error('[Gemini Banana] 9:16 canlı görsel üretimi başarısız; kampanya kaydedilmedi.');
 
   // 2. Detay Maddeli Gönderi (1080x1080)
   const detailedPost = await generateDetailedSpecPost({
@@ -300,6 +286,8 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
       youtube: { status: 'pending', shorts_at: '18:00', published: false }
     },
     engine: 'GEMINI_BANANA',
+    banana_generation_mode: 'LIVE_GEMINI_BANANA',
+    banana_is_fallback: false,
     created_at: new Date().toISOString()
   };
 
