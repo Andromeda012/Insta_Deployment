@@ -3885,8 +3885,8 @@ async function initializeModule1CmsAuth() {
   window.module1SupabaseClient=supabaseClient;
   try {
     const {data,error}=await supabaseClient.auth.getSession(); if(error)throw error;
-    const user=data?.session?.user; const role=user?.app_metadata?.role;
-    if(!user||!['admin','content_manager'].includes(role)){showCmsAuthGate(user?'Bu hesapta admin veya content_manager rolü bulunmuyor.':'');return false;}
+    const user=data?.session?.user; const meta=user?.app_metadata||{}; const roles=Array.isArray(meta.roles)?meta.roles:(meta.role?[meta.role]:[]);
+    if(!user||!roles.some(role=>['admin','content_manager'].includes(role))){showCmsAuthGate(user?'Bu hesapta admin veya content_manager rolü bulunmuyor.':'');return false;}
     hideCmsAuthGate(user); return true;
   } catch(error){showCmsAuthGate(error.message||'Oturum kontrol edilemedi.');return false;}
 }
@@ -3900,7 +3900,8 @@ async function signInModule1Cms(event) {
     const password=document.getElementById('cmsLoginPassword').value;
     const {data,error}=await supabaseClient.auth.signInWithPassword({email,password}); if(error)throw error;
     const user=data?.user;
-    if(!user||!['admin','content_manager'].includes(user.app_metadata?.role)){
+    const meta=user?.app_metadata||{}; const roles=Array.isArray(meta.roles)?meta.roles:(meta.role?[meta.role]:[]);
+    if(!user||!roles.some(role=>['admin','content_manager'].includes(role))){
       await supabaseClient.auth.signOut();
       throw new Error('Bu kullanıcıya CMS yetkisi verilmemiş. Supabase app_metadata.role alanını kontrol edin.');
     }
