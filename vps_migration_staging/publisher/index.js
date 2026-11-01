@@ -32,7 +32,8 @@ const { fetchWithTimeout } = httpClient;
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const DRY_RUN = process.env.DRY_RUN === 'true';
+const LIVE_PUBLISHING_ENABLED = process.env.ENABLE_LIVE_PUBLISHING === 'true';
+const DRY_RUN = process.env.DRY_RUN !== 'false' || !LIVE_PUBLISHING_ENABLED;
 const POLL_INTERVAL_MS = (parseInt(process.env.POLL_INTERVAL_SECONDS, 10) || 15) * 1000;
 const LOCK_DURATION_SEC = parseInt(process.env.LOCK_DURATION_SECONDS, 10) || 180;
 const API_TIMEOUT_MS = 25000;
@@ -258,6 +259,17 @@ async function executePublish(task) {
         return { status: 'published', platformPostId: stData.post_id || upData.id, rawResponse: stData };
       }
 
+      if (content_type === 'FB_REELS' || content_type === 'VIDEO_REELS' || content_type === 'REELS') {
+        return { status: 'unsupported', platformPostId: null, rawResponse: { note: 'Facebook Reels upload is not implemented.' }, errorMessage: '[UNSUPPORTED] Facebook Reels upload is not implemented.' };
+      }
+      if (content_type === 'LINK_CARD') {
+        if (!target_link || !/^https:\/\//i.test(target_link)) throw new Error('Facebook Link Card requires a valid HTTPS target link.');
+        const params = new URLSearchParams({ link: target_link, message: fullCaption, access_token: pageAccessToken });
+        const result = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, { method: 'POST', body: params });
+        if (!result.ok || !result.data?.id) throw new Error('Facebook Link Card publish failed.');
+        return { status: 'published', platformPostId: result.data.id, rawResponse: result.data };
+      }
+
       // Standart Fotoğraf Gönderisi
       const photoParams = new URLSearchParams({
         url: media_url,
@@ -412,46 +424,66 @@ async function executePublish(task) {
 // ── ANA KUYRUK DÖNGÜSÜ ───────────────────────────────────────────────────────
 
 // Admin Paneli Durum Senkronizasyonu Helper Fonksiyonu
+async function getPersistedQueueState(taskId) {
+  const { data, error } = await supabase.from('social_publish_queue')
+    .select('status,platform_post_id,error_message,published_at')
+    .eq('id', taskId).maybeSingle();
+  if (error) throw error;
+  return data;
+}
+
 async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, errorMsg = null) {
   try {
-    const stateKey = task.platform === 'facebook' ? 'fb_bot_state' : 'insta_bot_state';
-    const { data: rows, error: getErr } = await supabase
-      .from('site_settings')
-      .select('data')
-      .eq('key', stateKey)
-      .limit(1);
-
+    const map = {
+      instagram: { key: 'insta_bot_state', list: 'scheduled_posts' },
+      facebook: { key: 'fb_bot_state', list: 'scheduled_posts' },
+      tiktok: { key: 'tt_bot_state', list: 'scheduledQueue' }
+    };
+    const target = map[String(task.platform || '').toLowerCase()];
+    if (!target) return;
+    const { data: rows, error: getErr } = await supabase.from('site_settings').select('data').eq('key', target.key).limit(1);
     if (getErr || !rows || rows.length === 0) return;
-    const state = (rows[0] && rows[0].data) || {};
-    const posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
-
-    let updated = false;
-    for (const p of posts) {
-      const isMatch = p.queue_idempotency_key === task.idempotency_key ||
-                      p.queue_task_id === task.task_id ||
-                      (p.product_slug === task.product_slug && p.status === 'pending');
-      if (isMatch) {
-        p.status = finalStatus; // 'published', 'dry_run_completed', 'failed', 'reconciliation_required'
-        if (platformPostId) p.platform_post_id = platformPostId;
-        if (errorMsg) p.error_message = errorMsg;
-        p.worker_processed_at = new Date().toISOString();
-        updated = true;
-        break;
-      }
-    }
-
-    if (updated) {
-      await supabase
-        .from('site_settings')
-        .update({ data: state, updated_at: new Date().toISOString() })
-        .eq('key', stateKey);
-      console.log(`[Admin Panel Senkronizasyonu] ${stateKey} -> ${finalStatus}`);
-    }
+    const state = rows[0]?.data || {};
+    const posts = Array.isArray(state[target.list]) ? state[target.list] : [];
+    const item = posts.find(p =>
+      p.queue_task_id === task.task_id ||
+      p.queue_idempotency_key === task.idempotency_key ||
+      p.idempotency_key === task.idempotency_key
+    );
+    if (!item) return;
+    item.status = finalStatus;
+    if (platformPostId) item.platform_post_id = String(platformPostId);
+    if (errorMsg) item.error_message = errorMsg;
+    item.worker_processed_at = new Date().toISOString();
+    const { error: updateError } = await supabase.from('site_settings')
+      .update({ data: state, updated_at: new Date().toISOString() }).eq('key', target.key);
+    if (updateError) throw updateError;
+    console.log(`[Admin Panel Sync] ${target.key} -> ${finalStatus} (${task.task_id})`);
   } catch (syncErr) {
-    console.warn('[Admin Panel Senkronizasyon Uyarısı]:', syncErr.message);
+    console.warn('[Admin Panel Sync Warning]:', sanitize(syncErr.message));
   }
 }
 
+async function syncInstagramPublishedTracker(task, platformPostId) {
+  if (task.platform !== 'instagram' || !platformPostId || !task.product_slug) return;
+  const format = String(task.content_type || '').toUpperCase();
+  if (!['POST', 'REELS', 'STORIES'].includes(format)) return;
+  try {
+    const { data: rows, error: readError } = await supabase.from('site_settings')
+      .select('data').eq('key', 'instagram_published_tracker').limit(1);
+    if (readError) throw readError;
+    const tracker = rows?.[0]?.data || {};
+    const formats = Array.isArray(tracker[task.product_slug]) ? tracker[task.product_slug] : [];
+    if (!formats.includes(format)) formats.push(format);
+    tracker[task.product_slug] = formats;
+    const { error: writeError } = await supabase.from('site_settings').upsert({
+      key: 'instagram_published_tracker', data: tracker, updated_at: new Date().toISOString()
+    });
+    if (writeError) throw writeError;
+  } catch (error) {
+    console.warn('[Instagram Tracker Sync Warning]:', sanitize(error.message));
+  }
+}
 async function pollQueueCycle() {
   if (isShuttingDown || isTaskRunning) return;
 
@@ -489,17 +521,21 @@ async function pollQueueCycle() {
         p_backoff_minutes: 5
       });
 
-      // Admin Paneli Senkronizasyonu
-      await syncAdminPanelStatus(task, result.status, result.platformPostId, result.errorMessage);
-
-      // KRİTİK DOĞRULAMA: Hem error hem de return değerini kontrol et
+      // KRİTİK DOĞRULAMA: Panel yalnızca queue RPC kesin başarı döndürdükten sonra güncellenir.
       if (completeError || completedSuccessfully !== true) {
         const errMsg = (completeError && completeError.message) || 'v_updated = 0';
         console.error(
           `[RPC Başarısız] Görev veritabanında güncellenemedi (Kilit süresi dolmuş veya başka worker devralmış olabilir) - Görev ID: ${task.task_id} - Hata: ${sanitize(errMsg)}`
         );
       } else {
-        console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${result.status}`);
+        const persisted = await getPersistedQueueState(task.task_id).catch(err => {
+          console.warn('[Queue state read warning]:', sanitize(err.message)); return null;
+        });
+        const finalStatus = persisted?.status || result.status;
+        const finalPostId = persisted?.platform_post_id || (finalStatus === 'published' ? result.platformPostId : null);
+        await syncAdminPanelStatus(task, finalStatus, finalPostId, persisted?.error_message || result.errorMessage);
+        if (finalStatus === 'published') await syncInstagramPublishedTracker(task, finalPostId);
+        console.log(`[Görev Tamamlandı] ID: ${task.task_id} -> Durum: ${finalStatus}`);
       }
     } catch (execErr) {
       const lowerMsg = (execErr.message || '').toLowerCase();
@@ -544,6 +580,11 @@ async function pollQueueCycle() {
 
       if (failCompleteErr || failCompleteOk !== true) {
         console.error(`[RPC Hata Kayıt Başarısız] Görev ID: ${task.task_id} veritabanına işlenemedi.`);
+      } else {
+        const persisted = await getPersistedQueueState(task.task_id).catch(err => {
+          console.warn('[Queue state read warning]:', sanitize(err.message)); return null;
+        });
+        await syncAdminPanelStatus(task, persisted?.status || finalStatus, persisted?.platform_post_id || null, persisted?.error_message || cleanErrMsg);
       }
     } finally {
       isTaskRunning = false;

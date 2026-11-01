@@ -982,6 +982,19 @@
 const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+async function module2StateRequest(key, method='GET', data=null) {
+  if(!sbClient?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
+  const {data:sessionData,error:sessionError}=await sbClient.auth.getSession();
+  const token=sessionData?.session?.access_token;
+  if(sessionError||!token) throw new Error('Modül 2 ayarları için önce Modül 1 yönetici panelinden giriş yapın.');
+  const response=await fetch(method==='GET'?'/api/module2-state?key='+encodeURIComponent(key):'/api/module2-state',{
+    method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+    ...(method==='PUT'?{body:JSON.stringify({key,data})}:{})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok) throw new Error(result.error||'Modül 2 ayarları kaydedilemedi.');
+  return result;
+}
 
 const DEFAULT_FB_BOT_STATE = {
   config: {
@@ -1105,16 +1118,11 @@ async function resolveFacebookCredentials() {
 
   if (!pageId || !pageAccessToken) {
     try {
-      const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data&limit=1`, {
-        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-      });
-      if (res.ok) {
-        const rows = await res.json();
-        const conf = rows?.[0]?.data?.config;
-        if (conf) {
-          if (!pageId && conf.page_id) pageId = conf.page_id;
-          if (!pageAccessToken && conf.page_access_token) pageAccessToken = conf.page_access_token;
-        }
+      const stateResult=await module2StateRequest('fb_bot_state');
+      const conf=stateResult.data?.config;
+      if(conf){
+        if(!pageId&&conf.page_id)pageId=conf.page_id;
+        if(!pageAccessToken&&conf.page_access_token)pageAccessToken=conf.page_access_token;
       }
     } catch (_) {}
   }
@@ -1136,15 +1144,10 @@ async function resolveFacebookCredentials() {
 
 async function loadFbStateFromSupabase() {
   try {
-    const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.fb_bot_state&limit=1`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (setRes.ok) {
-      const rows = await setRes.json();
-      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
-        fbState = Object.assign({}, DEFAULT_FB_BOT_STATE, rows[0].data);
-        fbState.config = Object.assign({}, DEFAULT_FB_BOT_STATE.config, rows[0].data.config || {});
-      }
+    const stateResult=await module2StateRequest('fb_bot_state');
+    if(stateResult.data){
+      fbState=Object.assign({},DEFAULT_FB_BOT_STATE,stateResult.data);
+      fbState.config=Object.assign({},DEFAULT_FB_BOT_STATE.config,stateResult.data.config||{});
     }
   } catch (e) {
     console.warn('Facebook Bot Supabase yükleme uyarısı:', e);
@@ -1167,20 +1170,7 @@ async function loadFbStateFromSupabase() {
 
 async function persistFbStateToSupabase(notify = true) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        key: 'fb_bot_state',
-        data: fbState,
-        updated_at: new Date().toISOString()
-      })
-    });
+    await module2StateRequest('fb_bot_state','PUT',fbState);
     if (notify) showToast('☁️ Facebook Bulut Bot ayarları Supabase veritabanına kaydedildi!');
   } catch (e) {
     if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');

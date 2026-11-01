@@ -747,6 +747,19 @@
         const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
         const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        async function module2StateRequest(key, method='GET', data=null) {
+            if(!supabaseClient?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
+            const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+            const token=sessionData?.session?.access_token;
+            if(sessionError||!token) throw new Error('Modül 2 ayarları için önce Modül 1 yönetici panelinden giriş yapın.');
+            const response=await fetch(method==='GET'?'/api/module2-state?key='+encodeURIComponent(key):'/api/module2-state',{
+                method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+                ...(method==='PUT'?{body:JSON.stringify({key,data})}:{})
+            });
+            const result=await response.json().catch(()=>({}));
+            if(!response.ok||!result.ok) throw new Error(result.error||'Modül 2 ayarları kaydedilemedi.');
+            return result;
+        }
 
         const FALLBACK_PRODUCTS = [
             { sku: 'GKM-101', title: 'Klasik CNC Membran Kapak', kategori: 'Membran Kapak', renkler: ['Mat Antrasit', 'İpek Beyaz', 'Kaşmir', 'Doğal Meşe'] },
@@ -843,15 +856,8 @@
                         catalogProducts = prods;
                     }
 
-                    const { data: stateRow } = await supabaseClient
-                        .from('site_settings')
-                        .select('data')
-                        .eq('key', 'tt_bot_state')
-                        .maybeSingle();
-
-                    if (stateRow && stateRow.data) {
-                        botState = { ...botState, ...stateRow.data };
-                    }
+                    const stateResult=await module2StateRequest('tt_bot_state');
+                    if(stateResult.data) botState={...botState,...stateResult.data};
                 } catch (e) {
                     console.warn('Supabase okuma uyarisi, yerel yedek kullaniliyor:', e.message);
                 }
@@ -1195,11 +1201,7 @@
         async function saveStateToSupabase() {
             if (!supabaseClient) return;
             try {
-                await supabaseClient.from('site_settings').upsert({
-                    key: 'tt_bot_state',
-                    data: botState,
-                    updated_at: new Date().toISOString()
-                });
+                await module2StateRequest('tt_bot_state','PUT',botState);
             } catch (e) {
                 console.warn('Supabase kayit uyarisi:', e.message);
             }

@@ -27,107 +27,17 @@ import {
 } from './bot-engine.js';
 
 const PORT = process.env.PORT || 8081;
-const VERIFY_TOKEN = process.env.FB_WEBHOOK_VERIFY_TOKEN || 'global_kapak_fb_verify_2026';
+const VERIFY_TOKEN = process.env.FB_WEBHOOK_VERIFY_TOKEN || '';
 
 const triggeredSlotsMemory = new Set();
 
 // ── BULUT ZAMANLAYICI: KENDİ FACEBOOK GÖNDERİSİNİ / STORY / REELS'İNİ TASARLAR VE ONAYSIZ YAYINLAR ──
-async function checkAndPublishFacebookPosts(forceGenerate = false) {
-  try {
-    const rows = await supabaseRequest('site_settings?select=data&key=eq.fb_bot_state&limit=1').catch(() => []);
-    const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], rules: DEFAULT_FB_TIER1_RULES, conversations: [] };
-    const config = state.config || {};
-
-    if (config.auto_publish_enabled === false) {
-      return { publishedCount: 0, reason: 'auto_publish_disabled' };
-    }
-
-    state.scheduled_posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
-    const productsCatalog = await supabaseRequest('products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler&limit=20').catch(() => []);
-
-    const now = new Date();
-    const hhmm = now.toTimeString().slice(0, 5);
-    const todayKey = now.toISOString().slice(0, 10);
-
-    const activeSlots = (config.posting_slots || []).filter(s => s.active !== false);
-    for (const slot of activeSlots) {
-      const slotMemKey = `${todayKey}_${slot.time}_${slot.type}`;
-      if (slot.time === hhmm && !triggeredSlotsMemory.has(slotMemKey)) {
-        triggeredSlotsMemory.add(slotMemKey);
-        const autoItem = await generateAutonomousFacebookContent({
-          mediaType: slot.type || 'PHOTO_POST',
-          productsCatalog,
-          config,
-          slotLabel: slot.label
-        });
-        state.scheduled_posts.unshift({
-          ...autoItem,
-          scheduled_for: new Date().toISOString(),
-          status: 'scheduled'
-        });
-      }
-    }
-
-    const nowMs = Date.now();
-    let duePosts = state.scheduled_posts.filter(
-      p => p.status === 'scheduled' && new Date(p.scheduled_for).getTime() <= nowMs
-    );
-
-    if (forceGenerate && duePosts.length === 0) {
-      const types = ['PHOTO_POST', 'FB_REELS', 'FB_STORIES', 'LINK_CARD'];
-      const pickedType = types[Math.floor(Math.random() * types.length)];
-      const autoItem = await generateAutonomousFacebookContent({
-        mediaType: pickedType,
-        productsCatalog,
-        config
-      });
-      const record = {
-        ...autoItem,
-        scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
-      };
-      state.scheduled_posts.unshift(record);
-      duePosts = [record];
-    }
-
-    if (duePosts.length === 0) return { publishedCount: 0 };
-
-    let publishedCount = 0;
-    for (const post of duePosts) {
-      const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
-      const pubResult = await publishToFacebookPageGraphApi({
-        pageId: config.page_id || process.env.FB_PAGE_ID,
-        pageAccessToken: config.page_access_token || process.env.FB_PAGE_ACCESS_TOKEN,
-        mediaType: post.media_type || 'PHOTO_POST',
-        mediaUrl: post.media_url,
-        caption: fullCaption,
-        targetLink: post.target_link || 'https://wa.me/905050151035'
-      });
-
-      post.status = 'published';
-      post.published_at = pubResult.publishedAt;
-      post.fb_post_id = pubResult.postId;
-      publishedCount++;
-    }
-
-    state.scheduled_posts = state.scheduled_posts.slice(0, 60);
-    await supabaseRequest('site_settings', {
-      method: 'POST',
-      body: {
-        key: 'fb_bot_state',
-        data: state,
-        updated_at: new Date().toISOString()
-      }
-    }).catch(() => {});
-
-    return { publishedCount, autonomousDesign: true };
-  } catch (err) {
-    console.error('[Facebook Cloud Autonomous Scheduler] Hata:', err.message);
-    return { publishedCount: 0, error: err.message };
-  }
+async function checkAndPublishFacebookPosts() {
+  // Outbound publishing is centralized in the authenticated queue + VPS Publisher.
+  // Keep this legacy entry point inert to prevent duplicate direct platform posts.
+  return { publishedCount: 0, skipped: true, reason: 'central_queue_only' };
 }
 
-// ── GELEN MESSENGER DM VEYA SAYFA YORUMUNU 3 AŞAMALI MOTORLA İŞLE ────────────
 async function handleIncomingFacebookEvent({ senderId, senderName, channel = 'MESSENGER', text, commentId = null }) {
   const [stateRows, productsRows] = await Promise.all([
     supabaseRequest('site_settings?select=data&key=eq.fb_bot_state&limit=1').catch(() => []),
@@ -297,5 +207,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Global Kapak Facebook Cloud Bot Sunucusu aktif: Port ${PORT}`);
-  setInterval(() => checkAndPublishFacebookPosts(false), 60 * 1000);
+  // Legacy outbound scheduler intentionally disabled; Vercel Cron is the sole producer.
 });

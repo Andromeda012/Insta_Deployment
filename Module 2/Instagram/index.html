@@ -870,6 +870,19 @@
     const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
     const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+    async function module2StateRequest(key, method='GET', data=null) {
+      if (!sb?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
+      const {data:sessionData,error:sessionError}=await sb.auth.getSession();
+      const token=sessionData?.session?.access_token;
+      if(sessionError||!token) throw new Error('Modül 2 ayarları için önce Modül 1 yönetici panelinden giriş yapın.');
+      const response=await fetch(method==='GET'?'/api/module2-state?key='+encodeURIComponent(key):'/api/module2-state',{
+        method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+        ...(method==='PUT'?{body:JSON.stringify({key,data})}:{})
+      });
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.ok) throw new Error(result.error||'Modül 2 ayarları kaydedilemedi.');
+      return result;
+    }
 
     let botState = null;
     let catalogProducts = [];
@@ -895,22 +908,12 @@
       showToast('⏳ Instagram bot ayarları ve geçmişi yükleniyor...');
       try {
         // 1. Bot State Çek
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        if (res.ok) {
-          const rows = await res.json();
-          if (rows && rows[0]?.data) botState = rows[0].data;
-        }
+        const stateResult = await module2StateRequest('insta_bot_state');
+        if (stateResult.data) botState = stateResult.data;
 
-        // 2. Yayın Takipçisi (Tracker) Çek
-        const trkRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.instagram_published_tracker&select=data`, {
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        if (trkRes.ok) {
-          const trkRows = await trkRes.json();
-          if (trkRows && trkRows[0]?.data) publishedTracker = trkRows[0].data;
-        }
+        // 2. Yayın takipçisi yalnızca yetkili yönetici oturumuyla okunur.
+        const trackerResult = await module2StateRequest('instagram_published_tracker');
+        if (trackerResult.data) publishedTracker = trackerResult.data;
 
         // 3. Ürün Kataloğunu Çek (En yeni en üstte)
         const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
@@ -1093,11 +1096,7 @@
 
     async function persistBotState() {
       try {
-        await sb.from('site_settings').upsert({
-          key: 'insta_bot_state',
-          data: botState,
-          updated_at: new Date().toISOString()
-        });
+        await module2StateRequest('insta_bot_state','PUT',botState);
       } catch (err) {
         console.error('Bot state kaydetme hatası:', err);
         showToast('❌ Ayarlar kaydedilemedi: ' + err.message);
@@ -1184,13 +1183,8 @@
 
       // 2. Tracker'ı tazele
       try {
-        const tRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.instagram_published_tracker&select=data`, {
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        if (tRes.ok) {
-          const tRows = await tRes.json();
-          if (tRows && tRows[0]?.data) publishedTracker = tRows[0].data;
-        }
+        const trackerResult=await module2StateRequest('instagram_published_tracker');
+        if(trackerResult.data) publishedTracker=trackerResult.data;
       } catch (_) {}
 
       const ALL_FORMATS = ['POST', 'STORIES', 'REELS'];
@@ -1216,11 +1210,7 @@
         publishedTracker[slug].push(format);
       }
       try {
-        await sb.from('site_settings').upsert({
-          key: 'instagram_published_tracker',
-          data: publishedTracker,
-          updated_at: new Date().toISOString()
-        });
+        await module2StateRequest('instagram_published_tracker','PUT',publishedTracker);
       } catch (e) {
         console.warn('Tracker kaydedilemedi:', e);
       }

@@ -31,105 +31,12 @@ const PORT = process.env.PORT || 8082;
 const triggeredSlotsMemory = new Set();
 
 // ── BULUT ZAMANLAYICI: KENDİ YOUTUBE SHORTS İÇERİĞİNİ TASARLAR VE ONAYSIZ YAYINLAR ──
-async function checkAndPublishYouTubeShorts(forceGenerate = false) {
-  try {
-    const rows = await supabaseRequest('site_settings?select=data&key=eq.yt_bot_state&limit=1').catch(() => []);
-    const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], rules: DEFAULT_YT_TIER1_RULES, conversations: [] };
-    const config = state.config || {};
-
-    if (config.auto_publish_enabled === false) {
-      return { publishedCount: 0, reason: 'auto_publish_disabled' };
-    }
-
-    state.scheduled_posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
-    const productsCatalog = await supabaseRequest('products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler&limit=20').catch(() => []);
-
-    const now = new Date();
-    const hhmm = now.toTimeString().slice(0, 5);
-    const todayKey = now.toISOString().slice(0, 10);
-
-    const activeSlots = (config.posting_slots || []).filter(s => s.active !== false);
-    for (const slot of activeSlots) {
-      const slotMemKey = `${todayKey}_${slot.time}_${slot.type}`;
-      if (slot.time === hhmm && !triggeredSlotsMemory.has(slotMemKey)) {
-        triggeredSlotsMemory.add(slotMemKey);
-        const autoItem = await generateAutonomousYouTubeShortsContent({
-          format: slot.type || 'SHORTS_CNC',
-          productsCatalog,
-          config,
-          slotLabel: slot.label
-        });
-        state.scheduled_posts.unshift({
-          ...autoItem,
-          scheduled_for: new Date().toISOString(),
-          status: 'scheduled'
-        });
-      }
-    }
-
-    const nowMs = Date.now();
-    let duePosts = state.scheduled_posts.filter(
-      p => p.status === 'scheduled' && new Date(p.scheduled_for).getTime() <= nowMs
-    );
-
-    if (forceGenerate && duePosts.length === 0) {
-      const formats = ['SHORTS_CNC', 'SHORTS_SHOWCASE', 'SHORTS_GUIDE'];
-      const pickedFormat = formats[Math.floor(Math.random() * formats.length)];
-      const autoItem = await generateAutonomousYouTubeShortsContent({
-        format: pickedFormat,
-        productsCatalog,
-        config
-      });
-      const record = {
-        ...autoItem,
-        scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
-      };
-      state.scheduled_posts.unshift(record);
-      duePosts = [record];
-    }
-
-    if (duePosts.length === 0) return { publishedCount: 0 };
-
-    let publishedCount = 0;
-    for (const post of duePosts) {
-      const pubResult = await publishToYouTubeDataApi({
-        channelId: config.channel_id || process.env.YT_CHANNEL_ID,
-        clientId: config.client_id || process.env.YT_CLIENT_ID,
-        clientSecret: config.client_secret || process.env.YT_CLIENT_SECRET,
-        refreshToken: config.refresh_token || process.env.YT_REFRESH_TOKEN,
-        accessToken: config.access_token || process.env.YT_ACCESS_TOKEN,
-        title: post.title,
-        description: post.description,
-        tags: post.tags,
-        pinnedComment: post.pinned_comment,
-        mediaUrl: post.media_url
-      });
-
-      post.status = 'published';
-      post.published_at = pubResult.publishedAt;
-      post.yt_video_id = pubResult.videoId;
-      publishedCount++;
-    }
-
-    state.scheduled_posts = state.scheduled_posts.slice(0, 60);
-    await supabaseRequest('site_settings', {
-      method: 'POST',
-      body: {
-        key: 'yt_bot_state',
-        data: state,
-        updated_at: new Date().toISOString()
-      }
-    }).catch(() => {});
-
-    return { publishedCount, autonomousDesign: true };
-  } catch (err) {
-    console.error('[YouTube Shorts Cloud Autonomous Scheduler] Hata:', err.message);
-    return { publishedCount: 0, error: err.message };
-  }
+async function checkAndPublishYouTubeShorts() {
+  // Outbound publishing is centralized in the authenticated queue + VPS Publisher.
+  // Keep this legacy entry point inert to prevent duplicate direct platform posts.
+  return { publishedCount: 0, skipped: true, reason: 'central_queue_only' };
 }
 
-// ── GELEN YOUTUBE YORUMUNU 3 AŞAMALI MOTORLA İŞLE ───────────────────────────
 async function handleIncomingYouTubeComment({ commentId, authorName, videoTitle = 'YouTube Shorts', text }) {
   const [stateRows, productsRows] = await Promise.all([
     supabaseRequest('site_settings?select=data&key=eq.yt_bot_state&limit=1').catch(() => []),
@@ -249,5 +156,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Global Kapak YouTube Shorts Cloud Bot Sunucusu aktif: Port ${PORT}`);
-  setInterval(() => checkAndPublishYouTubeShorts(false), 60 * 1000);
+  // Legacy outbound scheduler intentionally disabled; Vercel Cron is the sole producer.
 });

@@ -12,8 +12,7 @@ const {
     BRAND_CONTEXT,
     TIKTOK_FORMATS,
     processIncomingTikTokInteraction,
-    generateAutonomousTikTokDraft,
-    publishAutonomousTikTokPost
+    generateAutonomousTikTokDraft
 } = require('./bot-engine');
 
 const app = express();
@@ -22,8 +21,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.static(__dirname));
 
 const PORT = process.env.PORT || 4040;
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://nyvctdskhAbImlvgbnhx.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || '';
+const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 
 // Sağlık kontrolü
@@ -64,19 +63,12 @@ app.post('/api/simulate-interaction', async (req, res) => {
 });
 
 // Otonom Yayın Tetikleyici
-app.post('/api/publish', async (req, res) => {
-    try {
-        const { draft, mediaUrl, tiktokAccessToken, tiktokOpenId } = req.body || {};
-        const publishResult = await publishAutonomousTikTokPost({
-            draft,
-            mediaUrl,
-            tiktokAccessToken: tiktokAccessToken || process.env.TIKTOK_ACCESS_TOKEN,
-            tiktokOpenId: tiktokOpenId || process.env.TIKTOK_OPEN_ID
-        });
-        res.json(publishResult);
-    } catch (err) {
-        res.status(500).json({ ok: false, error: err.message });
-    }
+app.post('/api/publish', (req, res) => {
+    return res.status(410).json({
+        ok: false,
+        supported: false,
+        error: 'Direct publishing is disabled. Use the authenticated Module 2 queue and Publisher worker.'
+    });
 });
 
 app.get('*', (req, res) => {

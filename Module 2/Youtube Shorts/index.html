@@ -970,6 +970,19 @@
 const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
 const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+async function module2StateRequest(key, method='GET', data=null) {
+  if(!sbClient?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
+  const {data:sessionData,error:sessionError}=await sbClient.auth.getSession();
+  const token=sessionData?.session?.access_token;
+  if(sessionError||!token) throw new Error('Modül 2 ayarları için önce Modül 1 yönetici panelinden giriş yapın.');
+  const response=await fetch(method==='GET'?'/api/module2-state?key='+encodeURIComponent(key):'/api/module2-state',{
+    method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
+    ...(method==='PUT'?{body:JSON.stringify({key,data})}:{})
+  });
+  const result=await response.json().catch(()=>({}));
+  if(!response.ok||!result.ok) throw new Error(result.error||'Modül 2 ayarları kaydedilemedi.');
+  return result;
+}
 
 const DEFAULT_YT_BOT_STATE = {
   config: {
@@ -1066,17 +1079,12 @@ async function loadYtStateFromSupabase() {
       catalogProducts = await prodRes.json();
     }
 
-    const setRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?select=data&key=eq.yt_bot_state&limit=1`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (setRes.ok) {
-      const rows = await setRes.json();
-      if (Array.isArray(rows) && rows.length > 0 && rows[0].data) {
-        ytState = Object.assign({}, DEFAULT_YT_BOT_STATE, rows[0].data);
-        ytState.config = Object.assign({}, DEFAULT_YT_BOT_STATE.config, rows[0].data.config || {});
-      } else {
-        await persistYtStateToSupabase(false);
-      }
+    const stateResult=await module2StateRequest('yt_bot_state');
+    if(stateResult.data){
+      ytState=Object.assign({},DEFAULT_YT_BOT_STATE,stateResult.data);
+      ytState.config=Object.assign({},DEFAULT_YT_BOT_STATE.config,stateResult.data.config||{});
+    }else{
+      await persistYtStateToSupabase(false);
     }
   } catch (e) {
     console.warn('YouTube Bot Supabase yükleme uyarısı:', e);
@@ -1087,20 +1095,7 @@ async function loadYtStateFromSupabase() {
 
 async function persistYtStateToSupabase(notify = true) {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
-      method: 'POST',
-      headers: {
-        'apikey': SUPABASE_KEY,
-        'Authorization': `Bearer ${SUPABASE_KEY}`,
-        'Content-Type': 'application/json',
-        'Prefer': 'resolution=merge-duplicates'
-      },
-      body: JSON.stringify({
-        key: 'yt_bot_state',
-        data: ytState,
-        updated_at: new Date().toISOString()
-      })
-    });
+    await module2StateRequest('yt_bot_state','PUT',ytState);
     if (notify) showToast('☁️ YouTube Shorts Bulut Bot ayarları Supabase veritabanına kaydedildi!');
   } catch (e) {
     if (notify) showToast('⚠️ Kayıt sırasında hata oluştu');

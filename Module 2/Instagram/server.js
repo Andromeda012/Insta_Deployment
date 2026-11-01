@@ -25,111 +25,19 @@ import {
 } from './bot-engine.js';
 
 const PORT = process.env.PORT || 8080;
-const VERIFY_TOKEN = process.env.IG_WEBHOOK_VERIFY_TOKEN || 'global_kapak_insta_verify_2026';
+const VERIFY_TOKEN = process.env.IG_WEBHOOK_VERIFY_TOKEN || '';
 const GRAPH_API_BASE = 'https://graph.facebook.com/v21.0';
 
 // Son tetiklenen slot anahtarlarını hafızada tut (aynı dakikada iki kez atmasın)
 const triggeredSlotsMemory = new Set();
 
 // ── BULUT ZAMANLAYICI: KENDİ GÖNDERİSİNİ / STORY / REELS'İNİ KENDİ TASARLAR VE ONAYSIZ YAYINLAR ──
-async function checkAndPublishScheduledPosts(forceGenerate = false) {
-  try {
-    const rows = await supabaseRequest('site_settings?select=data&key=eq.insta_bot_state&limit=1').catch(() => []);
-    const state = rows?.[0]?.data || { config: {}, scheduled_posts: [], rules: DEFAULT_TIER1_RULES, conversations: [] };
-    const config = state.config || {};
-
-    if (config.auto_publish_enabled === false) {
-      return { publishedCount: 0, reason: 'auto_publish_disabled' };
-    }
-
-    state.scheduled_posts = Array.isArray(state.scheduled_posts) ? state.scheduled_posts : [];
-    const productsCatalog = await supabaseRequest('products?select=slug,title,kategori,kisa_aciklama,ana_resim,renkler&limit=20').catch(() => []);
-
-    // 1. Saat Aralığı (Posting Slot) Kontrolü:
-    // Belirlenen saat geldiğinde kuyrukta hazır içerik olmasa bile bot KENDİSİ TASARLAR ve kuyruğa ekler!
-    const now = new Date();
-    const hhmm = now.toTimeString().slice(0, 5); // "10:00", "14:30", "19:30"
-    const todayKey = now.toISOString().slice(0, 10);
-
-    const activeSlots = (config.posting_slots || []).filter(s => s.active !== false);
-    for (const slot of activeSlots) {
-      const slotMemKey = `${todayKey}_${slot.time}_${slot.type}`;
-      if (slot.time === hhmm && !triggeredSlotsMemory.has(slotMemKey)) {
-        triggeredSlotsMemory.add(slotMemKey);
-        const autoItem = await generateAutonomousInstagramContent({
-          mediaType: slot.type || 'POST',
-          productsCatalog,
-          config,
-          slotLabel: slot.label
-        });
-        state.scheduled_posts.unshift({
-          ...autoItem,
-          scheduled_for: new Date().toISOString(),
-          status: 'scheduled'
-        });
-      }
-    }
-
-    // Eğer manuel tetikleme geldiyse ve bekleyen gönderi yoksa anında 1 adet otonom tasarım üret
-    const nowMs = Date.now();
-    let duePosts = state.scheduled_posts.filter(
-      p => p.status === 'scheduled' && new Date(p.scheduled_for).getTime() <= nowMs
-    );
-
-    if (forceGenerate && duePosts.length === 0) {
-      const types = ['REELS', 'STORIES', 'POST'];
-      const pickedType = types[Math.floor(Math.random() * types.length)];
-      const autoItem = await generateAutonomousInstagramContent({
-        mediaType: pickedType,
-        productsCatalog,
-        config
-      });
-      const record = {
-        ...autoItem,
-        scheduled_for: new Date().toISOString(),
-        status: 'scheduled'
-      };
-      state.scheduled_posts.unshift(record);
-      duePosts = [record];
-    }
-
-    if (duePosts.length === 0) return { publishedCount: 0 };
-
-    let publishedCount = 0;
-    for (const post of duePosts) {
-      const fullCaption = [post.caption, post.hashtags].filter(Boolean).join('\n\n');
-      const pubResult = await publishToInstagramGraphApi({
-        igUserId: config.ig_user_id || process.env.IG_USER_ID,
-        accessToken: config.access_token || process.env.IG_ACCESS_TOKEN,
-        mediaType: post.media_type || 'POST',
-        mediaUrl: post.media_url,
-        caption: fullCaption
-      });
-
-      post.status = 'published';
-      post.published_at = pubResult.publishedAt;
-      post.ig_media_id = pubResult.mediaId;
-      publishedCount++;
-    }
-
-    state.scheduled_posts = state.scheduled_posts.slice(0, 60);
-    await supabaseRequest('site_settings', {
-      method: 'POST',
-      body: {
-        key: 'insta_bot_state',
-        data: state,
-        updated_at: new Date().toISOString()
-      }
-    }).catch(() => {});
-
-    return { publishedCount, autonomousDesign: true };
-  } catch (err) {
-    console.error('[Cloud Autonomous Designer & Scheduler] Hata:', err.message);
-    return { publishedCount: 0, error: err.message };
-  }
+async function checkAndPublishScheduledPosts() {
+  // Outbound publishing is centralized in the authenticated queue + VPS Publisher.
+  // Keep this legacy entry point inert to prevent duplicate direct platform posts.
+  return { publishedCount: 0, skipped: true, reason: 'central_queue_only' };
 }
 
-// ── INSTAGRAM DM VEYA YORUM YANITINI META GRAPH API İLE GÖNDER ──────────────
 async function sendInstagramReply({ igUserId, accessToken, recipientId, commentId, channel, messageText }) {
   if (!igUserId || !accessToken) {
     return { simulated: true };
@@ -316,5 +224,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`🚀 Global Kapak Instagram Cloud Bot Sunucusu aktif: Port ${PORT}`);
-  setInterval(() => checkAndPublishScheduledPosts(false), 60 * 1000);
+  // Legacy outbound scheduler intentionally disabled; Vercel Cron is the sole producer.
 });

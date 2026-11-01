@@ -14,7 +14,7 @@ export default async function handler(req,res){
  if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({ok:false,error:'Method not allowed.'});}
  try{
   await authenticateModule2Admin(req);const id=String(req.body?.queue_task_id||'').trim();
-  if(!/^[0-9a-f-]{36}$/i.test(id))return res.status(400).json({ok:false,error:'Geçerli queue_task_id gerekli.'});
+  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(id))return res.status(400).json({ok:false,error:'Geçerli queue_task_id gerekli.'});
   const updated=await supabaseAdminRequest(`/rest/v1/social_publish_queue?id=eq.${encodeURIComponent(id)}&status=eq.pending`,{
    method:'PATCH',headers:{Prefer:'return=representation'},body:JSON.stringify({status:'cancelled',error_message:'Cancelled by an authorized Module 2 administrator.',updated_at:new Date().toISOString()})
   });
