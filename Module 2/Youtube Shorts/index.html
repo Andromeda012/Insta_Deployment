@@ -980,7 +980,7 @@ const DEFAULT_YT_BOT_STATE = {
     refresh_token: '',
     gemini_api_key: '',
     gemini_model: 'gemini-2.5-flash',
-    auto_publish_enabled: true,
+    auto_publish_enabled: false,
     require_approval: false,
     posting_slots: [
       { slot_id: 'yt_slot_1', time: '11:30', type: 'SHORTS_CNC', active: true, label: 'Öğle 5 Eksen CNC & Membran Üretim #Shorts' },
@@ -1032,36 +1032,7 @@ const DEFAULT_YT_BOT_STATE = {
       response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ membran renk seçeneğimiz mevcuttur. Sitemizdeki Canlı Tasarım Modunda ölçü ve renkleri anlık deneyebilirsiniz: https://wa.me/905050151035'
     }
   ],
-  scheduled_posts: [
-    {
-      id: 'yt-demo-1',
-      media_type: 'SHORTS_CNC',
-      title: '0.01 mm Hassasiyetle Özel Ölçü CNC Membran Kapak Nasıl Üretilir? 🛠️ #Shorts',
-      headline: '0.01 MM HASSASİYETLE CNC KAPAK ÜRETİMİ',
-      subheadline: '18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim',
-      description: '✨ 2.000 m² tesisimizde 0.01 mm CNC hassasiyetiyle özel ölçü membran kapak üretimi! 🌐 https://wa.me/905050151035 #Shorts',
-      pinned_comment: '📌 Kendi dolap ölçünüz ve renginizle canlı denemek için: https://wa.me/905050151035 | 📲 WhatsApp: https://wa.me/905050151035',
-      tags: ['Shorts', 'membran kapak', 'mutfak dolabı', 'cnc kapak', 'global kapak mobilya'],
-      media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_CNC&theme=yt-crimson-navy&door=diagonal',
-      auto_designed: true,
-      scheduled_for: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-      status: 'scheduled'
-    },
-    {
-      id: 'yt-demo-2',
-      media_type: 'SHORTS_SHOWCASE',
-      title: 'Mutfakta Fjord Mavi mi, Adaçayı Yeşili mi? 2026 Membran Kapak Trendleri 🎨 #Shorts',
-      headline: 'FJORD MAVİ VS ADAÇAYI YEŞİLİ KAPAKLAR',
-      subheadline: 'Parmak İzi Bırakmayan Anti-Fingerprint Mat Membran Yüzeyler',
-      description: '🎨 2026 Mutfak ve Banyo Mimarisinde En Çok Tercih Edilen CNC Membran Kapak Renkleri! #Shorts',
-      pinned_comment: '🎨 Sizce Fjord Mavi mi yoksa Adaçayı Yeşili mi? Yorumlara yazın! 👇 Canlı denemek için: https://wa.me/905050151035',
-      tags: ['Shorts', 'mutfak renkleri', 'country mutfak kapağı', 'fjord mavi', 'adaçayı yeşili'],
-      media_url: 'https://insta-deployment-rho.vercel.app/api/youtube-render?format=SHORTS_SHOWCASE&theme=nordic-fjord&door=shaker',
-      auto_designed: true,
-      scheduled_for: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
-      status: 'scheduled'
-    }
-  ],
+  scheduled_posts: [],
   conversations: []
 };
 
@@ -1572,6 +1543,15 @@ async function exportYtAutonomousCanvasAndUpload(format, headline, subheadline, 
 
 async function addYtScheduledPost(publishImmediately = false) {
   const btn = document.getElementById('btnQueuePost');
+  if (!sbClient?.auth) {
+    showToast('❌ Supabase Auth bağlantısı bulunamadı.');
+    return;
+  }
+  const { data: sessionData, error: sessionError } = await sbClient.auth.getSession();
+  if (sessionError || !sessionData?.session?.access_token) {
+    showToast('🔐 Medya taslağı yüklemek için önce Modül 1 yönetici panelinden giriş yapın.');
+    return;
+  }
   const format = document.getElementById('post_media_type').value || 'SHORTS_CNC';
   const themeKey = document.getElementById('auto_theme_select')?.value || 'yt-crimson-navy';
   const doorStyle = document.getElementById('auto_door_style')?.value || 'diagonal';
@@ -1618,18 +1598,17 @@ async function addYtScheduledPost(publishImmediately = false) {
     media_url: mediaUrl,
     auto_designed: true,
     scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
-    status: publishImmediately ? 'published' : 'scheduled',
-    published_at: publishImmediately ? new Date().toISOString() : null
+    status: 'draft',
+    published_at: null
   };
 
   ytState.scheduled_posts.unshift(newItem);
   await persistYtStateToSupabase(false);
 
   if (publishImmediately) {
-    fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
-    showToast(`🚀 YouTube Shorts Botu içeriği kendi üretti, yayınladı ve ilk yorumu sabitledi!`);
+    showToast('⚠️ YouTube Shorts gerçek video yükleme motoru tamamlanana kadar bu içerik yalnızca taslak olarak saklandı; yayınlanmadı.');
   } else {
-    showToast(`⏰ YouTube Shorts içeriği üretildi ve bulut kuyruğuna eklendi!`);
+    showToast('📝 YouTube Shorts taslağı kaydedildi. Gerçek yayın kuyruğu video yükleme desteği tamamlanınca açılacak.');
   }
 }
 
@@ -1642,8 +1621,10 @@ function renderYtScheduledQueue() {
   }
 
   cont.innerHTML = posts.map((p, idx) => {
-    const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
-    const isPub = p.status === 'published';
+    const dt = p.scheduled_for ? new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' }) : 'Taslak';
+    const isPub = p.status === 'published' && Boolean(p.platform_post_id);
+    const legacyUnverified = p.status === 'published' && !p.platform_post_id;
+    const isUnsupported = p.status === 'unsupported' || p.status === 'draft';
     return `
       <div class="queue-item">
         <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://wa.me/905050151035/resim/logo.png'" alt="">
@@ -1651,14 +1632,14 @@ function renderYtScheduledQueue() {
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
             <span class="badge badge-red">▶️ ${p.media_type}</span>
             <span class="badge badge-purple">🎨 Otonom 9:16</span>
-            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ YouTube\'da Yayınlandı + İlk Yorum Sabitlendi' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
+            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ YouTube\'da Yayınlandı + İlk Yorum Sabitlendi' : legacyUnverified ? '⚠️ Eski kayıt — platform onayı yok' : '📝 Taslak — gerçek video yükleme desteği bekleniyor'}</span>
             <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
           </div>
           <h4>${p.title}</h4>
           <p>${p.pinned_comment || p.description || ''}</p>
         </div>
         <div style="display:flex;gap:6px;">
-          ${!isPub ? `<button class="btn btn-success btn-sm" onclick="publishYtQueueItemNow(${idx})">Şimdi Yayınla</button>` : ''}
+          
           <button class="btn btn-danger btn-sm" onclick="deleteYtQueueItem(${idx})">Sil</button>
         </div>
       </div>
@@ -1668,11 +1649,7 @@ function renderYtScheduledQueue() {
 
 function publishYtQueueItemNow(idx) {
   if (!ytState.scheduled_posts[idx]) return;
-  ytState.scheduled_posts[idx].status = 'published';
-  ytState.scheduled_posts[idx].published_at = new Date().toISOString();
-  persistYtStateToSupabase(false);
-  fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
-  showToast(`🚀 "${ytState.scheduled_posts[idx].title}" YouTube bulut motorundan yayınlandı!`);
+  showToast('⚠️ YouTube gerçek video yükleme akışı henüz desteklenmiyor. İçerik yayınlanmadı.');
 }
 
 function deleteYtQueueItem(idx) {
@@ -1681,25 +1658,11 @@ function deleteYtQueueItem(idx) {
 }
 
 async function runYtAutonomousCycleNow() {
-  let count = 0;
-  (ytState.scheduled_posts || []).forEach(p => {
-    if (p.status === 'scheduled') {
-      p.status = 'published';
-      p.published_at = new Date().toISOString();
-      count++;
-    }
-  });
-
-  if (count === 0) {
-    await autonomousInventNewYtShort();
-    await addYtScheduledPost(true);
-    return;
-  }
-
-  await persistYtStateToSupabase(false);
-  fetch('/api/youtube-cron', { method: 'POST' }).catch(() => {});
-  showToast(`⚡ YouTube Shorts Bulut Döngüsü çalıştı: ${count} Shorts onay beklenmeden yayınlandı!`);
+  await autonomousInventNewYtShort();
+  await addYtScheduledPost(false);
+  showToast('📝 Yeni YouTube Shorts taslağı oluşturuldu. Otomatik yayın, video yükleme desteği tamamlanana kadar kapalı.');
 }
+
 
 // ── 1. AŞAMA SABİT YORUM KURALLARI ──
 function renderYtTier1Rules() {

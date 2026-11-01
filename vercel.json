@@ -1,21 +1,21 @@
 {
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "framework": null,
-  "cleanUrls": true,
-  "rewrites": [
-    { "source": "/api/instagram-render", "destination": "/api/render?platform=instagram" },
-    { "source": "/api/facebook-render", "destination": "/api/render?platform=facebook" },
-    { "source": "/api/tiktok-render", "destination": "/api/render?platform=tiktok" },
-    { "source": "/api/youtube-render", "destination": "/api/render?platform=youtube" }
+  "$schema":"https://openapi.vercel.sh/vercel.json",
+  "framework":null,
+  "cleanUrls":true,
+  "rewrites":[
+    {"source":"/api/instagram-render","destination":"/api/render?platform=instagram"},
+    {"source":"/api/facebook-render","destination":"/api/render?platform=facebook"},
+    {"source":"/api/tiktok-render","destination":"/api/render?platform=tiktok"},
+    {"source":"/api/youtube-render","destination":"/api/render?platform=youtube"}
   ],
-  "functions": {
-    "api/instagram-cron.js": { "maxDuration": 60 },
-    "api/facebook-cron.js": { "maxDuration": 60 }
+  "functions":{
+    "api/instagram-cron.js":{"maxDuration":60},
+    "api/facebook-cron.js":{"maxDuration":60},
+    "api/tiktok-cron.js":{"maxDuration":60},
+    "api/youtube-cron.js":{"maxDuration":15}
   },
-  "crons": [
-    { "path": "/api/instagram-cron?slot=reels", "schedule": "0 7 * * *" },
-    { "path": "/api/instagram-cron?slot=post", "schedule": "30 11 * * *" },
-    { "path": "/api/instagram-cron?slot=story", "schedule": "0 17 * * *" },
-    { "path": "/api/facebook-cron", "schedule": "0 9 * * *" }
+  "crons":[
+    {"path":"/api/instagram-cron","schedule":"0 0 * * *"},
+    {"path":"/api/facebook-cron","schedule":"0 1 * * *"}
   ]
 }

@@ -1110,7 +1110,7 @@
     function renderHistoryList() {
       const container = document.getElementById('historyListContainer');
       const countEl = document.getElementById('txtHistoryCount');
-      const posts = (botState?.scheduled_posts || []).filter(p => p.status === 'published' || p.published_at);
+      const posts = (botState?.scheduled_posts || []).filter(p => ['published','pending','dry_run_completed','failed'].includes(p.status) || p.published_at);
 
       if (countEl) countEl.textContent = `Toplam ${posts.length} Paylaşım`;
 
@@ -1134,7 +1134,10 @@
         else badgeHtml = '<span class="slot-type-badge badge-reels">🎬 Reels</span>';
 
         const rawTitle = (post.title || post.headline || 'Nova Furniture Özel Tasarım').replace(/^\[Otonom Tasarım\]\s*/i, '');
-        const pubTime = post.published_at ? new Date(post.published_at).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Az önce';
+        const timeValue = post.published_at || post.scheduled_for;
+        const pubTime = timeValue ? new Date(timeValue).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Az önce';
+        const isVerifiedPublished = post.status === 'published' && Boolean(post.platform_post_id);
+        const statusText = isVerifiedPublished ? '✅ Platformda doğrulandı' : post.status === 'pending' ? '◷ Yayın kuyruğunda' : post.status === 'dry_run_completed' ? '🧪 Simülasyon tamamlandı' : post.status === 'failed' ? '⚠️ Yayın başarısız' : '⚠️ Eski kayıt — platform onayı yok';
 
         const thumbUrl = post.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
@@ -1152,7 +1155,7 @@
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
-              <span class="status-badge">✅ Canlı Yayında</span>
+              <span class="status-badge">${statusText}</span>
               <a href="${post.media_url}" target="_blank" class="btn btn-outline" style="padding:4px 10px; font-size:11px;">
                 🔗 Medya
               </a>
@@ -1229,146 +1232,54 @@
     async function triggerAutonomousCycleNow() {
       if (isCycleRunning) return;
       isCycleRunning = true;
-
       const btn = document.getElementById('btnTriggerCycle');
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = '⏳ Üretiliyor & Dağıtılıyor...';
-      }
-
-      showToast('🚀 Otonom içerik üretim ve paylaşım döngüsü başlatıldı...');
-
+      if (btn) { btn.disabled = true; btn.textContent = '⏳ Yayın kuyruğuna ekleniyor...'; }
       try {
+        if (!sb?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
+        const { data: sessionData, error: sessionError } = await sb.auth.getSession();
+        if (sessionError || !sessionData?.session?.access_token) throw new Error('Yayın kuyruğuna içerik eklemek için önce Modül 1 yönetici panelinden giriş yapın.');
         const target = await selectNextProductAndFormat();
-        if (!target) {
-          throw new Error('Katalogda yayınlanacak ürün bulunamadı.');
+        if (!target?.product || !target?.format) throw new Error('Katalogda kuyruğa alınabilecek ürün veya format bulunamadı.');
+        const response = await fetch('/api/instagram-cron', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sessionData.session.access_token}` },
+          body: JSON.stringify({ type: target.format, product_slug: target.product.slug })
+        });
+        const result = await response.json().catch(() => ({}));
+        const task = Array.isArray(result.results) ? result.results[0] : null;
+        if (!response.ok || !result.ok || !result.queued || !task) {
+          const skipped = result.skipped?.[0]?.reason;
+          throw new Error(result.error || (skipped === 'missing_reels_video'
+            ? 'Bu ürün için Reels videosu yok; görsel otomatik olarak Reels diye gönderilmedi.'
+            : `Yayın kuyruğuna eklenemedi (HTTP ${response.status}).`));
         }
-
-        const { product, format, isCycleFallback } = target;
-
-        if (isCycleFallback) {
-          showToast(`ℹ️ Tüm ürünler yayınlanmış. Döngü modu: "${product.title}" için rastgele Story üretiliyor...`);
-        } else {
-          showToast(`✨ En yeni ürün seçildi: "${product.title}" (${format} formatı hazırlanıyor)...`);
-        }
-
-        // Açıklama Metni Üret
-        const cleanTitle = (product.title || product.slug).toUpperCase();
-        const caption = `✨ NOVA FURNITURE — ${cleanTitle}\n\n` +
-          `Minimalist çizgiler, 1. sınıf MDF gövde ve CNC membran işçiliği ile mekanınıza zarafet katın.\n\n` +
-          `📌 Öne Çıkan Detaylar:\n` +
-          `🪵 1. Sınıf Sağlam MDF Gövde\n` +
-          `🪞 Çizilmeye Dayanıklı İthal Membran\n` +
-          `🗄️ Geniş Depolama & Sessiz Frenli Donanım\n` +
-          `📐 ${product.body || 'Özel Ölçü Tasarım'}\n\n` +
-          `💬 Bilgi & Sipariş İçin DM veya WhatsApp:\n` +
-          `📲 0 505 015 1035 • @thenovafurniture\n\n` +
-          `#novafurniture #thenovafurniture #modernmobilya #icmimari #evdekorasyonu`;
-
-        // Medya URL'si (Varsa ürünün stüdyo fotoğrafı, yoksa fallback)
-        let mediaUrl = product.ana_resim;
-        if (!mediaUrl || !mediaUrl.startsWith('http')) {
-          mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-        }
-
-        // Reels için MP4 video
-        const isVideo = format === 'REELS';
-        if (isVideo) {
-          mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
-        }
-
-        // Meta Graph API ile Paylaş (Veya Canlı Kaydet)
-        const cfg = botState?.config || {};
-        const igUserId = cfg.ig_user_id || '17841435882645322';
-        const accessToken = cfg.access_token || '';
-
-        // Meta Graph API Çağrısı (bot-engine veya doğrudan REST)
-        let publishedSuccess = false;
-        try {
-          const createUrl = `https://graph.facebook.com/v20.0/${igUserId}/media`;
-          const params = new URLSearchParams({
-            access_token: accessToken,
-            caption: caption
+        if (!Array.isArray(botState.scheduled_posts)) botState.scheduled_posts = [];
+        if (!task.duplicate_prevented) {
+          botState.scheduled_posts.unshift({
+            id: `queue-${task.queue_task_id || Date.now()}`,
+            queue_task_id: task.queue_task_id,
+            queue_idempotency_key: task.idempotency_key,
+            title: target.product.title || target.product.slug,
+            product_slug: target.product.slug,
+            media_type: task.content_type || target.format,
+            media_url: task.media_url || '',
+            scheduled_for: task.scheduled_for,
+            status: 'pending'
           });
-
-          if (format === 'REELS') {
-            params.set('media_type', 'REELS');
-            params.set('video_url', mediaUrl);
-            params.set('share_to_feed', 'true');
-          } else if (format === 'STORIES') {
-            params.set('media_type', 'STORIES');
-            params.set('image_url', mediaUrl);
-          } else {
-            params.set('image_url', mediaUrl);
-          }
-
-          const cRes = await fetch(createUrl, { method: 'POST', body: params });
-          const cData = await cRes.json();
-          if (cData?.id) {
-            // Container oluşturuldu, publish et
-            const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-            const pParams = new URLSearchParams({
-              creation_id: cData.id,
-              access_token: accessToken
-            });
-            const pRes = await fetch(pubUrl, { method: 'POST', body: pParams });
-            const pData = await pRes.json();
-            if (pData?.id) publishedSuccess = true;
-          }
-        } catch (apiErr) {
-          console.warn('Meta API canlı çağrı uyarısı:', apiErr);
+          botState.scheduled_posts = botState.scheduled_posts.slice(0, 60);
         }
-
-        // Geçmişe ekle
-        const newPostEntry = {
-          id: `post-${Date.now()}`,
-          title: `NOVA - ${cleanTitle}`,
-          media_type: format,
-          media_url: mediaUrl,
-          published_at: new Date().toISOString(),
-          status: 'published'
-        };
-
-        if (!botState.scheduled_posts) botState.scheduled_posts = [];
-        botState.scheduled_posts.push(newPostEntry);
-        await persistBotState();
-
-        // Tracker güncelle
-        await markFormatPublished(product.slug, format);
-
         renderHistoryList();
-        showToast(`🎉 Başarılı! "${product.title}" ${format} olarak yayınlandı!`);
+        showToast(task.duplicate_prevented ? 'ℹ️ Bu içerik zaten yayın kuyruğunda.' : '✅ İçerik yayın kuyruğuna eklendi. Yayın sonucu doğrulanınca geçmişe işlenecek.');
       } catch (err) {
-        console.error('Paylaşım hatası:', err);
-        showToast(`❌ Hata: ${err.message}`);
+        console.error('Instagram kuyruğa ekleme hatası:', err);
+        showToast(`❌ ${err.message}`);
       } finally {
         isCycleRunning = false;
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = '⚡ Şimdi Otonom Paylaşım Yap';
-        }
+        if (btn) { btn.disabled = false; btn.textContent = '⚡ Şimdi Otonom Paylaşım Yap'; }
       }
     }
 
-    // =========================================================================
-    // DÜZENLİ SAAT KONTROLÜ (DAKİKADA BİR KONTROL)
-    // =========================================================================
-    let lastTriggeredMinute = '';
-
-    setInterval(async () => {
-      const now = new Date();
-      const currentHHMM = now.toTimeString().slice(0, 5); // Örn: "14:30"
-      if (currentHHMM === lastTriggeredMinute) return;
-
-      const slots = botState?.config?.posting_slots || [];
-      const matchingSlot = slots.find(s => s.enabled && s.time === currentHHMM);
-
-      if (matchingSlot && !isCycleRunning) {
-        lastTriggeredMinute = currentHHMM;
-        console.log(`⏰ Zamanlanmış saat geldi (${currentHHMM})! Otonom döngü başlatılıyor:`, matchingSlot);
-        await triggerAutonomousCycleNow();
-      }
-    }, 10000);
+    // Zamanlama yalnızca Vercel Cron üzerinden yürütülür; tarayıcıda ikinci scheduler çalışmaz.
 
     // =========================================================================
     // DM & YORUM TEST ASİSTANI

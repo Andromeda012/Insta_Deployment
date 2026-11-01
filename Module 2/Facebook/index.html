@@ -1646,210 +1646,99 @@ async function addFbScheduledPost(publishImmediately = false) {
   const mediaType = document.getElementById('post_media_type').value || 'PHOTO_POST';
   const themeKey = document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
   const doorStyle = document.getElementById('auto_door_style')?.value || 'shaker';
-
-  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) {
-    await autonomousInventNewFbDesign();
-  }
-
-  const headline = document.getElementById('post_title').value.trim();
-  const subheadline = document.getElementById('post_subtitle')?.value.trim() || '18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
-  const caption = document.getElementById('post_caption').value.trim();
-  const hashtags = document.getElementById('post_hashtags').value.trim();
-  const targetLink = document.getElementById('post_target_link').value.trim() || 'https://wa.me/905050151035';
-  const scheduledFor = document.getElementById('post_scheduled_for').value
-    ? new Date(document.getElementById('post_scheduled_for').value).toISOString()
-    : new Date().toISOString();
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '🎨 Facebook Görseli Tasarlanıyor ve Buluta Kaydediliyor...';
-  }
-
-  const mediaUrl = await exportFbAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle);
-
-  if (btn) {
-    btn.disabled = false;
-    btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
-  }
-
-  const newItem = {
-    id: 'fb-auto-' + Date.now(),
-    media_type: mediaType,
-    title: `[Otonom Facebook] ${headline}`,
-    headline,
-    subheadline,
-    theme_id: themeKey,
-    door_style: doorStyle,
-    target_link: targetLink,
-    caption,
-    hashtags,
-    media_url: mediaUrl,
-    auto_designed: true,
-    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
-    status: publishImmediately ? 'published' : 'scheduled',
-    published_at: publishImmediately ? new Date().toISOString() : null
-  };
-
-  fbState.scheduled_posts.unshift(newItem);
-  await persistFbStateToSupabase(false);
-  renderFbScheduledQueue();
-
-  if (publishImmediately) {
-    const { pageId, pageAccessToken } = await resolveFacebookCredentials();
-    const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
-
-    try {
-      let metaPublished = false;
-      let pubId = null;
-
-      if (pageId && pageAccessToken) {
-        showToast('🚀 Meta Facebook Sayfasına doğrudan yayınlanıyor...');
-        const photoParams = new URLSearchParams({
-          url: mediaUrl,
-          caption: fullCaption,
-          access_token: pageAccessToken
-        });
-        const metaRes = await fetch(`https://graph.facebook.com/v21.0/${pageId}/photos`, {
-          method: 'POST',
-          body: photoParams
-        });
-        const metaData = await metaRes.json();
-        if (metaRes.ok && (metaData.id || metaData.post_id)) {
-          metaPublished = true;
-          pubId = metaData.post_id || metaData.id;
-          newItem.fb_post_id = pubId;
-          newItem.status = 'published';
-          newItem.published_at = new Date().toISOString();
-          await persistFbStateToSupabase(false);
-          renderFbScheduledQueue();
-          alert(`🎉 Tebrikler! Test gönderiniz Facebook Sayfanızda canlı yayınlandı!\n\nFacebook Medya ID: ${pubId}`);
-          showToast(`✅ Facebook'ta yayınlandı! ID: ${pubId}`);
-        } else {
-          console.warn('Meta Graph API direct publish response:', metaData);
-          const errMsg = metaData?.error?.message || 'Meta yetkilendirme hatası';
-          if (metaData?.error?.code === 200 || errMsg.includes('pages_manage_posts')) {
-            alert(`⚠️ Meta Yetkilendirme Uyarısı (Sayfa Yayın İzni):\n\nFacebook Sayfanızda gönderi paylaşabilmek için token izinlerinde "pages_manage_posts" izni ve sayfa yetkisi gereklidir.\n\nMeta İşletme Ayarları -> Sistem Kullanıcıları -> İzin Oluştur (Token Al) ekranında "pages_manage_posts" kutucuğunu işaretleyip "Varlık Ata" kısmından sayfanızı ekleyiniz.\n\nMeta Mesajı: ${errMsg}`);
-          } else {
-            alert(`Facebook Paylaşım Hatası: ${errMsg}`);
-          }
-        }
-      }
-
-      if (!metaPublished) {
-        const cronRes = await fetch('/api/facebook-cron', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'publish',
-            pageId,
-            pageAccessToken,
-            mediaType,
-            mediaUrl,
-            caption: fullCaption
-          })
-        });
-        const cronData = await cronRes.json();
-        if (cronData.ok && cronData.publishedId) {
-          newItem.fb_post_id = cronData.publishedId;
-          newItem.status = 'published';
-          newItem.published_at = new Date().toISOString();
-          await persistFbStateToSupabase(false);
-          renderFbScheduledQueue();
-          showToast(`✅ Facebook'ta yayınlandı! ID: ${cronData.publishedId}`);
-        }
-      }
-    } catch (e) {
-      console.error('Publish error:', e);
-      showToast('⚠️ Yayınlama sırasında bağlantı hatası: ' + e.message);
-    }
-  } else {
-    showToast(`⏰ Facebook ${mediaType} tasarımı üretildi ve bulut kuyruğuna eklendi!`);
-  }
-}
-
-async function triggerFbDirectTestPost(btn) {
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '⏳ Yayınlanıyor...';
-  }
-  try {
-    await autonomousInventNewFbDesign();
-    await addFbScheduledPost(true);
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '🚀 Örnek Test Gönderisi Yayınla';
-    }
-  }
-}
-
-function renderFbScheduledQueue() {
-  const cont = document.getElementById('scheduledQueueContainer');
-  const posts = fbState.scheduled_posts || [];
-  if (posts.length === 0) {
-    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen gönderi yok. Saat dilimi geldiğinde bot kendi tasarımını otomatik üretip paylaşır.</div>`;
+  if (!['PHOTO_POST', 'FB_STORIES', 'LINK_CARD'].includes(mediaType)) {
+    showToast('⚠️ Bu Facebook formatı yayın motorunda henüz desteklenmiyor. Reels yanlışlıkla fotoğraf olarak gönderilmeyecek.');
     return;
   }
+  if (!sbClient?.auth) { showToast('❌ Supabase Auth bağlantısı bulunamadı.'); return; }
+  const { data: sessionData, error: sessionError } = await sbClient.auth.getSession();
+  if (sessionError || !sessionData?.session?.access_token) {
+    showToast('🔐 Önce Modül 1 yönetici panelinden giriş yapın; ardından Facebook yayın kuyruğunu kullanabilirsiniz.');
+    return;
+  }
+  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) await autonomousInventNewFbDesign();
+  const headline=document.getElementById('post_title').value.trim();
+  const subheadline=document.getElementById('post_subtitle')?.value.trim()||'18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
+  const caption=document.getElementById('post_caption').value.trim();
+  const hashtags=document.getElementById('post_hashtags').value.trim();
+  const targetLink=document.getElementById('post_target_link').value.trim()||'https://wa.me/905050151035';
+  const scheduledFor=publishImmediately?new Date().toISOString():(document.getElementById('post_scheduled_for').value?new Date(document.getElementById('post_scheduled_for').value).toISOString():new Date(Date.now()+3600000).toISOString());
+  try {
+    if(btn){btn.disabled=true;btn.textContent='🎨 Görsel hazırlanıyor ve yayın kuyruğuna ekleniyor...';}
+    const mediaUrl=await exportFbAutonomousCanvasAndUpload(mediaType,headline,subheadline,themeKey,doorStyle);
+    if(!mediaUrl||!/^https:\/\//i.test(mediaUrl))throw new Error('Facebook medya çıktısı geçerli bir HTTPS adresi değil.');
+    const response=await fetch('/api/module2-enqueue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({
+      platform:'facebook',content_type:mediaType,slot_label:publishImmediately?'Manuel yayın':'Planlı yayın',
+      product_slug:currentFbSelectedProduct?.slug||null,title:headline,media_url:mediaUrl,caption,hashtags,target_link:targetLink,scheduled_for:scheduledFor
+    })});
+    const result=await response.json().catch(()=>({}));
+    if(!response.ok||!result.ok||!result.queued)throw new Error(result.error||`Facebook kuyruğuna eklenemedi (HTTP ${response.status}).`);
+    const item={id:`fb-queue-${result.queue_task_id||Date.now()}`,queue_task_id:result.queue_task_id,queue_idempotency_key:result.idempotency_key,media_type:mediaType,title:`[Otonom Facebook] ${headline}`,headline,subheadline,theme_id:themeKey,door_style:doorStyle,target_link:targetLink,caption,hashtags,media_url:mediaUrl,auto_designed:true,scheduled_for:result.scheduled_for||scheduledFor,status:result.status||'pending'};
+    if(!result.duplicate_prevented){fbState.scheduled_posts=Array.isArray(fbState.scheduled_posts)?fbState.scheduled_posts:[];fbState.scheduled_posts.unshift(item);fbState.scheduled_posts=fbState.scheduled_posts.slice(0,60);}
+    renderFbScheduledQueue();
+    showToast(result.duplicate_prevented?'ℹ️ Bu Facebook içeriği zaten kuyrukta.':'✅ Facebook içeriği yayın kuyruğuna eklendi. Gerçek yayın sonucu worker tarafından doğrulanacak.');
+  } catch(error){console.error('Facebook yayın kuyruğu hatası:',error);showToast(`❌ ${error.message}`);}
+  finally{if(btn){btn.disabled=false;btn.textContent='⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';}}
+}
 
-  cont.innerHTML = posts.map((p, idx) => {
-    const dt = new Date(p.scheduled_for).toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
-    const isPub = p.status === 'published';
-    return `
-      <div class="queue-item">
-        <img class="queue-thumb" src="${p.media_url}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="">
-        <div class="queue-info">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
-            <span class="badge badge-blue">${p.media_type}</span>
-            <span class="badge badge-purple">🎨 Bot Tasarımı</span>
-            <span class="badge ${isPub?'badge-green':'badge-amber'}">${isPub ? '✅ Facebook\'ta Yayınlandı' : '⏳ Saatini Bekliyor (Onaysız)'}</span>
-            <small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
-          </div>
-          <h4>${p.title}</h4>
-          <p>${p.caption || ''}</p>
-        </div>
-        <div style="display:flex;gap:6px;">
-          ${!isPub ? `<button class="btn btn-success btn-sm" onclick="publishFbQueueItemNow(${idx})">Şimdi Yayınla</button>` : ''}
-          <button class="btn btn-danger btn-sm" onclick="deleteFbQueueItem(${idx})">Sil</button>
-        </div>
-      </div>
-    `;
+
+function renderFbScheduledQueue() {
+  const cont=document.getElementById('scheduledQueueContainer');const posts=fbState.scheduled_posts||[];
+  if(!posts.length){cont.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen gönderi yok. Yayınlar Vercel Cron tarafından kuyruğa alınır ve worker sonucu doğrular.</div>`;return;}
+  cont.innerHTML=posts.map((p,idx)=>{
+    const dt=p.scheduled_for?new Date(p.scheduled_for).toLocaleString('tr-TR',{dateStyle:'short',timeStyle:'short'}):'Zamanlanmadı';
+    const isPub=p.status==='published'&&Boolean(p.platform_post_id);const legacyUnverified=p.status==='published'&&!p.platform_post_id;
+    const statusLabel=isPub?'✅ Platformda doğrulandı':legacyUnverified?'⚠️ Eski kayıt — platform onayı yok':p.status==='pending'?'◷ Yayın kuyruğunda':p.status==='failed'?'⚠️ Yayın başarısız':p.status==='dry_run_completed'?'🧪 Simülasyon tamamlandı':'⏳ Zamanlanmış';
+    return `<div class="queue-item">
+      <img class="queue-thumb" src="${p.media_url||''}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="">
+      <div class="queue-info"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
+        <span class="badge badge-blue">${p.media_type||'PHOTO_POST'}</span><span class="badge badge-purple">🎨 Bot Tasarımı</span>
+        <span class="badge ${isPub?'badge-green':'badge-amber'}">${statusLabel}</span><small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
+      </div><h4>${p.title||'Facebook içeriği'}</h4><p>${p.caption||''}</p></div>
+      <div style="display:flex;gap:6px;">${!isPub&&!legacyUnverified&&(!p.queue_task_id||p.status==='failed')?`<button class="btn btn-success btn-sm" onclick="publishFbQueueItemNow(${idx})">Kuyruğa Ekle</button>`:''}<button class="btn btn-danger btn-sm" onclick="deleteFbQueueItem(${idx})">Sil</button></div>
+    </div>`;
   }).join('');
 }
-
-function publishFbQueueItemNow(idx) {
-  if (!fbState.scheduled_posts[idx]) return;
-  fbState.scheduled_posts[idx].status = 'published';
-  fbState.scheduled_posts[idx].published_at = new Date().toISOString();
-  persistFbStateToSupabase(false);
-  fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
-  showToast(`🚀 "${fbState.scheduled_posts[idx].title}" Facebook bulut motorundan yayınlandı!`);
+async function publishFbQueueItemNow(idx){
+ const item=fbState.scheduled_posts[idx];if(!item)return;
+ if(item.status==='published'&&!item.platform_post_id){showToast('⚠️ Bu eski kayıt platform tarafından doğrulanmamış; otomatik olarak yeniden gönderilmedi.');return;}
+ if(item.queue_task_id&&item.status==='pending'){showToast('ℹ️ Bu içerik zaten yayın kuyruğunda. Worker sonucunu bekleyin.');return;}
+ if(!item.media_url){showToast('❌ Bu kayıt için medya adresi bulunmuyor.');return;}
+ try{
+  const{data:sessionData,error:sessionError}=await sbClient.auth.getSession();if(sessionError||!sessionData?.session?.access_token)throw new Error('Önce Modül 1 yönetici panelinden giriş yapın.');
+  const response=await fetch('/api/module2-enqueue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({
+   platform:'facebook',content_type:item.media_type,slot_label:'Manuel tekrar kuyruğu',product_slug:item.product_slug||null,media_url:item.media_url,
+   caption:item.caption||'',hashtags:item.hashtags||'',target_link:item.target_link||null,scheduled_for:new Date().toISOString()
+  })});
+  const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok||!result.queued)throw new Error(result.error||'Kuyruğa eklenemedi.');
+  item.queue_task_id=result.queue_task_id;item.queue_idempotency_key=result.idempotency_key;item.status='pending';item.scheduled_for=result.scheduled_for;
+  renderFbScheduledQueue();showToast(result.duplicate_prevented?'ℹ️ Bu içerik zaten kuyrukta.':'✅ İçerik yayın kuyruğuna eklendi.');
+ }catch(error){showToast(`❌ ${error.message}`);}
 }
 
-function deleteFbQueueItem(idx) {
-  fbState.scheduled_posts.splice(idx, 1);
-  persistFbStateToSupabase(true);
+async function deleteFbQueueItem(idx) {
+  const item=fbState.scheduled_posts[idx];if(!item)return;
+  try{
+    let removedByServer=false;
+    if(item.queue_task_id&&item.status==='pending'){
+      const{data:sessionData,error:sessionError}=await sbClient.auth.getSession();
+      if(sessionError||!sessionData?.session?.access_token)throw new Error('İptal için önce Modül 1 yönetici panelinden giriş yapın.');
+      const response=await fetch('/api/module2-cancel',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({queue_task_id:item.queue_task_id})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok||!result.cancelled)throw new Error(result.error||'Yayın görevi iptal edilemedi; worker görevi işlemeye başlamış olabilir.');
+      removedByServer=true;
+    }
+    fbState.scheduled_posts.splice(idx,1);
+    if(!removedByServer)await persistFbStateToSupabase(true);
+    renderFbScheduledQueue();showToast('Facebook kuyruk kaydı kaldırıldı.');
+  }catch(error){showToast(`❌ ${error.message}`);}
 }
 
 async function runFbAutonomousCycleNow() {
-  let count = 0;
-  (fbState.scheduled_posts || []).forEach(p => {
-    if (p.status === 'scheduled') {
-      p.status = 'published';
-      p.published_at = new Date().toISOString();
-      count++;
-    }
-  });
-
-  if (count === 0) {
-    await autonomousInventNewFbDesign();
-    await addFbScheduledPost(true);
-    return;
-  }
-
-  await persistFbStateToSupabase(false);
-  fetch('/api/facebook-cron', { method: 'POST' }).catch(() => {});
-  showToast(`⚡ Facebook Bulut Döngüsü çalıştı: ${count} içerik onay beklenmeden yayınlandı!`);
+  await autonomousInventNewFbDesign();
+  await addFbScheduledPost(true);
 }
+
 
 // ── 1. AŞAMA SABİT KURALLAR ──
 function renderFbTier1Rules() {

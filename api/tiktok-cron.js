@@ -1,179 +1,19 @@
-/**
- * VERCEL SERVERLESS CRON ENDPOINT: /api/tiktok-cron
- * ============================================================================
- * 7/24 Bulut Zamanlayıcısı:
- * 1. Supabase `site_settings` tablosundan `tt_bot_state` durumunu ve `products`
- *    tablosundan canlı kapak modellerini okur.
- * 2. Zamanı gelen veya sıradaki otonom TikTok içeriğini sıfır medya girişiyle
- *    (Zero-Input Autonomous Design) 9:16 dikey olarak tasarlar ve yayınlar.
- * 3. Bekleyen TikTok yorum/DM mesajlarını 3 Aşamalı Hibrit İletişim Motoruyla yanıtlar.
- */
-
-import {
-    TIKTOK_FORMATS,
-    processIncomingTikTokInteraction,
-    generateAutonomousTikTokDraft,
-    publishAutonomousTikTokPost
-} from '../Module 2/Tiktok/bot-engine.js';
+import {createHash} from 'node:crypto';
+import {TIKTOK_FORMATS,generateAutonomousTikTokDraft} from '../Module 2/Tiktok/bot-engine.js';
 import PhotoroomEngine from '../photoroom-engine.js';
-
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-
-async function fetchSupabaseProducts() {
-    if (!SUPABASE_KEY) return [];
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/products?select=sku,title,kategori,renkler,kisa_aciklama,ana_resim&limit=25`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-        if (!res.ok) return [];
-        return await res.json();
-    } catch (_) {
-        return [];
-    }
-}
-
-async function fetchBotState() {
-    if (!SUPABASE_KEY) return null;
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.tt_bot_state&select=data`, {
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-        });
-        if (!res.ok) return null;
-        const rows = await res.json();
-        return rows?.[0]?.data || null;
-    } catch (_) {
-        return null;
-    }
-}
-
-async function saveBotState(stateData) {
-    if (!SUPABASE_KEY) return false;
-    try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
-            method: 'POST',
-            headers: {
-                'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
-                'Content-Type': 'application/json',
-                'Prefer': 'resolution=merge-duplicates'
-            },
-            body: JSON.stringify({
-                key: 'tt_bot_state',
-                data: stateData,
-                updated_at: new Date().toISOString()
-            })
-        });
-        return res.ok;
-    } catch (_) {
-        return false;
-    }
-}
-
-export default async function handler(req, res) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
-    }
-
-    try {
-        const products = await fetchSupabaseProducts();
-        const currentState = (await fetchBotState()) || {
-            botActive: true,
-            autonomousMode: true,
-            zeroInputRender: true,
-            accountHandle: '@thenovafurniture',
-            scheduledQueue: [],
-            publishedHistory: [],
-            interactionLogs: []
-        };
-
-        const formatKeys = Object.keys(TIKTOK_FORMATS);
-        const chosenFormat = req.body?.format || formatKeys[Math.floor(Math.random() * formatKeys.length)];
-        const chosenProduct = products.length > 0
-            ? products[Math.floor(Math.random() * products.length)]
-            : {
-                sku: 'GKM-104',
-                title: 'Royal CNC Membran Kapak',
-                kategori: 'CNC Membran Kapak',
-                renkler: ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe']
-            };
-
-        // 1. Otonom Taslak Üret
-        const draft = generateAutonomousTikTokDraft({
-            format: chosenFormat,
-            product: chosenProduct
-        });
-
-        // 2. Otonom 9:16 Dikey Görsel Sahne URL'si Oluştur
-        // 2. Photoroom Mimari Üretim Varlığını Çek (9:16 Dikey Video / Hero)
-        let campaign = await PhotoroomEngine.fetchActiveCampaignFromSupabase('tiktok');
-        if (!campaign && chosenProduct) {
-            campaign = await PhotoroomEngine.buildAndSaveProductCampaign({ product: chosenProduct });
-        }
-        const mediaUrl = campaign?.reels_video_url || campaign?.photoroom_hero_vertical_url || `https://insta-deployment-rho.vercel.app/api/tiktok-render?raw=1&format=${encodeURIComponent(draft.format)}&sku=${encodeURIComponent(draft.productSku)}&title=${encodeURIComponent(draft.productTitle)}`;
-
-        // 3. TikTok Content Posting API v2 ile Yayınla (veya Bulut Simülasyonu Kaydet)
-        const publishResult = await publishAutonomousTikTokPost({
-            draft,
-            mediaUrl,
-            tiktokAccessToken: process.env.TIKTOK_ACCESS_TOKEN,
-            tiktokOpenId: process.env.TIKTOK_OPEN_ID
-        });
-
-        const publishedEntry = {
-            id: publishResult.publishId || `tt_${Date.now()}`,
-            format: draft.format,
-            formatLabel: draft.formatLabel,
-            productSku: draft.productSku,
-            productTitle: draft.productTitle,
-            onScreenHook: draft.onScreenHook,
-            trendingAudio: draft.trendingAudio,
-            caption: draft.caption,
-            pinnedComment: draft.pinnedComment,
-            mediaUrl,
-            mode: publishResult.mode,
-            publishedAt: new Date().toISOString()
-        };
-
-        if (campaign) {
-            await PhotoroomEngine.markPlatformPublished(campaign.id, 'tiktok', 'VIDEO');
-        }
-        currentState.publishedHistory = [publishedEntry, ...(currentState.publishedHistory || [])].slice(0, 40);
-
-        // Eğer test/webhook yorumu gönderildiyse onu da 3 Aşamalı Motor ile işle
-        let interactionResult = null;
-        if (req.body?.testComment) {
-            interactionResult = await processIncomingTikTokInteraction({
-                messageText: req.body.testComment,
-                username: req.body.username || 'tiktok_musteri',
-                channel: req.body.channel || 'COMMENT',
-                products,
-                geminiApiKey: GEMINI_API_KEY
-            });
-            currentState.interactionLogs = [interactionResult, ...(currentState.interactionLogs || [])].slice(0, 60);
-        }
-
-        await saveBotState(currentState);
-
-        return res.status(200).json({
-            ok: true,
-            service: 'TikTok 7/24 Autonomous Cloud Cron',
-            publishedEntry,
-            interactionResult,
-            catalogProductsLoaded: products.length
-        });
-    } catch (err) {
-        return res.status(500).json({ ok: false, error: err.message });
-    }
-};
+import {authenticateModule2Admin,authorizeVercelCron,getServiceRoleKey,supabaseAdminRequest,sendApiError,istanbulDateParts,istanbulScheduledIso} from './_lib/module2-publishing.js';
+export default async function handler(req,res){res.setHeader('Cache-Control','no-store');if(!['GET','POST'].includes(req.method))return res.status(405).json({ok:false});
+try{getServiceRoleKey();if(req.method==='GET'){if(!authorizeVercelCron(req))return res.status(401).json({ok:false});}else await authenticateModule2Admin(req);
+const st=await supabaseAdminRequest('/rest/v1/site_settings?key=eq.tt_bot_state&select=data&limit=1'),state=st?.[0]?.data||{config:{auto_publish_enabled:false},scheduledQueue:[]},cfg=state.config||{};
+if(req.method==='GET')return res.status(200).json({ok:true,skipped:true,reason:'tiktok_slots_not_configured'});
+const format=String(req.body?.format||'TIKTOK_ASMR_CNC').toUpperCase();if(!Object.prototype.hasOwnProperty.call(TIKTOK_FORMATS,format))return res.status(400).json({ok:false,error:'Unsupported TikTok format'});
+const p=await supabaseAdminRequest('/rest/v1/products?select=slug,sku,title,ana_resim,video_url&order=created_at.desc&limit=100');if(!p?.length)throw new Error('Product catalogue empty.');
+const sku=String(req.body?.product_sku||''),product=p.find(x=>x.sku===sku||x.slug===sku)||p[0],draft=generateAutonomousTikTokDraft({format,product});
+let campaign=await PhotoroomEngine.fetchActiveCampaignFromSupabase('tiktok');if(!campaign||campaign.product_slug!==product.slug)campaign=await PhotoroomEngine.buildAndSaveProductCampaign({product,apiKey:process.env.PHOTOROOM_API_KEY||process.env.GEMINI_API_KEY});
+const media=campaign?.reels_video_url||campaign?.photoroom_hero_vertical_url||product.ana_resim;if(!media||!/^https:\/\//i.test(media))return res.status(422).json({ok:false,error:'No valid TikTok media URL'});
+const type=/\.mp4(\?.*)?$/i.test(media)?'TIKTOK_VIDEO':'TIKTOK_PHOTO_CAROUSEL',scheduled=new Date().toISOString(),key=`tiktok_${createHash('sha256').update([product.slug,type,format,scheduled.slice(0,16),media].join('|')).digest('hex')}`;
+const ins=await supabaseAdminRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:JSON.stringify({platform:'tiktok',content_type:type,slot_label:'Manuel yayın',product_slug:product.slug,media_url:media,caption:draft.caption||draft.onScreenHook||'',hashtags:Array.isArray(draft.hashtags)?draft.hashtags.join(' '):(draft.hashtags||''),status:'pending',idempotency_key:key,scheduled_for:scheduled})});
+let task=ins?.[0],dup=false;if(!task){dup=true;task=(await supabaseAdminRequest(`/rest/v1/social_publish_queue?idempotency_key=eq.${encodeURIComponent(key)}&select=id,status,scheduled_for&limit=1`))?.[0];}if(!task)throw new Error('Queue task not confirmed.');
+if(!dup){state.scheduledQueue=Array.isArray(state.scheduledQueue)?state.scheduledQueue:[];state.scheduledQueue.unshift({queue_task_id:task.id,idempotency_key:key,format,content_type:type,productSku:product.sku,productTitle:product.title,mediaUrl:media,scheduled_for:scheduled,status:'pending'});await supabaseAdminRequest('/rest/v1/site_settings',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:'tt_bot_state',data:state,updated_at:new Date().toISOString()})});}
+return res.status(200).json({ok:true,queued:true,duplicate_prevented:dup,queue_task_id:task.id,idempotency_key:key,content_type:type,product_sku:product.sku,product_title:product.title,media_url:media,scheduled_for:task.scheduled_for||scheduled});
+}catch(e){return sendApiError(res,e,'TikTok Cron');}}

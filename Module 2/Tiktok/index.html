@@ -744,8 +744,8 @@
         // =====================================================================
         // SUPABASE BAĞLANTISI VE VARSAYILAN KATALOG
         // =====================================================================
-        const SUPABASE_URL = 'https://nyvctdskhAbImlvgbnhx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im55dmN0ZHNraGFiaW1sdmdibmh4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDI5NTM4NTEsImV4cCI6MjA1ODUyOTg1MX0.L3-2_N2M1n6xW3f2sI9tG4cK7v8R5pQ1mZ0yX9wE6uA';
+        const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
         const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
         const FALLBACK_PRODUCTS = [
@@ -805,24 +805,8 @@
             tiktokOpenId: '',
             geminiApiKey: '',
             whatsappNumber: '905050151035',
-            publishedHistory: [
-                {
-                    id: 'tt_init_1',
-                    format: 'TIKTOK_ASMR_CNC',
-                    productSku: 'GKM-101',
-                    productTitle: 'Klasik CNC Membran Kapak',
-                    onScreenHook: 'POV: 5 İş Gününde Mutfak Kapaklarınız Fabrikamızda Nasıl Üretiliyor?',
-                    publishedAt: 'Bugün • 11:30 (Otonom Bulut)'
-                },
-                {
-                    id: 'tt_init_2',
-                    format: 'TIKTOK_PHOTO_CAROUSEL',
-                    productSku: 'GKM-204',
-                    productTitle: 'Country Çerçeveli Membran Kapak',
-                    onScreenHook: '2026 Mutfaklarında En Çok Sorulan 4 Country Kapak Rengi 👉',
-                    publishedAt: 'Dün • 20:30 (Otonom Bulut)'
-                }
-            ],
+            publishedHistory: [],
+            scheduledQueue: [],
             interactionLogs: [
                 {
                     stage: 1,
@@ -1222,73 +1206,44 @@
         }
 
         function renderQueueList() {
-            const listEl = document.getElementById('publishedQueueList');
-            const items = botState.publishedHistory || [];
-            document.getElementById('queueCountBadge').textContent = `${items.length} Gönderi`;
-
-            listEl.innerHTML = items.map(item => `
-                <div class="queue-item">
-                    <div>
-                        <strong style="color:#fff;">[${item.productSku}] ${item.productTitle}</strong>
-                        <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
-                            ${item.format} • ${item.onScreenHook ? item.onScreenHook.slice(0, 52) + '...' : ''}
-                        </div>
-                    </div>
-                    <span style="font-size:11px; color:#34d399; font-weight:700; white-space:nowrap;">
-                        ✓ ${item.publishedAt || 'Yayınlandı'}
-                    </span>
-                </div>
-            `).join('');
+            const listEl=document.getElementById('publishedQueueList');
+            const queued=Array.isArray(botState.scheduledQueue)?botState.scheduledQueue:[];
+            const published=Array.isArray(botState.publishedHistory)?botState.publishedHistory:[];
+            const items=[...queued,...published].slice(0,60);
+            document.getElementById('queueCountBadge').textContent=`${items.length} Gönderi`;
+            listEl.innerHTML=items.map(item=>{
+                const status=item.status||(item.publishedAt?'published':'draft');
+                const verifiedPublished=status==='published'&&Boolean(item.platform_post_id);
+                const legacyUnverified=status==='published'&&!item.platform_post_id;
+                const statusLabel=verifiedPublished?'✓ Platformda doğrulandı':legacyUnverified?'⚠ Eski kayıt — platform onayı yok':status==='pending'?'◷ Yayın kuyruğunda':status==='dry_run_completed'?'🧪 Simülasyon tamamlandı':status==='reconciliation_required'?'⚠ Durum kontrolü gerekli':status==='unsupported'?'⚠ Format desteklenmiyor':status==='failed'?'⚠ Yayın başarısız':'Taslak';
+                const statusColor=verifiedPublished?'#34d399':status==='pending'?'#fbbf24':legacyUnverified||status==='failed'||status==='unsupported'||status==='reconciliation_required'?'#f87171':'#94a3b8';
+                return `<div class="queue-item"><div><strong style="color:#fff;">[${item.productSku||''}] ${item.productTitle||item.title||'TikTok içeriği'}</strong>
+                  <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${item.format||item.content_type||''} • ${item.onScreenHook?item.onScreenHook.slice(0,52):''}</div></div>
+                  <span style="font-size:11px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusLabel}</span></div>`;
+            }).join('');
         }
-
-        async function addCurrentDraftToSchedule() {
-            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
-            const entry = {
-                id: `tt_sched_${Date.now()}`,
-                format: currentFormat,
-                productSku: p.sku || 'GKM-104',
-                productTitle: p.title || 'CNC Membran Kapak',
-                onScreenHook: document.getElementById('hookInput').value,
-                publishedAt: 'Sıradaki Otonom Saat (16:30)'
-            };
-            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
-            renderQueueList();
-            await saveStateToSupabase();
+        async function addCurrentDraftToSchedule(){
+            const p=catalogProducts[currentProductIndex]||FALLBACK_PRODUCTS[0];
+            const entry={id:`tt_draft_${Date.now()}`,format:currentFormat,productSku:p.sku||'GKM-104',productTitle:p.title||'CNC Membran Kapak',onScreenHook:document.getElementById('hookInput').value,status:'draft',scheduled_for:null};
+            botState.scheduledQueue=[entry,...(botState.scheduledQueue||[])].slice(0,60);renderQueueList();await saveStateToSupabase();
         }
-
-        async function publishTikTokNow() {
-            const p = catalogProducts[currentProductIndex] || FALLBACK_PRODUCTS[0];
-            const entry = {
-                id: `tt_live_${Date.now()}`,
-                format: currentFormat,
-                productSku: p.sku || 'GKM-104',
-                productTitle: p.title || 'CNC Membran Kapak',
-                onScreenHook: document.getElementById('hookInput').value,
-                publishedAt: `Şimdi Yayınlandı (${new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })})`
-            };
-            botState.publishedHistory = [entry, ...(botState.publishedHistory || [])].slice(0, 30);
-            renderQueueList();
-            await saveStateToSupabase();
-            alert(`🚀 TikTok 9:16 Dikey Gönderi (${entry.productSku} - ${entry.productTitle}) sıfır medya girişiyle otonom olarak üretildi ve yayın kuyruğuna işlendi!`);
-        }
-
-        async function triggerCloudCronNow() {
-            try {
-                const res = await fetch('/api/tiktok-cron', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ format: currentFormat })
-                });
-                const data = await res.json();
-                if (data.ok && data.publishedEntry) {
-                    botState.publishedHistory = [data.publishedEntry, ...(botState.publishedHistory || [])].slice(0, 30);
-                    renderQueueList();
-                    alert(`☁️ Bulut Cron (/api/tiktok-cron) başarıyla çalıştı! Üretilen: [${data.publishedEntry.productSku}] ${data.publishedEntry.productTitle}`);
-                }
-            } catch (e) {
-                await publishTikTokNow();
+        async function enqueueTikTokNow(){
+            const p=catalogProducts[currentProductIndex]||FALLBACK_PRODUCTS[0];
+            if(!supabaseClient?.auth)throw new Error('Supabase Auth bağlantısı bulunamadı.');
+            const{data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
+            if(sessionError||!sessionData?.session?.access_token)throw new Error('Önce Modül 1 yönetici panelinden giriş yapın.');
+            const response=await fetch('/api/tiktok-cron',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({format:currentFormat,product_sku:p.sku||''})});
+            const result=await response.json().catch(()=>({}));
+            if(!response.ok||!result.ok||!result.queued)throw new Error(result.error||`TikTok kuyruğuna eklenemedi (HTTP ${response.status}).`);
+            if(!result.duplicate_prevented){
+                botState.scheduledQueue=Array.isArray(botState.scheduledQueue)?botState.scheduledQueue:[];
+                botState.scheduledQueue.unshift({id:`tt_queue_${result.queue_task_id||Date.now()}`,queue_task_id:result.queue_task_id,idempotency_key:result.idempotency_key,format:result.content_type,productSku:result.product_sku,productTitle:result.product_title,mediaUrl:result.media_url,scheduled_for:result.scheduled_for,status:'pending'});
+                botState.scheduledQueue=botState.scheduledQueue.slice(0,60);
             }
+            renderQueueList();alert(result.duplicate_prevented?'Bu TikTok içeriği zaten yayın kuyruğunda.':'TikTok içeriği yayın kuyruğuna eklendi. Gerçek yayın sonucu doğrulanınca durum güncellenecek.');
         }
+        async function publishTikTokNow(){try{await enqueueTikTokNow();}catch(error){alert(`TikTok yayın kuyruğu hatası: ${error.message}`);}}
+        async function triggerCloudCronNow(){await publishTikTokNow();}
 
         // =====================================================================
         // 3 AŞAMALI HİBRİT TIKTOK YORUM & DM SİMÜLATÖRÜ
