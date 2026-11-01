@@ -52,6 +52,7 @@ The following migrations are committed under `supabase/migrations` and have been
 - `202611010002_module1_cms_policy_cleanup.sql`
 - `202611010003_module1_product_web_settings_bridge.sql`
 - `202611010004_module1_media_folder_security.sql`
+- `202611010005_restore_module7_product_crud.sql`
 
 Do not rerun the full `supabase_setup.sql` on the live database; it is a base-install script. It has been updated for future fresh installations.
 
