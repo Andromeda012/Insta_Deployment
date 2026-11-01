@@ -2115,48 +2115,27 @@ function renderProductGrid(products) {
 async function toggleProductWebVisibility(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
-
-  prod.web_gorunur = newStatus;
-  renderProductGrid(allProducts);
-
-  showToast(`⏳ "${prod.title || prod.slug}" web sitesi durumu güncelleniyor...`);
-
   try {
-    if (isSupabaseReady()) {
-      const { error } = await supabaseClient
-        .from('products')
-        .update({ web_gorunur: newStatus })
-        .eq('slug', slug);
-
-      if (error) {
-        console.warn('Supabase update warning, falling back to local state:', error);
-      }
-    }
-
-    showToast(newStatus ? `👁️ "${prod.title}" web sitesinde yayına alındı!` : `🙈 "${prod.title}" web sitesinde gizlendi!`, 'success');
-  } catch (err) {
-    showToast('Güncelleme sırasında hata oluştu: ' + err.message, 'error');
-  }
+    await saveModule1Draft('product_web_settings', slug, {
+      is_visible: !!newStatus, is_featured: !!prod.anasayfada_goster,
+      sort_order: Number(prod.web_sort_order || 0)
+    }, 'Ürün web görünürlüğü');
+    prod.web_gorunur = !!newStatus;
+    renderProductGrid(allProducts);
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function toggleProductShowcase(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
-
-  prod.anasayfada_goster = newStatus;
-  renderProductGrid(allProducts);
-
   try {
-    if (isSupabaseReady()) {
-      await supabaseClient
-        .from('products')
-        .update({ anasayfada_goster: newStatus })
-        .eq('slug', slug);
-    }
-    showToast(newStatus ? `🏠 "${prod.title}" ana sayfa vitrinine eklendi!` : `📁 "${prod.title}" vitrinden kaldırıldı.`, 'success');
-  } catch (err) {
-    showToast('Vitrin ayarı güncellenemedi: ' + err.message, 'error');
-  }
+    await saveModule1Draft('product_web_settings', slug, {
+      is_visible: prod.web_gorunur !== false, is_featured: !!newStatus,
+      sort_order: Number(prod.web_sort_order || 0)
+    }, 'Ürün ana sayfa vitrini');
+    prod.anasayfada_goster = !!newStatus;
+    renderProductGrid(allProducts);
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function filterProductList() {
@@ -2233,97 +2212,31 @@ function editProduct(slug) {
 
 async function saveProduct(e) {
   if (e) e.preventDefault();
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase Project URL ve Anon Key girin!', 'error');
+  const slug = document.getElementById('f_slug').value.trim();
+  if (!slug || !editMode) {
+    showToast('Yeni ürün ana kaydı Modül 7 üzerinden oluşturulur. Burada mevcut ürünün web görünümünü düzenleyebilirsiniz.', 'info');
     return;
   }
-
-  const title = document.getElementById('f_title').value.trim();
-  let slug = document.getElementById('f_slug').value.trim() || slugify(title);
-  if (!title || !slug) {
-    showToast('Lütfen ürün adını doldurun!', 'error');
-    return;
-  }
-
-  if (!editMode && allProducts.some(p => p.slug === slug)) {
-    slug = `${slug}-${Date.now().toString().slice(-4)}`;
-  }
-
   const btn = document.getElementById('btnProductSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
-
   try {
-    let finalImageUrl = document.getElementById('f_image_url').value.trim();
-
-    if (uploadedProductFile) {
-      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Supabase Storage\'a Yükleniyor...';
-      finalImageUrl = await uploadFileToSupabaseStorage(uploadedProductFile, 'urunler', slug);
-    }
-
-    const productRow = {
-      slug,
-      title,
-      kategori: document.getElementById('f_kategori').value,
-      sku: document.getElementById('f_sku').value.trim() || null,
-      kisa_aciklama: document.getElementById('f_kisa').value.trim(),
-      ana_resim: finalImageUrl || '/resim/logo.png',
-      body: document.getElementById('f_body').value.trim(),
-      anasayfada_goster: document.getElementById('f_anasayfa').checked,
-      populer: document.getElementById('f_populer').checked,
-      yeni: document.getElementById('f_yeni').checked,
-      renkler: colorsList,
-      ozellikler: featsList,
-      updated_at: new Date().toISOString()
-    };
-
-    const { error } = await supabaseClient
-      .from('products')
-      .upsert(productRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
-
-    editMode = false;
-    editingSlug = '';
-    uploadedProductFile = null;
-
-    showToast('🎉 Ürün Supabase Database & Storage\'a kaydedildi ve sitede yayına alındı!', 'success');
+    await saveModule1Draft('product_web_settings', slug, {
+      is_visible: true,
+      is_featured: document.getElementById('f_anasayfa').checked || document.getElementById('f_populer').checked,
+      sort_order: Date.now()
+    }, 'Ürün web görünüm ayarı');
     await loadAllProducts();
     switchProductSubTab('list');
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
-  }
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '💾 Web Görünüm Taslağını Kaydet'; }
 }
 
 async function deleteProduct(slug) {
-  if (!confirm(`"${slug}" ürününü Supabase veritabanından silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('"' + slug + '" ürün ana kaydını silmeden web kataloğunda gizlemek istiyor musunuz?')) return;
   try {
-    showToast('Ürün Supabase\'den siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('products')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Ürün başarıyla silindi!', 'success');
+    await saveModule1Draft('product_web_settings', slug, { is_visible:false, is_featured:false, sort_order:0 }, 'Ürünü web kataloğunda gizleme');
     await loadAllProducts();
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 // CHIPS
