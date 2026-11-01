@@ -697,6 +697,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .main-wrapper { padding: 16px; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* Module 1 CMS */
+.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,19,47,.94);backdrop-filter:blur(8px)}
+.cms-auth-card,.cms-revision-card{width:min(520px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.cms-auth-card h2,.cms-revision-card h2{font-family:Montserrat,sans-serif;color:var(--navy);margin-bottom:8px}
+.cms-auth-card p,.cms-revision-card p{font-size:13px;color:var(--text-muted);margin-bottom:18px}
+.cms-auth-card input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;margin:7px 0 14px;font:inherit}
+.cms-auth-error{min-height:20px;color:#b91c1c;font-size:12px;margin:8px 0}
+.cms-revision-overlay{position:fixed;inset:0;z-index:4500;background:rgba(6,19,47,.65);display:none;align-items:center;justify-content:center;padding:18px}
+.cms-revision-card{width:min(900px,100%);max-height:90vh;overflow:auto}
+.cms-revision-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
+.cms-revision-row small{display:block;color:var(--text-muted);margin-top:3px}
+.cms-revision-actions{display:flex;gap:6px;flex-wrap:wrap}
+.cms-revision-preview{white-space:pre-wrap;overflow:auto;max-height:280px;background:#0b1220;color:#dbeafe;padding:14px;border-radius:8px;font:12px/1.5 monospace}
+.cms-user-pill{font-size:11px;color:#fff;opacity:.85}
+@media(max-width:700px){.cms-revision-row{grid-template-columns:1fr}.cms-revision-actions{justify-content:flex-start}}
+
 </style>
 </head>
 <body>
@@ -711,6 +728,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
   </div>
   <div class="header-right">
+    <button class="btn-header btn-header-outline" id="cmsDraftsButton" onclick="openCmsRevisions()" style="display:none;">🗂️ Taslaklar</button>
+    <span class="cms-user-pill" id="cmsUserBadge" style="display:none;"></span>
+    <button class="btn-header btn-header-outline" id="cmsSignOutButton" onclick="signOutModule1Cms()" style="display:none;">Çıkış</button>
     <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
       ⛶ Tam Ekran
     </button>
@@ -1759,12 +1779,38 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 </div>
 
+<!-- MODULE 1 CMS AUTH GATE -->
+<div class="cms-auth-gate" id="cmsAuthGate">
+  <div class="cms-auth-card">
+    <h2>Güvenli Yönetici Girişi</h2>
+    <p>İçerik yönetimi için yetkili Supabase hesabınızla giriş yapın. Yalnızca <b>admin</b> ve <b>content_manager</b> rolleri kabul edilir.</p>
+    <form onsubmit="signInModule1Cms(event)">
+      <label for="cmsLoginEmail">E-posta</label><input id="cmsLoginEmail" type="email" autocomplete="username" required>
+      <label for="cmsLoginPassword">Şifre</label><input id="cmsLoginPassword" type="password" autocomplete="current-password" required>
+      <button class="btn-primary" id="cmsLoginButton" type="submit" style="width:100%;justify-content:center;">Güvenli Giriş Yap</button>
+    </form>
+    <div class="cms-auth-error" id="cmsAuthError"></div>
+    <button class="btn-secondary btn-sm" type="button" onclick="openSupabaseModal()">Supabase bağlantı ayarları</button>
+  </div>
+</div>
+<div class="cms-revision-overlay" id="cmsRevisionOverlay" onclick="if(event.target===this)closeCmsRevisions()">
+  <div class="cms-revision-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div><h2>Taslaklar ve Revizyonlar</h2><p>Revizyonları inceleyin ve seçtiğiniz taslağı yayınlayın.</p></div>
+      <button class="btn-secondary btn-sm" onclick="closeCmsRevisions()">Kapat</button>
+    </div>
+    <div id="cmsRevisionList">Taslaklar yükleniyor...</div>
+    <h3 style="font-size:13px;margin:18px 0 8px;color:var(--navy);">Revizyon önizlemesi</h3>
+    <pre class="cms-revision-preview" id="cmsRevisionPreview">Önizlemek için bir revizyon seçin.</pre>
+  </div>
+</div>
 <!-- TOAST NOTIFICATION -->
 <div class="toast" id="toastMsg">
   <span id="toastIcon">✅</span>
   <span id="toastText">İşlem başarılı</span>
 </div>
 
+<script src="/Module%201/js/cms-api.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // SUPABASE CLOUD DATABASE & STORAGE CONFIGURATION
@@ -1799,6 +1845,7 @@ function initSupabaseClient() {
   } else {
     supabaseClient = null;
   }
+  window.module1SupabaseClient = supabaseClient;
   checkSupabaseStatus();
   return supabaseClient;
 }
@@ -1983,12 +2030,25 @@ async function loadAllProducts() {
               renkler: Array.isArray(p.renkler) ? p.renkler : [],
               ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
             }));
-            await supabaseClient.from('products').upsert(rowsToInsert, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
           }
         }
       } catch(e) {}
     }
 
+    if (isSupabaseReady()) {
+      const { data: webSettings } = await supabaseClient.from('product_web_settings').select('*');
+      const settingsBySlug = new Map((webSettings || []).map(item => [item.product_slug, item]));
+      loaded = loaded.map(product => {
+        const settings = settingsBySlug.get(product.slug);
+        return {
+          ...product,
+          web_gorunur: settings ? settings.is_visible : product.web_gorunur !== false,
+          anasayfada_goster: settings ? settings.is_featured : product.anasayfada_goster !== false,
+          web_sort_order: settings ? settings.sort_order : 0
+        };
+      });
+    }
     allProducts = loaded;
     document.getElementById('productCountBadge').textContent = allProducts.length;
     renderProductGrid(allProducts);
@@ -2068,48 +2128,29 @@ function renderProductGrid(products) {
 async function toggleProductWebVisibility(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
-
-  prod.web_gorunur = newStatus;
-  renderProductGrid(allProducts);
-
-  showToast(`⏳ "${prod.title || prod.slug}" web sitesi durumu güncelleniyor...`);
-
   try {
-    if (isSupabaseReady()) {
-      const { error } = await supabaseClient
-        .from('products')
-        .update({ web_gorunur: newStatus })
-        .eq('slug', slug);
-
-      if (error) {
-        console.warn('Supabase update warning, falling back to local state:', error);
-      }
-    }
-
-    showToast(newStatus ? `👁️ "${prod.title}" web sitesinde yayına alındı!` : `🙈 "${prod.title}" web sitesinde gizlendi!`, 'success');
-  } catch (err) {
-    showToast('Güncelleme sırasında hata oluştu: ' + err.message, 'error');
-  }
+    const outcome = await saveModule1Draft('product_web_settings', slug, {
+      is_visible: !!newStatus, is_featured: !!prod.anasayfada_goster,
+      sort_order: Number(prod.web_sort_order || 0)
+    }, 'Ürün web görünürlüğü');
+    if (outcome.published) prod.web_gorunur = !!newStatus;
+    else await loadAllProducts();
+    renderProductGrid(allProducts);
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 async function toggleProductShowcase(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
-
-  prod.anasayfada_goster = newStatus;
-  renderProductGrid(allProducts);
-
   try {
-    if (isSupabaseReady()) {
-      await supabaseClient
-        .from('products')
-        .update({ anasayfada_goster: newStatus })
-        .eq('slug', slug);
-    }
-    showToast(newStatus ? `🏠 "${prod.title}" ana sayfa vitrinine eklendi!` : `📁 "${prod.title}" vitrinden kaldırıldı.`, 'success');
-  } catch (err) {
-    showToast('Vitrin ayarı güncellenemedi: ' + err.message, 'error');
-  }
+    const outcome = await saveModule1Draft('product_web_settings', slug, {
+      is_visible: prod.web_gorunur !== false, is_featured: !!newStatus,
+      sort_order: Number(prod.web_sort_order || 0)
+    }, 'Ürün ana sayfa vitrini');
+    if (outcome.published) prod.anasayfada_goster = !!newStatus;
+    else await loadAllProducts();
+    renderProductGrid(allProducts);
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function filterProductList() {
@@ -2126,23 +2167,8 @@ function filterProductList() {
 }
 
 function startNewProduct() {
-  editMode = false;
-  editingSlug = '';
-  document.getElementById('formCardTitle').textContent = '➕ Yeni Membran Kapak Ürünü Ekle';
-  document.getElementById('btnProductSave').textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
-  document.getElementById('productForm').reset();
-  document.getElementById('f_slug').value = '';
-  document.getElementById('f_slug').readOnly = false;
-  document.getElementById('f_image_url').value = '/resim/logo.png';
-  document.getElementById('f_anasayfa').checked = true;
-  document.getElementById('f_populer').checked = false;
-  document.getElementById('f_yeni').checked = false;
-  colorsList = [];
-  featsList = [];
-  renderChips('colors');
-  renderChips('feats');
-  removeSelectedImage();
-  switchProductSubTab('form');
+  showToast('Ürün ana kayıtları Modül 7 üzerinden oluşturulur. Modül 7 açılıyor...', 'info');
+  window.location.href = '/Module%207/index.html';
 }
 
 function editProduct(slug) {
@@ -2181,102 +2207,43 @@ function editProduct(slug) {
   renderChips('colors');
   renderChips('feats');
 
+  ['f_title','f_kategori','f_sku','f_slug','f_kisa','f_body','f_populer','f_yeni','f_image_url'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.disabled = true;
+  });
+  document.getElementById('f_anasayfa').disabled = false;
+
   switchProductSubTab('form');
 }
 
 async function saveProduct(e) {
   if (e) e.preventDefault();
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase Project URL ve Anon Key girin!', 'error');
+  const slug = document.getElementById('f_slug').value.trim();
+  if (!slug || !editMode) {
+    showToast('Yeni ürün ana kaydı Modül 7 üzerinden oluşturulur.', 'info');
     return;
   }
-
-  const title = document.getElementById('f_title').value.trim();
-  let slug = document.getElementById('f_slug').value.trim() || slugify(title);
-  if (!title || !slug) {
-    showToast('Lütfen ürün adını doldurun!', 'error');
-    return;
-  }
-
-  if (!editMode && allProducts.some(p => p.slug === slug)) {
-    slug = `${slug}-${Date.now().toString().slice(-4)}`;
-  }
-
+  const existing = allProducts.find(p => p.slug === slug);
   const btn = document.getElementById('btnProductSave');
   btn.disabled = true;
-  btn.innerHTML = '<div class="spinner"></div> Supabase\'e Kaydediliyor...';
-
   try {
-    let finalImageUrl = document.getElementById('f_image_url').value.trim();
-
-    if (uploadedProductFile) {
-      btn.innerHTML = '<div class="spinner"></div> Fotoğraf Supabase Storage\'a Yükleniyor...';
-      finalImageUrl = await uploadFileToSupabaseStorage(uploadedProductFile, 'urunler', slug);
-    }
-
-    const productRow = {
-      slug,
-      title,
-      kategori: document.getElementById('f_kategori').value,
-      sku: document.getElementById('f_sku').value.trim() || null,
-      kisa_aciklama: document.getElementById('f_kisa').value.trim(),
-      ana_resim: finalImageUrl || '/resim/logo.png',
-      body: document.getElementById('f_body').value.trim(),
-      anasayfada_goster: document.getElementById('f_anasayfa').checked,
-      populer: document.getElementById('f_populer').checked,
-      yeni: document.getElementById('f_yeni').checked,
-      renkler: colorsList,
-      ozellikler: featsList,
-      updated_at: new Date().toISOString()
-    };
-
-    const { error } = await supabaseClient
-      .from('products')
-      .upsert(productRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
-
-    editMode = false;
-    editingSlug = '';
-    uploadedProductFile = null;
-
-    showToast('🎉 Ürün Supabase Database & Storage\'a kaydedildi ve sitede yayına alındı!', 'success');
+    await saveModule1Draft('product_web_settings', slug, {
+      is_visible: existing ? existing.web_gorunur !== false : true,
+      is_featured: document.getElementById('f_anasayfa').checked,
+      sort_order: Number(existing?.web_sort_order || 0)
+    }, 'Ürün web görünüm ayarı');
     await loadAllProducts();
     switchProductSubTab('list');
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  } finally {
-    btn.disabled = false;
-    btn.textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
-  }
+  } catch (err) { showToast(err.message, 'error'); }
+  finally { btn.disabled = false; btn.textContent = '💾 Web Görünüm Taslağını Kaydet'; }
 }
 
 async function deleteProduct(slug) {
-  if (!confirm(`"${slug}" ürününü Supabase veritabanından silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('"' + slug + '" ürün ana kaydını silmeden web kataloğunda gizlemek istiyor musunuz?')) return;
   try {
-    showToast('Ürün Supabase\'den siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('products')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Ürün başarıyla silindi!', 'success');
+    await saveModule1Draft('product_web_settings', slug, { is_visible:false, is_featured:false, sort_order:0 }, 'Ürünü web kataloğunda gizleme');
     await loadAllProducts();
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 // CHIPS
@@ -2357,13 +2324,7 @@ async function fetchSiteSettingFromSupabaseOrLocal(key, localPath) {
     const res = await fetch(localPath + '?t=' + Date.now());
     if (res.ok) {
       const localObj = await res.json();
-      if (isSupabaseReady() && localObj) {
-        await supabaseClient.from('site_settings').upsert({
-          key,
-          data: localObj,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-      }
+      // Local JSON fallback is read-only; imports use authenticated CMS drafts.
       return localObj;
     }
   } catch(e) {}
@@ -2395,49 +2356,26 @@ async function loadCompanySettings() {
 }
 
 async function saveCompanySettings() {
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
-  showToast('Firma bilgileri Supabase\'e kaydediliyor...', 'info');
   try {
     const existingData = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
-
     existingData.firma = existingData.firma || {};
     existingData.firma.ad = document.getElementById('c_ad').value.trim();
     existingData.firma.slogan = document.getElementById('c_slogan').value.trim();
-
     existingData.iletisim = existingData.iletisim || {};
     existingData.iletisim.telefon = document.getElementById('c_telefon').value.trim();
     existingData.iletisim.whatsapp = document.getElementById('c_whatsapp').value.trim();
     existingData.iletisim.email = document.getElementById('c_email').value.trim();
     existingData.iletisim.adres = document.getElementById('c_adres').value.trim();
     existingData.iletisim.calisma_saatleri = document.getElementById('c_saatler').value.trim();
-
     existingData.topbar = existingData.topbar || {};
     existingData.topbar.metin = document.getElementById('c_topbar').value.trim();
-
     existingData.sosyal_medya = existingData.sosyal_medya || {};
     existingData.sosyal_medya.instagram = document.getElementById('c_instagram').value.trim();
     existingData.sosyal_medya.facebook = document.getElementById('c_facebook').value.trim();
     existingData.sosyal_medya.linkedin = document.getElementById('c_linkedin').value.trim();
-
-    const { error } = await supabaseClient
-      .from('site_settings')
-      .upsert({
-        key: 'genel',
-        data: existingData,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'key' });
-
-    if (error) throw new Error(error.message);
-    showToast('🎉 Firma bilgileri Supabase veritabanında güncellendi!', 'success');
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+    await saveModule1Draft('site_setting', 'genel', { data: existingData }, 'Firma ve iletişim ayarları');
+    await loadCompanySettings();
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2594,14 +2532,18 @@ async function saveHomeSettings() {
     genelData.anasayfa_hakkimizda.buton_link = 'hakkimizda.html';
     genelData.anasayfa_video = homeData.video;
 
-    const { error } = await supabaseClient
-      .from('site_settings')
-      .upsert([
-        { key: 'anasayfa', data: homeData, updated_at: new Date().toISOString() },
-        { key: 'genel', data: genelData, updated_at: new Date().toISOString() }
-      ], { onConflict: 'key' });
-
-    if (error) throw new Error(error.message);
+    const revisions = await Promise.all([
+      Module1CmsApi.saveDraft('site_setting', 'anasayfa', { data: homeData }),
+      Module1CmsApi.saveDraft('site_setting', 'genel', { data: genelData })
+    ]);
+    await refreshCmsRevisionCount();
+    if (confirm('Ana sayfa ve firma ayarları taslak olarak kaydedildi. İkisini şimdi birlikte yayınlamak ister misiniz?')) {
+      for (const item of revisions) await Module1CmsApi.publish(item.revision.id);
+      showToast('Ana sayfa ve firma ayarları yayınlandı.', 'success');
+      await Promise.all([loadHomeSettings(), loadCompanySettings()]);
+    } else {
+      showToast('Ana sayfa ve firma ayarları taslaklara kaydedildi.', 'success');
+    }
 
     homeAboutUploadedFile = null;
     homeAboutUploadedFileName = '';
@@ -2867,7 +2809,7 @@ async function loadAllGallery() {
           anasayfada_goster: g.anasayfada_goster !== false,
           siralama: g.siralama || (Date.now() - idx)
         }));
-        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -3001,11 +2943,7 @@ async function saveGalleryItem(e) {
       siralama: Date.now()
     };
 
-    const { error } = await supabaseClient
-      .from('gallery')
-      .upsert(galRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('gallery', slug, galRow, 'Galeri içeriği');
 
     editGalMode = false;
     editingGalSlug = '';
@@ -3024,29 +2962,11 @@ async function saveGalleryItem(e) {
 }
 
 async function deleteGalleryItem(slug) {
-  if (!confirm(`Bu galeri fotoğrafını silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu galeri içeriğini silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Fotoğraf siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('gallery')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Fotoğraf başarıyla silindi!', 'success');
+    await saveModule1Draft('gallery', slug, { _delete:true }, 'Galeri silme');
     await loadAllGallery();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleGalFileSelect(e) {
@@ -3151,7 +3071,7 @@ async function loadAllBlogs() {
           body: b.body || '',
           anasayfada_goster: b.anasayfada_goster !== false
         }));
-        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -3294,11 +3214,7 @@ async function saveBlogItem(e) {
       anasayfada_goster: document.getElementById('b_anasayfa').checked
     };
 
-    const { error } = await supabaseClient
-      .from('blogs')
-      .upsert(blogRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('blog', slug, blogRow, 'Blog makalesi');
 
     editBlogMode = false;
     editingBlogSlug = '';
@@ -3317,29 +3233,11 @@ async function saveBlogItem(e) {
 }
 
 async function deleteBlogItem(slug) {
-  if (!confirm(`"${slug}" makalesini silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu makaleyi silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Makale siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('blogs')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Makale başarıyla silindi!', 'success');
+    await saveModule1Draft('blog', slug, { _delete:true }, 'Makale silme');
     await loadAllBlogs();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleBlogFileSelect(e) {
@@ -3443,7 +3341,7 @@ async function loadAllSuppliers() {
           logo: s.logo || '/resim/logo.png',
           siralama: s.siralama || (idx + 1)
         }));
-        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -3596,11 +3494,7 @@ async function saveSupplierItem(e) {
       updated_at: new Date().toISOString()
     };
 
-    const { error } = await supabaseClient
-      .from('suppliers')
-      .upsert(supRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('supplier', slug, supRow, 'Tedarikçi içeriği');
 
     editSupMode = false;
     editingSupSlug = '';
@@ -3619,29 +3513,11 @@ async function saveSupplierItem(e) {
 }
 
 async function deleteSupplierItem(slug) {
-  if (!confirm(`"${slug}" tedarikçisini silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu tedarikçiyi silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Tedarikçi siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('suppliers')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Tedarikçi başarıyla silindi!', 'success');
+    await saveModule1Draft('supplier', slug, { _delete:true }, 'Tedarikçi silme');
     await loadAllSuppliers();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleSupFileSelect(e) {
@@ -3982,20 +3858,104 @@ function removeSelectedImage() {
 // ══════════════════════════════════════════════════════════
 // INIT
 // ══════════════════════════════════════════════════════════
+
+let module1CmsUser = null;
+function setCmsAuthError(message) { const el=document.getElementById('cmsAuthError'); if(el) el.textContent=message||''; }
+function showCmsAuthGate(message) {
+  const gate=document.getElementById('cmsAuthGate'); if(gate) gate.style.display='flex';
+  ['cmsDraftsButton','cmsSignOutButton','cmsUserBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
+  if(message) setCmsAuthError(message);
+}
+function hideCmsAuthGate(user) {
+  module1CmsUser=user; const gate=document.getElementById('cmsAuthGate'); if(gate)gate.style.display='none';
+  const drafts=document.getElementById('cmsDraftsButton'); if(drafts)drafts.style.display='inline-flex';
+  const out=document.getElementById('cmsSignOutButton'); if(out)out.style.display='inline-flex';
+  const badge=document.getElementById('cmsUserBadge'); if(badge){badge.textContent=user.email||'Yetkili kullanıcı';badge.style.display='inline';}
+}
+async function initializeModule1CmsAuth() {
+  if(!isSupabaseReady()){showCmsAuthGate('Supabase bağlantısı yapılandırılmamış. Önce bağlantı ayarlarını tamamlayın.');return false;}
+  window.module1SupabaseClient=supabaseClient;
+  try {
+    const {data,error}=await supabaseClient.auth.getSession(); if(error)throw error;
+    const user=data?.session?.user; const role=user?.app_metadata?.role;
+    if(!user||!['admin','content_manager'].includes(role)){showCmsAuthGate(user?'Bu hesapta admin veya content_manager rolü bulunmuyor.':'');return false;}
+    hideCmsAuthGate(user); return true;
+  } catch(error){showCmsAuthGate(error.message||'Oturum kontrol edilemedi.');return false;}
+}
+async function signInModule1Cms(event) {
+  if(event)event.preventDefault();
+  if(!isSupabaseReady()){setCmsAuthError('Önce Supabase bağlantı ayarlarını yapılandırın.');return;}
+  const btn=document.getElementById('cmsLoginButton'); if(btn){btn.disabled=true;btn.textContent='Giriş yapılıyor...';}
+  setCmsAuthError('');
+  try {
+    const email=document.getElementById('cmsLoginEmail').value.trim();
+    const password=document.getElementById('cmsLoginPassword').value;
+    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password}); if(error)throw error;
+    const user=data?.user;
+    if(!user||!['admin','content_manager'].includes(user.app_metadata?.role)){
+      await supabaseClient.auth.signOut();
+      throw new Error('Bu kullanıcıya CMS yetkisi verilmemiş. Supabase app_metadata.role alanını kontrol edin.');
+    }
+    hideCmsAuthGate(user); document.getElementById('cmsLoginPassword').value='';
+    await bootModule1AdminData();
+  } catch(error){setCmsAuthError(error.message||'Giriş başarısız.');}
+  finally{if(btn){btn.disabled=false;btn.textContent='Güvenli Giriş Yap';}}
+}
+async function signOutModule1Cms(){try{await supabaseClient.auth.signOut();}catch(e){}module1CmsUser=null;showCmsAuthGate('Oturum kapatıldı.');}
+async function bootModule1AdminData(){
+  await Promise.allSettled([loadAllProducts(),loadCompanySettings(),loadHomeSettings(),loadAllGallery(),loadAllBlogs(),loadAllSuppliers()]);
+  setupDragAndDrop();renderWebsiteAnalytics();runLiveSiteHealthCheck();await refreshCmsRevisionCount();
+}
+async function saveModule1Draft(type,slug,payload,label){
+  const result=await Module1CmsApi.saveDraft(type,slug,payload);
+  await refreshCmsRevisionCount();
+  showToast(label+': taslak #'+result.revision.revision_number+' kaydedildi.','success');
+  let published=false;
+  if(confirm('Taslak kaydedildi. Şimdi canlı siteye yayınlamak ister misiniz?')){
+    await Module1CmsApi.publish(result.revision.id);
+    published=true;
+    showToast(label+' başarıyla yayınlandı.','success');
+    await refreshCmsRevisionCount();
+  }
+  return {revision:result.revision,published};
+}
+async function refreshCmsRevisionCount(){
+  try{const {revisions}=await Module1CmsApi.listRevisions();const n=(revisions||[]).filter(x=>x.status==='draft').length;const b=document.getElementById('cmsDraftsButton');if(b)b.textContent='🗂️ Taslaklar ('+n+')';}
+  catch(e){console.warn('CMS taslak sayısı alınamadı:',e.message);}
+}
+function escapeCmsHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function openCmsRevisions(){
+  const overlay=document.getElementById('cmsRevisionOverlay');const list=document.getElementById('cmsRevisionList');
+  overlay.style.display='flex';list.textContent='Revizyonlar yükleniyor...';
+  document.getElementById('cmsRevisionPreview').textContent='Önizlemek için bir revizyon seçin.';
+  try{
+    const {revisions}=await Module1CmsApi.listRevisions();
+    if(!revisions?.length){list.textContent='Henüz revizyon bulunmuyor.';return;}
+    list.innerHTML=revisions.map(item=>{
+      const id=escapeCmsHtml(item.id);const state=item.status==='draft'?'Taslak':item.status==='published'?'Yayınlandı':'Arşiv';
+      let row='<div class="cms-revision-row"><div><b>'+escapeCmsHtml(item.entity_type)+' / '+escapeCmsHtml(item.entity_slug)+'</b><small>Revizyon #'+item.revision_number+' · '+state+' · '+new Date(item.created_at).toLocaleString('tr-TR')+'</small></div>';
+      row+='<div class="cms-revision-actions"><button class="btn-secondary btn-sm" data-id="'+id+'" onclick="previewCmsRevision(this.dataset.id)">Önizle</button>';
+      if(item.status==='draft') row+='<button class="btn-primary btn-sm" data-id="'+id+'" onclick="publishCmsRevision(this.dataset.id)">Yayınla</button>';
+      return row+'</div></div>';
+    }).join('');
+  }catch(error){list.textContent=error.message||'Revizyonlar alınamadı.';}
+}
+function closeCmsRevisions(){const el=document.getElementById('cmsRevisionOverlay');if(el)el.style.display='none';}
+async function previewCmsRevision(id){try{const {revision}=await Module1CmsApi.getRevision(id);document.getElementById('cmsRevisionPreview').textContent=JSON.stringify(revision,null,2);}catch(e){showToast(e.message,'error');}}
+async function publishCmsRevision(id){
+  if(!confirm('Bu revizyon canlı siteye yayınlansın mı?'))return;
+  try{await Module1CmsApi.publish(id);showToast('Revizyon başarıyla yayınlandı.','success');await openCmsRevisions();await refreshCmsRevisionCount();await Promise.allSettled([loadAllProducts(),loadCompanySettings(),loadHomeSettings(),loadAllGallery(),loadAllBlogs(),loadAllSuppliers()]);}
+  catch(e){showToast(e.message,'error');}
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   initSupabaseClient();
+  window.module1SupabaseClient = supabaseClient;
   renderWebsiteAnalytics();
-  await Promise.allSettled([
-    loadAllProducts(),
-    loadCompanySettings(),
-    loadHomeSettings(),
-    loadAllGallery(),
-    loadAllBlogs(),
-    loadAllSuppliers()
-  ]);
   setupDragAndDrop();
-  renderWebsiteAnalytics();
-  runLiveSiteHealthCheck();
+  const authorized = await initializeModule1CmsAuth();
+  if (!authorized) return;
+  await bootModule1AdminData();
 });
 
 // ══════════════════════════════════════════════════════════
@@ -4031,6 +3991,7 @@ async function saveSupabaseConfig() {
     localStorage.removeItem('gkm_supabase_url');
     localStorage.removeItem('gkm_supabase_key');
     initSupabaseClient();
+    window.module1SupabaseClient = supabaseClient;
     closeSupabaseModal();
     showToast('Supabase bağlantı bilgileri temizlendi', 'info');
     return;
@@ -4044,6 +4005,7 @@ async function saveSupabaseConfig() {
     localStorage.setItem('gkm_supabase_url', url);
     localStorage.setItem('gkm_supabase_key', key);
     initSupabaseClient();
+    window.module1SupabaseClient = supabaseClient;
 
     if (error && (error.message.includes('relation') || error.message.includes('does not exist') || error.code === '42P01')) {
       showToast('⚠️ Supabase bağlantısı kuruldu ancak tablolar henüz oluşturulmamış. Lütfen "Kurulum SQL Kodunu Kopyala" butonuyla SQL Editor\'de tabloları oluşturun.', 'info');
@@ -4068,186 +4030,16 @@ async function saveSupabaseConfig() {
 }
 
 async function seedExistingDataToSupabase() {
-  const url = document.getElementById('supabaseUrlInput').value.trim().replace(/\/+$/, '') || SUPABASE_URL;
-  const key = document.getElementById('supabaseKeyInput').value.trim() || SUPABASE_KEY;
-
-  if (!url || !key) {
-    showToast('Lütfen önce yukarıya Supabase Project URL ve Anon Key girin!', 'error');
-    return;
-  }
-
-  localStorage.setItem('gkm_supabase_url', url);
-  localStorage.setItem('gkm_supabase_key', key);
-  initSupabaseClient();
-
-  const btn = document.getElementById('btnSeedSupabase');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Aktarılıyor...';
-  }
-
-  try {
-    // 1. Seed Products
-    const pIdxRes = await fetch('/_data/urunler-index.json?t=' + Date.now());
-    if (pIdxRes.ok) {
-      const ids = await pIdxRes.json();
-      const rows = [];
-      for (const id of ids) {
-        try {
-          const r = await fetch(`/_data/urunler/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const p = await r.json();
-            rows.push({
-              slug: id,
-              title: p.title || p.baslik || id,
-              kategori: p.kategori || 'Düz Membran Kapak',
-              sku: p.sku || null,
-              kisa_aciklama: p.kisa_aciklama || '',
-              body: p.body || '',
-              ana_resim: p.ana_resim || '/resim/logo.png',
-              anasayfada_goster: p.anasayfada_goster !== false,
-              populer: !!p.populer,
-              yeni: !!p.yeni,
-              renkler: Array.isArray(p.renkler) ? p.renkler : [],
-              ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        const { error } = await supabaseClient.from('products').upsert(rows, { onConflict: 'slug' });
-        if (error) throw new Error('Ürünler tablosu hatası: ' + error.message);
-      }
-    }
-
-    // 2. Seed Suppliers
-    const sIdxRes = await fetch('/_data/tedarikciler-index.json?t=' + Date.now());
-    if (sIdxRes.ok) {
-      const ids = await sIdxRes.json();
-      const rows = [];
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        try {
-          const r = await fetch(`/_data/tedarikciler/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const s = await r.json();
-            rows.push({
-              slug: id,
-              ad: s.ad || id,
-              kategori: s.kategori || 'Membran & Folyo',
-              aciklama: s.aciklama || '',
-              link: s.link || null,
-              logo: s.logo || '/resim/logo.png',
-              siralama: s.siralama || (i + 1)
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 3. Seed Gallery
-    const gIdxRes = await fetch('/_data/galeri-index.json?t=' + Date.now());
-    if (gIdxRes.ok) {
-      const ids = await gIdxRes.json();
-      const rows = [];
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        try {
-          const r = await fetch(`/_data/galeri/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const g = await r.json();
-            rows.push({
-              slug: id,
-              baslik: g.baslik || 'Proje Görseli',
-              kategori: g.kategori || 'Mutfak',
-              resim: g.resim || '/resim/logo.png',
-              anasayfada_goster: g.anasayfada_goster !== false,
-              siralama: g.siralama || (Date.now() - i)
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 4. Seed Blogs
-    const bIdxRes = await fetch('/_data/blog-index.json?t=' + Date.now());
-    if (bIdxRes.ok) {
-      const ids = await bIdxRes.json();
-      const rows = [];
-      for (const id of ids) {
-        try {
-          const r = await fetch(`/_data/blog/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const b = await r.json();
-            rows.push({
-              slug: id,
-              title: b.title || id,
-              kategori: b.kategori || 'Rehber & Bakım',
-              tarih: b.tarih || new Date().toISOString(),
-              kapak_resim: b.kapak_resim || '/resim/logo.png',
-              ozet: b.ozet || '',
-              body: b.body || '',
-              anasayfada_goster: b.anasayfada_goster !== false
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 5. Seed Site Settings ('genel' & 'anasayfa')
-    try {
-      const [genelRes, homeRes] = await Promise.all([
-        fetch('/_data/ayarlar/genel.json?t=' + Date.now()),
-        fetch('/_data/ayarlar/anasayfa.json?t=' + Date.now())
-      ]);
-      const settingsRows = [];
-      if (genelRes.ok) settingsRows.push({ key: 'genel', data: await genelRes.json(), updated_at: new Date().toISOString() });
-      if (homeRes.ok) settingsRows.push({ key: 'anasayfa', data: await homeRes.json(), updated_at: new Date().toISOString() });
-      if (settingsRows.length > 0) {
-        await supabaseClient.from('site_settings').upsert(settingsRows, { onConflict: 'key' });
-      }
-    } catch(e) {}
-
-    showToast('🎉 Tüm ürünler, tedarikçiler, galeri, blog ve ayarlar Supabase\'e aktarıldı!', 'success');
-    await Promise.allSettled([
-      loadAllProducts(),
-      loadCompanySettings(),
-      loadHomeSettings(),
-      loadAllGallery(),
-      loadAllBlogs(),
-      loadAllSuppliers()
-    ]);
-
-  } catch (err) {
-    showToast('Aktarım hatası: ' + err.message, 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '🔄 Verileri Supabase\'e Aktar';
-    }
-  }
+  showToast('Anonim toplu yazma güvenlik nedeniyle kapatıldı. Mevcut kayıtlar korunur; yeni içerikleri CMS taslak akışıyla yönetin.', 'info');
 }
 
 async function copySupabaseSetupSql() {
   try {
-    const res = await fetch('/supabase_setup.sql?t=' + Date.now());
-    let sqlText = '';
-    if (res.ok) {
-      sqlText = await res.text();
-    } else {
-      sqlText = `-- Supabase SQL Editor icerisine yapistirip Run tusuna basin:\nCREATE TABLE IF NOT EXISTS public.products (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Düz Membran Kapak', sku TEXT, kisa_aciklama TEXT DEFAULT '', body TEXT DEFAULT '', ana_resim TEXT DEFAULT '/resim/logo.png', anasayfada_goster BOOLEAN DEFAULT true, populer BOOLEAN DEFAULT false, yeni BOOLEAN DEFAULT false, renkler JSONB DEFAULT '[]'::jsonb, ozellikler JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.suppliers (slug TEXT PRIMARY KEY, ad TEXT NOT NULL, kategori TEXT DEFAULT 'Membran & Folyo', aciklama TEXT DEFAULT '', link TEXT, logo TEXT DEFAULT '/resim/logo.png', siralama INTEGER DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.gallery (slug TEXT PRIMARY KEY, baslik TEXT NOT NULL, kategori TEXT DEFAULT 'Mutfak', resim TEXT NOT NULL, anasayfada_goster BOOLEAN DEFAULT true, siralama BIGINT DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.blogs (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Rehber & Bakım', tarih TIMESTAMPTZ DEFAULT now(), kapak_resim TEXT DEFAULT '/resim/logo.png', ozet TEXT DEFAULT '', body TEXT DEFAULT '', anasayfada_goster BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.site_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ DEFAULT now());\nALTER TABLE public.products ENABLE ROW LEVEL SECURITY; ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY; ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY; ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY; ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on suppliers" ON public.suppliers FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on gallery" ON public.gallery FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on blogs" ON public.blogs FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on site_settings" ON public.site_settings FOR ALL TO public USING (true) WITH CHECK (true);\nINSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true) ON CONFLICT (id) DO UPDATE SET public = true;\nCREATE POLICY "Public read access on media bucket" ON storage.objects FOR SELECT TO public USING (bucket_id = 'media');\nCREATE POLICY "Public insert access on media bucket" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'media');\nCREATE POLICY "Public update access on media bucket" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'media');\nCREATE POLICY "Public delete access on media bucket" ON storage.objects FOR DELETE TO public USING (bucket_id = 'media');`;
-    }
+    const res = await fetch('/supabase_setup.sql?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('Güvenli Supabase kurulum SQL dosyası bulunamadı.');
+    const sqlText = await res.text();
     await navigator.clipboard.writeText(sqlText);
-    showToast('📋 Supabase tablo & Storage kurulum SQL kodu panoya kopyalandı!', 'success');
+    showToast('Güvenli Supabase kurulum SQL kodu panoya kopyalandı.', 'success');
   } catch(e) {
     showToast('SQL kopyalanamadı: ' + e.message, 'error');
   }
