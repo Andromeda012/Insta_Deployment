@@ -89,6 +89,15 @@ async function handleCancel(req,res){
  return res.status(409).json({ok:false,cancelled:false,status:current?.[0]?.status||'not_found',error:'Yayın artık pending durumda değil; güvenli şekilde iptal edilemedi.'});
 }
 
+async function handleYoutubeCron(req,res){
+ if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({ok:false});}
+ if(req.method==='GET'){
+  const {authorizeVercelCron}=await import('./_lib/module2-publishing.js');
+  if(!authorizeVercelCron(req))return res.status(401).json({ok:false});
+ }else await authenticateModule2Admin(req);
+ return res.status(501).json({ok:false,supported:false,status:'unsupported',error:'YouTube Shorts resumable video upload is not implemented; drafts only.'});
+}
+
 export default async function handler(req,res){
  res.setHeader('Cache-Control','no-store, max-age=0');res.setHeader('X-Content-Type-Options','nosniff');
  const action=actionOf(req);
@@ -96,6 +105,7 @@ export default async function handler(req,res){
   if(action==='state')return await handleState(req,res);
   if(action==='enqueue')return await handleEnqueue(req,res);
   if(action==='cancel')return await handleCancel(req,res);
+  if(action==='youtube-cron')return await handleYoutubeCron(req,res);
   return res.status(400).json({ok:false,error:'Unknown Module 2 action.'});
  }catch(e){return sendApiError(res,e,`Module 2 ${action||'API'}`);}
 }
