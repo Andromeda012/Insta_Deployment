@@ -81,7 +81,7 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Public full access on products" ON public.products;
 CREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);
 
--- Module 1 content writes are handled by the authenticated CMS API.
+-- Module 1 blog/gallery/supplier content is read-only from browser roles.
 DROP POLICY IF EXISTS "Public full access on suppliers" ON public.suppliers;
 DROP POLICY IF EXISTS "Public full access on gallery" ON public.gallery;
 DROP POLICY IF EXISTS "Public full access on blogs" ON public.blogs;
@@ -89,24 +89,43 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.suppliers
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.gallery FROM PUBLIC, anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.blogs FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.suppliers, public.gallery, public.blogs TO anon, authenticated;
-DROP POLICY IF EXISTS "Module 1 public read suppliers" ON public.suppliers;
-DROP POLICY IF EXISTS "Module 1 public read gallery" ON public.gallery;
-DROP POLICY IF EXISTS "Module 1 public read blogs" ON public.blogs;
-CREATE POLICY "Module 1 public read suppliers" ON public.suppliers FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Module 1 public read gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Module 1 public read blogs" ON public.blogs FOR SELECT TO anon, authenticated USING (true);
 
--- Module 2/7 still store their own settings; only Module 1's live keys are protected.
+DROP POLICY IF EXISTS "Module 1 public read suppliers" ON public.suppliers;
+DROP POLICY IF EXISTS "Public read suppliers" ON public.suppliers;
+CREATE POLICY "Public read suppliers" ON public.suppliers FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Module 1 public read gallery" ON public.gallery;
+DROP POLICY IF EXISTS "Public read gallery" ON public.gallery;
+CREATE POLICY "Public read gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
+DROP POLICY IF EXISTS "Module 1 public read blogs" ON public.blogs;
+DROP POLICY IF EXISTS "Public read blogs" ON public.blogs;
+CREATE POLICY "Public read blogs" ON public.blogs FOR SELECT TO anon, authenticated USING (true);
+
+-- Module 2/7 retain writes to their own site_settings keys. Module 1 live keys are protected.
 DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_settings;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.site_settings FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.site_settings TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.site_settings TO public;
 DROP POLICY IF EXISTS "Module 1 public read site settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Public read safe site_settings only" ON public.site_settings;
+CREATE POLICY "Public read safe site_settings only" ON public.site_settings
+FOR SELECT TO anon, authenticated
+USING (key IN (
+  'company_info','contact_info','hero_banner','theme_settings',
+  'product_transform_settings','social_campaign_assets','instagram_published_tracker',
+  'genel','anasayfa'
+));
+
 DROP POLICY IF EXISTS "Legacy non-Module-1 settings writes" ON public.site_settings;
-CREATE POLICY "Module 1 public read site settings" ON public.site_settings FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Legacy non-Module-1 settings writes" ON public.site_settings
-FOR ALL TO public USING (key NOT IN ('genel','anasayfa'))
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings insert" ON public.site_settings;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings update" ON public.site_settings;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings delete" ON public.site_settings;
+CREATE POLICY "Legacy non-Module-1 settings insert" ON public.site_settings
+FOR INSERT TO public WITH CHECK (key NOT IN ('genel','anasayfa'));
+CREATE POLICY "Legacy non-Module-1 settings update" ON public.site_settings
+FOR UPDATE TO public USING (key NOT IN ('genel','anasayfa'))
 WITH CHECK (key NOT IN ('genel','anasayfa'));
+CREATE POLICY "Legacy non-Module-1 settings delete" ON public.site_settings
+FOR DELETE TO public USING (key NOT IN ('genel','anasayfa'));
 
 -- Shared media storage remains compatible with Module 2 and Module 7 for now.
 -- ============================================================================
