@@ -697,6 +697,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   .main-wrapper { padding: 16px; }
   .form-grid { grid-template-columns: 1fr; }
 }
+
+/* Module 1 CMS */
+.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,19,47,.94);backdrop-filter:blur(8px)}
+.cms-auth-card,.cms-revision-card{width:min(520px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
+.cms-auth-card h2,.cms-revision-card h2{font-family:Montserrat,sans-serif;color:var(--navy);margin-bottom:8px}
+.cms-auth-card p,.cms-revision-card p{font-size:13px;color:var(--text-muted);margin-bottom:18px}
+.cms-auth-card input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;margin:7px 0 14px;font:inherit}
+.cms-auth-error{min-height:20px;color:#b91c1c;font-size:12px;margin:8px 0}
+.cms-revision-overlay{position:fixed;inset:0;z-index:4500;background:rgba(6,19,47,.65);display:none;align-items:center;justify-content:center;padding:18px}
+.cms-revision-card{width:min(900px,100%);max-height:90vh;overflow:auto}
+.cms-revision-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
+.cms-revision-row small{display:block;color:var(--text-muted);margin-top:3px}
+.cms-revision-actions{display:flex;gap:6px;flex-wrap:wrap}
+.cms-revision-preview{white-space:pre-wrap;overflow:auto;max-height:280px;background:#0b1220;color:#dbeafe;padding:14px;border-radius:8px;font:12px/1.5 monospace}
+.cms-user-pill{font-size:11px;color:#fff;opacity:.85}
+@media(max-width:700px){.cms-revision-row{grid-template-columns:1fr}.cms-revision-actions{justify-content:flex-start}}
+
 </style>
 </head>
 <body>
@@ -711,6 +728,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     </div>
   </div>
   <div class="header-right">
+    <button class="btn-header btn-header-outline" id="cmsDraftsButton" onclick="openCmsRevisions()" style="display:none;">🗂️ Taslaklar</button>
+    <span class="cms-user-pill" id="cmsUserBadge" style="display:none;"></span>
+    <button class="btn-header btn-header-outline" id="cmsSignOutButton" onclick="signOutModule1Cms()" style="display:none;">Çıkış</button>
     <button class="btn-header btn-header-outline" id="inAppFsBtn" onclick="toggleParentFullscreen()" title="Panel İçinde Tam Ekran Yap">
       ⛶ Tam Ekran
     </button>
@@ -1759,12 +1779,38 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
 </div>
 
+<!-- MODULE 1 CMS AUTH GATE -->
+<div class="cms-auth-gate" id="cmsAuthGate">
+  <div class="cms-auth-card">
+    <h2>Güvenli Yönetici Girişi</h2>
+    <p>İçerik yönetimi için yetkili Supabase hesabınızla giriş yapın. Yalnızca <b>admin</b> ve <b>content_manager</b> rolleri kabul edilir.</p>
+    <form onsubmit="signInModule1Cms(event)">
+      <label for="cmsLoginEmail">E-posta</label><input id="cmsLoginEmail" type="email" autocomplete="username" required>
+      <label for="cmsLoginPassword">Şifre</label><input id="cmsLoginPassword" type="password" autocomplete="current-password" required>
+      <button class="btn-primary" id="cmsLoginButton" type="submit" style="width:100%;justify-content:center;">Güvenli Giriş Yap</button>
+    </form>
+    <div class="cms-auth-error" id="cmsAuthError"></div>
+    <button class="btn-secondary btn-sm" type="button" onclick="openSupabaseModal()">Supabase bağlantı ayarları</button>
+  </div>
+</div>
+<div class="cms-revision-overlay" id="cmsRevisionOverlay" onclick="if(event.target===this)closeCmsRevisions()">
+  <div class="cms-revision-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+      <div><h2>Taslaklar ve Revizyonlar</h2><p>Revizyonları inceleyin ve seçtiğiniz taslağı yayınlayın.</p></div>
+      <button class="btn-secondary btn-sm" onclick="closeCmsRevisions()">Kapat</button>
+    </div>
+    <div id="cmsRevisionList">Taslaklar yükleniyor...</div>
+    <h3 style="font-size:13px;margin:18px 0 8px;color:var(--navy);">Revizyon önizlemesi</h3>
+    <pre class="cms-revision-preview" id="cmsRevisionPreview">Önizlemek için bir revizyon seçin.</pre>
+  </div>
+</div>
 <!-- TOAST NOTIFICATION -->
 <div class="toast" id="toastMsg">
   <span id="toastIcon">✅</span>
   <span id="toastText">İşlem başarılı</span>
 </div>
 
+<script src="/Module%201/js/cms-api.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // SUPABASE CLOUD DATABASE & STORAGE CONFIGURATION
