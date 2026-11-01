@@ -2129,11 +2129,12 @@ async function toggleProductWebVisibility(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
   try {
-    await saveModule1Draft('product_web_settings', slug, {
+    const outcome = await saveModule1Draft('product_web_settings', slug, {
       is_visible: !!newStatus, is_featured: !!prod.anasayfada_goster,
       sort_order: Number(prod.web_sort_order || 0)
     }, 'Ürün web görünürlüğü');
-    prod.web_gorunur = !!newStatus;
+    if (outcome.published) prod.web_gorunur = !!newStatus;
+    else await loadAllProducts();
     renderProductGrid(allProducts);
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -2142,11 +2143,12 @@ async function toggleProductShowcase(slug, newStatus) {
   const prod = allProducts.find(p => p.slug === slug);
   if (!prod) return;
   try {
-    await saveModule1Draft('product_web_settings', slug, {
+    const outcome = await saveModule1Draft('product_web_settings', slug, {
       is_visible: prod.web_gorunur !== false, is_featured: !!newStatus,
       sort_order: Number(prod.web_sort_order || 0)
     }, 'Ürün ana sayfa vitrini');
-    prod.anasayfada_goster = !!newStatus;
+    if (outcome.published) prod.anasayfada_goster = !!newStatus;
+    else await loadAllProducts();
     renderProductGrid(allProducts);
   } catch (err) { showToast(err.message, 'error'); }
 }
@@ -2165,23 +2167,8 @@ function filterProductList() {
 }
 
 function startNewProduct() {
-  editMode = false;
-  editingSlug = '';
-  document.getElementById('formCardTitle').textContent = '➕ Yeni Membran Kapak Ürünü Ekle';
-  document.getElementById('btnProductSave').textContent = '💾 Supabase\'e Kaydet ve Sitede Yayınla';
-  document.getElementById('productForm').reset();
-  document.getElementById('f_slug').value = '';
-  document.getElementById('f_slug').readOnly = false;
-  document.getElementById('f_image_url').value = '/resim/logo.png';
-  document.getElementById('f_anasayfa').checked = true;
-  document.getElementById('f_populer').checked = false;
-  document.getElementById('f_yeni').checked = false;
-  colorsList = [];
-  featsList = [];
-  renderChips('colors');
-  renderChips('feats');
-  removeSelectedImage();
-  switchProductSubTab('form');
+  showToast('Ürün ana kayıtları Modül 7 üzerinden oluşturulur. Modül 7 açılıyor...', 'info');
+  window.location.href = '/Module%207/index.html';
 }
 
 function editProduct(slug) {
@@ -2220,6 +2207,12 @@ function editProduct(slug) {
   renderChips('colors');
   renderChips('feats');
 
+  ['f_title','f_kategori','f_sku','f_slug','f_kisa','f_body','f_populer','f_yeni','f_image_url'].forEach(id => {
+    const field = document.getElementById(id);
+    if (field) field.disabled = true;
+  });
+  document.getElementById('f_anasayfa').disabled = false;
+
   switchProductSubTab('form');
 }
 
@@ -2227,16 +2220,17 @@ async function saveProduct(e) {
   if (e) e.preventDefault();
   const slug = document.getElementById('f_slug').value.trim();
   if (!slug || !editMode) {
-    showToast('Yeni ürün ana kaydı Modül 7 üzerinden oluşturulur. Burada mevcut ürünün web görünümünü düzenleyebilirsiniz.', 'info');
+    showToast('Yeni ürün ana kaydı Modül 7 üzerinden oluşturulur.', 'info');
     return;
   }
+  const existing = allProducts.find(p => p.slug === slug);
   const btn = document.getElementById('btnProductSave');
   btn.disabled = true;
   try {
     await saveModule1Draft('product_web_settings', slug, {
-      is_visible: true,
-      is_featured: document.getElementById('f_anasayfa').checked || document.getElementById('f_populer').checked,
-      sort_order: Date.now()
+      is_visible: existing ? existing.web_gorunur !== false : true,
+      is_featured: document.getElementById('f_anasayfa').checked,
+      sort_order: Number(existing?.web_sort_order || 0)
     }, 'Ürün web görünüm ayarı');
     await loadAllProducts();
     switchProductSubTab('list');
@@ -3916,12 +3910,14 @@ async function saveModule1Draft(type,slug,payload,label){
   const result=await Module1CmsApi.saveDraft(type,slug,payload);
   await refreshCmsRevisionCount();
   showToast(label+': taslak #'+result.revision.revision_number+' kaydedildi.','success');
+  let published=false;
   if(confirm('Taslak kaydedildi. Şimdi canlı siteye yayınlamak ister misiniz?')){
     await Module1CmsApi.publish(result.revision.id);
+    published=true;
     showToast(label+' başarıyla yayınlandı.','success');
     await refreshCmsRevisionCount();
   }
-  return result.revision;
+  return {revision:result.revision,published};
 }
 async function refreshCmsRevisionCount(){
   try{const {revisions}=await Module1CmsApi.listRevisions();const n=(revisions||[]).filter(x=>x.status==='draft').length;const b=document.getElementById('cmsDraftsButton');if(b)b.textContent='🗂️ Taslaklar ('+n+')';}
