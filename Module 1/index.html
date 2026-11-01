@@ -1837,7 +1837,15 @@ function initSupabaseClient() {
   SUPABASE_KEY = (localStorage.getItem('gkm_supabase_key') || DEFAULT_SUPABASE_ANON_KEY || '').trim();
   if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
     try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: localStorage.getItem('gm_auth_remember_device') === '1' ? localStorage : sessionStorage,
+        storageKey: 'sb-vrfujrpsjzqjthaqdalx-auth-token'
+      }
+    });
     } catch (e) {
       console.error('Supabase başlatma hatası:', e);
       supabaseClient = null;
