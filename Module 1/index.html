@@ -2030,12 +2030,25 @@ async function loadAllProducts() {
               renkler: Array.isArray(p.renkler) ? p.renkler : [],
               ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
             }));
-            await supabaseClient.from('products').upsert(rowsToInsert, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
           }
         }
       } catch(e) {}
     }
 
+    if (isSupabaseReady()) {
+      const { data: webSettings } = await supabaseClient.from('product_web_settings').select('*');
+      const settingsBySlug = new Map((webSettings || []).map(item => [item.product_slug, item]));
+      loaded = loaded.map(product => {
+        const settings = settingsBySlug.get(product.slug);
+        return {
+          ...product,
+          web_gorunur: settings ? settings.is_visible : product.web_gorunur !== false,
+          anasayfada_goster: settings ? settings.is_featured : product.anasayfada_goster !== false,
+          web_sort_order: settings ? settings.sort_order : 0
+        };
+      });
+    }
     allProducts = loaded;
     document.getElementById('productCountBadge').textContent = allProducts.length;
     renderProductGrid(allProducts);
@@ -2808,7 +2821,7 @@ async function loadAllGallery() {
           anasayfada_goster: g.anasayfada_goster !== false,
           siralama: g.siralama || (Date.now() - idx)
         }));
-        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -3070,7 +3083,7 @@ async function loadAllBlogs() {
           body: b.body || '',
           anasayfada_goster: b.anasayfada_goster !== false
         }));
-        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -3340,7 +3353,7 @@ async function loadAllSuppliers() {
           logo: s.logo || '/resim/logo.png',
           siralama: s.siralama || (idx + 1)
         }));
-        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
+// Disabled: direct writes with the public anon key are not permitted.
       }
     }
 
@@ -4027,173 +4040,7 @@ async function saveSupabaseConfig() {
 }
 
 async function seedExistingDataToSupabase() {
-  const url = document.getElementById('supabaseUrlInput').value.trim().replace(/\/+$/, '') || SUPABASE_URL;
-  const key = document.getElementById('supabaseKeyInput').value.trim() || SUPABASE_KEY;
-
-  if (!url || !key) {
-    showToast('Lütfen önce yukarıya Supabase Project URL ve Anon Key girin!', 'error');
-    return;
-  }
-
-  localStorage.setItem('gkm_supabase_url', url);
-  localStorage.setItem('gkm_supabase_key', key);
-  initSupabaseClient();
-
-  const btn = document.getElementById('btnSeedSupabase');
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = '⏳ Aktarılıyor...';
-  }
-
-  try {
-    // 1. Seed Products
-    const pIdxRes = await fetch('/_data/urunler-index.json?t=' + Date.now());
-    if (pIdxRes.ok) {
-      const ids = await pIdxRes.json();
-      const rows = [];
-      for (const id of ids) {
-        try {
-          const r = await fetch(`/_data/urunler/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const p = await r.json();
-            rows.push({
-              slug: id,
-              title: p.title || p.baslik || id,
-              kategori: p.kategori || 'Düz Membran Kapak',
-              sku: p.sku || null,
-              kisa_aciklama: p.kisa_aciklama || '',
-              body: p.body || '',
-              ana_resim: p.ana_resim || '/resim/logo.png',
-              anasayfada_goster: p.anasayfada_goster !== false,
-              populer: !!p.populer,
-              yeni: !!p.yeni,
-              renkler: Array.isArray(p.renkler) ? p.renkler : [],
-              ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : []
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        const { error } = await supabaseClient.from('products').upsert(rows, { onConflict: 'slug' });
-        if (error) throw new Error('Ürünler tablosu hatası: ' + error.message);
-      }
-    }
-
-    // 2. Seed Suppliers
-    const sIdxRes = await fetch('/_data/tedarikciler-index.json?t=' + Date.now());
-    if (sIdxRes.ok) {
-      const ids = await sIdxRes.json();
-      const rows = [];
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        try {
-          const r = await fetch(`/_data/tedarikciler/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const s = await r.json();
-            rows.push({
-              slug: id,
-              ad: s.ad || id,
-              kategori: s.kategori || 'Membran & Folyo',
-              aciklama: s.aciklama || '',
-              link: s.link || null,
-              logo: s.logo || '/resim/logo.png',
-              siralama: s.siralama || (i + 1)
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('suppliers').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 3. Seed Gallery
-    const gIdxRes = await fetch('/_data/galeri-index.json?t=' + Date.now());
-    if (gIdxRes.ok) {
-      const ids = await gIdxRes.json();
-      const rows = [];
-      for (let i = 0; i < ids.length; i++) {
-        const id = ids[i];
-        try {
-          const r = await fetch(`/_data/galeri/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const g = await r.json();
-            rows.push({
-              slug: id,
-              baslik: g.baslik || 'Proje Görseli',
-              kategori: g.kategori || 'Mutfak',
-              resim: g.resim || '/resim/logo.png',
-              anasayfada_goster: g.anasayfada_goster !== false,
-              siralama: g.siralama || (Date.now() - i)
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('gallery').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 4. Seed Blogs
-    const bIdxRes = await fetch('/_data/blog-index.json?t=' + Date.now());
-    if (bIdxRes.ok) {
-      const ids = await bIdxRes.json();
-      const rows = [];
-      for (const id of ids) {
-        try {
-          const r = await fetch(`/_data/blog/${id}.json?t=${Date.now()}`);
-          if (r.ok) {
-            const b = await r.json();
-            rows.push({
-              slug: id,
-              title: b.title || id,
-              kategori: b.kategori || 'Rehber & Bakım',
-              tarih: b.tarih || new Date().toISOString(),
-              kapak_resim: b.kapak_resim || '/resim/logo.png',
-              ozet: b.ozet || '',
-              body: b.body || '',
-              anasayfada_goster: b.anasayfada_goster !== false
-            });
-          }
-        } catch(e) {}
-      }
-      if (rows.length > 0) {
-        await supabaseClient.from('blogs').upsert(rows, { onConflict: 'slug' });
-      }
-    }
-
-    // 5. Seed Site Settings ('genel' & 'anasayfa')
-    try {
-      const [genelRes, homeRes] = await Promise.all([
-        fetch('/_data/ayarlar/genel.json?t=' + Date.now()),
-        fetch('/_data/ayarlar/anasayfa.json?t=' + Date.now())
-      ]);
-      const settingsRows = [];
-      if (genelRes.ok) settingsRows.push({ key: 'genel', data: await genelRes.json(), updated_at: new Date().toISOString() });
-      if (homeRes.ok) settingsRows.push({ key: 'anasayfa', data: await homeRes.json(), updated_at: new Date().toISOString() });
-      if (settingsRows.length > 0) {
-        await supabaseClient.from('site_settings').upsert(settingsRows, { onConflict: 'key' });
-      }
-    } catch(e) {}
-
-    showToast('🎉 Tüm ürünler, tedarikçiler, galeri, blog ve ayarlar Supabase\'e aktarıldı!', 'success');
-    await Promise.allSettled([
-      loadAllProducts(),
-      loadCompanySettings(),
-      loadHomeSettings(),
-      loadAllGallery(),
-      loadAllBlogs(),
-      loadAllSuppliers()
-    ]);
-
-  } catch (err) {
-    showToast('Aktarım hatası: ' + err.message, 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = '🔄 Verileri Supabase\'e Aktar';
-    }
-  }
+  showToast('Anonim toplu yazma güvenlik nedeniyle kapatıldı. Mevcut kayıtlar korunur; yeni içerikleri CMS taslak akışıyla yönetin.', 'info');
 }
 
 async function copySupabaseSetupSql() {
