@@ -77,20 +77,26 @@ ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
+-- Public website access is read-only. All content writes go through the authenticated Module 1 CMS API.
 DROP POLICY IF EXISTS "Public full access on products" ON public.products;
-CREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Public full access on suppliers" ON public.suppliers;
-CREATE POLICY "Public full access on suppliers" ON public.suppliers FOR ALL TO public USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Public full access on gallery" ON public.gallery;
-CREATE POLICY "Public full access on gallery" ON public.gallery FOR ALL TO public USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Public full access on blogs" ON public.blogs;
-CREATE POLICY "Public full access on blogs" ON public.blogs FOR ALL TO public USING (true) WITH CHECK (true);
-
 DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_settings;
-CREATE POLICY "Public full access on site_settings" ON public.site_settings FOR ALL TO public USING (true) WITH CHECK (true);
+
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.products FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.suppliers FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.gallery FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.blogs FROM PUBLIC, anon, authenticated;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.site_settings FROM PUBLIC, anon, authenticated;
+
+GRANT SELECT ON public.products, public.suppliers, public.gallery, public.blogs, public.site_settings TO anon, authenticated;
+
+CREATE POLICY "Module 1 public read products" ON public.products FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Module 1 public read suppliers" ON public.suppliers FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Module 1 public read gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Module 1 public read blogs" ON public.blogs FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Module 1 public read site settings" ON public.site_settings FOR SELECT TO anon, authenticated USING (true);
 
 -- ============================================================================
 -- SUPABASE STORAGE BUCKET (media) — FOTOĞRAF VE VİDEO DEPOLAMA ALANI
@@ -105,16 +111,21 @@ ON storage.objects FOR SELECT TO public
 USING (bucket_id = 'media');
 
 DROP POLICY IF EXISTS "Public insert access on media bucket" ON storage.objects;
-CREATE POLICY "Public insert access on media bucket"
-ON storage.objects FOR INSERT TO public
-WITH CHECK (bucket_id = 'media');
-
 DROP POLICY IF EXISTS "Public update access on media bucket" ON storage.objects;
-CREATE POLICY "Public update access on media bucket"
-ON storage.objects FOR UPDATE TO public
-USING (bucket_id = 'media');
-
 DROP POLICY IF EXISTS "Public delete access on media bucket" ON storage.objects;
-CREATE POLICY "Public delete access on media bucket"
-ON storage.objects FOR DELETE TO public
-USING (bucket_id = 'media');
+DROP POLICY IF EXISTS "Module 1 managers upload media" ON storage.objects;
+DROP POLICY IF EXISTS "Module 1 managers update media" ON storage.objects;
+DROP POLICY IF EXISTS "Module 1 managers delete media" ON storage.objects;
+
+CREATE POLICY "Module 1 managers upload media" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
+CREATE POLICY "Module 1 managers update media" ON storage.objects
+FOR UPDATE TO authenticated
+USING (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'))
+WITH CHECK (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
+CREATE POLICY "Module 1 managers delete media" ON storage.objects
+FOR DELETE TO authenticated
+USING (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
+
+
