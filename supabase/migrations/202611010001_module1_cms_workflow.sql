@@ -141,6 +141,9 @@ begin
         ad=excluded.ad, kategori=excluded.kategori, aciklama=excluded.aciklama,
         link=excluded.link, logo=excluded.logo, siralama=excluded.siralama;
     when 'site_setting' then
+      if v_slug not in ('genel', 'anasayfa') then
+        raise exception 'This site setting key is not publishable through Module 1';
+      end if;
       select to_jsonb(t) into v_before from public.site_settings t where key = v_slug;
       insert into public.site_settings (key, data, updated_at)
       values (v_slug, coalesce(v_payload->'data', '{}'::jsonb), now())
