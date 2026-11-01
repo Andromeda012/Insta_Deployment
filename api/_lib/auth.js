@@ -20,8 +20,9 @@ export async function authenticateRoles(req, allowedRoles) {
   if (!response.ok) throw httpError('Oturum geçersiz veya süresi dolmuş.', 401);
 
   const user = await response.json();
-  const role = user.app_metadata?.role;
-  if (!allowedRoles.includes(role)) throw httpError('Bu işlem için yetkiniz bulunmuyor.', 403);
+  const metadata = user.app_metadata || {};
+  const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
+  if (!roles.some(role => allowedRoles.includes(role))) throw httpError('Bu işlem için yetkiniz bulunmuyor.', 403);
   return user;
 }
 
