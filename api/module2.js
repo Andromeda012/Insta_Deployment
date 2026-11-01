@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {authenticateModule2Admin,supabaseAdminRequest,sendApiError} from './_lib/module2-publishing.js';
+import {authenticateModule2Admin,authorizeVercelCron,supabaseAdminRequest,sendApiError} from './_lib/module2-publishing.js';
 
 const STATE_KEYS=new Set(['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']);
 const ALLOWED_TYPES={instagram:new Set(['POST','REELS','STORIES']),facebook:new Set(['PHOTO_POST','FB_STORIES','LINK_CARD']),tiktok:new Set(['TIKTOK_VIDEO','TIKTOK_PHOTO_CAROUSEL'])};
@@ -92,7 +92,6 @@ async function handleCancel(req,res){
 async function handleYoutubeCron(req,res){
  if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({ok:false});}
  if(req.method==='GET'){
-  const {authorizeVercelCron}=await import('./_lib/module2-publishing.js');
   if(!authorizeVercelCron(req))return res.status(401).json({ok:false});
  }else await authenticateModule2Admin(req);
  return res.status(501).json({ok:false,supported:false,status:'unsupported',error:'YouTube Shorts resumable video upload is not implemented; drafts only.'});
