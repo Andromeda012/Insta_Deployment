@@ -33,7 +33,7 @@ function canAccessRoute(route) {
     if (state.roles.includes('admin')) return true;
     if (route === 'dashboard') return true;
     if (route === 'products') return state.roles.includes('product_manager');
-    if (route === 'social') return state.roles.includes('content_manager');
+    if (route === 'website' || route === 'social') return state.roles.includes('content_manager');
     return false;
 }
 
