@@ -81,6 +81,9 @@ export default async function handler(req, res) {
       if (!ALLOWED_TYPES.has(entityType) || !slug || slug.length > 180 || !payload || typeof payload !== 'object' || Array.isArray(payload)) {
         return send(res, 400, { ok: false, error: 'Taslak türü, slug veya içerik geçersiz.' });
       }
+      if (entityType === 'site_setting' && !['genel', 'anasayfa'].includes(slug)) {
+        return send(res, 400, { ok: false, error: 'Bu ayar anahtarı Modül 1 üzerinden yayınlanamaz.' });
+      }
 
       const existing = await supabaseRequest(
         `/rest/v1/content_revisions?entity_type=eq.${encodeURIComponent(entityType)}&entity_slug=eq.${encodeURIComponent(slug)}&select=revision_number&order=revision_number.desc&limit=1`
