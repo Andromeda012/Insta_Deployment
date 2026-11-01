@@ -5,6 +5,8 @@
 
 -- 1. ÜRÜNLER TABLOSU (products)
 CREATE TABLE IF NOT EXISTS public.products (
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS web_gorunur BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE public.products ADD COLUMN IF NOT EXISTS web_siralama INTEGER NOT NULL DEFAULT 0;
     slug TEXT PRIMARY KEY,
     title TEXT NOT NULL,
     kategori TEXT DEFAULT 'Düz Membran Kapak',
