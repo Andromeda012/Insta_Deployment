@@ -6,6 +6,7 @@
     {"source":"/api/module2-state","destination":"/api/module2?action=state"},
     {"source":"/api/module2-enqueue","destination":"/api/module2?action=enqueue"},
     {"source":"/api/module2-cancel","destination":"/api/module2?action=cancel"},
+    {"source":"/api/youtube-cron","destination":"/api/module2?action=youtube-cron"},
     {"source":"/api/instagram-render","destination":"/api/render?platform=instagram"},
     {"source":"/api/facebook-render","destination":"/api/render?platform=facebook"},
     {"source":"/api/tiktok-render","destination":"/api/render?platform=tiktok"},
@@ -14,8 +15,7 @@
   "functions":{
     "api/instagram-cron.js":{"maxDuration":60},
     "api/facebook-cron.js":{"maxDuration":60},
-    "api/tiktok-cron.js":{"maxDuration":60},
-    "api/youtube-cron.js":{"maxDuration":15}
+    "api/tiktok-cron.js":{"maxDuration":60}
   },
   "crons":[
     {"path":"/api/instagram-cron","schedule":"0 0 * * *"},
