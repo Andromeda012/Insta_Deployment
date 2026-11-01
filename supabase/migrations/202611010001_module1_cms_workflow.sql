@@ -20,6 +20,8 @@ create index if not exists idx_content_revisions_entity_latest
   on public.content_revisions(entity_type, entity_slug, revision_number desc);
 create index if not exists idx_content_revisions_status_created
   on public.content_revisions(status, created_at desc);
+create index if not exists idx_content_revisions_author on public.content_revisions(author_id);
+create index if not exists idx_content_revisions_published_by on public.content_revisions(published_by);
 
 create table if not exists public.publication_logs (
   id uuid primary key default gen_random_uuid(),
@@ -34,6 +36,8 @@ create table if not exists public.publication_logs (
 );
 create index if not exists idx_publication_logs_entity_created
   on public.publication_logs(entity_type, entity_slug, created_at desc);
+create index if not exists idx_publication_logs_revision on public.publication_logs(revision_id);
+create index if not exists idx_publication_logs_actor on public.publication_logs(actor_id);
 
 -- Module 7 owns the product master; Module 1 owns only website presentation flags.
 create table if not exists public.product_web_settings (
@@ -54,7 +58,7 @@ grant select on public.product_web_settings to anon, authenticated;
 
 -- Preserve Module 7's existing product-master workflow. Module 1 writes only
 -- product_web_settings through the service-role CMS API.
--- Module 2 and Module 7 still use site_settings for their own non-website keys.
+-- Module 2 and Module 7 retain writes to their own site_settings keys.
 drop policy if exists "Public full access on suppliers" on public.suppliers;
 drop policy if exists "Public full access on gallery" on public.gallery;
 drop policy if exists "Public full access on blogs" on public.blogs;
@@ -67,27 +71,44 @@ grant select on public.suppliers, public.gallery, public.blogs, public.products,
 revoke insert, update, delete, truncate, references, trigger on public.site_settings from public, anon, authenticated;
 grant insert, update, delete on public.site_settings to public;
 
+-- Public website reads remain available; content tables are now read-only to browser roles.
 drop policy if exists "Module 1 public read suppliers" on public.suppliers;
-create policy "Module 1 public read suppliers" on public.suppliers for select to anon, authenticated using (true);
+drop policy if exists "Public read suppliers" on public.suppliers;
+create policy "Public read suppliers" on public.suppliers for select to anon, authenticated using (true);
 drop policy if exists "Module 1 public read gallery" on public.gallery;
-create policy "Module 1 public read gallery" on public.gallery for select to anon, authenticated using (true);
+drop policy if exists "Public read gallery" on public.gallery;
+create policy "Public read gallery" on public.gallery for select to anon, authenticated using (true);
 drop policy if exists "Module 1 public read blogs" on public.blogs;
-create policy "Module 1 public read blogs" on public.blogs for select to anon, authenticated using (true);
-drop policy if exists "Module 1 public read site settings" on public.site_settings;
-create policy "Module 1 public read site settings" on public.site_settings for select to anon, authenticated using (true);
+drop policy if exists "Public read blogs" on public.blogs;
+create policy "Public read blogs" on public.blogs for select to anon, authenticated using (true);
 
--- Preserve legacy Module 2/7 settings writes, but protect Module 1's live keys.
+-- Only the two Module 1 public settings are exposed to the website; other keys stay scoped.
+drop policy if exists "Module 1 public read site settings" on public.site_settings;
+drop policy if exists "Public read safe site_settings only" on public.site_settings;
+create policy "Public read safe site_settings only" on public.site_settings
+  for select to anon, authenticated
+  using (key in (
+    'company_info','contact_info','hero_banner','theme_settings',
+    'product_transform_settings','social_campaign_assets','instagram_published_tracker',
+    'genel','anasayfa'
+  ));
+
+-- Module 2/7 can continue writing their own keys; Module 1's live keys are protected.
 drop policy if exists "Legacy non-Module-1 settings writes" on public.site_settings;
-create policy "Legacy non-Module-1 settings writes" on public.site_settings
-  for all to public
-  using (key not in ('genel','anasayfa'))
+create policy "Legacy non-Module-1 settings insert" on public.site_settings
+  for insert to public with check (key not in ('genel','anasayfa'));
+create policy "Legacy non-Module-1 settings update" on public.site_settings
+  for update to public using (key not in ('genel','anasayfa'))
   with check (key not in ('genel','anasayfa'));
+create policy "Legacy non-Module-1 settings delete" on public.site_settings
+  for delete to public using (key not in ('genel','anasayfa'));
 
 drop policy if exists "Module 1 public read product web settings" on public.product_web_settings;
 create policy "Module 1 public read product web settings" on public.product_web_settings for select to anon, authenticated using (true);
 
 -- The media bucket is shared by Modules 2 and 7. Its existing storage policies
 -- are intentionally left untouched here to avoid breaking their upload flows.
+
 create or replace function public.save_content_draft(
   p_entity_type text,
   p_entity_slug text,
