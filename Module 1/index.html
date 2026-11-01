@@ -1845,6 +1845,7 @@ function initSupabaseClient() {
   } else {
     supabaseClient = null;
   }
+  window.module1SupabaseClient = supabaseClient;
   checkSupabaseStatus();
   return supabaseClient;
 }
@@ -4118,18 +4119,12 @@ async function publishCmsRevision(id){
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSupabaseClient();
+  window.module1SupabaseClient = supabaseClient;
   renderWebsiteAnalytics();
-  await Promise.allSettled([
-    loadAllProducts(),
-    loadCompanySettings(),
-    loadHomeSettings(),
-    loadAllGallery(),
-    loadAllBlogs(),
-    loadAllSuppliers()
-  ]);
   setupDragAndDrop();
-  renderWebsiteAnalytics();
-  runLiveSiteHealthCheck();
+  const authorized = await initializeModule1CmsAuth();
+  if (!authorized) return;
+  await bootModule1AdminData();
 });
 
 // ══════════════════════════════════════════════════════════
@@ -4165,6 +4160,7 @@ async function saveSupabaseConfig() {
     localStorage.removeItem('gkm_supabase_url');
     localStorage.removeItem('gkm_supabase_key');
     initSupabaseClient();
+    window.module1SupabaseClient = supabaseClient;
     closeSupabaseModal();
     showToast('Supabase bağlantı bilgileri temizlendi', 'info');
     return;
@@ -4178,6 +4174,7 @@ async function saveSupabaseConfig() {
     localStorage.setItem('gkm_supabase_url', url);
     localStorage.setItem('gkm_supabase_key', key);
     initSupabaseClient();
+    window.module1SupabaseClient = supabaseClient;
 
     if (error && (error.message.includes('relation') || error.message.includes('does not exist') || error.code === '42P01')) {
       showToast('⚠️ Supabase bağlantısı kuruldu ancak tablolar henüz oluşturulmamış. Lütfen "Kurulum SQL Kodunu Kopyala" butonuyla SQL Editor\'de tabloları oluşturun.', 'info');
