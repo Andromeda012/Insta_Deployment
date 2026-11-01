@@ -89,6 +89,9 @@ REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.suppliers
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.gallery FROM PUBLIC, anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.blogs FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.suppliers, public.gallery, public.blogs TO anon, authenticated;
+DROP POLICY IF EXISTS "Module 1 public read suppliers" ON public.suppliers;
+DROP POLICY IF EXISTS "Module 1 public read gallery" ON public.gallery;
+DROP POLICY IF EXISTS "Module 1 public read blogs" ON public.blogs;
 CREATE POLICY "Module 1 public read suppliers" ON public.suppliers FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Module 1 public read gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Module 1 public read blogs" ON public.blogs FOR SELECT TO anon, authenticated USING (true);
@@ -98,6 +101,8 @@ DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_setti
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.site_settings FROM PUBLIC, anon, authenticated;
 GRANT SELECT ON public.site_settings TO anon, authenticated;
 GRANT INSERT, UPDATE, DELETE ON public.site_settings TO public;
+DROP POLICY IF EXISTS "Module 1 public read site settings" ON public.site_settings;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings writes" ON public.site_settings;
 CREATE POLICY "Module 1 public read site settings" ON public.site_settings FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Legacy non-Module-1 settings writes" ON public.site_settings
 FOR ALL TO public USING (key NOT IN ('genel','anasayfa'))
