@@ -2355,49 +2355,26 @@ async function loadCompanySettings() {
 }
 
 async function saveCompanySettings() {
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
-  showToast('Firma bilgileri Supabase\'e kaydediliyor...', 'info');
   try {
     const existingData = await fetchSiteSettingFromSupabaseOrLocal('genel', '/_data/ayarlar/genel.json');
-
     existingData.firma = existingData.firma || {};
     existingData.firma.ad = document.getElementById('c_ad').value.trim();
     existingData.firma.slogan = document.getElementById('c_slogan').value.trim();
-
     existingData.iletisim = existingData.iletisim || {};
     existingData.iletisim.telefon = document.getElementById('c_telefon').value.trim();
     existingData.iletisim.whatsapp = document.getElementById('c_whatsapp').value.trim();
     existingData.iletisim.email = document.getElementById('c_email').value.trim();
     existingData.iletisim.adres = document.getElementById('c_adres').value.trim();
     existingData.iletisim.calisma_saatleri = document.getElementById('c_saatler').value.trim();
-
     existingData.topbar = existingData.topbar || {};
     existingData.topbar.metin = document.getElementById('c_topbar').value.trim();
-
     existingData.sosyal_medya = existingData.sosyal_medya || {};
     existingData.sosyal_medya.instagram = document.getElementById('c_instagram').value.trim();
     existingData.sosyal_medya.facebook = document.getElementById('c_facebook').value.trim();
     existingData.sosyal_medya.linkedin = document.getElementById('c_linkedin').value.trim();
-
-    const { error } = await supabaseClient
-      .from('site_settings')
-      .upsert({
-        key: 'genel',
-        data: existingData,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'key' });
-
-    if (error) throw new Error(error.message);
-    showToast('🎉 Firma bilgileri Supabase veritabanında güncellendi!', 'success');
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+    await saveModule1Draft('site_setting', 'genel', { data: existingData }, 'Firma ve iletişim ayarları');
+    await loadCompanySettings();
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2554,14 +2531,18 @@ async function saveHomeSettings() {
     genelData.anasayfa_hakkimizda.buton_link = 'hakkimizda.html';
     genelData.anasayfa_video = homeData.video;
 
-    const { error } = await supabaseClient
-      .from('site_settings')
-      .upsert([
-        { key: 'anasayfa', data: homeData, updated_at: new Date().toISOString() },
-        { key: 'genel', data: genelData, updated_at: new Date().toISOString() }
-      ], { onConflict: 'key' });
-
-    if (error) throw new Error(error.message);
+    const revisions = await Promise.all([
+      Module1CmsApi.saveDraft('site_setting', 'anasayfa', { data: homeData }),
+      Module1CmsApi.saveDraft('site_setting', 'genel', { data: genelData })
+    ]);
+    await refreshCmsRevisionCount();
+    if (confirm('Ana sayfa ve firma ayarları taslak olarak kaydedildi. İkisini şimdi birlikte yayınlamak ister misiniz?')) {
+      for (const item of revisions) await Module1CmsApi.publish(item.revision.id);
+      showToast('Ana sayfa ve firma ayarları yayınlandı.', 'success');
+      await Promise.all([loadHomeSettings(), loadCompanySettings()]);
+    } else {
+      showToast('Ana sayfa ve firma ayarları taslaklara kaydedildi.', 'success');
+    }
 
     homeAboutUploadedFile = null;
     homeAboutUploadedFileName = '';
