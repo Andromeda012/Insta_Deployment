@@ -82,6 +82,7 @@ ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 -- Module 7 remains the canonical product master and retains its current write workflow.
 DROP POLICY IF EXISTS "Public full access on products" ON public.products;
 CREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.products TO public;
 
 -- Module 1 blog/gallery/supplier content is read-only from browser roles.
 DROP POLICY IF EXISTS "Public full access on suppliers" ON public.suppliers;
