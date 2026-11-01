@@ -746,7 +746,15 @@
         // =====================================================================
         const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
-        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: localStorage.getItem('gm_auth_remember_device') === '1' ? localStorage : sessionStorage,
+        storageKey: 'sb-vrfujrpsjzqjthaqdalx-auth-token'
+      }
+    }) : null;
         async function module2StateRequest(key, method='GET', data=null) {
             if(!supabaseClient?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
             const {data:sessionData,error:sessionError}=await supabaseClient.auth.getSession();
