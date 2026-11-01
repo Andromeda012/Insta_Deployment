@@ -145,19 +145,33 @@ USING (bucket_id = 'media');
 DROP POLICY IF EXISTS "Public insert access on media bucket" ON storage.objects;
 DROP POLICY IF EXISTS "Public update access on media bucket" ON storage.objects;
 DROP POLICY IF EXISTS "Public delete access on media bucket" ON storage.objects;
-DROP POLICY IF EXISTS "Module 1 managers upload media" ON storage.objects;
-DROP POLICY IF EXISTS "Module 1 managers update media" ON storage.objects;
-DROP POLICY IF EXISTS "Module 1 managers delete media" ON storage.objects;
+DROP POLICY IF EXISTS "Legacy public media uploads outside Module 1" ON storage.objects;
+DROP POLICY IF EXISTS "Legacy public media updates outside Module 1" ON storage.objects;
+DROP POLICY IF EXISTS "Legacy public media deletes outside Module 1" ON storage.objects;
+DROP POLICY IF EXISTS "Module 1 managers upload protected media" ON storage.objects;
+DROP POLICY IF EXISTS "Module 1 managers update protected media" ON storage.objects;
+DROP POLICY IF EXISTS "Module 1 managers delete protected media" ON storage.objects;
 
-CREATE POLICY "Module 1 managers upload media" ON storage.objects
+CREATE POLICY "Legacy public media uploads outside Module 1" ON storage.objects
+FOR INSERT TO public WITH CHECK (
+  bucket_id = 'media'
+  AND COALESCE((storage.foldername(name))[1], '') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler')
+);
+CREATE POLICY "Legacy public media updates outside Module 1" ON storage.objects
+FOR UPDATE TO public
+USING (bucket_id = 'media' AND COALESCE((storage.foldername(name))[1], '') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler'))
+WITH CHECK (bucket_id = 'media' AND COALESCE((storage.foldername(name))[1], '') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler'));
+CREATE POLICY "Legacy public media deletes outside Module 1" ON storage.objects
+FOR DELETE TO public
+USING (bucket_id = 'media' AND COALESCE((storage.foldername(name))[1], '') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler'));
+
+CREATE POLICY "Module 1 managers upload protected media" ON storage.objects
 FOR INSERT TO authenticated
-WITH CHECK (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
-CREATE POLICY "Module 1 managers update media" ON storage.objects
+WITH CHECK (bucket_id = 'media' AND (storage.foldername(name))[1] IN ('urunler','anasayfa','galeri','blog','tedarikciler') AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
+CREATE POLICY "Module 1 managers update protected media" ON storage.objects
 FOR UPDATE TO authenticated
-USING (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'))
-WITH CHECK (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
-CREATE POLICY "Module 1 managers delete media" ON storage.objects
+USING (bucket_id = 'media' AND (storage.foldername(name))[1] IN ('urunler','anasayfa','galeri','blog','tedarikciler') AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'))
+WITH CHECK (bucket_id = 'media' AND (storage.foldername(name))[1] IN ('urunler','anasayfa','galeri','blog','tedarikciler') AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
+CREATE POLICY "Module 1 managers delete protected media" ON storage.objects
 FOR DELETE TO authenticated
-USING (bucket_id = 'media' AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
-
-
+USING (bucket_id = 'media' AND (storage.foldername(name))[1] IN ('urunler','anasayfa','galeri','blog','tedarikciler') AND (auth.jwt() -> 'app_metadata' ->> 'role') IN ('admin','content_manager'));
