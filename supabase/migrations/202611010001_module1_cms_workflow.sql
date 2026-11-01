@@ -60,18 +60,12 @@ drop policy if exists "Public full access on gallery" on public.gallery;
 drop policy if exists "Public full access on blogs" on public.blogs;
 drop policy if exists "Public full access on site_settings" on public.site_settings;
 
-do $$
-declare
-  t text;
-begin
-  foreach t in array array['suppliers','gallery','blogs'] loop
-    execute format('revoke insert, update, delete, truncate, references, trigger on public.%I from public, anon, authenticated', t);
-    execute format('grant select on public.%I to anon, authenticated', t);
-  end loop;
-  grant select on public.products, public.site_settings to anon, authenticated;
-  revoke insert, update, delete, truncate, references, trigger on public.site_settings from public, anon, authenticated;
-  grant insert, update, delete on public.site_settings to public;
-end $$;
+revoke insert, update, delete, truncate, references, trigger on public.suppliers from public, anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.gallery from public, anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.blogs from public, anon, authenticated;
+grant select on public.suppliers, public.gallery, public.blogs, public.products, public.site_settings to anon, authenticated;
+revoke insert, update, delete, truncate, references, trigger on public.site_settings from public, anon, authenticated;
+grant insert, update, delete on public.site_settings to public;
 
 drop policy if exists "Module 1 public read suppliers" on public.suppliers;
 create policy "Module 1 public read suppliers" on public.suppliers for select to anon, authenticated using (true);
@@ -148,7 +142,7 @@ declare
   v_slug text;
   v_deleted boolean;
 begin
-  if coalesce(auth.role(), '') <> 'service_role' then
+  if coalesce(current_setting('request.jwt.claim.role', true), '') <> 'service_role' then
     raise exception 'service_role required';
   end if;
 
