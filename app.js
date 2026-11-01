@@ -53,6 +53,7 @@ function applyAuthenticatedUser(user) {
     document.querySelectorAll('.nav-item[data-route]').forEach(item => {
         const allowed = canAccessRoute(item.dataset.route) || item.dataset.route === 'permissions' && state.roles.includes('admin');
         item.hidden = !allowed;
+        item.style.display = allowed ? '' : 'none';
     });
     const logout = document.getElementById('central-logout-btn');
     if (logout && !logout.dataset.bound) {
