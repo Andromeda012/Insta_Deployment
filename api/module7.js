@@ -5,8 +5,7 @@ const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const PRODUCT_FIELDS = new Set([
   'slug', 'title', 'sku', 'kategori', 'kisa_aciklama', 'body', 'ana_resim',
-  'anasayfada_goster', 'populer', 'yeni', 'renkler', 'ozellikler',
-  'web_gorunur', 'web_siralama', 'created_at', 'updated_at'
+  'populer', 'yeni', 'renkler', 'ozellikler', 'created_at', 'updated_at'
 ]);
 const MAX_BODY_BYTES = 1024 * 1024;
 const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
