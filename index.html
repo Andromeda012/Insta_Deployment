@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Mobilya — Modüler Operasyon Yönetim Platformu</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -75,13 +76,13 @@
             <div class="sidebar-footer">
                 <div class="role-badge-box">
                     <span class="role-label">Aktif Rol (Prototip):</span>
-                    <span class="badge badge-accent" id="active-role-badge">Admin</span>
+                    <span class="badge badge-accent" id="active-role-badge">Kontrol ediliyor</span>
                 </div>
                 <div class="user-profile-preview">
                     <div class="avatar">GM</div>
                     <div class="profile-info">
-                        <strong>Global Mobilya IT</strong>
-                        <small>operasyon@globalmobilya.com.tr</small>
+                        <strong id="sidebar-user-name">Yetkili kullanıcı</strong>
+                        <small id="sidebar-user-email">Oturum bekleniyor</small>
                     </div>
                 </div>
             </div>
@@ -102,16 +103,9 @@
                 </div>
 
                 <div class="topbar-right">
-                    <!-- Prototype Role Switcher Dropdown -->
-                    <div class="role-switcher-wrap">
-                        <label for="role-select-header" class="role-select-label">Rol Simülasyonu:</label>
-                        <select id="role-select-header" class="form-select-sm">
-                            <option value="admin">Sistem Yöneticisi</option>
-                            <option value="management">Şirket Yönetimi</option>
-                            <option value="sales">Satış & Pazarlama</option>
-                            <option value="production">Üretim Sorumlusu</option>
-                            <option value="infrastructure">Altyapı Operatörü</option>
-                        </select>
+                    <div class="central-user-chip" style="display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid rgba(148,163,184,.2);border-radius:10px;color:var(--text-muted);font-size:12px;">
+                        <span id="central-user-email">Oturum kontrol ediliyor…</span>
+                        <button id="central-logout-btn" class="icon-btn" type="button" title="Güvenli çıkış" aria-label="Güvenli çıkış">↪</button>
                     </div>
 
                     <!-- In-App Fullscreen Toggle -->
