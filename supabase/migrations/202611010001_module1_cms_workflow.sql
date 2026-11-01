@@ -52,7 +52,9 @@ revoke all on public.content_revisions, public.publication_logs, public.product_
 grant all on public.content_revisions, public.publication_logs, public.product_web_settings to service_role;
 grant select on public.product_web_settings to anon, authenticated;
 
-drop policy if exists "Public full access on products" on public.products;
+-- Preserve Module 7's existing product-master workflow. Module 1 writes only
+-- product_web_settings through the service-role CMS API.
+-- Module 2 and Module 7 still use site_settings for their own non-website keys.
 drop policy if exists "Public full access on suppliers" on public.suppliers;
 drop policy if exists "Public full access on gallery" on public.gallery;
 drop policy if exists "Public full access on blogs" on public.blogs;
@@ -62,14 +64,15 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['products','suppliers','gallery','blogs','site_settings'] loop
+  foreach t in array array['suppliers','gallery','blogs'] loop
     execute format('revoke insert, update, delete, truncate, references, trigger on public.%I from public, anon, authenticated', t);
     execute format('grant select on public.%I to anon, authenticated', t);
   end loop;
+  grant select on public.products, public.site_settings to anon, authenticated;
+  revoke insert, update, delete, truncate, references, trigger on public.site_settings from public, anon, authenticated;
+  grant insert, update, delete on public.site_settings to public;
 end $$;
 
-drop policy if exists "Module 1 public read products" on public.products;
-create policy "Module 1 public read products" on public.products for select to anon, authenticated using (true);
 drop policy if exists "Module 1 public read suppliers" on public.suppliers;
 create policy "Module 1 public read suppliers" on public.suppliers for select to anon, authenticated using (true);
 drop policy if exists "Module 1 public read gallery" on public.gallery;
@@ -78,27 +81,19 @@ drop policy if exists "Module 1 public read blogs" on public.blogs;
 create policy "Module 1 public read blogs" on public.blogs for select to anon, authenticated using (true);
 drop policy if exists "Module 1 public read site settings" on public.site_settings;
 create policy "Module 1 public read site settings" on public.site_settings for select to anon, authenticated using (true);
+
+-- Preserve legacy Module 2/7 settings writes, but protect Module 1's live keys.
+drop policy if exists "Legacy non-Module-1 settings writes" on public.site_settings;
+create policy "Legacy non-Module-1 settings writes" on public.site_settings
+  for all to public
+  using (key not in ('genel','anasayfa'))
+  with check (key not in ('genel','anasayfa'));
+
 drop policy if exists "Module 1 public read product web settings" on public.product_web_settings;
 create policy "Module 1 public read product web settings" on public.product_web_settings for select to anon, authenticated using (true);
 
--- Keep public media reads, but require a privileged authenticated user for writes.
-drop policy if exists "Public insert access on media bucket" on storage.objects;
-drop policy if exists "Public update access on media bucket" on storage.objects;
-drop policy if exists "Public delete access on media bucket" on storage.objects;
-drop policy if exists "Module 1 managers upload media" on storage.objects;
-drop policy if exists "Module 1 managers update media" on storage.objects;
-drop policy if exists "Module 1 managers delete media" on storage.objects;
-create policy "Module 1 managers upload media" on storage.objects
-  for insert to authenticated
-  with check (bucket_id = 'media' and (auth.jwt() -> 'app_metadata' ->> 'role') in ('admin','content_manager'));
-create policy "Module 1 managers update media" on storage.objects
-  for update to authenticated
-  using (bucket_id = 'media' and (auth.jwt() -> 'app_metadata' ->> 'role') in ('admin','content_manager'))
-  with check (bucket_id = 'media' and (auth.jwt() -> 'app_metadata' ->> 'role') in ('admin','content_manager'));
-create policy "Module 1 managers delete media" on storage.objects
-  for delete to authenticated
-  using (bucket_id = 'media' and (auth.jwt() -> 'app_metadata' ->> 'role') in ('admin','content_manager'));
-
+-- The media bucket is shared by Modules 2 and 7. Its existing storage policies
+-- are intentionally left untouched here to avoid breaking their upload flows.
 create or replace function public.save_content_draft(
   p_entity_type text,
   p_entity_slug text,
@@ -113,7 +108,7 @@ declare
   v_revision public.content_revisions%rowtype;
   v_number integer;
 begin
-  if coalesce(auth.role(), '') <> 'service_role' then
+  if coalesce(current_setting('request.jwt.claim.role', true), '') <> 'service_role' then
     raise exception 'service_role required';
   end if;
   if p_entity_type not in ('blog','gallery','supplier','site_setting','product_web_settings')
