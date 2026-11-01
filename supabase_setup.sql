@@ -77,27 +77,33 @@ ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;
 
--- Public website access is read-only. All content writes go through the authenticated Module 1 CMS API.
+-- Module 7 remains the canonical product master and retains its current write workflow.
 DROP POLICY IF EXISTS "Public full access on products" ON public.products;
+CREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);
+
+-- Module 1 content writes are handled by the authenticated CMS API.
 DROP POLICY IF EXISTS "Public full access on suppliers" ON public.suppliers;
 DROP POLICY IF EXISTS "Public full access on gallery" ON public.gallery;
 DROP POLICY IF EXISTS "Public full access on blogs" ON public.blogs;
-DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_settings;
-
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.products FROM PUBLIC, anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.suppliers FROM PUBLIC, anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.gallery FROM PUBLIC, anon, authenticated;
 REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.blogs FROM PUBLIC, anon, authenticated;
-REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.site_settings FROM PUBLIC, anon, authenticated;
-
-GRANT SELECT ON public.products, public.suppliers, public.gallery, public.blogs, public.site_settings TO anon, authenticated;
-
-CREATE POLICY "Module 1 public read products" ON public.products FOR SELECT TO anon, authenticated USING (true);
+GRANT SELECT ON public.suppliers, public.gallery, public.blogs TO anon, authenticated;
 CREATE POLICY "Module 1 public read suppliers" ON public.suppliers FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Module 1 public read gallery" ON public.gallery FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Module 1 public read blogs" ON public.blogs FOR SELECT TO anon, authenticated USING (true);
-CREATE POLICY "Module 1 public read site settings" ON public.site_settings FOR SELECT TO anon, authenticated USING (true);
 
+-- Module 2/7 still store their own settings; only Module 1's live keys are protected.
+DROP POLICY IF EXISTS "Public full access on site_settings" ON public.site_settings;
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER ON public.site_settings FROM PUBLIC, anon, authenticated;
+GRANT SELECT ON public.site_settings TO anon, authenticated;
+GRANT INSERT, UPDATE, DELETE ON public.site_settings TO public;
+CREATE POLICY "Module 1 public read site settings" ON public.site_settings FOR SELECT TO anon, authenticated USING (true);
+CREATE POLICY "Legacy non-Module-1 settings writes" ON public.site_settings
+FOR ALL TO public USING (key NOT IN ('genel','anasayfa'))
+WITH CHECK (key NOT IN ('genel','anasayfa'));
+
+-- Shared media storage remains compatible with Module 2 and Module 7 for now.
 -- ============================================================================
 -- SUPABASE STORAGE BUCKET (media) — FOTOĞRAF VE VİDEO DEPOLAMA ALANI
 -- ============================================================================
