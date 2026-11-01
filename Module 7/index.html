@@ -844,7 +844,7 @@
     }
 
     async function module7Api(path, options = {}) {
-      if (!accessToken && sb) {
+      if (sb) {
         const { data } = await sb.auth.getSession();
         accessToken = data.session?.access_token || null;
       }
