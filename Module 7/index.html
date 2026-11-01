@@ -756,7 +756,7 @@
     // SUPABASE BAĞLANTISI & CANLI VERİ
     // =========================================================================
     const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQi:1793097134,exp:2108673134}';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
     const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
     }) : null;
@@ -1207,11 +1207,18 @@
       // Yeni görseli, yetkili sunucu API'si üzerinden Storage'a yükle.
       if (currentImageBase64 && currentImageBase64.startsWith('data:image')) {
         btn.textContent = '☁️ Görsel güvenli şekilde yükleniyor...';
-        const uploaded = await module7Api('/api/module7-media', {
-          method: 'POST',
-          body: JSON.stringify({ slug, data_url: currentImageBase64 })
-        });
-        ana_resim = uploaded.public_url;
+        try {
+          const uploaded = await module7Api('/api/module7-media', {
+            method: 'POST',
+            body: JSON.stringify({ slug, data_url: currentImageBase64 })
+          });
+          ana_resim = uploaded.public_url;
+        } catch (uploadError) {
+          alert(`❌ Görsel yüklenemedi: ${uploadError.message}`);
+          btn.disabled = false;
+          btn.textContent = '💾 Ürünü Kaydet & 4 Bota Dağıt';
+          return;
+        }
       }
 
       const payload = {
