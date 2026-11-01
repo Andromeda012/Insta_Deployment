@@ -2942,11 +2942,7 @@ async function saveGalleryItem(e) {
       siralama: Date.now()
     };
 
-    const { error } = await supabaseClient
-      .from('gallery')
-      .upsert(galRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('gallery', slug, galRow, 'Galeri içeriği');
 
     editGalMode = false;
     editingGalSlug = '';
@@ -2965,29 +2961,11 @@ async function saveGalleryItem(e) {
 }
 
 async function deleteGalleryItem(slug) {
-  if (!confirm(`Bu galeri fotoğrafını silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu galeri içeriğini silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Fotoğraf siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('gallery')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Fotoğraf başarıyla silindi!', 'success');
+    await saveModule1Draft('gallery', slug, { _delete:true }, 'Galeri silme');
     await loadAllGallery();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleGalFileSelect(e) {
@@ -3235,11 +3213,7 @@ async function saveBlogItem(e) {
       anasayfada_goster: document.getElementById('b_anasayfa').checked
     };
 
-    const { error } = await supabaseClient
-      .from('blogs')
-      .upsert(blogRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('blog', slug, blogRow, 'Blog makalesi');
 
     editBlogMode = false;
     editingBlogSlug = '';
@@ -3258,29 +3232,11 @@ async function saveBlogItem(e) {
 }
 
 async function deleteBlogItem(slug) {
-  if (!confirm(`"${slug}" makalesini silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu makaleyi silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Makale siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('blogs')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Makale başarıyla silindi!', 'success');
+    await saveModule1Draft('blog', slug, { _delete:true }, 'Makale silme');
     await loadAllBlogs();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleBlogFileSelect(e) {
@@ -3537,11 +3493,7 @@ async function saveSupplierItem(e) {
       updated_at: new Date().toISOString()
     };
 
-    const { error } = await supabaseClient
-      .from('suppliers')
-      .upsert(supRow, { onConflict: 'slug' });
-
-    if (error) throw new Error(error.message);
+    await saveModule1Draft('supplier', slug, supRow, 'Tedarikçi içeriği');
 
     editSupMode = false;
     editingSupSlug = '';
@@ -3560,29 +3512,11 @@ async function saveSupplierItem(e) {
 }
 
 async function deleteSupplierItem(slug) {
-  if (!confirm(`"${slug}" tedarikçisini silmek istediğinize emin misiniz?`)) return;
-
-  if (!isSupabaseReady()) {
-    openSupabaseModal();
-    showToast('Lütfen önce Supabase bağlantısını yapılandırın!', 'error');
-    return;
-  }
-
+  if (!confirm('Bu tedarikçiyi silme taslağına almak istiyor musunuz?')) return;
   try {
-    showToast('Tedarikçi siliniyor...', 'info');
-    const { error } = await supabaseClient
-      .from('suppliers')
-      .delete()
-      .eq('slug', slug);
-
-    if (error) throw new Error(error.message);
-
-    showToast('Tedarikçi başarıyla silindi!', 'success');
+    await saveModule1Draft('supplier', slug, { _delete:true }, 'Tedarikçi silme');
     await loadAllSuppliers();
-
-  } catch(err) {
-    showToast('Hata: ' + err.message, 'error');
-  }
+  } catch (err) { showToast(err.message, 'error'); }
 }
 
 function handleSupFileSelect(e) {
