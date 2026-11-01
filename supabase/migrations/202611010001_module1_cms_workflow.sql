@@ -62,7 +62,7 @@ create or replace function public.publish_content_revision(
   p_actor_id uuid
 ) returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = pg_catalog, public, auth
 as $$
 declare
