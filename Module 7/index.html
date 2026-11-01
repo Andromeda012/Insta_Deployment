@@ -757,9 +757,21 @@
     // =========================================================================
     const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
-    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
-    }) : null;
+    const REMEMBER_DEVICE_KEY = 'gm_auth_remember_device';
+    const AUTH_STORAGE_KEY = 'sb-vrfujrpsjzqjthaqdalx-auth-token';
+    function createModule7AuthClient(remember = localStorage.getItem(REMEMBER_DEVICE_KEY) === '1') {
+      if (!window.supabase) return null;
+      return window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: remember ? window.localStorage : window.sessionStorage,
+          storageKey: AUTH_STORAGE_KEY
+        }
+      });
+    }
+    let sb = createModule7AuthClient();
 
     let accessToken = null;
     let catalogItems = [];
@@ -779,6 +791,10 @@
               <input id="module7-auth-email" type="email" autocomplete="username" required placeholder="ornek@globalmobilya.com.tr" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
               <label style="display:block;color:#cbd5e1;font-size:12px;margin:0 0 6px;">Şifre</label>
               <input id="module7-auth-password" type="password" autocomplete="current-password" required placeholder="Şifreniz" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
+              <label style="display:flex;gap:9px;align-items:flex-start;color:#cbd5e1;font-size:12px;margin:2px 0 14px;text-transform:none;">
+                <input id="module7-auth-remember" type="checkbox" style="accent-color:#d4af37;margin-top:1px;">
+                <span>Bu cihazda oturumu açık tut<br><small style="color:#94a3b8;">Yalnızca güvendiğiniz cihazlarda seçin.</small></span>
+              </label>
               <div id="module7-auth-error" style="color:#fca5a5;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
               <button type="submit" style="width:100%;padding:12px;border:0;border-radius:9px;background:#38bdf8;color:#082f49;font-weight:800;cursor:pointer;">Giriş Yap</button>
             </form>
@@ -797,13 +813,21 @@
           errorBox.textContent = '';
           try {
             if (!sb) throw new Error('Kimlik doğrulama kütüphanesi yüklenemedi.');
+            const remember = document.getElementById('module7-auth-remember').checked;
+            if (remember) localStorage.setItem(REMEMBER_DEVICE_KEY, '1');
+            else {
+              localStorage.removeItem(REMEMBER_DEVICE_KEY);
+              localStorage.removeItem(AUTH_STORAGE_KEY);
+            }
+            sb = createModule7AuthClient(remember);
             const { data, error } = await sb.auth.signInWithPassword({
               email: document.getElementById('module7-auth-email').value.trim(),
               password: document.getElementById('module7-auth-password').value
             });
             if (error) throw error;
-            const role = data.user?.app_metadata?.role;
-            if (!['admin', 'product_manager'].includes(role)) {
+            const metadata = data.user?.app_metadata || {};
+            const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
+            if (!roles.some(role => ['admin', 'product_manager'].includes(role))) {
               await sb.auth.signOut();
               throw new Error('Bu hesapta admin veya product_manager yetkisi bulunmuyor.');
             }
@@ -820,6 +844,8 @@
         });
       }
       overlay.style.display = 'flex';
+      const rememberInput = document.getElementById('module7-auth-remember');
+      if (rememberInput) rememberInput.checked = localStorage.getItem(REMEMBER_DEVICE_KEY) === '1';
       if (message) {
         const errorBox = document.getElementById('module7-auth-error');
         if (errorBox) errorBox.textContent = message;
@@ -1345,8 +1371,9 @@
         loadCatalogFromSupabase();
         return;
       }
-      const role = session.user?.app_metadata?.role;
-      if (!['admin', 'product_manager'].includes(role)) {
+      const metadata = session.user?.app_metadata || {};
+      const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
+      if (!roles.some(role => ['admin', 'product_manager'].includes(role))) {
         await sb.auth.signOut();
         showModule7Login('Bu hesapta ürün yönetimi yetkisi bulunmuyor.');
         return;
