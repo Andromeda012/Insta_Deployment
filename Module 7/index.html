@@ -895,10 +895,10 @@
     // =========================================================================
     async function loadCatalogFromSupabase() {
       try {
-        const result = await module7Api('/api/module7-products');
+        const result = await module7Api('/api/module7?action=products');
         catalogItems = Array.isArray(result.products) ? result.products : [];
         try {
-          const settings = await module7Api('/api/module7-settings');
+          const settings = await module7Api('/api/module7?action=settings');
           productTransformSettings = settings.settings || {};
         } catch (settingsError) {
           console.warn('Dönüştürme ayarları okunamadı:', settingsError);
@@ -1208,7 +1208,7 @@
       if (currentImageBase64 && currentImageBase64.startsWith('data:image')) {
         btn.textContent = '☁️ Görsel güvenli şekilde yükleniyor...';
         try {
-          const uploaded = await module7Api('/api/module7-media', {
+          const uploaded = await module7Api('/api/module7?action=media', {
             method: 'POST',
             body: JSON.stringify({ slug, data_url: currentImageBase64 })
           });
@@ -1240,7 +1240,7 @@
           payload.created_at = new Date().toISOString();
         }
 
-        await module7Api('/api/module7-products', {
+        await module7Api('/api/module7?action=products', {
           method: 'POST',
           body: JSON.stringify(payload)
         });
@@ -1249,7 +1249,7 @@
           ? document.getElementById('chk_transform_image').checked
           : true;
         productTransformSettings[slug] = shouldTransform;
-        await module7Api('/api/module7-settings', {
+        await module7Api('/api/module7?action=settings', {
           method: 'PUT',
           body: JSON.stringify({ settings: productTransformSettings })
         });
@@ -1286,7 +1286,7 @@
       if (!confirm(`"${title}" modelini katalogdan ve bot havuzundan silmek istediğinize emin misiniz?`)) return;
 
       try {
-        await module7Api('/api/module7-products', {
+        await module7Api('/api/module7?action=products', {
           method: 'DELETE',
           body: JSON.stringify({ slug })
         });
