@@ -1,5 +1,6 @@
 // Global Mobilya — Master Application Coordinator
 import { mockData } from './js/data.js';
+import { initializeCentralAuth, getUserRoles, signOutCentral } from './js/auth.js';
 import { renderDashboard } from './js/modules/dashboard.js';
 import { renderWebsiteModule } from './js/modules/website.js';
 import { renderSocialModule } from './js/modules/social.js';
@@ -13,7 +14,9 @@ import { renderPermissionsModule } from './js/modules/permissions.js';
 // Application State
 const state = {
     currentRoute: 'dashboard',
-    currentRole: mockData.roles[0], // default: Sistem Yöneticisi
+    currentRole: mockData.roles[0],
+    user: null,
+    roles: [],
     isAnalyticsEmpty: false
 };
 
@@ -26,8 +29,47 @@ const modalOverlay = document.getElementById('modal-overlay');
 const modalTitle = document.getElementById('modal-title');
 const modalBody = document.getElementById('modal-body');
 
+function canAccessRoute(route) {
+    if (state.roles.includes('admin')) return true;
+    if (route === 'dashboard') return true;
+    if (route === 'products') return state.roles.includes('product_manager');
+    if (route === 'social') return state.roles.includes('content_manager');
+    return false;
+}
+
+function applyAuthenticatedUser(user) {
+    state.user = user;
+    state.roles = getUserRoles(user);
+    const roleLabels = { admin: 'Sistem Yöneticisi', product_manager: 'Ürün Yöneticisi', content_manager: 'İçerik Yöneticisi' };
+    const label = state.roles.map(role => roleLabels[role] || role).join(' • ');
+    if (activeRoleBadge) activeRoleBadge.textContent = label || 'Yetki yok';
+    const email = user.email || 'Yetkili kullanıcı';
+    const emailEl = document.getElementById('central-user-email');
+    const sidebarName = document.getElementById('sidebar-user-name');
+    const sidebarEmail = document.getElementById('sidebar-user-email');
+    if (emailEl) emailEl.textContent = email;
+    if (sidebarName) sidebarName.textContent = email.split('@')[0];
+    if (sidebarEmail) sidebarEmail.textContent = email;
+    document.querySelectorAll('.nav-item[data-route]').forEach(item => {
+        const allowed = canAccessRoute(item.dataset.route) || item.dataset.route === 'permissions' && state.roles.includes('admin');
+        item.hidden = !allowed;
+    });
+    const logout = document.getElementById('central-logout-btn');
+    if (logout && !logout.dataset.bound) {
+        logout.dataset.bound = '1';
+        logout.addEventListener('click', async () => {
+            logout.disabled = true;
+            try { await signOutCentral(); } catch (error) { showToast(error.message || 'Çıkış yapılamadı.'); logout.disabled = false; }
+        });
+    }
+}
+
 // Navigation Controller
 export function navigateTo(route) {
+    if (!canAccessRoute(route) && !(route === 'permissions' && state.roles.includes('admin'))) {
+        showToast('Bu modüle erişim yetkiniz bulunmuyor.');
+        route = 'dashboard';
+    }
     state.currentRoute = route;
 
     // Update active class on sidebar items
@@ -93,6 +135,9 @@ function renderCurrentView() {
 
 // Global Role Switcher
 export function setRole(roleId) {
+    showToast('Rol değişikliği kullanıcı hesabının yetkileri üzerinden yönetilir.');
+    return;
+
     const role = mockData.roles.find(r => r.id === roleId);
     if (!role) return;
 
@@ -462,7 +507,7 @@ export function switchSocialBotChannel(btnEl, channel) {
 }
 
 // Initialize Application
-function initApp() {
+async function initApp() {
     // Expose helpers globally to window for inline template handlers
     window.navigateTo = navigateTo;
     window.setRole = setRole;
@@ -514,12 +559,6 @@ function initApp() {
         });
     }
 
-    // Role switcher in top header
-    if (roleSelectHeader) {
-        roleSelectHeader.addEventListener('change', (e) => {
-            setRole(e.target.value);
-        });
-    }
 
     // Modal close button
     const modalCloseBtn = document.getElementById('modal-close-btn');
@@ -551,9 +590,16 @@ function initApp() {
         if (r && r !== state.currentRoute) navigateTo(r);
     });
 
-    // Initial render
-    const initialRoute = window.location.hash ? window.location.hash.replace('#', '') : 'dashboard';
-    navigateTo(initialRoute || 'dashboard');
+    // Central authentication: one Supabase session protects the platform shell and its modules.
+    try {
+        const user = await initializeCentralAuth();
+        applyAuthenticatedUser(user);
+        const initialRoute = window.location.hash ? window.location.hash.replace('#', '') : 'dashboard';
+        navigateTo(initialRoute || 'dashboard');
+    } catch (error) {
+        console.error('Central authentication initialization failed:', error);
+        showToast('Kimlik doğrulama başlatılamadı. Sayfayı yenileyin.');
+    }
 }
 
 if (document.readyState === 'loading') {
