@@ -1,31 +1,39 @@
-# Module 7 Product API — Initial Backend Foundation
+# Module 7 Product API and UI integration
 
-## Status
+## Current implementation
 
-The authenticated product API has been added. The Module 7 browser UI has **not yet been migrated** and still uses its legacy direct Supabase access. Do not revoke the existing `public.products` write policy until the UI and Storage upload paths have been migrated and tested.
+The Module 7 interface now authenticates with Supabase Auth using email/password. It accepts only users whose server-verified `app_metadata.role` is `admin` or `product_manager`. The interface persists the Supabase session, obtains the current access token, and sends it as a bearer token for all write operations. A sign-out control is available in the module header.
 
-## Endpoint
+The product catalog remains `public.products`, the single master catalog. Public catalog reads use the anonymous key; all writes use server-side service-role access after role verification.
 
-- `GET /api/module7-products`: public catalog read from the canonical `public.products` table.
-- `POST /api/module7-products`: create/update a product (upsert by `slug`).
-- `DELETE /api/module7-products`: delete a product by `slug`.
+## Consolidated endpoint
 
-Writes require a valid Supabase access token and an `app_metadata.role` of `admin` or `product_manager`. Roles in `user_metadata` are not trusted. The service-role key is used only server-side.
+To remain within the Vercel Hobby plan's 12 Serverless Function limit, Module 7 operations share one function:
 
-The API allowlists product columns and validates slug, title, SKU, array fields and request size. Website-specific flags remain in the existing product schema for compatibility during the transition.
+- `GET /api/module7?action=products`: public product catalog read.
+- `POST /api/module7?action=products`: create/update by `slug`; requires `admin` or `product_manager`.
+- `DELETE /api/module7?action=products`: delete by `slug`; requires `admin` or `product_manager`.
+- `GET /api/module7?action=settings`: read product transformation settings.
+- `PUT /api/module7?action=settings`: save product transformation settings; requires an authorized role.
+- `POST /api/module7?action=media`: upload PNG/JPEG/WebP product image to the public `media` bucket; requires an authorized role. Upload limit is 3 MB.
+
+The API validates product fields, slug, title, SKU, settings keys, image MIME type and image size. Service-role credentials remain server-side.
 
 ## Shared authentication
 
-`api/_lib/auth.js` contains reusable role authentication. Module 2 now delegates its existing `admin` / `content_manager` check to this helper; its current permission behavior is preserved.
+`api/_lib/auth.js` is the reusable role-verification helper. Module 2 delegates its existing `admin` / `content_manager` check to this helper, preserving its prior permission behavior.
 
-## Required next steps before cutover
+## Migration safety
 
-1. Add a real Supabase sign-in/session experience to the main shell and ensure the embedded Module 7 iframe can obtain the authenticated session.
-2. Migrate Module 7 catalog reads/writes and image uploads to server APIs.
-3. Migrate product transformation settings writes to an authenticated API.
-4. Test with an admin and product-manager account, including denied unauthenticated writes.
-5. Only then tighten `products` and Storage write policies. Keep public product reads available if required by the storefront.
+The Module 7 interface no longer writes directly to Supabase tables or Storage. However, the old public write policies are intentionally still in place during the compatibility period. Do not revoke them until the live UI has been verified with real authorized accounts and all other product writers/consumers have been audited.
 
-## Publishing mode
+## Remaining validation
 
-Module 2 enqueue currently writes new jobs with `status: pending`; the Publisher worker consumes eligible pending jobs without a separate human approval state. Cancellation is available while the job remains pending. This is the intended automatic-publishing flow. Live publishing still remains fail-closed behind both `DRY_RUN=false` and `ENABLE_LIVE_PUBLISHING=true`.
+1. Create or confirm a Supabase Auth user with `app_metadata.role=admin` or `product_manager`.
+2. Sign in through Module 7 and test catalog read, product create/update/delete, image upload, and transformation settings.
+3. Confirm unauthenticated and unauthorized writes are rejected.
+4. Audit any remaining external product writers before tightening database and Storage policies.
+
+## Publishing
+
+Module 2 enqueue remains automatic: valid queued posts do not wait for a separate human approval state. Cancellation remains available while a task is pending. Live publishing still requires both `DRY_RUN=false` and `ENABLE_LIVE_PUBLISHING=true`.
