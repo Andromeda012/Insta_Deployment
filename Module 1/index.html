@@ -2330,13 +2330,7 @@ async function fetchSiteSettingFromSupabaseOrLocal(key, localPath) {
     const res = await fetch(localPath + '?t=' + Date.now());
     if (res.ok) {
       const localObj = await res.json();
-      if (isSupabaseReady() && localObj) {
-        await supabaseClient.from('site_settings').upsert({
-          key,
-          data: localObj,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'key' });
-      }
+      // Local JSON fallback is read-only; imports use authenticated CMS drafts.
       return localObj;
     }
   } catch(e) {}
