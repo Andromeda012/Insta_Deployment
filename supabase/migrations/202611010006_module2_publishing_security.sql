@@ -1,0 +1,16 @@
+BEGIN;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings insert" ON public.site_settings;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings update" ON public.site_settings;
+DROP POLICY IF EXISTS "Legacy non-Module-1 settings delete" ON public.site_settings;
+CREATE POLICY "Legacy non-Module-1 settings insert" ON public.site_settings FOR INSERT TO public WITH CHECK (key <> ALL(ARRAY['genel','anasayfa','insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']));
+CREATE POLICY "Legacy non-Module-1 settings update" ON public.site_settings FOR UPDATE TO public USING (key <> ALL(ARRAY['genel','anasayfa','insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker'])) WITH CHECK (key <> ALL(ARRAY['genel','anasayfa','insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']));
+CREATE POLICY "Legacy non-Module-1 settings delete" ON public.site_settings FOR DELETE TO public USING (key <> ALL(ARRAY['genel','anasayfa','insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']));
+DROP POLICY IF EXISTS "Module 2 admin read bot settings" ON public.site_settings;
+CREATE POLICY "Module 2 admin read bot settings" ON public.site_settings FOR SELECT TO authenticated USING (key=ANY(ARRAY['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']) AND coalesce((select auth.jwt()->'app_metadata'->>'role'),'') IN ('admin','content_manager'));
+DROP POLICY IF EXISTS "Module 2 admin insert bot settings" ON public.site_settings;
+CREATE POLICY "Module 2 admin insert bot settings" ON public.site_settings FOR INSERT TO authenticated WITH CHECK (key=ANY(ARRAY['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']) AND coalesce((select auth.jwt()->'app_metadata'->>'role'),'') IN ('admin','content_manager'));
+DROP POLICY IF EXISTS "Module 2 admin update bot settings" ON public.site_settings;
+CREATE POLICY "Module 2 admin update bot settings" ON public.site_settings FOR UPDATE TO authenticated USING (key=ANY(ARRAY['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']) AND coalesce((select auth.jwt()->'app_metadata'->>'role'),'') IN ('admin','content_manager')) WITH CHECK (key=ANY(ARRAY['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']) AND coalesce((select auth.jwt()->'app_metadata'->>'role'),'') IN ('admin','content_manager'));
+DROP POLICY IF EXISTS "Module 2 admin delete bot settings" ON public.site_settings;
+CREATE POLICY "Module 2 admin delete bot settings" ON public.site_settings FOR DELETE TO authenticated USING (key=ANY(ARRAY['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']) AND coalesce((select auth.jwt()->'app_metadata'->>'role'),'') IN ('admin','content_manager'));
+COMMIT;

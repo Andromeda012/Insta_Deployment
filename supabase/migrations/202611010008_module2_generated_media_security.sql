@@ -1,0 +1,14 @@
+BEGIN;
+DROP POLICY IF EXISTS "Legacy public media uploads outside protected modules" ON storage.objects;
+DROP POLICY IF EXISTS "Legacy public media updates outside protected modules" ON storage.objects;
+DROP POLICY IF EXISTS "Legacy public media deletes outside protected modules" ON storage.objects;
+CREATE POLICY "Legacy public media uploads outside protected modules" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler','instagram','facebook','tiktok','youtube','posts','stories'));
+CREATE POLICY "Legacy public media updates outside protected modules" ON storage.objects FOR UPDATE TO public USING (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler','instagram','facebook','tiktok','youtube','posts','stories')) WITH CHECK (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler','instagram','facebook','tiktok','youtube','posts','stories'));
+CREATE POLICY "Legacy public media deletes outside protected modules" ON storage.objects FOR DELETE TO public USING (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') NOT IN ('urunler','anasayfa','galeri','blog','tedarikciler','instagram','facebook','tiktok','youtube','posts','stories'));
+DROP POLICY IF EXISTS "Module 2 managers upload protected media" ON storage.objects;
+CREATE POLICY "Module 2 managers upload protected media" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') IN ('instagram','facebook','tiktok','youtube','posts','stories') AND (auth.jwt()->'app_metadata'->>'role') IN ('admin','content_manager'));
+DROP POLICY IF EXISTS "Module 2 managers update protected media" ON storage.objects;
+CREATE POLICY "Module 2 managers update protected media" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') IN ('instagram','facebook','tiktok','youtube','posts','stories') AND (auth.jwt()->'app_metadata'->>'role') IN ('admin','content_manager')) WITH CHECK (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') IN ('instagram','facebook','tiktok','youtube','posts','stories') AND (auth.jwt()->'app_metadata'->>'role') IN ('admin','content_manager'));
+DROP POLICY IF EXISTS "Module 2 managers delete protected media" ON storage.objects;
+CREATE POLICY "Module 2 managers delete protected media" ON storage.objects FOR DELETE TO authenticated USING (bucket_id='media' AND coalesce((storage.foldername(name))[1],'') IN ('instagram','facebook','tiktok','youtube','posts','stories') AND (auth.jwt()->'app_metadata'->>'role') IN ('admin','content_manager'));
+COMMIT;
