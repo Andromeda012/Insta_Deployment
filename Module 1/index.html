@@ -4039,15 +4039,11 @@ async function seedExistingDataToSupabase() {
 
 async function copySupabaseSetupSql() {
   try {
-    const res = await fetch('/supabase_setup.sql?t=' + Date.now());
-    let sqlText = '';
-    if (res.ok) {
-      sqlText = await res.text();
-    } else {
-      sqlText = `-- Supabase SQL Editor icerisine yapistirip Run tusuna basin:\nCREATE TABLE IF NOT EXISTS public.products (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Düz Membran Kapak', sku TEXT, kisa_aciklama TEXT DEFAULT '', body TEXT DEFAULT '', ana_resim TEXT DEFAULT '/resim/logo.png', anasayfada_goster BOOLEAN DEFAULT true, populer BOOLEAN DEFAULT false, yeni BOOLEAN DEFAULT false, renkler JSONB DEFAULT '[]'::jsonb, ozellikler JSONB DEFAULT '[]'::jsonb, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.suppliers (slug TEXT PRIMARY KEY, ad TEXT NOT NULL, kategori TEXT DEFAULT 'Membran & Folyo', aciklama TEXT DEFAULT '', link TEXT, logo TEXT DEFAULT '/resim/logo.png', siralama INTEGER DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now(), updated_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.gallery (slug TEXT PRIMARY KEY, baslik TEXT NOT NULL, kategori TEXT DEFAULT 'Mutfak', resim TEXT NOT NULL, anasayfada_goster BOOLEAN DEFAULT true, siralama BIGINT DEFAULT 1, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.blogs (slug TEXT PRIMARY KEY, title TEXT NOT NULL, kategori TEXT DEFAULT 'Rehber & Bakım', tarih TIMESTAMPTZ DEFAULT now(), kapak_resim TEXT DEFAULT '/resim/logo.png', ozet TEXT DEFAULT '', body TEXT DEFAULT '', anasayfada_goster BOOLEAN DEFAULT true, created_at TIMESTAMPTZ DEFAULT now());\nCREATE TABLE IF NOT EXISTS public.site_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL DEFAULT '{}'::jsonb, updated_at TIMESTAMPTZ DEFAULT now());\nALTER TABLE public.products ENABLE ROW LEVEL SECURITY; ALTER TABLE public.suppliers ENABLE ROW LEVEL SECURITY; ALTER TABLE public.gallery ENABLE ROW LEVEL SECURITY; ALTER TABLE public.blogs ENABLE ROW LEVEL SECURITY; ALTER TABLE public.site_settings ENABLE ROW LEVEL SECURITY;\nCREATE POLICY "Public full access on products" ON public.products FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on suppliers" ON public.suppliers FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on gallery" ON public.gallery FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on blogs" ON public.blogs FOR ALL TO public USING (true) WITH CHECK (true);\nCREATE POLICY "Public full access on site_settings" ON public.site_settings FOR ALL TO public USING (true) WITH CHECK (true);\nINSERT INTO storage.buckets (id, name, public) VALUES ('media', 'media', true) ON CONFLICT (id) DO UPDATE SET public = true;\nCREATE POLICY "Public read access on media bucket" ON storage.objects FOR SELECT TO public USING (bucket_id = 'media');\nCREATE POLICY "Public insert access on media bucket" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'media');\nCREATE POLICY "Public update access on media bucket" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'media');\nCREATE POLICY "Public delete access on media bucket" ON storage.objects FOR DELETE TO public USING (bucket_id = 'media');`;
-    }
+    const res = await fetch('/supabase_setup.sql?t=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) throw new Error('Güvenli Supabase kurulum SQL dosyası bulunamadı.');
+    const sqlText = await res.text();
     await navigator.clipboard.writeText(sqlText);
-    showToast('📋 Supabase tablo & Storage kurulum SQL kodu panoya kopyalandı!', 'success');
+    showToast('Güvenli Supabase kurulum SQL kodu panoya kopyalandı.', 'success');
   } catch(e) {
     showToast('SQL kopyalanamadı: ' + e.message, 'error');
   }
