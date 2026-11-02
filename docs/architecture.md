@@ -55,7 +55,14 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 - API uçları ortak auth yardımcılarını kullanmalı; CORS `*` gibi geniş izinler yalnızca gerekçelendirilmiş, herkese açık uçlarda bulunmalıdır.
 - Veritabanı değişiklikleri migration dosyalarıyla izlenmeli; canlı şemaya doğrudan ve kayıtsız müdahale edilmemelidir.
 
-## 7. Temizlik sırası
+## 7. Kalite kapısı
+
+- `npm run check`, depo içindeki JSON dosyalarını, JavaScript/CJS sözdizimini, migration dosya adlarını ve yanlışlıkla izlenen gerçek ortam dosyalarını kontrol eder.
+- Canlı API/AI/Storage testi, statik kontrollerden ayrıdır ve açık `RUN_LIVE_AI_TESTS=true` onayı olmadan çalışmaz.
+- `.env*` dosyaları varsayılan olarak Git dışında tutulur; yalnızca `.env.example` şablonları izlenebilir.
+- GitHub Actions, `main` ve pull request değişikliklerinde aynı statik kalite kapısını çalıştırır.
+
+## 8. Temizlik sırası
 
 1. Dosya envanteri ve import/endpoint bağımlılıklarını doğrula.
 2. Kullanılmayan, sıfır bayt veya yinelenen dosyaları referans kontrolünden sonra kaldır.
