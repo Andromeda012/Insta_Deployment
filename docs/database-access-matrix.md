@@ -36,7 +36,7 @@
 
 ## Uygulanan değişiklik — 2 Kasım 2026
 
-Migration `public_catalog_write_restrictions` canlı Supabase projesine uygulandı. Depodaki karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql` dosyasıdır.
+Migration `public_catalog_write_restrictions` canlı Supabase projesine uygulandı. Depodaki karşılığı `supabase/migrations/20261102093133_public_catalog_write_restrictions.sql` dosyasıdır.
 
 - `products`: `Public full access on products` policy kaldırıldı. Anon/authenticated yalnızca SELECT yapabilir; INSERT/UPDATE/DELETE yalnızca `service_role` için kaldı.
 - `site_settings`: üç eski public denylist yazma policy'si kaldırıldı. Anon INSERT/UPDATE/DELETE grant'leri iptal edildi. Authenticated DML grant'i korundu; RLS'de mevcut Modül 2 `admin`/`content_manager` ve anahtar bazlı policy'ler değiştirilmedi.
