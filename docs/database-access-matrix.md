@@ -81,3 +81,12 @@ Photoroom tarafında iki ayrı motor dosyası bulunuyor ve yetki davranışları
 - `samples/` ve `showroom/` klasörlerinde de depo içi yazıcı bulunamadı; harici tüketici doğrulanana kadar mevcut izinler ve nesneler korunacak.
 
 Bu incelemede canlı tablo/Storage politikası değiştirilmedi ve Storage nesnelerine dokunulmadı. Sonraki güvenli adım, Modül 2 motorunun fiilî çalışma noktasını (Vercel route, harici worker veya yerel servis) doğrulayıp gerekiyorsa ayrı bir sunucu tarafı yazma köprüsü tasarlamaktır.
+
+## Modül 2 eski Photoroom motorunun kaldırılması — 2 Kasım 2026
+
+- `Module 2/photoroom-engine.js` depo içindeki kaynak kodlarda, HTML giriş noktalarında, API uçlarında veya bot sunucularında kullanılan bir bağımlılık değildi. GitHub kod araması ve kaynak dosya taramasında bu dosyaya ait import/require/script çağrısı bulunmadı.
+- Modül 2 AI Studio'nun aktif akışı `/api/module2?action=prompt-preview` üzerinden ilerliyor; `api/module2.js` doğrudan `Module 2/gemini-banana-engine.js` içindeki `buildGeminiBananaPrompt` fonksiyonunu kullanıyor. Dört platform botu kendi `bot-engine.js` dosyalarıyla çalışıyor.
+- Bu nedenle yalnızca kullanılmayan `Module 2/photoroom-engine.js` kopyası kaldırıldı. `Module 2/gemini-banana-engine.js`, `Module 2/nova-studio-engine.js`, dört platform botu ve kök dizindeki `photoroom-engine.js` dosyası değiştirilmedi.
+- Kök dizindeki `photoroom-engine.js` dosyasının başlığı ve içeriği Gemini Banana motorunu tanımlıyor; `api/photoroom-campaign.js` bu dosyayı mevcut API sözleşmesiyle kullanıyor. Yanlış adlandırılmış bu kök dosya, bağımlılıkları ayrıca ele alınmadan yeniden adlandırılmadı veya silinmedi.
+- Silme işlemi kaynak kodu/Storage verisi veya Supabase politikası değiştirmedi. Modül 2'nin onaylanmış ana prompt'u ve yayınlama akışı korunmuştur.
+
