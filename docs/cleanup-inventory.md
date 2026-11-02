@@ -74,3 +74,12 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 3. Endpoint'in yazma işlemi yetkisiz erişime açık göründüğünden, kullanım sahibi belirlendikten sonra `POST` için `authenticateRoles` veya eşdeğer güvenli servis kimlik doğrulaması eklenmeli. Çağıran istemci doğrulanmadan bu değişiklik yapılmayacak; aksi halde mevcut entegrasyon kırılabilir.
 4. `supabase_photoroom_setup.sql` yeniden çalıştırılmayacak. `social_campaign_assets` kaydı ve Storage nesneleri, güncel motorun ortak kullandığı veriler olarak korunacak.
 5. Eski motorun yalnızca adlandırma/uyumluluk kalıntısı olan alanları, aktif motorun beklediği kayıt şemasıyla karşılaştırılarak ayrı bir refactor olarak ele alınacak.
+
+### Tekrarlı Nova Studio script yüklemesi — güvenli sadeleştirme
+
+- `Module 7/index.html` ve `Module 2/Catalog/index.html` aynı Nova Studio motorunu hem `/Module%202/nova-studio-engine.js` hem de `/nova-studio-engine.js` yolundan iki kez yüklüyordu.
+- İki dosyanın Git blob SHA'sı aynı ve motor `window.NovaStudioEngine` globalini atayarak dışa açıyor. Sayfalarda kullanılan çağrılar bu global üzerinden yapılıyor.
+- Modül 2 dondurulduğu için `Module 2/Catalog/index.html` ve `Module 2/nova-studio-engine.js` değiştirilmedi.
+- Yalnızca `Module 7/index.html` içindeki ilk, yinelenen `/Module%202/nova-studio-engine.js` script etiketi kaldırıldı. Kök `/nova-studio-engine.js` yüklemesi ve Module 7'nin kullandığı global API korundu.
+- Kök motor dosyası ve Modül 2 kopyası şimdilik korunuyor; Module 2 katalog sayfası hâlâ kendi mevcut yükleme zincirine bağlı.
+- Değişiklik commit'i: `ee28d808125314bcebf59048023670a551d4208d`.
