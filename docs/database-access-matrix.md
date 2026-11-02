@@ -70,3 +70,14 @@ Migration `protect_products_storage_folder` canlı Supabase projesine uygulandı
 - `photoroom/`, `samples/` ve `showroom/` değiştirilmedi.
 - Modül 2 policy'leri ve kaynak kodu değiştirilmedi.
 - Canlı `pg_policies` sorgusu üç public write policy'sinin de `products` klasörünü hariç tuttuğunu doğruladı.
+
+## Photoroom motor ayrımı ve kalan doğrulama — 2 Kasım 2026
+
+Photoroom tarafında iki ayrı motor dosyası bulunuyor ve yetki davranışları aynı değil:
+
+- Kök dizindeki `photoroom-engine.js`, `SUPABASE_SERVICE_ROLE_KEY` kullanacak şekilde yapılandırılmış. `api/photoroom-campaign.js` bu motoru sunucu tarafında çağırıyor; POST isteği `admin` veya `product_manager` rolüyle sınırlandırılmış. Bu akışta ürün kataloğu okuması anon anahtarla yapılabiliyor çünkü `products` public SELECT korunuyor; medya ve kampanya yazımı kök motorun service-role yapılandırmasına dayanıyor.
+- `Module 2/photoroom-engine.js` ayrı bir kopya ve kendi varsayılan yapılandırmasında anon anahtara düşüyor. Bu kopyanın depodaki çağrı noktası doğrulanamadı; Modül 2'nin dondurulmuş kapsamı nedeniyle dosya ve prompt değiştirilmedi.
+- Bu nedenle `photoroom/` klasörünün public yazma izni henüz kaldırılmadı. Kök API akışı service-role ile çalışabilecek olsa da, Modül 2 kopyasının veya depo dışındaki bir çalıştırıcının anon yazmaya bağımlı olup olmadığı kesinleşmeden politika değişikliği yapılmayacak.
+- `samples/` ve `showroom/` klasörlerinde de depo içi yazıcı bulunamadı; harici tüketici doğrulanana kadar mevcut izinler ve nesneler korunacak.
+
+Bu incelemede canlı tablo/Storage politikası değiştirilmedi ve Storage nesnelerine dokunulmadı. Sonraki güvenli adım, Modül 2 motorunun fiilî çalışma noktasını (Vercel route, harici worker veya yerel servis) doğrulayıp gerekiyorsa ayrı bir sunucu tarafı yazma köprüsü tasarlamaktır.
