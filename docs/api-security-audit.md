@@ -56,6 +56,8 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 
 ## Bu turda yapılan değişiklikler
 
+- Kök `supabase_setup.sql` dosyasının başına, mevcut geniş public-write politikaları nedeniyle üretimde tekrar çalıştırılmaması gerektiğini belirten güvenlik uyarısı eklendi. Bu yalnızca depo dosyasını korur; canlı Supabase'e uygulanmış bir değişiklik değildir.
+
 - Yalnızca bu denetim raporu ve depo temizlik envanteri güncellendi.
 - Canlı Supabase şeması, policy'ler, grant'ler, kullanıcılar, Storage nesneleri veya Auth ayarları değiştirilmedi.
 - API endpoint kodu, Modül 2 dosyaları, yayın prompt'u ve canlı veri akışları değiştirilmedi.
