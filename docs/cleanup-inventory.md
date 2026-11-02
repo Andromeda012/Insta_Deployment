@@ -118,3 +118,6 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 
 - `Module 4/takip.html` içindeki geçmiş notları için stored XSS riski tespit edildi ve `innerHTML` yerine DOM `textContent` ile render edilecek şekilde düzeltildi. Ayrıntı: `docs/module4-tracking-security.md`.
 - Takip sayfası Firebase `/siparisler.json` koleksiyonunun tamamını tarayıcıya çekiyor. Firebase anonim okuma kuralları doğrulanmadığından `/siparis-paneli` rewrite'i açılmadı; önce müşteri verisi erişim modeli güvenli hâle getirilmeli.
+
+- İlk CI çalışması, `_data/galeri/galeri-1787672363723.json` içinde kalmış bir Git merge-conflict işaretini tespit etti. İşaretler kaldırılarak geçerli JSON hâline getirildi; sonraki CI kontrolü 159 izlenen dosya, 31 JSON, 55 JS/CJS ve 9 migration üzerinde başarılı oldu.
+- Vercel Production dağıtımı son commit `5a26020c5452ef3e03b3b6b376f4c66a622c1a8d` için `READY`; GitHub Actions statik kalite kontrolü de aynı commit üzerinde başarılı.
