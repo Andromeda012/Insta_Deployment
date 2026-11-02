@@ -97,6 +97,44 @@ async function settings(req, res) {
   return res.status(200).json({ ok: true, settings: value });
 }
 
+
+const AI_STUDIO_KEY = 'ai_studio_profiles';
+
+async function aiProfiles(req, res) {
+  if (req.method === 'GET') {
+    const rows = await supabase(`/rest/v1/site_settings?key=eq.${AI_STUDIO_KEY}&select=data&limit=1`, ANON_KEY);
+    return res.status(200).json({ ok: true, profiles: rows?.[0]?.data || { categories: {}, products: {} } });
+  }
+  if (req.method !== 'PUT') {
+    res.setHeader('Allow', 'GET, PUT');
+    return res.status(405).json({ ok: false, error: 'Method not allowed.' });
+  }
+  await authenticateRoles(req, ['admin', 'product_manager']);
+  const profiles = req.body?.profiles;
+  if (!profiles || typeof profiles !== 'object' || Array.isArray(profiles) ||
+      !profiles.categories || typeof profiles.categories !== 'object' ||
+      !profiles.products || typeof profiles.products !== 'object' ||
+      Object.keys(profiles.categories).length > 100 || Object.keys(profiles.products).length > 1000 ||
+      Buffer.byteLength(JSON.stringify(profiles), 'utf8') > 200000) {
+    return res.status(400).json({ ok: false, error: 'AI Studio profil verisi geçersiz.' });
+  }
+  const clean = { categories: {}, products: {} };
+  for (const [key, value] of Object.entries(profiles.categories)) {
+    if (!key.trim() || !value || typeof value !== 'object' || Array.isArray(value)) return res.status(400).json({ ok: false, error: 'Kategori profili geçersiz.' });
+    clean.categories[key.slice(0, 120)] = value;
+  }
+  for (const [slug, value] of Object.entries(profiles.products)) {
+    if (!validSlug(slug) || !value || typeof value !== 'object' || Array.isArray(value)) return res.status(400).json({ ok: false, error: 'Ürün profili geçersiz.' });
+    clean.products[slug] = value;
+  }
+  await supabase('/rest/v1/site_settings', SERVICE_KEY, {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ key: AI_STUDIO_KEY, data: clean, updated_at: new Date().toISOString() })
+  });
+  return res.status(200).json({ ok: true, profiles: clean, saved: true });
+}
+
 async function media(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -135,6 +173,7 @@ export default async function handler(req, res) {
     const action = actionOf(req);
     if (action === 'products') return await products(req, res);
     if (action === 'settings') return await settings(req, res);
+    if (action === 'ai-profiles') return await aiProfiles(req, res);
     if (action === 'media') return await media(req, res);
     return res.status(400).json({ ok: false, error: 'Bilinmeyen Modül 7 işlemi.' });
   } catch (err) {
