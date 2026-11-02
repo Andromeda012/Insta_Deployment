@@ -478,21 +478,41 @@
 
       // History
       const histContainer = document.getElementById('resHistoryList');
-      if (order.stageHistory && order.stageHistory.length > 0) {
-        histContainer.innerHTML = order.stageHistory.map(h => {
-          const d = h.timestamp ? new Date(h.timestamp).toLocaleString('tr-TR') : '';
-          return `
-            <div class="history-item">
-              <div>
-                <span class="hist-stage">${h.stageName}</span>
-                ${h.note ? `<span style="color:var(--text-muted); margin-left:8px;">— ${h.note}</span>` : ''}
-              </div>
-              <div class="hist-time">${d}</div>
-            </div>
-          `;
-        }).join('');
+      histContainer.replaceChildren();
+
+      if (Array.isArray(order.stageHistory) && order.stageHistory.length > 0) {
+        order.stageHistory.forEach(h => {
+          const item = document.createElement('div');
+          item.className = 'history-item';
+
+          const details = document.createElement('div');
+          const stage = document.createElement('span');
+          stage.className = 'hist-stage';
+          stage.textContent = String(h.stageName || 'Aşama güncellendi');
+          details.appendChild(stage);
+
+          if (h.note) {
+            const note = document.createElement('span');
+            note.style.color = 'var(--text-muted)';
+            note.style.marginLeft = '8px';
+            note.textContent = `— ${String(h.note)}`;
+            details.appendChild(note);
+          }
+
+          const timestamp = document.createElement('div');
+          timestamp.className = 'hist-time';
+          timestamp.textContent = h.timestamp ? new Date(h.timestamp).toLocaleString('tr-TR') : '';
+
+          item.append(details, timestamp);
+          histContainer.appendChild(item);
+        });
       } else {
-        histContainer.innerHTML = '<div style="color:var(--text-muted); font-size:0.85rem; padding:8px;">Henüz aşama geçmişi kaydı bulunmuyor.</div>';
+        const empty = document.createElement('div');
+        empty.style.color = 'var(--text-muted)';
+        empty.style.fontSize = '0.85rem';
+        empty.style.padding = '8px';
+        empty.textContent = 'Henüz aşama geçmişi kaydı bulunmuyor.';
+        histContainer.appendChild(empty);
       }
     }
 
