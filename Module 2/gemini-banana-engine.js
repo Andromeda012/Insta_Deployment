@@ -39,11 +39,11 @@ const BRAND = {
  * Onaylanan Bahar Portmanto'da kullanılan KUSURSUZ MİMARİ PROMPT ŞABLONU.
  * %100 Ürün Sadakati ve İskandinav Sahnesi Kuralı
  */
-export function buildGeminiBananaPrompt(product = {}) {
+export function buildGeminiBananaPrompt(product = {}, aiProfile = {}) {
   const title = (product.title || product.baslik || 'Lüks Tasarım Mobilya').trim();
   const cleanName = title.replace(/^NOVA\s*[-–—:]*\s*/i, '');
 
-  return `Modify the environment around the furniture unit from the reference image while keeping the exact ${cleanName} furniture unit completely identical and untouched. Maintain the exact same proportions, door layout, surface reliefs, handles, knobs, niche features, outer casing, and base legs. Do NOT redraw, alter, or redesign the furniture piece in any way.
+  const basePrompt = `Modify the environment around the furniture unit from the reference image while keeping the exact ${cleanName} furniture unit completely identical and untouched. Maintain the exact same proportions, door layout, surface reliefs, handles, knobs, niche features, outer casing, and base legs. Do NOT redraw, alter, or redesign the furniture piece in any way.
 
 Transform the backdrop wall into an ultra-luxurious deep warm charcoal-greige textured Venetian plaster micro-cement wall, providing rich high contrast behind the bright doors and warm wood frame. To one side in the background, include subtle recessed vertical natural oak acoustic wood slat paneling.
 
@@ -52,6 +52,14 @@ Enhance the lighting with high-end architectural lighting: soft warm recessed ce
 On the right side next to the unit (without blocking any doors), place a tall artisanal textured beige ceramic vase with a minimalist sculptural branch. On the light oak herringbone parquet floor, place a tasteful textured low-pile cream bouclé runner rug. Realistic soft floor contact shadows grounding the furniture legs.
 
 Architectural Digest quality, perfectly centered, straight-on front view, photorealistic 8k interior design photography, absolutely NO text, NO logos, NO watermarks.`;
+  const additions = [
+    aiProfile.lighting && `Lighting preference: ${aiProfile.lighting}.`,
+    aiProfile.atmosphere && `Atmosphere and mood: ${aiProfile.atmosphere}.`,
+    aiProfile.palette && `Additional color palette guidance: ${aiProfile.palette}.`,
+    aiProfile.decor && `Additional background decor guidance: ${aiProfile.decor}. Never obscure or overlap the furniture.`,
+    aiProfile.camera && `Camera and framing preference: ${aiProfile.camera}. Keep the furniture fully visible and unchanged.`
+  ].filter(Boolean);
+  return additions.length ? basePrompt + `\\n\\nPRODUCT AI STUDIO GUIDANCE (background and presentation only; product geometry and details remain frozen):\\n` + additions.join(' ') : basePrompt;
 }
 
 /**
@@ -65,10 +73,11 @@ export async function generateBananaRecontextualizedImage({
   rawImageUrl = '',
   aspectRatio = '1:1',
   apiKey = '',
-  allowFallback = true
+  allowFallback = true,
+  aiProfile = {}
 }) {
   const safeSlug = (product.slug || 'prod').replace(/[^a-zA-Z0-9_-]/g, '');
-  const prompt = buildGeminiBananaPrompt(product);
+  const prompt = buildGeminiBananaPrompt(product, aiProfile);
   const inputImageUrl = (rawImageUrl && rawImageUrl.startsWith('http')) ? rawImageUrl : (product.ana_resim || null);
 
   // Gemini API Anahtarı: Yalnızca sunucu ortamından okunur
@@ -234,9 +243,9 @@ export async function generateStoryPost({ product = {}, heroImageUrl = '' }) {
 /**
  * TÜM KAMPANYA PAKETİNİ OLUŞTURUR VE SUPABASE'E KAYDEDER
  */
-export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', allowFallback = true }) {
+export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', allowFallback = true, aiProfile = {} }) {
   console.log(`[Gemini Banana Pipeline] ${product.title || product.slug} için kampanya hazırlığı başlatıldı...`);
-  const prompt = buildGeminiBananaPrompt(product);
+  const prompt = buildGeminiBananaPrompt(product, aiProfile);
 
   // 1. Gemini Banana ile 1:1 ve 9:16 Katalog Görselini Hazırla
   const hero1x1 = await generateBananaRecontextualizedImage({
@@ -244,7 +253,8 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     rawImageUrl: product.ana_resim,
     aspectRatio: '1:1',
     apiKey,
-    allowFallback
+    allowFallback,
+    aiProfile
   });
 
   if (!hero1x1 || !hero1x1.ok || !hero1x1.imageUrl) {
