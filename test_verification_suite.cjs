@@ -453,6 +453,11 @@ async function runTestSuite() {
   }
 }
 
+if (process.env.RUN_LIVE_AI_TESTS !== 'true') {
+  console.log('Bu dosya canlı API/Storage işlemleri yapabilir. Çalıştırmak için RUN_LIVE_AI_TESTS=true değişkenini açıkça ayarlayın.');
+  process.exit(0);
+}
+
 runTestSuite().catch(err => {
   console.error('Test paketi çalışma hatası:', err);
   process.exit(1);
