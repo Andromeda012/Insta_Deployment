@@ -12,14 +12,16 @@
   let products = [], profiles = { categories: {}, products: {} }, selected = null;
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
   function token() {
-    try {
-      for (let i=0;i<localStorage.length;i++) {
-        const key=localStorage.key(i);
-        if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
-        const raw=JSON.parse(localStorage.getItem(key)||'{}');
-        if (raw.access_token) return raw.access_token;
-      }
-    } catch {}
+    for (const store of [window.localStorage, window.sessionStorage]) {
+      try {
+        for (let i=0;i<store.length;i++) {
+          const key=store.key(i);
+          if (!key || !key.startsWith('sb-') || !key.endsWith('-auth-token')) continue;
+          const raw=JSON.parse(store.getItem(key)||'{}');
+          if (raw.access_token) return raw.access_token;
+        }
+      } catch {}
+    }
     return '';
   }
   async function request(url, options={}) {
