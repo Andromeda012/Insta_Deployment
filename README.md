@@ -81,5 +81,5 @@ Modül 2'nin mevcut botları, yayın sistemi ve Gemini görsel üretim motoru bu
 - Gerçek `.env` dosyaları, token'lar ve API anahtarları Git'e eklenmez.
 - Supabase Service Role anahtarı yalnızca güvenilir sunucu ortamında kullanılabilir.
 - Admin işlemleri sunucu tarafında yetkilendirilir.
-- Webhook ve cron uçları kendi doğrulama mekanizmalarını kullanır.
+- Cron uçları sunucu sırrı ile doğrulanır; webhook sağlayıcı imza doğrulaması ayrıca denetlenmesi gereken bir güvenlik alanıdır.
 - Canlı veritabanı veya dağıtım yapılandırmasında yıkıcı değişiklikler öncesinde geri dönüş planı hazırlanır.
