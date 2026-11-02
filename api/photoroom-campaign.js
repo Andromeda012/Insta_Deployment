@@ -4,7 +4,7 @@
 // ============================================================================
 
 import PhotoroomEngine from '../photoroom-engine.js';
-import { authenticateRoles } from './_lib/auth.js';
+import { authenticateRoles, apiError } from './_lib/auth.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -82,7 +82,6 @@ export default async function handler(req, res) {
 
     return res.status(405).json({ ok: false, error: 'Method not allowed' });
   } catch (err) {
-    console.error('Photoroom Campaign API Hatası:', err);
-    return res.status(500).json({ ok: false, error: err.message });
+    return apiError(res, err, 'Photoroom Campaign');
   }
 }
