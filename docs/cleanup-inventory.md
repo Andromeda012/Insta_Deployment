@@ -5,7 +5,7 @@
 - `Module 2/` ve mevcut Gemini görsel motoru: kullanıcı kararıyla dondurulmuştur.
 - `api/` endpoint yolları: URL sözleşmeleri nedeniyle bağımlılık kontrolü olmadan taşınmayacaktır.
 - `supabase/migrations/`: geçmiş migration dosyaları silinmeyecektir.
-- `vps_migration_staging/`: canlıya geçiş tamamlanmış sayılmayacaktır; geçiş kararı verilene kadar arşiv/ hazırlık alanı olarak kalır.
+- `infra/vps-migration-staging/`: canlıya geçiş tamamlanmış sayılmayacaktır; geçiş kararı verilene kadar arşiv/ hazırlık alanı olarak kalır.
 
 ## İnceleme gerektiren eski/tekrarlı öğeler
 
@@ -13,7 +13,7 @@
 |---|---|---|
 | `photoroom-engine.js` | `api/photoroom-campaign.js` tarafından import ediliyor | Endpoint kullanım ve logları doğrulanmadan silinmeyecek |
 | `api/photoroom-campaign.js` | Eski Photoroom kampanya endpoint'i | Harici çağrılar ve DB bağımlılıkları doğrulanmadan silinmeyecek |
-| `supabase_photoroom_setup.sql` | Photoroom'a özel eski kurulum SQL'i | Mevcut tablo/policy bağımlılıkları kontrol edilmeden silinmeyecek |
+| `supabase/legacy/supabase_photoroom_setup.sql` | Photoroom'a özel eski kurulum SQL'i | Mevcut tablo/policy bağımlılıkları kontrol edilmeden silinmeyecek |
 | `Module 2/photoroom-engine.js` | Modül 2 altında eski motor dosyası | Modül 2 dondurulduğu için dokunulmayacak |
 | `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js` | Git blob SHA aynı; katalog sayfası iki yolu da script olarak yüklüyor | İki script yüklemesinin davranışı test edilmeden bir kopya kaldırılmayacak |
 | `Module 4/app.js` | Sıfır bayt dosya | HTML ve diğer dosyalarda referansı olmadığı teyit edilince kaldırılabilir |
@@ -27,16 +27,16 @@ Bir dosyanın eski görünmesi veya adında eski bir servis geçmesi tek başın
 
 | Öğe | Doğrulanan bulgu | Karar |
 |---|---|---|
-| `gemini-banana-engine.js` (kök) | `test_gemini_banana.cjs` ve `test_verification_suite.cjs` bu dosyayı import ediyor. `api/module2.js` ise ayrı olarak `Module 2/gemini-banana-engine.js` dosyasını kullanıyor. | Modül 2 motoruna dokunulmayacak. Kök motor testlerin parçası olduğu için testler taşınmadan silinmeyecek. |
+| `gemini-banana-engine.js` (kök) | `tests/test_gemini_banana.cjs` ve `tests/test_verification_suite.cjs` bu dosyayı import ediyor. `api/module2.js` ise ayrı olarak `Module 2/gemini-banana-engine.js` dosyasını kullanıyor. | Modül 2 motoruna dokunulmayacak. Kök motor testlerin parçası olduğu için testler taşınmadan silinmeyecek. |
 | `run_dm_scanner.ps1` / `.bat` | PowerShell betiği canlı Instagram DM tarama ve Instagram/Facebook cron endpoint'lerini düzenli çağırıyor; BAT dosyası bunu başlatıyor. | Kullanım dışı değil; yerel işletim aracı olarak korunacak. 7/24 çalışması için açık bir Windows oturumu gerektirdiği ayrıca not edilmeli. |
 | `Module 4/index.html` / `Module 4/siparis-paneli.html` | Dosyalar aynı Git blob SHA değerine ve aynı boyuta sahip; içerikleri birebir aynı. | Yinelenen içerik doğrulandı, fakat iki ayrı URL doğrudan kullanılıyor olabilir. URL/harici bağlantı kullanımı doğrulanmadan biri silinmeyecek. |
 | `package.json` (kök) | Yalnızca proje adı, sürüm, ESM tipi ve private işaretini içeriyor; script veya dependency tanımlamıyor. | Şu an gereksiz değil; ESM davranışını açıkça tanımlıyor. |
-| `vps_migration_staging/` | Docker publisher/webhook, SQL yamaları, testler ve migration checklist içeriyor. | Aktif VPS olarak değerlendirilmez; geçiş kararı verilene kadar staging arşivi olarak korunur. |
+| `infra/vps-migration-staging/` | Docker publisher/webhook, SQL yamaları, testler ve migration checklist içeriyor. | Aktif VPS olarak değerlendirilmez; geçiş kararı verilene kadar staging arşivi olarak korunur. |
 
 ## Güvenlik / eski entegrasyon notu
 
 - `api/photoroom-campaign.js` içinde Supabase anon anahtarı için sabit bir fallback tanımı var. Anon anahtar tek başına servis rolü sırrı değildir; asıl güvenlik sınırı Supabase RLS politikalarıdır.
-- `supabase_photoroom_setup.sql`, Photoroom tablolarında `FOR ALL` ve herkese açık `USING (true)` / `WITH CHECK (true)` politikaları tanımlıyor. Bu SQL dosyası yeniden çalıştırılmamalı; canlı projedeki mevcut tablolar ve politikalar ayrıca denetlenmeli.
+- `supabase/legacy/supabase_photoroom_setup.sql`, Photoroom tablolarında `FOR ALL` ve herkese açık `USING (true)` / `WITH CHECK (true)` politikaları tanımlıyor. Bu SQL dosyası yeniden çalıştırılmamalı; canlı projedeki mevcut tablolar ve politikalar ayrıca denetlenmeli.
 - Photoroom API'si kök `photoroom-engine.js` dosyasını import ediyor. Depo içi aramada görünür çağrı bulunmaması, Vercel endpoint'ine dışarıdan istek gelmediğini kanıtlamaz. Erişim logları ve Supabase bağımlılıkları doğrulanmadan tüm akış birlikte kaldırılmayacak.
 
 ## Photoroom / kampanya akışı — canlı Supabase denetimi (2 Kasım 2026)
@@ -49,7 +49,7 @@ Bir dosyanın eski görünmesi veya adında eski bir servis geçmesi tek başın
 | Supabase Storage | `media` bucket mevcut; kampanya kayıtları `products/`, `posts/`, `stories/` ve eski `photoroom/` yollarına işaret ediyor | Dosyalar ve bucket korunacak; kullanılmayan nesneler ayrı envanter ve referans taraması olmadan silinmeyecek |
 | `photoroom-engine.js` | `site_settings` içindeki `social_campaign_assets` anahtarına kayıt yazıyor ve oradan okuyor; görselleri `media` bucket'ına yüklüyor | Dosya yalnızca eski Photoroom motoru değil, kampanya veri akışının da parçası. Şimdilik korunacak |
 | `api/photoroom-campaign.js` | Motoru import ediyor; GET kampanyayı okuyor, POST ürün kataloğundan kampanya üretip kaydediyor | Endpoint dışarıdan çağrılabilir. Depo içi çağrı bulunmaması kaldırmak için yeterli değil |
-| `supabase_photoroom_setup.sql` | Olmayan iki tabloyu tanımlıyor ve ikisine de `FOR ALL USING (true) WITH CHECK (true)` politikası öneriyor | **Tekrar çalıştırılmamalı.** Bu geniş izinler yeni oluşturulacak tablolar için güvenli varsayılan değildir. Dosya tarihsel referans olarak tutulacak; canlı politikaları değiştirmek için kullanılmayacak |
+| `supabase/legacy/supabase_photoroom_setup.sql` | Olmayan iki tabloyu tanımlıyor ve ikisine de `FOR ALL USING (true) WITH CHECK (true)` politikası öneriyor | **Tekrar çalıştırılmamalı.** Bu geniş izinler yeni oluşturulacak tablolar için güvenli varsayılan değildir. Dosya tarihsel referans olarak tutulacak; canlı politikaları değiştirmek için kullanılmayacak |
 | Vercel runtime logları | Son 30 dakikalık sorguda eşleşme bulunmadı. Hobby planı 1 saatten eski runtime loglarını saklamadığından 7 günlük sorgu reddedildi | Bu sonuç endpoint'in kullanılmadığını kanıtlamaz. Erişim geçmişi için daha uzun saklama/başka log kaynağı gerekir |
 
 ### Sonuç
@@ -72,7 +72,7 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 1. Canlı yayın akışının kök `gemini-banana-engine.js` üzerinden devam ettiği doğrulandı; bu dosya ve ortak kampanya kayıtları korunacak.
 2. Eski `api/photoroom-campaign.js` endpoint'i ve kök `photoroom-engine.js` henüz silinmeyecek. Önce endpoint için harici çağrı sahibi/iş akışı teyit edilmeli.
 3. Endpoint'in yazma işlemi yetkisiz erişime açık göründüğünden, kullanım sahibi belirlendikten sonra `POST` için `authenticateRoles` veya eşdeğer güvenli servis kimlik doğrulaması eklenmeli. Çağıran istemci doğrulanmadan bu değişiklik yapılmayacak; aksi halde mevcut entegrasyon kırılabilir.
-4. `supabase_photoroom_setup.sql` yeniden çalıştırılmayacak. `social_campaign_assets` kaydı ve Storage nesneleri, güncel motorun ortak kullandığı veriler olarak korunacak.
+4. `supabase/legacy/supabase_photoroom_setup.sql` yeniden çalıştırılmayacak. `social_campaign_assets` kaydı ve Storage nesneleri, güncel motorun ortak kullandığı veriler olarak korunacak.
 5. Eski motorun yalnızca adlandırma/uyumluluk kalıntısı olan alanları, aktif motorun beklediği kayıt şemasıyla karşılaştırılarak ayrı bir refactor olarak ele alınacak.
 
 ### Tekrarlı Nova Studio script yüklemesi — güvenli sadeleştirme
@@ -107,7 +107,7 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 
 ### Test güvenliği ve depo kalite kapısı
 
-- `test_gemini_banana.cjs` ve `test_verification_suite.cjs` normal çalıştırmada gerçek Gemini/Storage işlemlerini başlatabiliyordu. İki dosyanın canlı test yürütme çağrısı artık yalnızca `RUN_LIVE_AI_TESTS=true` iken çalışır; test kodu ve kapsamı silinmedi.
+- `tests/test_gemini_banana.cjs` ve `tests/test_verification_suite.cjs` normal çalıştırmada gerçek Gemini/Storage işlemlerini başlatabiliyordu. İki dosyanın canlı test yürütme çağrısı artık yalnızca `RUN_LIVE_AI_TESTS=true` iken çalışır; test kodu ve kapsamı silinmedi.
 - Kök `package.json` içine bağımlılıksız `npm run check` komutu eklendi; statik depo denetimi canlı entegrasyon testlerinden ayrıldı.
 - `.gitignore` genişletilerek tüm gerçek `.env*` dosyaları ve Node bağımlılık/coverage klasörleri dışlanacak; `.env.example` şablonları izlenebilir kalacak.
 - Modül 2 kaynakları değişmeden yalnızca statik sözdizimi denetimine dahil edilir; prompt veya yayın davranışında değişiklik yapılmaz.
@@ -150,3 +150,12 @@ Bu bölüm, yukarıdaki tarihsel denetim notlarında sonradan değişen durumlar
 - Modül 1 upload path'leri mevcut korumalı klasörlerle eşleşiyor. Modül 7 ve kök Gemini Banana motoru `products/`, `posts/`, `stories/` yollarına service_role ile yazıyor.
 - Dondurulmuş Modül 2 Photoroom motoru `photoroom/` yoluna yazar ve anon anahtar fallback'i içerir. `samples/` ve `showroom/` için depo içi yazıcı yok.
 - Storage public-write denylist'i bu turda değiştirilmedi; Modül 2'yi veya harici klasör tüketicilerini kırmamak için önce runtime anahtar kaynağı ve harici yükleyiciler doğrulanacak.
+
+
+## Fiziksel depo düzenlemesi — 2 Kasım 2026
+
+- VPS geçiş hazırlıkları `vps_migration_staging/` kökünden `infra/vps-migration-staging/` altına taşındı. İç klasör ilişkileri ve Docker çalışma dosyaları aynı göreli yapıda korundu; bu klasör hâlâ canlı altyapı değil, hazırlık alanıdır.
+- Canlı entegrasyon testleri `tests/` altına taşındı. Testlerin `RUN_LIVE_AI_TESTS=true` güvenlik kapısı korundu; `docs/testing-and-release.md` komutları yeni yola göre güncellendi.
+- Tarihsel `supabase_setup.sql` ve `supabase_photoroom_setup.sql` dosyaları `supabase/legacy/` altına taşındı. Bunlar Supabase CLI migration değildir ve otomatik/tekrar çalıştırılmamalıdır.
+- Gerçek, sıralı migration dosyaları `supabase/migrations/` içinde aynı ad ve sırayla bırakıldı. Canlı Supabase'e bu dosya düzenlemesi kapsamında hiçbir SQL uygulanmadı.
+- Kök `api/` endpoint dosyaları, kök motor/entrypoint dosyaları ve Vercel yapılandırması URL/import uyumluluğu nedeniyle bu aşamada yerlerinde bırakıldı. AI Studio arayüz ve modül motorları zaten `Module 2/` ve `Module 7/` altında bulunuyor.
