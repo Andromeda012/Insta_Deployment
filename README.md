@@ -24,7 +24,7 @@ Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki aray
 - **Hosting / dağıtım:** Vercel. Proje kök dizininden statik arayüz ve `api/` altındaki serverless fonksiyonlar dağıtılır.
 - **Veri katmanı:** Supabase.
 - **Zamanlanmış işler:** Vercel Cron ve GitHub Actions iş akışları.
-- **VPS geçiş hazırlığı:** `vps_migration_staging/` altında ayrı bir hazırlık alanı bulunur; bu alan canlı VPS altyapısı olarak değerlendirilmemelidir.
+- **VPS geçiş hazırlığı:** `infra/vps-migration-staging/` altında ayrı bir hazırlık alanı bulunur; bu alan canlı VPS altyapısı olarak değerlendirilmemelidir.
 
 ### Depo yapısı
 
@@ -42,10 +42,14 @@ Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki aray
 │   ├── module7.js
 │   └── *-cron.js / *-webhook.js        # Entegrasyon uçları
 ├── supabase/
-│   └── migrations/                     # Sıralı veritabanı değişiklikleri
+│   ├── migrations/                     # Sıralı veritabanı değişiklikleri
+│   └── legacy/                         # Tarihsel SQL; tekrar çalıştırılmaz
 ├── docs/                               # Mimari, API ve işletim belgeleri
 ├── scripts/repo-check.mjs              # Statik depo kalite kontrolü
-├── vps_migration_staging/              # VPS geçiş hazırlıkları
+├── tests/                              # Kontrollü manuel entegrasyon testleri
+├── infra/vps-migration-staging/        # VPS geçiş hazırlıkları (canlı değil)
+├── supabase/legacy/                    # Tarihsel, tekrar çalıştırılmaması gereken SQL
+
 ├── vercel.json                         # Vercel yönlendirme, cron ve fonksiyon ayarları
 └── package.json
 ```
