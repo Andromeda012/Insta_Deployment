@@ -92,3 +92,14 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 - Depoda kök dizinde `siparis-paneli.html` bulunmuyor ve `vercel.json` içinde `/siparis-paneli` için rewrite tanımı yok. Bu nedenle mevcut repo içeriğiyle bu takip URL'sinin doğru sayfaya yönlendiği doğrulanamıyor.
 - `Module 4/siparis-paneli.html` adı bir müşteri takip sayfası izlenimi verse de içeriği ayrı bir müşteri ekranı değil; yönetim paneliyle birebir aynı dosya.
 - Karar: iki dosyadan hiçbiri silinmedi. Önce müşteriye açık takip sayfasının gerçekten var olup olmadığı ve doğru URL sözleşmesinin ne olması gerektiği netleştirilmeli. Müşteriye açık olması gereken bir bağlantıyı yönetim paneline yönlendirmek güvenlik ve erişim kontrolü açısından kabul edilemez.
+
+
+## API ve canlı Supabase güvenlik denetimi — 2 Kasım 2026
+
+- Ayrıntılı bulgular ve aşamalı düzeltme planı `docs/api-security-audit.md` dosyasına eklendi.
+- Canlı `products` tablosunda herkese açık tam yazma politikası ve `site_settings` üzerinde eski public denylist yazma politikaları doğrulandı. Harici yazıcılar ve gerçek yetkili Modül 7 hesabı doğrulanmadan canlı policy/grant değişikliği yapılmadı.
+- `api/photoroom-campaign.js` ve `api/render.js` için kimlik doğrulaması eksikliği tespit edildi; bilinmeyen harici çağrılar kırılmasın diye bu turda endpoint'ler değiştirilmedi.
+- Sosyal webhook'larda sağlayıcı imza doğrulaması eksikliği görüldü. Modül 2 ve onaylı prompt dondurulmuş kapsamda kaldığından bu dosyalara dokunulmadı.
+- Ortak `api/_lib/auth.js` yardımcısının Supabase Auth token doğrulaması ve `app_metadata` rol kontrolü olumlu bulundu.
+- Supabase advisor: leaked-password protection kapalı; `site_settings` üzerinde birden fazla permissive policy uyarısı; `content_revisions` ve `publication_logs` policy yok (mevcut grant'ler yalnızca service_role ile sınırlı); altı kullanılmayan index bildirimi. Bunlar için otomatik veya körlemesine DB değişikliği yapılmadı.
+- Bu denetim turunda canlı Supabase'e yazılmadı; yalnızca repo dokümantasyonu değiştirildi.
