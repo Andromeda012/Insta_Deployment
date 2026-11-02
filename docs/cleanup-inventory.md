@@ -103,3 +103,11 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 - Ortak `api/_lib/auth.js` yardımcısının Supabase Auth token doğrulaması ve `app_metadata` rol kontrolü olumlu bulundu.
 - Supabase advisor: leaked-password protection kapalı; `site_settings` üzerinde birden fazla permissive policy uyarısı; `content_revisions` ve `publication_logs` policy yok (mevcut grant'ler yalnızca service_role ile sınırlı); altı kullanılmayan index bildirimi. Bunlar için otomatik veya körlemesine DB değişikliği yapılmadı.
 - Bu denetim turunda canlı Supabase'e yazılmadı; yalnızca repo dokümantasyonu değiştirildi.
+
+
+### Test güvenliği ve depo kalite kapısı
+
+- `test_gemini_banana.cjs` ve `test_verification_suite.cjs` normal çalıştırmada gerçek Gemini/Storage işlemlerini başlatabiliyordu. İki dosyanın canlı test yürütme çağrısı artık yalnızca `RUN_LIVE_AI_TESTS=true` iken çalışır; test kodu ve kapsamı silinmedi.
+- Kök `package.json` içine bağımlılıksız `npm run check` komutu eklenecek; statik depo denetimi canlı entegrasyon testlerinden ayrılacak.
+- `.gitignore` genişletilerek tüm gerçek `.env*` dosyaları ve Node bağımlılık/coverage klasörleri dışlanacak; `.env.example` şablonları izlenebilir kalacak.
+- Modül 2 kaynakları değişmeden yalnızca statik sözdizimi denetimine dahil edilir; prompt veya yayın davranışında değişiklik yapılmaz.
