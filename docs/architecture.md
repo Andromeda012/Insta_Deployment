@@ -31,7 +31,8 @@ Modül numaraları ile ana kabuktaki modül yükleyicileri eşleşecek şekilde 
 - `js/modules/permissions.js`: rol ve yetki arayüzü.
 - `api/_lib/`: API tarafında ortak kimlik doğrulama ve yayın yardımcıları.
 - `supabase/migrations/`: veritabanı şema ve güvenlik değişikliklerinin sıralı kayıtları.
-- `docs/`: teknik kararlar, API sözleşmeleri ve işletim dokümantasyonu.
+- `docs/`: teknik kararlar, API sözleşmeleri, veri erişim matrisi ve işletim dokümantasyonu.
+- `scripts/repo-check.mjs`: CI ve yerel geliştirme için salt-okunur statik kalite kontrolü.
 
 ## 4. API dosyaları neden hemen taşınmıyor?
 
