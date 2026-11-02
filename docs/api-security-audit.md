@@ -101,3 +101,13 @@ Migration `public_catalog_write_restrictions` canlı Supabase projesinde başar�
 **Etki sınırı:** Ürün okuma ve web kataloğu için public SELECT korunur. Modül 7 ürün yazma/silme işlemleri zaten `/api/module7` üzerinden server-side service_role kullanır. Modül 1 ürün web görünürlüğü `product_web_settings` ve CMS API akışını kullanır. Modül 1/7 site ayarı yazımları server-side API üzerinden devam eder. Modül 2 kaynak kodu, prompt, kampanya kayıtları ve bot verileri değiştirilmedi.
 
 **Kalan test:** Gerçek admin/product_manager hesabıyla Modül 7 ekle/güncelle/sil/görsel yükle; admin/content_manager hesabıyla Modül 2 bot ayarı/kampanya yönetimi ve cron yayın akışını test et. Bu testler yapılana kadar daha fazla policy sadeleştirmesi yapılmayacak.
+
+
+## Storage klasör bağımlılıkları — 2 Kasım 2026
+
+- Canlı `media` bucket envanteri: `instagram` 19, `photoroom` 4, `posts` 23, `products` 8, `samples` 2, `showroom` 3 ve `stories` 24 nesne.
+- Modül 1 upload yardımcı fonksiyonu `urunler/`, `anasayfa/`, `galeri/`, `blog/`, `tedarikciler/` yollarını kullanıyor; bunlar mevcut korumalı klasör listesinde.
+- Modül 7 API `products/` yoluna service_role ile yüklüyor. Kök Gemini Banana motoru `products/`, `posts/`, `stories/` yollarına service_role ile yazıyor.
+- Dondurulmuş `Module 2/photoroom-engine.js` `photoroom/`, `posts/`, `stories/` yollarına yazıyor; yapılandırmasında `SUPABASE_KEY` için anon anahtar fallback'i bulunuyor. Üretimde hangi anahtarın kullanıldığı ve bu motorun nerede çağrıldığı doğrulanmadan `photoroom/` public write erişimini kapatmak Modül 2'yi bozabilir.
+- `samples/` ve `showroom/` için depo içinde yazıcı bulunamadı; canlı nesneler mevcut olduğundan harici yazıcı kaynağı henüz bilinmiyor.
+- Karar: Storage policy'lerine bu adımda dokunulmadı. Public write denylist'ten allowlist'e geçiş için önce bu iki klasörün ve Modül 2 Photoroom anahtarının kaynağı netleştirilmeli.
