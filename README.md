@@ -44,6 +44,7 @@ Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki aray
 ├── supabase/
 │   └── migrations/                     # Sıralı veritabanı değişiklikleri
 ├── docs/                               # Mimari, API ve işletim belgeleri
+├── scripts/repo-check.mjs              # Statik depo kalite kontrolü
 ├── vps_migration_staging/              # VPS geçiş hazırlıkları
 ├── vercel.json                         # Vercel yönlendirme, cron ve fonksiyon ayarları
 └── package.json
@@ -65,6 +66,9 @@ Daha ayrıntılı mevcut mimari için [docs/architecture.md](docs/architecture.m
 Modül 2'nin mevcut botları, yayın sistemi ve Gemini görsel üretim motoru bu aşamada korunmaktadır. Görsel üretim API/model geçişi, Nano Banana erişimi ve ödeme yapılandırması hazır olduğunda ayrı bir geliştirme adımı olarak ele alınacaktır. Onaylanmış ana prompt değiştirilmez.
 
 ## Geliştirme ve dağıtım
+
+- Yerel statik kalite kontrolü: `npm run check` (JSON, JavaScript sözdizimi, migration adları ve gizli ortam dosyası kontrolü).
+- Canlı görsel üretimi/Storage erişimi yapan eski entegrasyon testleri varsayılan olarak kapalıdır. Yalnızca bilinçli canlı testte `RUN_LIVE_AI_TESTS=true` ile çalıştırılmalıdır.
 
 - Vercel projesinin Root Directory ayarı depo kök dizinidir.
 - `main` dalına gönderilen commit'ler bağlı Vercel projesinde otomatik dağıtımı tetikler.
