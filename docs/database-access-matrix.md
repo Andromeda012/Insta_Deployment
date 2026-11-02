@@ -9,8 +9,8 @@
 
 | Kaynak | Anonim (`anon`) | Oturum açmış (`authenticated`) | Sunucu (`service_role`) | Değerlendirme |
 |---|---|---|---|---|
-| `public.products` | SELECT / INSERT / UPDATE / DELETE | SELECT / INSERT / UPDATE / DELETE | CRUD | **Yüksek risk.** `Public full access on products` policy'si `TO public`, `USING (true)`, `WITH CHECK (true)`. Migration `005_restore_module7_product_crud.sql` public CRUD grant'ini açıkça geri getiriyor. |
-| `public.site_settings` | SELECT / INSERT / UPDATE / DELETE | SELECT / INSERT / UPDATE / DELETE | CRUD | **Yüksek risk.** Public yazma policy'leri birkaç anahtarı denylist ile hariç tutuyor. Yeni veya unutulmuş anahtarlar varsayılan olarak public yazmaya açık kalabilir. |
+| `public.products` | SELECT | SELECT | CRUD | **Düzeltildi (2 Kasım 2026):** Public full-access policy kaldırıldı; anon/authenticated için yalnızca SELECT policy ve grant kaldı. Yazma yalnızca `service_role` üzerinden. Modül 7 ürün yazma/silme işlemleri `/api/module7` üzerinden yürütülüyor. |
+| `public.site_settings` | SELECT (RLS safe-key listesi) | SELECT + RLS ile sınırlandırılmış DML | CRUD | **Düzeltildi (2 Kasım 2026):** Eski public denylist INSERT/UPDATE/DELETE policy'leri kaldırıldı; anon DML grant'leri iptal edildi. Authenticated DML grant'i korunuyor ancak yalnızca mevcut Modül 2 admin/content_manager key policy'leri yazmaya izin veriyor. Modül 1/7 sunucu API'leri service_role kullanıyor. |
 | `public.product_web_settings` | SELECT | SELECT | CRUD | CMS köprüsü için makul ayrım: tarayıcı okur, CMS API service-role ile yazar. |
 | `public.content_revisions` | Erişim yok | Erişim yok | CRUD | RLS açık, kullanıcı policy'si yok; service-role sunucu akışı için uygun görünüyor. |
 | `public.publication_logs` | Erişim yok | Erişim yok | CRUD | RLS açık, kullanıcı policy'si yok; service-role sunucu akışı için uygun görünüyor. |
@@ -34,6 +34,13 @@
 4. Storage'da public read gereksinimi ayrı tutulmalı; upload/update/delete için denylist yerine klasör allowlist'i ve rol doğrulaması hedeflenmeli.
 5. Her değişiklik öncesi Modül 1/2/7 gerçek yetkili hesapla ve anonim isteklerle test edilmeli; geri dönüş migration'ı hazırlanmalı.
 
-## Uygulanmayan değişiklikler
+## Uygulanan değişiklik — 2 Kasım 2026
 
-Bu turda canlı RLS, GRANT/REVOKE, Storage policy veya Auth ayarı değiştirilmedi. Çünkü Modül 2'nin kampanya/bot verileri ve bilinmeyen harici yazıcılar için uyumluluk testi henüz tamamlanmadı. Güvenli geçiş, bağımlılık envanteri ve staging doğrulamasından sonra ayrı migration olarak uygulanmalı.
+Migration `public_catalog_write_restrictions` canlı Supabase projesine uygulandı. Depodaki karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql` dosyasıdır.
+
+- `products`: `Public full access on products` policy kaldırıldı. Anon/authenticated yalnızca SELECT yapabilir; INSERT/UPDATE/DELETE yalnızca `service_role` için kaldı.
+- `site_settings`: üç eski public denylist yazma policy'si kaldırıldı. Anon INSERT/UPDATE/DELETE grant'leri iptal edildi. Authenticated DML grant'i korundu; RLS'de mevcut Modül 2 `admin`/`content_manager` ve anahtar bazlı policy'ler değiştirilmedi.
+- `site_settings` public-safe SELECT policy'si ve `products` public read policy'si korundu.
+- Canlı `has_table_privilege` sorgusuyla izinler yeniden doğrulandı. Modül 2 policy envanteri değişmeden kaldı.
+
+Storage policy'leri ve Auth ayarları bu adımda değiştirilmedi.
