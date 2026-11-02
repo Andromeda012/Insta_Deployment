@@ -133,3 +133,12 @@ Bu bölüm, yukarıdaki tarihsel denetim notlarında sonradan değişen durumlar
 - `Module 7/index.html` içindeki yinelenen Nova Studio script etiketi daha önce kaldırılmıştır; kök `/nova-studio-engine.js` yüklemesi korunur. Modül 2 katalog sayfası ve Modül 2 içindeki aynı blob'lu motor dosyası dondurulmuş kapsamda tutulur.
 - Son doğrulanan GitHub ana dal commit'i `962fb6efb2f2f15caa9904de3cb1db37ab167489` için GitHub Actions kalite kontrolü başarılı, Vercel Production dağıtımı `READY` durumundadır. Bu envanter güncellemesinden sonra gelen dokümantasyon commit'i ayrıca CI ve Vercel'de doğrulanmalıdır.
 - Git ağacında iki tam blob kopyası doğrulanmıştır: `Module 2/nova-studio-engine.js` / `nova-studio-engine.js` ve `Module 4/index.html` / `Module 4/siparis-paneli.html`. Bunlar şu aşamada silinmeyecektir: ilki Modül 2'nin korunması nedeniyle, ikincisi ise iki ayrı URL'nin dış bağlantılarda kullanılıyor olma ihtimali nedeniyle korunur.
+
+
+## Supabase public catalog yazma izinleri — 2 Kasım 2026
+
+- `products` tablosunda önceki `Public full access on products` policy'si ve anon/authenticated INSERT/UPDATE/DELETE yetkileri kaldırıldı. Anon/authenticated public SELECT yapabilir; server-side `service_role` CRUD yapabilir.
+- `site_settings` tablosundaki eski public denylist INSERT/UPDATE/DELETE policy'leri kaldırıldı ve anon DML grant'leri iptal edildi. Authenticated DML grant'i, Modül 2'nin mevcut admin/content_manager ve key-scope RLS policy'leri için korundu; bu policy'lere dokunulmadı.
+- Modül 7 ürün CRUD ve ayar yazımları zaten `/api/module7` üzerinden service_role kullanıyor; Modül 1 site ayarları CMS API üzerinden yazılıyor. `product_web_settings` public read / service_role write ayrımı değişmedi.
+- Canlı migration adı `public_catalog_write_restrictions`; repo SQL karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql`.
+- Migration sonrası `has_table_privilege` ve `pg_policies` sorguları çalıştırıldı. Storage policy'leri, Auth ayarları, Modül 2 kodu/prompt'u ve kampanya verileri değiştirilmedi.
