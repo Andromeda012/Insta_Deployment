@@ -59,7 +59,10 @@ Architectural Digest quality, perfectly centered, straight-on front view, photor
     aiProfile.decor && `Additional background decor guidance: ${aiProfile.decor}. Never obscure or overlap the furniture.`,
     aiProfile.camera && `Camera and framing preference: ${aiProfile.camera}. Keep the furniture fully visible and unchanged.`
   ].filter(Boolean);
-  return additions.length ? basePrompt + `\\n\\nPRODUCT AI STUDIO GUIDANCE (background and presentation only; product geometry and details remain frozen):\\n` + additions.join(' ') : basePrompt;
+  return additions.length ? basePrompt + `
+
+PRODUCT AI STUDIO GUIDANCE (background and presentation only; product geometry and details remain frozen):
+` + additions.join(' ') : basePrompt;
 }
 
 /**
