@@ -266,7 +266,8 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     rawImageUrl: product.ana_resim,
     aspectRatio: '9:16',
     apiKey,
-    allowFallback
+    allowFallback,
+    aiProfile
   });
 
   // 2. Detay Maddeli Gönderi (1080x1080)
@@ -294,6 +295,8 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     product_title: product.title || 'Lüks Koleksiyon',
     raw_image_url: product.ana_resim || SUPABASE_CONFIG.mediaFallback,
     banana_prompt: prompt,
+    ai_studio_profile: aiProfile,
+    reels_music_preference: aiProfile.music || '',
     banana_hero_url: hero1x1.imageUrl,
     banana_hero_vertical_url: (hero9x16 && hero9x16.ok && hero9x16.imageUrl) ? hero9x16.imageUrl : hero1x1.imageUrl,
     photoroom_hero_url: hero1x1.imageUrl,
