@@ -4,6 +4,7 @@
 // ============================================================================
 
 import PhotoroomEngine from '../photoroom-engine.js';
+import { authenticateRoles } from './_lib/auth.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -44,6 +45,7 @@ export default async function handler(req, res) {
 
     // 2. POST: Photoroom Pipeline ile Yeni Kampanya Üret ve Supabase'e Kaydet
     if (req.method === 'POST') {
+      await authenticateRoles(req, ['admin', 'product_manager']);
       const body = req.body || {};
       const catalog = await fetchProductsCatalog();
 
@@ -63,7 +65,8 @@ export default async function handler(req, res) {
         product = catalog[dayOfYear % catalog.length];
       }
 
-      const apiKey = (body.photoroom_api_key || process.env.PHOTOROOM_API_KEY || '').trim();
+      // Provider keys must remain server-side; never accept secret keys from browser input.
+      const apiKey = (process.env.PHOTOROOM_API_KEY || '').trim();
 
       const campaign = await PhotoroomEngine.buildAndSaveProductCampaign({
         product,
