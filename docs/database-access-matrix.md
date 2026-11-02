@@ -3,7 +3,7 @@
 **Denetim tarihi:** 2 Kasım 2026  
 **Proje:** `vrfujrpsjzqjthaqdalx`  
 **Yöntem:** `pg_policies`, etkin rol izinleri (`has_table_privilege`) ve canlı migration dosyalarının karşılaştırılması.  
-**Not:** Bu belge yalnızca mevcut durumu kaydeder. Bu denetim sırasında canlı şemaya, grant'lere, policy'lere veya Storage nesnelerine yazılmadı.
+**Not:** Bu belge canlı Supabase erişim yapılandırmasını ve uygulanan değişiklikleri kaydeder. Storage nesnelerinin kendisi değiştirilmedi.
 
 ## Tablo erişimleri
 
@@ -20,11 +20,11 @@
 | İşlem | Anonim | Oturum açmış | Mevcut kural |
 |---|---|---|---|
 | SELECT | Evet | Evet | Bucket genelinde public read policy. |
-| INSERT | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | Public policy yalnızca korunan klasör adlarını hariç tutuyor; `urunler`, `anasayfa`, `galeri`, `blog`, `tedarikciler`, `instagram`, `facebook`, `tiktok`, `youtube`, `posts`, `stories` korunmuş. Canlı nesne envanterinde ayrıca `products` (8), `photoroom` (4), `samples` (2), `showroom` (3) klasörleri bulundu; bunlar public write denylist'inde yer almıyor. `instagram` (19), `posts` (23), `products` (8), `stories` (24), `photoroom` (4), `samples` (2), `showroom` (3) nesneleri mevcut. Modül 1/2 yöneticileri kendi korunan klasörlerine yükleyebilir. |
+| INSERT | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | Public policy korunan klasör adlarını hariç tutuyor. 2 Kasım 2026 tarihli `protect_products_storage_folder` migration'ı ile `products` da INSERT/UPDATE/DELETE denylist'ine eklendi. `photoroom`, `samples` ve `showroom` henüz public write denylist'inde değil. `instagram` (19), `posts` (23), `products` (8), `stories` (24), `photoroom` (4), `samples` (2), `showroom` (3) nesneleri mevcut. Modül 1/2 yöneticileri kendi korunan klasörlerine yükleyebilir. |
 | UPDATE | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | INSERT ile benzer denylist mantığı. |
 | DELETE | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | INSERT ile benzer denylist mantığı. |
 
-**Önemli ayrıntı:** Public Storage yazma politikaları bir allowlist değil, denylist kullanıyor. Korunan klasör listesine eklenmemiş yeni bir klasör açılırsa public write erişimi varsayılan olarak açılabilir. Depo kodu incelemesinde Modül 1 `urunler/`, `anasayfa/`, `galeri/`, `blog/`, `tedarikciler/` yollarını kullanıyor. Modül 7 API ve kök Gemini motoru `products/`, `posts/`, `stories/` yollarına service-role ile yazıyor. Dondurulmuş `Module 2/photoroom-engine.js` ise `photoroom/`, `posts/`, `stories/` yollarına yazıyor ve varsayılan yapılandırmasında anon anahtara düşebiliyor. Bu nedenle `photoroom/` klasörünü korumaya almak, üretimde service-role yapılandırması yoksa Modül 2 akışını bozabilir. `samples/` ve `showroom/` için depo içi yazıcı bulunamadı; harici tüketici kaynağı bilinmiyor. Storage policy'leri bu nedenle henüz değiştirilmedi.
+**Önemli ayrıntı:** Public Storage yazma politikaları hâlâ bir allowlist değil, denylist kullanıyor. Korunan klasör listesine eklenmemiş yeni bir klasör açılırsa public write erişimi varsayılan olarak açılabilir. Depo kodu incelemesinde Modül 1 `urunler/`, `anasayfa/`, `galeri/`, `blog/`, `tedarikciler/` yollarını kullanıyor. Modül 7 API ve kök Gemini motoru `products/`, `posts/`, `stories/` yollarına service-role ile yazıyor. Vercel Production değişken envanterinde `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_ANON_KEY` ve `SUPABASE_URL` bulundu; `SUPABASE_KEY` bulunamadı. Bu nedenle `Module 2/photoroom-engine.js` varsayılan anonim anahtara düşüyor. Dondurulmuş `Module 2/photoroom-engine.js` ise `photoroom/`, `posts/`, `stories/` yollarına yazıyor ve varsayılan yapılandırmasında anon anahtara düşebiliyor. Bu nedenle `photoroom/` klasörünü korumaya almak, üretimde service-role yapılandırması yoksa Modül 2 akışını bozabilir. `samples/` ve `showroom/` için depo içi yazıcı bulunamadı; harici tüketici kaynağı bilinmiyor. Bu nedenle `photoroom/` policy'si değiştirilmedi. `products/` için ayrı bir güvenlik daraltması uygulandı.
 
 ## Yetki sınırları ve önerilen hedef
 
@@ -53,9 +53,20 @@ Storage policy'leri ve Auth ayarları bu adımda değiştirilmedi.
 | `instagram` | 19 | Varsayılan Reels medyası; Modül 2 yayın varlıkları | Modül 2 kapsamı korunur |
 | `posts` | 23 | Kök ve Modül 2 Gemini/Photoroom motorları | Korunan klasör olarak kalır |
 | `stories` | 24 | Kök ve Modül 2 Gemini/Photoroom motorları | Korunan klasör olarak kalır |
-| `products` | 8 | Modül 7 API ve kök/Modül 2 Gemini motorları | Service-role akışı doğrulanmadan policy değişikliği yapılmaz |
+| `products` | 8 | Modül 7 API ve kök Gemini motoru | 2 Kasım 2026: public INSERT/UPDATE/DELETE engellendi; public read korundu; service-role yazımı devam eder |
 | `photoroom` | 4 | Modül 2 Photoroom motoru; anon fallback anahtarı mevcut | Modül 2 dondurulmuş; service-role yapılandırması doğrulanmadan public write kapatılmaz |
 | `samples` | 2 | Depo içi yazıcı bulunamadı | Harici tüketici araştırılmalı |
 | `showroom` | 3 | Depo içi yazıcı bulunamadı | Harici tüketici araştırılmalı |
 
-Canlı nesne sorgusunda en son güncellemeler: `posts` ve `stories` 2 Kasım 2026; `products`, `instagram`, `photoroom` 31 Ekim 2026; `showroom` 29 Ekim 2026. Hiçbir nesne silinmedi veya değiştirilmadi.
+Canlı nesne sorgusunda en son oluşturulma zamanları: `posts` ve `stories` 2 Kasım 2026; `products`, `instagram`, `photoroom`, `samples` 31 Ekim 2026; `showroom` 29 Ekim 2026. Hiçbir Storage nesnesi silinmedi veya değiştirilmedi.
+
+## Uygulanan Storage değişikliği — 2 Kasım 2026
+
+Migration `protect_products_storage_folder` canlı Supabase projesine uygulandı; depodaki karşılığı `supabase/migrations/20261102110000_protect_products_storage_folder.sql`.
+
+- `media` bucket'ında `products/` için public INSERT, UPDATE ve DELETE policy erişimi kaldırıldı.
+- Public SELECT policy'si değişmedi; mevcut ürün görselleri herkese açık okunabilir durumda.
+- `service_role` kullanan Modül 7 API ve kök motor yüklemeleri bu değişiklikten etkilenmez.
+- `photoroom/`, `samples/` ve `showroom/` değiştirilmedi.
+- Modül 2 policy'leri ve kaynak kodu değiştirilmedi.
+- Canlı `pg_policies` sorgusu üç public write policy'sinin de `products` klasörünü hariç tuttuğunu doğruladı.
