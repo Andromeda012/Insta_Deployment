@@ -23,7 +23,7 @@ for (const file of tracked) {
   }
   if (file.startsWith('supabase/migrations/') && file.endsWith('.sql')) {
     migrationCount++;
-    if (!/^\d{12}_[a-z0-9_]+\.sql$/.test(base)) failures.push(`Migration adı sıralama standardına uymuyor: ${file}`);
+    if (!/^\d{12}(?:\\d{2})?_[a-z0-9_]+\.sql$/.test(base)) failures.push(`Migration adı sıralama standardına uymuyor: ${file}`);
   }
 }
 
