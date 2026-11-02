@@ -260,6 +260,11 @@ async function runTests() {
   }
 }
 
+if (process.env.RUN_LIVE_AI_TESTS !== 'true') {
+  console.log('Bu dosya canlı API/Storage işlemleri yapabilir. Çalıştırmak için RUN_LIVE_AI_TESTS=true değişkenini açıkça ayarlayın.');
+  process.exit(0);
+}
+
 runTests().catch(err => {
   console.error('Beklenmeyen test hatası:', err);
   process.exit(1);
