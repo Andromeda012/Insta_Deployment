@@ -42,7 +42,7 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 ## 5. Motorlar ve eski entegrasyonlar
 
 - `Module 2/gemini-banana-engine.js`: Modül 2 kapsamındadır; bu temizlikte değiştirilmeyecektir.
-- `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js`: aynı Git blob içeriğine sahip iki kopya olarak tespit edilmiştir. Katalog sayfası her iki yolu da yüklediğinden, tekilleştirme ancak yükleme zinciri ve global nesne davranışı test edilerek yapılmalıdır.
+- `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js`: aynı Git blob içeriğine sahip iki kopyadır. `Module 7/index.html` içindeki yinelenen yükleme kaldırılmış ve yalnızca kök motor bırakılmıştır. `Module 2/Catalog/index.html` ile Modül 2 kopyası dondurma kararı nedeniyle değiştirilmemiştir.
 - `photoroom-engine.js`: `api/photoroom-campaign.js` tarafından import edilmektedir. Dolayısıyla yalnızca motor dosyasını silmek canlı API fonksiyonunu kırar.
 - `Module 2/photoroom-engine.js`: Modül 2 alanındadır ve bu çalışma kapsamında dokunulmayacaktır.
 - `api/photoroom-campaign.js` ve `supabase_photoroom_setup.sql`: eski Photoroom akışının parçalarıdır. İç kodda çağrı bulunmaması, harici sistem veya eski panel tarafından kullanılmadığını kanıtlamaz. Silme kararı öncesinde endpoint erişim/logları ve Supabase bağımlılıkları doğrulanmalıdır.
