@@ -140,5 +140,5 @@ Bu bölüm, yukarıdaki tarihsel denetim notlarında sonradan değişen durumlar
 - `products` tablosunda önceki `Public full access on products` policy'si ve anon/authenticated INSERT/UPDATE/DELETE yetkileri kaldırıldı. Anon/authenticated public SELECT yapabilir; server-side `service_role` CRUD yapabilir.
 - `site_settings` tablosundaki eski public denylist INSERT/UPDATE/DELETE policy'leri kaldırıldı ve anon DML grant'leri iptal edildi. Authenticated DML grant'i, Modül 2'nin mevcut admin/content_manager ve key-scope RLS policy'leri için korundu; bu policy'lere dokunulmadı.
 - Modül 7 ürün CRUD ve ayar yazımları zaten `/api/module7` üzerinden service_role kullanıyor; Modül 1 site ayarları CMS API üzerinden yazılıyor. `product_web_settings` public read / service_role write ayrımı değişmedi.
-- Canlı migration adı `public_catalog_write_restrictions`; repo SQL karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql`.
+- Canlı migration adı `public_catalog_write_restrictions`; repo SQL karşılığı `supabase/migrations/20261102093133_public_catalog_write_restrictions.sql`.
 - Migration sonrası `has_table_privilege` ve `pg_policies` sorguları çalıştırıldı. Storage policy'leri, Auth ayarları, Modül 2 kodu/prompt'u ve kampanya verileri değiştirilmedi.
