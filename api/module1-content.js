@@ -1,3 +1,5 @@
+import { authenticateRoles } from './_lib/auth.js';
+
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -8,35 +10,13 @@ function send(res, status, body) {
   return res.status(status).json(body);
 }
 
-function fail(message, status) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
-
-function bearerToken(req) {
-  const value = req.headers.authorization || '';
-  return value.startsWith('Bearer ') ? value.slice(7).trim() : '';
-}
-
 async function authenticate(req) {
-  const token = bearerToken(req);
-  if (!token) throw fail('Oturum açmanız gerekiyor.', 401);
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
-    throw fail('CMS sunucu ortam değişkenleri eksik.', 503);
+    const error = new Error('CMS sunucu ortam değişkenleri eksik.');
+    error.status = 503;
+    throw error;
   }
-
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` }
-  });
-  if (!response.ok) throw fail('Oturum geçersiz veya süresi dolmuş.', 401);
-
-  const user = await response.json();
-  const role = user.app_metadata?.role;
-  if (!['admin', 'content_manager'].includes(role)) {
-    throw fail('Bu işlem için CMS yetkiniz bulunmuyor.', 403);
-  }
-  return user;
+  return authenticateRoles(req, ['admin', 'content_manager']);
 }
 
 async function supabaseRequest(path, options = {}) {
