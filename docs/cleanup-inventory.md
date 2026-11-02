@@ -83,3 +83,12 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 - Yalnızca `Module 7/index.html` içindeki ilk, yinelenen `/Module%202/nova-studio-engine.js` script etiketi kaldırıldı. Kök `/nova-studio-engine.js` yüklemesi ve Module 7'nin kullandığı global API korundu.
 - Kök motor dosyası ve Modül 2 kopyası şimdilik korunuyor; Module 2 katalog sayfası hâlâ kendi mevcut yükleme zincirine bağlı.
 - Değişiklik commit'i: `ee28d808125314bcebf59048023670a551d4208d`.
+
+### Modül 4 yinelenen HTML dosyası ve takip URL'si
+
+- `Module 4/index.html` ile `Module 4/siparis-paneli.html` aynı Git blob SHA değerine sahiptir; içerikleri birebir aynıdır.
+- Ana uygulama `js/modules/production.js` üzerinden `Module%204/index.html` dosyasını iframe içinde açar.
+- Her iki HTML dosyasındaki sipariş mesajı oluşturma kodu `{window.location.origin}/siparis-paneli?kod=...` adresini üretir.
+- Depoda kök dizinde `siparis-paneli.html` bulunmuyor ve `vercel.json` içinde `/siparis-paneli` için rewrite tanımı yok. Bu nedenle mevcut repo içeriğiyle bu takip URL'sinin doğru sayfaya yönlendiği doğrulanamıyor.
+- `Module 4/siparis-paneli.html` adı bir müşteri takip sayfası izlenimi verse de içeriği ayrı bir müşteri ekranı değil; yönetim paneliyle birebir aynı dosya.
+- Karar: iki dosyadan hiçbiri silinmedi. Önce müşteriye açık takip sayfasının gerçekten var olup olmadığı ve doğru URL sözleşmesinin ne olması gerektiği netleştirilmeli. Müşteriye açık olması gereken bir bağlantıyı yönetim paneline yönlendirmek güvenlik ve erişim kontrolü açısından kabul edilemez.
