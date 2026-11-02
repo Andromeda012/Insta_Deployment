@@ -62,3 +62,12 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 - Canlı Supabase şeması, policy'ler, grant'ler, kullanıcılar, Storage nesneleri veya Auth ayarları değiştirilmedi.
 - API endpoint kodu, Modül 2 dosyaları, yayın prompt'u ve canlı veri akışları değiştirilmedi.
 - Bu karar bilinçli: henüz doğrulanmamış harici tüketicileri kırmadan, riskli noktaları ve uygulanma sırasını kayıt altına almak.
+
+
+## Denetim kapsamı düzeltmesi — etkin izinlerin doğrulanması
+
+- `products` ve `site_settings` için yalnızca `information_schema.role_table_grants` çıktısına bakmak yeterli değildir; PostgreSQL rol kalıtımı nedeniyle `has_table_privilege` ile etkin izinler ayrıca sorgulandı.
+- Etkin izin sorgusu `anon` ve `authenticated` rollerinin `products` ve `site_settings` üzerinde SELECT/INSERT/UPDATE/DELETE yetkilerine sahip olduğunu doğruladı. RLS politikaları da `TO public` ve geniş `USING/WITH CHECK (true)` ya da denylist koşullarıyla bunu destekliyor. Dolayısıyla API-01 ve API-02 bulguları doğrulanmıştır.
+- `storage.objects` için de anon/authenticated rolleri INSERT/UPDATE/DELETE tablo izinlerine sahip; RLS policy'leri `media` bucket'ında belirli korunan klasörler dışındaki yollara public yazmayı/silmeyi açıyor. Bu bir uyumluluk politikası gibi görünse de izin verilen klasörler allowlist yerine denylist ile tanımlandığı için yeni klasörler varsayılan olarak korumasız kalabilir.
+- Migration `202611010005_restore_module7_product_crud.sql` açıkça `GRANT SELECT, INSERT, UPDATE, DELETE TO public` ve `Public full access on products` politikasını geri getiriyor. Migration `006-009` sosyal medya ayarları ve Storage klasörlerini daraltıyor ancak ürün tablosunun public CRUD iznini kaldırmıyor.
+- Bu nedenle önceki rapordaki ürün/site ayarı risk değerlendirmesi teyit edildi; Storage için ayrıca yeni bir yüksek öncelikli bulgu eklendi. Canlı DB'de bu denetim sırasında hiçbir değişiklik yapılmadı.
