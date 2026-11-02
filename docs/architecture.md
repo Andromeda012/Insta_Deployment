@@ -49,7 +49,7 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 - `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js`: aynı Git blob içeriğine sahip iki kopyadır. `Module 7/index.html` içindeki yinelenen yükleme kaldırılmış ve yalnızca kök motor bırakılmıştır. `Module 2/Catalog/index.html` ile Modül 2 kopyası dondurma kararı nedeniyle değiştirilmemiştir.
 - `photoroom-engine.js`: `api/photoroom-campaign.js` tarafından import edilmektedir. Dolayısıyla yalnızca motor dosyasını silmek canlı API fonksiyonunu kırar.
 - `Module 2/photoroom-engine.js` kullanılmayan eski kopya olarak bağımlılık taramasından sonra kaldırılmıştır (2 Kasım 2026).
-- `api/photoroom-campaign.js` ve `supabase_photoroom_setup.sql`: eski Photoroom akışının parçalarıdır. İç kodda çağrı bulunmaması, harici sistem veya eski panel tarafından kullanılmadığını kanıtlamaz. Silme kararı öncesinde endpoint erişim/logları ve Supabase bağımlılıkları doğrulanmalıdır.
+- `api/photoroom-campaign.js` ve `supabase/legacy/supabase_photoroom_setup.sql`: eski Photoroom akışının parçalarıdır. İç kodda çağrı bulunmaması, harici sistem veya eski panel tarafından kullanılmadığını kanıtlamaz. Silme kararı öncesinde endpoint erişim/logları ve Supabase bağımlılıkları doğrulanmalıdır.
 
 ## 6. Güvenlik ve yapılandırma
 
