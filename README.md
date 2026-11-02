@@ -50,7 +50,7 @@ Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki aray
 └── package.json
 ```
 
-Daha ayrıntılı mevcut mimari için [docs/architecture.md](docs/architecture.md), temizlik ve bağımlılık envanteri için [docs/cleanup-inventory.md](docs/cleanup-inventory.md), API güvenliği için [docs/api-security-audit.md](docs/api-security-audit.md), veri erişim matrisi için [docs/database-access-matrix.md](docs/database-access-matrix.md) ve test/yayın standardı için [docs/testing-and-release.md](docs/testing-and-release.md) dosyalarına bakın.
+Daha ayrıntılı mevcut mimari için [docs/architecture.md](docs/architecture.md), temizlik ve bağımlılık envanteri için [docs/cleanup-inventory.md](docs/cleanup-inventory.md), API güvenliği için [docs/api-security-audit.md](docs/api-security-audit.md), veri erişim matrisi için [docs/database-access-matrix.md](docs/database-access-matrix.md), Modül 4 takip güvenliği için [docs/module4-tracking-security.md](docs/module4-tracking-security.md) ve test/yayın standardı için [docs/testing-and-release.md](docs/testing-and-release.md) dosyalarına bakın.
 
 ## Mimari ilkeler
 
