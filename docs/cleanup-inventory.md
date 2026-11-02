@@ -57,3 +57,20 @@ Bir dosyanın eski görünmesi veya adında eski bir servis geçmesi tek başın
 Photoroom adı yanıltıcı: kök `photoroom-engine.js` içinde kampanya motoru Gemini Banana akışını da yürütüyor. Canlı `site_settings` kayıtları ve Storage varlıkları yakın tarihli olduğundan, bu dosyaları veya kampanya verisini şu aşamada kaldırmak güvenli değil. `Module 2/photoroom-engine.js` dondurulmuş Modül 2 kapsamı nedeniyle ayrıca korunur.
 
 Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTML/JS/cron/webhook referanslarını ve Vercel erişim isteklerini (mevcut log saklama sınırları dahilinde) doğrulamak; ardından Photoroom adı taşıyan parçaları **aktif Gemini Banana kampanya akışından ayırmak** olmalıdır. Bu ayrım tamamlanmadan dosya silinmeyecek veya API yolu değiştirilmeyecektir.
+
+### Kampanya motorlarının ayrıştırılması — ek kod ve yayın akışı denetimi (2 Kasım 2026)
+
+- Canlı yayın zamanlayıcıları `api/instagram-cron.js` ve `api/facebook-cron.js`, kökteki `gemini-banana-engine.js` dosyasını import eder. Bu motor `buildAndSaveProductCampaign()`, `fetchActiveCampaignFromSupabase()` ve `saveAssetRecordToSupabase()` üzerinden `site_settings.social_campaign_assets` anahtarını kullanır.
+- `Module 2/gemini-banana-engine.js` de aynı kampanya kayıt anahtarını kullanır; Modül 2 dondurulduğu için korunur.
+- Kök `photoroom-engine.js`, bu iki cron dosyasının import zincirinde görünmüyor. Eski `api/photoroom-campaign.js` endpoint'i tarafından import ediliyor. Bu nedenle eski motor ile güncel yayın motoru ayrı kod yolları; fakat aynı kampanya kayıt alanını paylaşıyorlar.
+- `Module 7/index.html` içindeki ürün dönüştürme ayarları ve medya yükleme işlemleri `/api/module7?action=...` uçlarını kullanıyor. Bu sayfada `/api/photoroom-campaign` veya Photoroom API çağrısı bulunmuyor.
+- Depo kod araması `/api/photoroom-campaign` için sonuç döndürmedi. Ancak GitHub kod araması sonuçsuz kaldığından bu tek başına harici tüketici olmadığını kanıtlamaz. Vercel'de son 30 dakikalık log sorgusunda da eşleşme bulunmadı; bu yalnızca dar zaman penceresidir.
+- `api/photoroom-campaign.js` tüm origin'lere CORS izni veriyor ve `POST` yolunda kimlik/rol doğrulaması yapmıyor. Buna rağmen kök motor, Supabase service-role anahtarıyla Storage ve `site_settings` üzerinde yazma işlemleri yapıyor. `photoroom_api_key` gövde alanı da kabul ediliyor; mevcut motorun Gemini anahtarını fiilen kullanıp kullanmadığı ayrıca kodda doğrulanmalıdır.
+
+### Karar ve sonraki güvenli adım
+
+1. Canlı yayın akışının kök `gemini-banana-engine.js` üzerinden devam ettiği doğrulandı; bu dosya ve ortak kampanya kayıtları korunacak.
+2. Eski `api/photoroom-campaign.js` endpoint'i ve kök `photoroom-engine.js` henüz silinmeyecek. Önce endpoint için harici çağrı sahibi/iş akışı teyit edilmeli.
+3. Endpoint'in yazma işlemi yetkisiz erişime açık göründüğünden, kullanım sahibi belirlendikten sonra `POST` için `authenticateRoles` veya eşdeğer güvenli servis kimlik doğrulaması eklenmeli. Çağıran istemci doğrulanmadan bu değişiklik yapılmayacak; aksi halde mevcut entegrasyon kırılabilir.
+4. `supabase_photoroom_setup.sql` yeniden çalıştırılmayacak. `social_campaign_assets` kaydı ve Storage nesneleri, güncel motorun ortak kullandığı veriler olarak korunacak.
+5. Eski motorun yalnızca adlandırma/uyumluluk kalıntısı olan alanları, aktif motorun beklediği kayıt şemasıyla karşılaştırılarak ayrı bir refactor olarak ele alınacak.
