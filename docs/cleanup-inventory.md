@@ -22,3 +22,20 @@
 ## Temizlik kuralı
 
 Bir dosyanın eski görünmesi veya adında eski bir servis geçmesi tek başına silme gerekçesi değildir. Önce import, script, fetch URL, cron, webhook, Vercel rewrite, SQL ve harici tüketici bağımlılıkları kontrol edilir. Silme işlemi ancak bağımlılıklar taşındıktan veya kullanım dışı olduğu doğrulandıktan sonra yapılır.
+
+## Kök dizin ve işletim dosyaları — ikinci inceleme
+
+| Öğe | Doğrulanan bulgu | Karar |
+|---|---|---|
+| `gemini-banana-engine.js` (kök) | `test_gemini_banana.cjs` ve `test_verification_suite.cjs` bu dosyayı import ediyor. `api/module2.js` ise ayrı olarak `Module 2/gemini-banana-engine.js` dosyasını kullanıyor. | Modül 2 motoruna dokunulmayacak. Kök motor testlerin parçası olduğu için testler taşınmadan silinmeyecek. |
+| `run_dm_scanner.ps1` / `.bat` | PowerShell betiği canlı Instagram DM tarama ve Instagram/Facebook cron endpoint'lerini düzenli çağırıyor; BAT dosyası bunu başlatıyor. | Kullanım dışı değil; yerel işletim aracı olarak korunacak. 7/24 çalışması için açık bir Windows oturumu gerektirdiği ayrıca not edilmeli. |
+| `Module 4/index.html` / `Module 4/siparis-paneli.html` | Dosyalar aynı Git blob SHA değerine ve aynı boyuta sahip; içerikleri birebir aynı. | Yinelenen içerik doğrulandı, fakat iki ayrı URL doğrudan kullanılıyor olabilir. URL/harici bağlantı kullanımı doğrulanmadan biri silinmeyecek. |
+| `package.json` (kök) | Yalnızca proje adı, sürüm, ESM tipi ve private işaretini içeriyor; script veya dependency tanımlamıyor. | Şu an gereksiz değil; ESM davranışını açıkça tanımlıyor. |
+| `vps_migration_staging/` | Docker publisher/webhook, SQL yamaları, testler ve migration checklist içeriyor. | Aktif VPS olarak değerlendirilmez; geçiş kararı verilene kadar staging arşivi olarak korunur. |
+
+## Güvenlik / eski entegrasyon notu
+
+- `api/photoroom-campaign.js` içinde Supabase anon anahtarı için sabit bir fallback tanımı var. Anon anahtar tek başına servis rolü sırrı değildir; asıl güvenlik sınırı Supabase RLS politikalarıdır.
+- `supabase_photoroom_setup.sql`, Photoroom tablolarında `FOR ALL` ve herkese açık `USING (true)` / `WITH CHECK (true)` politikaları tanımlıyor. Bu SQL dosyası yeniden çalıştırılmamalı; canlı projedeki mevcut tablolar ve politikalar ayrıca denetlenmeli.
+- Photoroom API'si kök `photoroom-engine.js` dosyasını import ediyor. Depo içi aramada görünür çağrı bulunmaması, Vercel endpoint'ine dışarıdan istek gelmediğini kanıtlamaz. Erişim logları ve Supabase bağımlılıkları doğrulanmadan tüm akış birlikte kaldırılmayacak.
+
