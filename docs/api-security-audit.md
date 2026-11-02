@@ -85,7 +85,7 @@ Denetimde ürün tablosunda public CRUD ve `site_settings` üzerinde public deny
 
 ## 2 Kasım 2026 — Ürün ve site ayarı yazma yetkileri daraltıldı
 
-Migration `public_catalog_write_restrictions` canlı Supabase projesinde başarıyla uygulandı; depo karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql`.
+Migration `public_catalog_write_restrictions` canlı Supabase projesinde başarıyla uygulandı; depo karşılığı `supabase/migrations/20261102093133_public_catalog_write_restrictions.sql`.
 
 **Önceki etkin izinler (has_table_privilege):**
 - `products`: anon ve authenticated SELECT/INSERT/UPDATE/DELETE.
