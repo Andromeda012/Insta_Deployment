@@ -48,7 +48,6 @@ Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki aray
 ├── scripts/repo-check.mjs              # Statik depo kalite kontrolü
 ├── tests/                              # Kontrollü manuel entegrasyon testleri
 ├── infra/vps-migration-staging/        # VPS geçiş hazırlıkları (canlı değil)
-
 ├── vercel.json                         # Vercel yönlendirme, cron ve fonksiyon ayarları
 └── package.json
 ```
