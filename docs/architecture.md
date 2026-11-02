@@ -8,7 +8,7 @@ Bu belge, depodaki mevcut kodun fiilî yerleşimini ve sorumluluk sınırların�
 - **Dağıtım:** Vercel, kök dizinden statik dosyaları ve `api/` altındaki Node.js serverless fonksiyonlarını dağıtır.
 - **Veri ve kimlik:** Supabase, uygulama verileri ve oturum/erişim akışlarının ana veri katmanıdır.
 - **Zamanlanmış işler:** `vercel.json` içinde tanımlı cron uçları ve `.github/workflows/` altındaki GitHub Actions iş akışları ayrı ayrı değerlendirilmelidir.
-- **VPS geçişi:** `vps_migration_staging/` bir geçiş hazırlık alanıdır; mevcut canlı yayın altyapısı olarak kabul edilmemelidir.
+- **VPS geçişi:** `infra/vps-migration-staging/` bir geçiş hazırlık alanıdır; mevcut canlı yayın altyapısı olarak kabul edilmemelidir.
 
 ## 2. Modül sınırları
 
@@ -30,7 +30,10 @@ Modül numaraları ile ana kabuktaki modül yükleyicileri eşleşecek şekilde 
 - `js/data.js`: ana kabukta kullanılan paylaşılan veri/arayüz durumu.
 - `js/modules/permissions.js`: rol ve yetki arayüzü.
 - `api/_lib/`: API tarafında ortak kimlik doğrulama ve yayın yardımcıları.
-- `supabase/migrations/`: veritabanı şema ve güvenlik değişikliklerinin sıralı kayıtları.
+- `supabase/migrations/`: veritabanı şema ve güvenlik değişikliklerinin sıralı kayıtları. Bu klasörün dışına taşınmaz.
+- `supabase/legacy/`: tarihsel başlangıç/Photoroom SQL dosyaları; migration değildir ve tekrar çalıştırılmamalıdır.
+- `infra/vps-migration-staging/`: canlıya alınmamış VPS geçiş taslakları, Docker publisher/webhook ve testleri.
+- `tests/`: kontrollü manuel entegrasyon testleri; canlı API/Storage erişimi için açık opt-in gerekir.
 - `docs/`: teknik kararlar, API sözleşmeleri, veri erişim matrisi ve işletim dokümantasyonu.
 - `scripts/repo-check.mjs`: CI ve yerel geliştirme için salt-okunur statik kalite kontrolü.
 
@@ -45,7 +48,7 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 - `Module 2/gemini-banana-engine.js`: Modül 2 kapsamındadır; bu temizlikte değiştirilmeyecektir.
 - `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js`: aynı Git blob içeriğine sahip iki kopyadır. `Module 7/index.html` içindeki yinelenen yükleme kaldırılmış ve yalnızca kök motor bırakılmıştır. `Module 2/Catalog/index.html` ile Modül 2 kopyası dondurma kararı nedeniyle değiştirilmemiştir.
 - `photoroom-engine.js`: `api/photoroom-campaign.js` tarafından import edilmektedir. Dolayısıyla yalnızca motor dosyasını silmek canlı API fonksiyonunu kırar.
-- `Module 2/photoroom-engine.js`: Modül 2 alanındadır ve bu çalışma kapsamında dokunulmayacaktır.
+- `Module 2/photoroom-engine.js` kullanılmayan eski kopya olarak bağımlılık taramasından sonra kaldırılmıştır (2 Kasım 2026).
 - `api/photoroom-campaign.js` ve `supabase_photoroom_setup.sql`: eski Photoroom akışının parçalarıdır. İç kodda çağrı bulunmaması, harici sistem veya eski panel tarafından kullanılmadığını kanıtlamaz. Silme kararı öncesinde endpoint erişim/logları ve Supabase bağımlılıkları doğrulanmalıdır.
 
 ## 6. Güvenlik ve yapılandırma
@@ -78,3 +81,14 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 4. Her modülün UI, istemci kodu, API sözleşmesi ve migration referanslarını tek yerde belgelemeye devam et.
 5. Her değişiklikten sonra Vercel preview dağıtımı ve ilgili endpoint smoke testlerini çalıştır.
 6. Canlı cron, webhook ve yayın akışlarını doğrulamadan production temizliği yapma.
+
+
+## 10. Depo klasör standardı — 2 Kasım 2026
+
+- `tests/`: manuel entegrasyon testleri; canlı servis erişimi açık onay gerektirir.
+- `infra/vps-migration-staging/`: VPS geçiş taslağı; canlı deployment değildir.
+- `supabase/migrations/`: Supabase CLI tarafından sıralı olarak yürütülen gerçek migration'lar.
+- `supabase/legacy/`: eski başlangıç/kurulum SQL'leri; migration dizinine alınmaz ve tekrar çalıştırılmaz.
+- `Module 2/AI Studio/`, `Module 2/gemini-banana-engine.js`, `Module 2/nova-studio-engine.js`: Modül 2 yaratıcı akışı.
+- `Module 7/ai-studio.js`: Modül 7 ürün bazlı AI profil editörü. İki AI Studio alanı farklı sorumluluk taşır; tek dosyada birleştirilmez.
+- Kök `gemini-banana-engine.js`, `nova-studio-engine.js` ve `photoroom-engine.js` mevcut cron/API veya tarayıcı URL giriş noktalarıdır. Bunlar bağımlılıkları değiştirilmeden fiziksel olarak taşınmaz.
