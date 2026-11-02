@@ -121,3 +121,15 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 
 - İlk CI çalışması, `_data/galeri/galeri-1787672363723.json` içinde kalmış bir Git merge-conflict işaretini tespit etti. İşaretler kaldırılarak geçerli JSON hâline getirildi; sonraki CI kontrolü 159 izlenen dosya, 31 JSON, 55 JS/CJS ve 9 migration üzerinde başarılı oldu.
 - Vercel Production dağıtımı son commit `5a26020c5452ef3e03b3b6b376f4c66a622c1a8d` için `READY`; GitHub Actions statik kalite kontrolü de aynı commit üzerinde başarılı.
+
+
+## Güncel durum düzeltmesi — 2 Kasım 2026
+
+Bu bölüm, yukarıdaki tarihsel denetim notlarında sonradan değişen durumları günceller:
+
+- `api/photoroom-campaign.js` POST yolu artık `api/_lib/auth.js` üzerinden `admin` veya `product_manager` rolü gerektirir. Sağlayıcı anahtarı request body'den alınmaz; yalnızca `PHOTOROOM_API_KEY` sunucu ortam değişkeninden okunur. Hata yanıtları ortak `apiError` yardımcısıyla döndürülür. GET okuma davranışı korunmuştur.
+- Bu düzeltme `docs/api-security-audit.md` içinde de güncel bulgu olarak işaretlenmiştir. Eski bölümlerdeki “POST kimlik doğrulamasız” ifadeleri, bu tarihteki önceki durumun tarihsel kaydı olarak okunmalıdır.
+- `api/render.js` hâlâ Modül 2 bot motorlarını import eden ortak render endpoint'idir. TikTok akışında Supabase Storage'a yazma yapabildiği için açık auth/rate-limit konusu devam etmektedir; Modül 2'nin dondurulmuş olması ve dış tüketici envanterinin tamamlanmaması nedeniyle endpoint değiştirilmemiştir.
+- `Module 7/index.html` içindeki yinelenen Nova Studio script etiketi daha önce kaldırılmıştır; kök `/nova-studio-engine.js` yüklemesi korunur. Modül 2 katalog sayfası ve Modül 2 içindeki aynı blob'lu motor dosyası dondurulmuş kapsamda tutulur.
+- Son doğrulanan GitHub ana dal commit'i `962fb6efb2f2f15caa9904de3cb1db37ab167489` için GitHub Actions kalite kontrolü başarılı, Vercel Production dağıtımı `READY` durumundadır. Bu envanter güncellemesinden sonra gelen dokümantasyon commit'i ayrıca CI ve Vercel'de doğrulanmalıdır.
+- Git ağacında iki tam blob kopyası doğrulanmıştır: `Module 2/nova-studio-engine.js` / `nova-studio-engine.js` ve `Module 4/index.html` / `Module 4/siparis-paneli.html`. Bunlar şu aşamada silinmeyecektir: ilki Modül 2'nin korunması nedeniyle, ikincisi ise iki ayrı URL'nin dış bağlantılarda kullanılıyor olma ihtimali nedeniyle korunur.
