@@ -1,7 +1,7 @@
 import { authenticateRoles, apiError } from './_lib/auth.js';
 import { buildGeminiBananaPrompt } from '../Module 2/gemini-banana-engine.js';
 
-const BASE=(process.env.SUPABASE_URL||'').replace(/\\/+$/,'');
+const BASE=(process.env.SUPABASE_URL||'').replace(/\/+$/,'');
 const SERVICE=process.env.SUPABASE_SERVICE_ROLE_KEY||'';
 function fail(message,status=500){const e=new Error(message);e.status=status;return e;}
 async function db(path){
