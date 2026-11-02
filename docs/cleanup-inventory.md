@@ -108,6 +108,10 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 ### Test güvenliği ve depo kalite kapısı
 
 - `test_gemini_banana.cjs` ve `test_verification_suite.cjs` normal çalıştırmada gerçek Gemini/Storage işlemlerini başlatabiliyordu. İki dosyanın canlı test yürütme çağrısı artık yalnızca `RUN_LIVE_AI_TESTS=true` iken çalışır; test kodu ve kapsamı silinmedi.
-- Kök `package.json` içine bağımlılıksız `npm run check` komutu eklenecek; statik depo denetimi canlı entegrasyon testlerinden ayrılacak.
+- Kök `package.json` içine bağımlılıksız `npm run check` komutu eklendi; statik depo denetimi canlı entegrasyon testlerinden ayrıldı.
 - `.gitignore` genişletilerek tüm gerçek `.env*` dosyaları ve Node bağımlılık/coverage klasörleri dışlanacak; `.env.example` şablonları izlenebilir kalacak.
 - Modül 2 kaynakları değişmeden yalnızca statik sözdizimi denetimine dahil edilir; prompt veya yayın davranışında değişiklik yapılmaz.
+
+- `scripts/repo-check.mjs` ve `.github/workflows/repository-quality.yml` eklendi. CI, JSON/JS sözdizimi, migration adlandırması ve izlenen gerçek ortam dosyalarını kontrol eder.
+- `docs/testing-and-release.md` testlerin güvenli çalıştırılma ve yayın kontrol prosedürünü tanımlar.
+- Canlı Supabase tablo/Storage yetkileri için `docs/database-access-matrix.md` oluşturuldu; bu doküman canlı veritabanı değişikliği değildir.
