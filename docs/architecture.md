@@ -63,7 +63,14 @@ Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taş�
 - `.env*` dosyaları varsayılan olarak Git dışında tutulur; yalnızca `.env.example` şablonları izlenebilir.
 - GitHub Actions, `main` ve pull request değişikliklerinde aynı statik kalite kapısını çalıştırır.
 
-## 8. Temizlik sırası
+## 8. Modül 4 müşteri takip route'u
+
+- Müşteri takip arayüzü `Module 4/takip.html` dosyasıdır; `Module 4/siparis-paneli.html` yönetim paneliyle aynı içeriktedir.
+- Sipariş mesajlarının ürettiği `/siparis-paneli?kod=...` adresi için henüz Vercel rewrite yoktur.
+- Takip sayfası şu anda Firebase `/siparisler.json` listesini tarayıcıda indirip filtrelemektedir. Firebase kuralları doğrulanmadan bu sayfa müşteri verisi açısından güvenli kabul edilmez ve route açılmaz.
+- Geçmiş notlarının XSS riski `textContent` tabanlı DOM render'ı ile giderildi. Firebase koleksiyon erişimi ve takip API'si ayrı bir güvenlik işi olarak kalır.
+
+## 9. Temizlik sırası
 
 1. Dosya envanteri ve import/endpoint bağımlılıklarını doğrula.
 2. Kullanılmayan, sıfır bayt veya yinelenen dosyaları referans kontrolünden sonra kaldır.
