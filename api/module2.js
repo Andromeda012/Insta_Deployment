@@ -1,3 +1,4 @@
+import { buildGeminiBananaPrompt } from '../Module 2/gemini-banana-engine.js';
 import {createHash} from 'node:crypto';
 import {authenticateModule2Admin,authorizeVercelCron,supabaseAdminRequest,sendApiError} from './_lib/module2-publishing.js';
 
@@ -89,6 +90,21 @@ async function handleCancel(req,res){
  return res.status(409).json({ok:false,cancelled:false,status:current?.[0]?.status||'not_found',error:'Yayın artık pending durumda değil; güvenli şekilde iptal edilemedi.'});
 }
 
+async function handlePromptPreview(req,res){
+ if(req.method!=='POST'){res.setHeader('Allow','POST');return res.status(405).json({ok:false,error:'Method not allowed.'});}
+ await authenticateModule2Admin(req);
+ const slug=String(req.body?.product_slug||'').trim();
+ if(!/^[a-z0-9][a-z0-9-]{0,179}$/i.test(slug))return res.status(400).json({ok:false,error:'Geçerli ürün kodu gerekli.'});
+ const products=await supabaseAdminRequest('/rest/v1/products?slug=eq.'+encodeURIComponent(slug)+'&select=*&limit=1');
+ const product=products?.[0];if(!product)return res.status(404).json({ok:false,error:'Ürün bulunamadı.'});
+ const rows=await supabaseAdminRequest('/rest/v1/site_settings?key=eq.ai_studio_profiles&select=data&limit=1');
+ const all=rows?.[0]?.data||{categories:{},products:{}};
+ const profile={...(all.categories?.[product.kategori||'Genel']||{}),...(all.products?.[slug]||{})};
+ const prompt=buildGeminiBananaPrompt(product,profile);
+ const campaign={season:String(req.body?.season||'').slice(0,500),audience:String(req.body?.audience||'').slice(0,500),notes:String(req.body?.notes||'').slice(0,1500),platform:String(req.body?.platform||'instagram').slice(0,30),format:String(req.body?.format||'1:1').slice(0,10)};
+ return res.status(200).json({ok:true,product:{slug:product.slug,title:product.title,category:product.kategori,image:product.ana_resim},profile,campaign,prompt,api_ready:Boolean(process.env.GEMINI_API_KEY)});
+}
+
 async function handleYoutubeCron(req,res){
  if(!['GET','POST'].includes(req.method)){res.setHeader('Allow','GET, POST');return res.status(405).json({ok:false});}
  if(req.method==='GET'){
@@ -102,6 +118,7 @@ export default async function handler(req,res){
  const action=actionOf(req);
  try{
   if(action==='state')return await handleState(req,res);
+  if(action==='prompt-preview')return await handlePromptPreview(req,res);
   if(action==='enqueue')return await handleEnqueue(req,res);
   if(action==='cancel')return await handleCancel(req,res);
   if(action==='youtube-cron')return await handleYoutubeCron(req,res);
