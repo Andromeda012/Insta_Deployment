@@ -86,10 +86,10 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 
 ### Modül 4 yinelenen HTML dosyası ve takip URL'si
 
-- `Module 4/index.html` ile `Module 4/siparis-paneli.html` aynı Git blob SHA değerine sahiptir; içerikleri birebir aynıdır.
+- `Module 4/index.html` ile `Module 4/siparis-paneli.html` aynı Git blob SHA değerine sahiptir; içerikleri birebir aynıdır. Ayrı müşteri takip sayfası `Module 4/takip.html` dosyasıdır.
 - Ana uygulama `js/modules/production.js` üzerinden `Module%204/index.html` dosyasını iframe içinde açar.
 - Her iki HTML dosyasındaki sipariş mesajı oluşturma kodu `{window.location.origin}/siparis-paneli?kod=...` adresini üretir.
-- Depoda kök dizinde `siparis-paneli.html` bulunmuyor ve `vercel.json` içinde `/siparis-paneli` için rewrite tanımı yok. Bu nedenle mevcut repo içeriğiyle bu takip URL'sinin doğru sayfaya yönlendiği doğrulanamıyor.
+- Ayrı müşteri takip sayfası `Module 4/takip.html` mevcut; ancak `vercel.json` içinde `/siparis-paneli` için rewrite tanımı yok. Bu nedenle üretilen takip bağlantısı şu anda doğru sayfaya yönlenmiyor.
 - `Module 4/siparis-paneli.html` adı bir müşteri takip sayfası izlenimi verse de içeriği ayrı bir müşteri ekranı değil; yönetim paneliyle birebir aynı dosya.
 - Karar: iki dosyadan hiçbiri silinmedi. Önce müşteriye açık takip sayfasının gerçekten var olup olmadığı ve doğru URL sözleşmesinin ne olması gerektiği netleştirilmeli. Müşteriye açık olması gereken bir bağlantıyı yönetim paneline yönlendirmek güvenlik ve erişim kontrolü açısından kabul edilemez.
 
@@ -115,3 +115,6 @@ Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTM
 - `scripts/repo-check.mjs` ve `.github/workflows/repository-quality.yml` eklendi. CI, JSON/JS sözdizimi, migration adlandırması ve izlenen gerçek ortam dosyalarını kontrol eder.
 - `docs/testing-and-release.md` testlerin güvenli çalıştırılma ve yayın kontrol prosedürünü tanımlar.
 - Canlı Supabase tablo/Storage yetkileri için `docs/database-access-matrix.md` oluşturuldu; bu doküman canlı veritabanı değişikliği değildir.
+
+- `Module 4/takip.html` içindeki geçmiş notları için stored XSS riski tespit edildi ve `innerHTML` yerine DOM `textContent` ile render edilecek şekilde düzeltildi. Ayrıntı: `docs/module4-tracking-security.md`.
+- Takip sayfası Firebase `/siparisler.json` koleksiyonunun tamamını tarayıcıya çekiyor. Firebase anonim okuma kuralları doğrulanmadığından `/siparis-paneli` rewrite'i açılmadı; önce müşteri verisi erişim modeli güvenli hâle getirilmeli.
