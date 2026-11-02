@@ -72,3 +72,10 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 - `storage.objects` için de anon/authenticated rolleri INSERT/UPDATE/DELETE tablo izinlerine sahip; RLS policy'leri `media` bucket'ında belirli korunan klasörler dışındaki yollara public yazmayı/silmeyi açıyor. Bu bir uyumluluk politikası gibi görünse de izin verilen klasörler allowlist yerine denylist ile tanımlandığı için yeni klasörler varsayılan olarak korumasız kalabilir.
 - Migration `202611010005_restore_module7_product_crud.sql` açıkça `GRANT SELECT, INSERT, UPDATE, DELETE TO public` ve `Public full access on products` politikasını geri getiriyor. Migration `006-009` sosyal medya ayarları ve Storage klasörlerini daraltıyor ancak ürün tablosunun public CRUD iznini kaldırmıyor.
 - Bu nedenle önceki rapordaki ürün/site ayarı risk değerlendirmesi teyit edildi; Storage için ayrıca yeni bir yüksek öncelikli bulgu eklendi. Canlı DB'de bu denetim sırasında hiçbir değişiklik yapılmadı.
+
+
+## Modül 4 müşteri takip sayfası
+
+- `Module 4/takip.html` içinde sipariş geçmişi alanlarında stored XSS riski vardı; `stageName` ve `note` artık `textContent` ile DOM'a yazılıyor.
+- Sayfa tüm Firebase `/siparisler.json` koleksiyonunu istemciye indirip takip koduna göre filtreliyor. Firebase Security Rules canlı konsoldan doğrulanamadığı için veri gizliliği riski koşullu fakat önemli kabul edildi.
+- `/siparis-paneli` route'u henüz müşteri takip sayfasına yönlendirilmedi. Önce Firebase anonim okuma kuralları ve tek siparişe sınırlı sorgu/API modeli doğrulanmalı.
