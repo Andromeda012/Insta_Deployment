@@ -1,0 +1,65 @@
+# Global Mobilya — Sistem Mimarisi
+
+Bu belge, depodaki mevcut kodun fiilî yerleşimini ve sorumluluk sınırlarını tanımlar. Planlanan özellikler, canlıda mevcutmuş gibi gösterilmez.
+
+## 1. Çalışma modeli
+
+- **Web uygulaması:** Kök dizindeki `index.html`, `app.js`, `style.css` ve `js/` dosyaları ana yönetim kabuğunu oluşturur.
+- **Dağıtım:** Vercel, kök dizinden statik dosyaları ve `api/` altındaki Node.js serverless fonksiyonlarını dağıtır.
+- **Veri ve kimlik:** Supabase, uygulama verileri ve oturum/erişim akışlarının ana veri katmanıdır.
+- **Zamanlanmış işler:** `vercel.json` içinde tanımlı cron uçları ve `.github/workflows/` altındaki GitHub Actions iş akışları ayrı ayrı değerlendirilmelidir.
+- **VPS geçişi:** `vps_migration_staging/` bir geçiş hazırlık alanıdır; mevcut canlı yayın altyapısı olarak kabul edilmemelidir.
+
+## 2. Modül sınırları
+
+| Alan | Kod konumu | Sorumluluk |
+|---|---|---|
+| Modül 1 — Web sitesi ve CMS | `Module 1/`, `api/module1-content.js` | Site içerikleri, CMS ve web kataloğu |
+| Modül 2 — Sosyal medya | `Module 2/`, `api/module2.js`, `api/*-cron.js`, `api/*-webhook.js` | Bot arayüzleri, sosyal kanal iş akışları, yayın kuyruğu |
+| Modül 3 — CRM | `Module 3/`, `js/modules/crm.js` | Müşteri ve satış süreçleri |
+| Modül 4 — Üretim | `Module 4/`, `js/modules/production.js` | Üretim ve sipariş takip arayüzleri |
+| Modül 5 — Operasyon ve altyapı | `Module 5/`, `js/modules/operations.js` | Servis, altyapı ve operasyon görünümü |
+| Modül 6 — Analitik | `js/modules/analytics.js` | Yönetim ve performans göstergeleri |
+| Modül 7 — Ürün ve AI Studio | `Module 7/`, `api/module7.js` | Ürün kataloğu ve ürün bazlı AI profilleri |
+
+Modül numaraları ile ana kabuktaki modül yükleyicileri eşleşecek şekilde korunmalıdır. Modül 2 bu temizlik çalışmasında dondurulmuştur.
+
+## 3. Ortak platform katmanları
+
+- `js/auth.js`: tarayıcı oturum ve kimlik doğrulama arayüzü.
+- `js/data.js`: ana kabukta kullanılan paylaşılan veri/arayüz durumu.
+- `js/modules/permissions.js`: rol ve yetki arayüzü.
+- `api/_lib/`: API tarafında ortak kimlik doğrulama ve yayın yardımcıları.
+- `supabase/migrations/`: veritabanı şema ve güvenlik değişikliklerinin sıralı kayıtları.
+- `docs/`: teknik kararlar, API sözleşmeleri ve işletim dokümantasyonu.
+
+## 4. API dosyaları neden hemen taşınmıyor?
+
+Vercel'de `api/` altındaki dosya yolları aynı zamanda HTTP endpoint'leridir. Örneğin `api/module7.js` dosyasını `api/module7/index.js` konumuna taşımak URL sözleşmesini değiştirebilir. Cron tanımları, webhook sağlayıcıları, yeniden yazımlar ve istemci çağrıları birlikte güncellenmeden böyle bir taşıma yapılmamalıdır.
+
+Bu nedenle API'ler mantıksal olarak modüllere göre belgelenir; fiziksel taşıma ayrı bir kontrollü geçiş olarak planlanır.
+
+## 5. Motorlar ve eski entegrasyonlar
+
+- `Module 2/gemini-banana-engine.js`: Modül 2 kapsamındadır; bu temizlikte değiştirilmeyecektir.
+- `nova-studio-engine.js` ve `Module 2/nova-studio-engine.js`: aynı Git blob içeriğine sahip iki kopya olarak tespit edilmiştir. Katalog sayfası her iki yolu da yüklediğinden, tekilleştirme ancak yükleme zinciri ve global nesne davranışı test edilerek yapılmalıdır.
+- `photoroom-engine.js`: `api/photoroom-campaign.js` tarafından import edilmektedir. Dolayısıyla yalnızca motor dosyasını silmek canlı API fonksiyonunu kırar.
+- `Module 2/photoroom-engine.js`: Modül 2 alanındadır ve bu çalışma kapsamında dokunulmayacaktır.
+- `api/photoroom-campaign.js` ve `supabase_photoroom_setup.sql`: eski Photoroom akışının parçalarıdır. İç kodda çağrı bulunmaması, harici sistem veya eski panel tarafından kullanılmadığını kanıtlamaz. Silme kararı öncesinde endpoint erişim/logları ve Supabase bağımlılıkları doğrulanmalıdır.
+
+## 6. Güvenlik ve yapılandırma
+
+- Gizli anahtarlar yalnızca Vercel Environment Variables veya güvenli sunucu secret store içinde tutulmalıdır.
+- `.env` dosyaları Git'e eklenmemelidir; örnek dosyalarda yalnızca değişken adları ve sahte değerler bulunmalıdır.
+- Servis rolü anahtarları tarayıcı koduna gönderilmemelidir.
+- API uçları ortak auth yardımcılarını kullanmalı; CORS `*` gibi geniş izinler yalnızca gerekçelendirilmiş, herkese açık uçlarda bulunmalıdır.
+- Veritabanı değişiklikleri migration dosyalarıyla izlenmeli; canlı şemaya doğrudan ve kayıtsız müdahale edilmemelidir.
+
+## 7. Temizlik sırası
+
+1. Dosya envanteri ve import/endpoint bağımlılıklarını doğrula.
+2. Kullanılmayan, sıfır bayt veya yinelenen dosyaları referans kontrolünden sonra kaldır.
+3. Ortak sunucu yardımcılarını `api/_lib/` altında tut; modül API sözleşmelerini dokümante et.
+4. Her modülün UI, istemci kodu, API sözleşmesi ve migration referanslarını tek yerde belgelemeye devam et.
+5. Her değişiklikten sonra Vercel preview dağıtımı ve ilgili endpoint smoke testlerini çalıştır.
+6. Canlı cron, webhook ve yayın akışlarını doğrulamadan production temizliği yapma.
