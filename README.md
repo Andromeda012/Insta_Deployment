@@ -1,118 +1,81 @@
-# 🛋️ Global Mobilya — Modüler Operasyon Yönetim Platformu (Frontend Prototip v0.1)
+# Global Mobilya — Modüler Operasyon Platformu
 
-Mobilya üretimi ve kurumsal operasyonlar gerçekleştiren **Global Mobilya A.Ş.** için geliştirilmiş profesyonel, modern ve duyarlı (responsive) modüler operasyon yönetim platformu ön yüz prototipi.
+Global Mobilya'nın web sitesi, ürün kataloğu, müşteri ilişkileri, üretim, sosyal medya ve kurumsal operasyon süreçlerini tek bir platformda birleştirmek üzere geliştirilen modüler uygulama.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FAndromeda012%2FInsta_Deployment)
+> **Mimari hedef:** Modüllerin kendi sorumluluk alanlarını koruduğu, ortak servisler üzerinden haberleştiği ve zaman içinde katalogdan üretime, içerik üretiminden dağıtıma kadar otonom iş akışlarını destekleyebilen tek bir operasyon platformu.
 
----
+## Modül haritası
 
-## 📌 Proje Amacı ve Kapsamı
+| Modül | Kapsam | Ana kod alanı |
+|---|---|---|
+| **1 — Web Sitesi & CMS** | Kurumsal site, sayfa/içerik yönetimi ve web kataloğu | `Module 1/`, `api/module1-content.js` |
+| **2 — Sosyal Medya** | Instagram, Facebook, TikTok, YouTube botları ve yayın akışları | `Module 2/`, `api/module2.js`, webhook/cron uçları |
+| **3 — CRM** | Müşteri ilişkileri ve satış süreçleri | `Module 3/`, `js/modules/crm.js` |
+| **4 — Üretim** | Üretim ve sipariş takip arayüzleri | `Module 4/`, `js/modules/production.js` |
+| **5 — Operasyon & Altyapı** | Servisler, sunucu ve operasyon görünümü | `Module 5/`, `js/modules/operations.js` |
+| **6 — Performans Analitiği** | Yönetim KPI'ları ve performans görünümü | `js/modules/analytics.js` |
+| **7 — Ürün Yönetimi & AI Studio** | Ürün kataloğu ve ürün bazlı AI profilleri | `Module 7/`, `api/module7.js` |
 
-Bu proje, Global Mobilya'nın üretim, satış, pazarlama ve teknik altyapı operasyonlarını tek bir çatı altında birleştiren kurumsal yazılımın **frontend prototipidir (v0.1)**. 
+Paylaşılan yetenekler: ana uygulama kabuğu, kimlik doğrulama, rol/yetki arayüzü ve ortak API yardımcıları.
 
-Gerçek iş mantığı ve veritabanı bağlanmadan önce; görsel tasarım standartları, bilgi mimarisi, modül sınırları, kullanıcı deneyimi ve rol bazlı erişim modeli (RBAC) bu prototip ile somutlaştırılmıştır.
+## Teknik mimari
 
----
+- **Frontend:** Vanilla JavaScript, HTML ve CSS.
+- **Hosting / dağıtım:** Vercel. Proje kök dizininden statik arayüz ve `api/` altındaki serverless fonksiyonlar dağıtılır.
+- **Veri katmanı:** Supabase.
+- **Zamanlanmış işler:** Vercel Cron ve GitHub Actions iş akışları.
+- **VPS geçiş hazırlığı:** `vps_migration_staging/` altında ayrı bir hazırlık alanı bulunur; bu alan canlı VPS altyapısı olarak değerlendirilmemelidir.
 
-## 🏛️ Temel 6 İşletme Modülü
+### Depo yapısı
 
-Platform tam olarak 6 ana iş modülünden oluşmaktadır:
-
-1. **🌐 Modül 1 — Web Sitesi Yönetim Paneli:**
-   - Kurumsal web sitesi yayın durumu, sayfa ağacı ve navigasyon yönetimi.
-   - Mobilya ürün kataloğu (Masif meşe masalar, bukle koltuklar, TV üniteleri, stok ve SKU takibi).
-   - Ürün kategorileri, blog & makale içerikleri, SEO sağlık skoru ve gelen web iletişim formları.
-
-2. **🤖 Modül 2 — Sosyal Medya Bot Kontrol Paneli:**
-   - Çok kanallı hesap izleme (Instagram `@globalmobilya_tr`, Facebook, TikTok, YouTube).
-   - Bot durum göstergeleri (Otomatik DM, katalog senkronizasyonu, webhook gecikme süreleri).
-   - Zamanlanmış içerik takvimi ve yayın kuyruğu.
-   - Gelen yorumlar, otomatik bot yanıtları ve servis log terminali.
-
-3. **👥 Modül 3 — CRM & Satış Hunisi:**
-   - B2B ve perakende müşteri fırsatları (Otel projeleri, holding ofisleri, rezidans işleri).
-   - 5 Aşamalı Satış Hunisi (Yeni Talep → İletişim Kuruldu → Keşif & Projelendirme → Teklif Sunuldu → Sözleşme & Üretimde).
-   - Çok kanallı talep kaynakları (Web Formu, Instagram DM, Showroom, Telefon).
-   - Temsilci atamaları, teklif tutarları ve müşteri detay pencereleri.
-
-4. **🏭 Modül 4 — Üretim & Fabrika Kontrol Paneli:**
-   - İmalat iş emirleri ve atölye aşama takibi (Kesim → CNC → Zımpara/Cila → Döşeme → Montaj → Kalite).
-   - CNC İşleme Merkezleri canlı kapasite telemetrisi (Homag 5-Eksen, Biesse Ebatlama, Brandt Bantlama).
-   - Atölye ekipleri, termin tarihleri ve üretim darboğazı/gecikme uyarıları.
-
-5. **🛡️ Modül 5 — Altyapı & Operasyon Paneli:**
-   - Vercel Edge, AWS S3 Asset Bucket, Cloudflare DNS ve PostgreSQL servis sağlığı.
-   - Alan adları ve SSL sertifikaları takibi (`globalmobilya.com.tr`).
-   - Maskelenmiş API entegrasyon anahtarları (Instagram Graph API, Nebim ERP, IYS, S3).
-   - Aylık tahmini operasyon maliyetleri dökümü ve sistem denetim kayıtları (Audit Log).
-
-6. **📈 Modül 6 — Performans Analitiği Paneli:**
-   - Konsolide yönetici KPI göstergeleri ve tarih aralığı filtreleme (Son 7 Gün, Son 30 Gün, Q4, Yıllık).
-   - İnteraktif aylık ciro ve bütçe hedefi trend grafikleri (Tooltipli görsel barlar).
-   - Kanal bazlı gelir dağılımı (Mimari B2B %48, Web %26, Sosyal Medya %16, Showroom %10).
-   - Departman bazlı verimlilik karşılaştırması ve boş durum (empty state) simülasyonu.
-
----
-
-## 🔐 Paylaşılan Platform Özelliği: Kullanıcı Rolleri & Yetki Matrisi (RBAC)
-
-Modüllerden bağımsız paylaşılan bir platform özelliği olarak 5 kurumsal rolün yetki modeli tanımlanmıştır:
-- **Sistem Yöneticisi (Admin):** Tüm modüllere tam erişim ve yönetim.
-- **Şirket Yönetimi (Yönetici):** Konsolide ciro, finans ve performans analitiği.
-- **Satış & Pazarlama:** CRM, web sitesi içerikleri ve sosyal medya bot takibi.
-- **Üretim Sorumlusu:** Fabrika iş emirleri, CNC tezgahları ve atölye süreçleri.
-- **Altyapı Operatörü (DevOps):** Bulut servisleri, alan adları, API anahtarları ve sistem logları.
-
-> *Not: Üst bardaki rol değiştirici prototip simülasyonu olup, roller arası geçişin arayüzdeki etkilerini canlı olarak test etmeye olanak sağlar.*
-
----
-
-## 🛠️ Teknik Mimari ve Dosya Yapısı
-
-Sıfır bağımlılık (zero-dependency), ultra hızlı açılış ve tam Vercel Edge uyumluluğu için **Modern Modüler Vanilla ES6+ & CSS Tasarım Sistemi** kullanılmıştır:
-
-```
-Insta_Deployment/
-├── index.html               # Uygulama ana kabuğu (Sidebar, Topbar, Modal/Toast konteynerleri)
-├── style.css                # Global Mobilya kurumsal tasarım sistemi (Dark architectural UI)
-├── app.js                   # Ana koordinatör, SPA router, arama, filtreleme ve modal yöneticisi
+```text
+/
+├── index.html, app.js, style.css       # Ana uygulama kabuğu
 ├── js/
-│   ├── data.js              # 6 modüle ve rollere ait gerçekçi mock veri deposu
-│   └── modules/
-│       ├── dashboard.js     # Merkezi genel bakış paneli
-│       ├── website.js       # Modül 1: Web sitesi kontrolü
-│       ├── social.js        # Modül 2: Sosyal medya & bot paneli
-│       ├── crm.js           # Modül 3: CRM & satış hunisi
-│       ├── production.js    # Modül 4: Üretim & CNC takip paneli
-│       ├── operations.js    # Modül 5: Altyapı & bulut servisleri
-│       ├── analytics.js     # Modül 6: Konsolide performans analitiği
-│       └── permissions.js   # Platform Rolleri & Erişim Matrisi (RBAC)
-├── vercel.json              # "framework": null statik Vercel yapılandırması
-├── .gitignore               # Gereksiz dosyaların filtrelenmesi
-└── README.md                # Dokümantasyon
+│   ├── auth.js, data.js                # Paylaşılan istemci katmanı
+│   └── modules/                        # Modül arayüz yükleyicileri
+├── Module 1/ ... Module 7/             # Modüllerin kendi arayüz ve varlıkları
+├── api/
+│   ├── _lib/                           # Ortak sunucu yardımcıları
+│   ├── module1-content.js
+│   ├── module2.js
+│   ├── module7.js
+│   └── *-cron.js / *-webhook.js        # Entegrasyon uçları
+├── supabase/
+│   └── migrations/                     # Sıralı veritabanı değişiklikleri
+├── docs/                               # Mimari, API ve işletim belgeleri
+├── vps_migration_staging/              # VPS geçiş hazırlıkları
+├── vercel.json                         # Vercel yönlendirme, cron ve fonksiyon ayarları
+└── package.json
 ```
 
----
+Daha ayrıntılı mevcut mimari için [docs/architecture.md](docs/architecture.md), temizlik ve bağımlılık envanteri için [docs/cleanup-inventory.md](docs/cleanup-inventory.md) dosyalarına bakın.
 
-## ✨ AI Studio — Modül 7 / Modül 2 Entegrasyonu
+## Mimari ilkeler
 
-- Modül 7 ürün kataloğuna **AI Studio** profil editörü eklendi.
-- Kategori varsayılanları ve ürün bazlı özel ayarlar Supabase `site_settings` tablosundaki `ai_studio_profiles` kaydında tutulur.
-- Profil alanları: ışıklandırma, atmosfer, renk paleti, dekor, kamera/kadraj ve Reels müzik tercihi.
-- Modül 2'ye **AI Content Studio** sekmesi eklendi. Ürün, platform, format ve kampanya brief'i seçilebilir.
-- Mevcut `api/module2.js?action=prompt-preview` işlemi yetkili kullanıcının seçtiği ürün ve AI Studio profilini birleştirerek prompt önizlemesi sunar.
-- Onaylanan Gemini/Banana ana prompt metni değiştirilmeden korunur. Ürün profili yalnızca ek bağlam olarak birleştirilir; müzik tercihi görsel prompt'una eklenmez.
-- Gemini API anahtarı olmadan canlı görsel üretimi başlatılmaz. API anahtarı ve model/üretim bağlantısı sonraki yapılandırma aşamasındadır.
+1. Her modül kendi UI, istemci mantığı ve API sözleşmesinin sahibi olur.
+2. Kimlik doğrulama, yetki, loglama ve veri erişimi gibi ortak kabiliyetler tekrar yazılmaz; ortak katmanda tutulur.
+3. Modüller birbirlerinin iç dosyalarını doğrudan kullanmak yerine açık API sözleşmeleri üzerinden entegre edilir.
+4. Otonom iş akışları adım adım kurulurken insan onayı, yetki sınırları, işlem kayıtları, tekrar deneme ve hata telafisi desteklenir.
+5. API anahtarları yalnızca sunucu ortam değişkenlerinde tutulur; tarayıcıya gönderilmez.
+6. Dosya veya endpoint taşımadan önce import, URL, cron, webhook, Vercel rewrite ve veritabanı bağımlılıkları kontrol edilir.
 
-Yeni dosyalar:
-- `Module 7/ai-studio.js`
-- `Module 2/AI Studio/index.html`
+## Modül 2 çalışma notu
 
-## 🌐 Vercel Dağıtımı (Deployment)
+Modül 2'nin mevcut botları, yayın sistemi ve Gemini görsel üretim motoru bu aşamada korunmaktadır. Görsel üretim API/model geçişi, Nano Banana erişimi ve ödeme yapılandırması hazır olduğunda ayrı bir geliştirme adımı olarak ele alınacaktır. Onaylanmış ana prompt değiştirilmez.
 
-Proje doğrudan Vercel üzerinde tek tıkla çalışacak şekilde yapılandırılmıştır (`"framework": null`).
+## Geliştirme ve dağıtım
 
-1. Vercel Dashboard üzerinde **Settings** ➜ **General** bölümünde:
-   - **Framework Preset:** `Other`
-   - **Root Directory:** `./` (veya boş)
-2. `main` dalına push yapıldığında Vercel Edge Static motoru saniyeler içinde canlıya alacaktır.
+- Vercel projesinin Root Directory ayarı depo kök dizinidir.
+- `main` dalına gönderilen commit'ler bağlı Vercel projesinde otomatik dağıtımı tetikler.
+- `vercel.json` içindeki endpoint rewrite ve cron tanımları API dosyalarıyla birlikte değerlendirilmelidir.
+- Veritabanı şema değişiklikleri `supabase/migrations/` altında sıralı migration olarak tutulmalıdır.
+- Her anlamlı değişiklikten sonra Vercel Preview/Production durumu ve ilgili endpoint smoke testleri kontrol edilmelidir.
+
+## Güvenlik
+
+- Gerçek `.env` dosyaları, token'lar ve API anahtarları Git'e eklenmez.
+- Supabase Service Role anahtarı yalnızca güvenilir sunucu ortamında kullanılabilir.
+- Admin işlemleri sunucu tarafında yetkilendirilir.
+- Webhook ve cron uçları kendi doğrulama mekanizmalarını kullanır.
+- Canlı veritabanı veya dağıtım yapılandırmasında yıkıcı değişiklikler öncesinde geri dönüş planı hazırlanır.
