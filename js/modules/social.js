@@ -10,6 +10,7 @@ if (typeof window !== 'undefined') {
         }
 
         const channelMap = {
+            ai: { path: 'Module%202/AI%20Studio/index.html', label: '✨ AI Content Studio aktif.' },
             instagram: { path: 'Module%202/Instagram/index.html', label: '📸 Instagram Bulut Bot Kontrol Merkezi aktif.' },
             facebook: { path: 'Module%202/Facebook/index.html', label: '📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.' },
             youtube: { path: 'Module%202/Youtube%20Shorts/index.html', label: '▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.' },
@@ -33,6 +34,7 @@ export function renderSocialModule(data) {
             <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; padding:8px 16px; background:#0f172a; border-bottom:1px solid rgba(148,163,184,0.18); flex-shrink:0; flex-wrap:wrap;">
                 <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;" id="socialBotChannelBar">
                     <span style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.6px; color:#94a3b8; margin-right:4px;">Modül 2 Bot Ağı:</span>
+                    <button class="embed-tab-chip" data-channel="ai" onclick="window.switchSocialBotChannel(this, 'ai')" style="display:inline-flex; align-items:center; gap:6px; padding:6px 13px; border-radius:8px; border:1px solid rgba(212,175,55,0.55); background:linear-gradient(135deg, rgba(212,175,55,0.22), rgba(15,23,42,0.6)); color:#fde68a; font-size:12px; font-weight:800; cursor:pointer;">✨ AI Content Studio <span style="background:#d4af37;color:#111827;font-size:10px;padding:1px 6px;border-radius:99px;font-weight:900;">YENİ</span></button>
                     <button
                         class="embed-tab-chip active"
                         data-channel="instagram"
