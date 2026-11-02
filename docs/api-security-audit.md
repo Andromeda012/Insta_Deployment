@@ -2,13 +2,11 @@
 
 **Tarih:** 2 Kasım 2026  
 **Kapsam:** Vercel `api/` uçları, ortak kimlik doğrulama yardımcıları, canlı Supabase RLS/grant/policy durumu, kök kurulum SQL'i.  
-**Koruma sınırı:** `Module 2/`, onaylanmış Bahar Portmanto prompt'u ve mevcut yayın motoru değiştirilmedi. Canlı veritabanında bu denetim kapsamında hiçbir yazma/DDL işlemi yapılmadı.
+**Koruma sınırı:** `Module 2/`, onaylanmış Bahar Portmanto prompt'u ve mevcut yayın motoru değiştirilmedi. 2 Kasım 2026'da yalnızca ürün ve site ayarı yazma yetkilerini daraltan, Modül 2 policy'lerini koruyan bir Supabase migration uygulandı.
 
 ## Yönetici özeti
 
-Mevcut sistemde merkezi API kimlik doğrulaması doğru yönde kurulmuş olsa da canlı veritabanında eski ve geniş yetkili politikalar hâlâ bulunuyor. En önemli risk, ürün tablosundaki herkese açık yazma politikası ve `site_settings` üzerindeki eski, denylist tabanlı yazma politikalarıdır. Ayrıca bazı eski/entegrasyon endpoint'leri kimlik doğrulamasız biçimde ayrıcalıklı işlemler yapabiliyor.
-
-Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya dondurulmuş Modül 2 akışlarını bozabileceğinden bu turda uygulanmadı. Güvenli sonraki adımlar ve engeller aşağıda kayıt altına alındı.
+Denetimde ürün tablosunda public CRUD ve `site_settings` üzerinde public denylist yazma politikaları doğrulandı. 2 Kasım 2026'da bu iki risk alanı, mevcut okuma akışını ve Modül 2'nin rol/anahtar bazlı politikalarını koruyacak şekilde daraltıldı. `api/render.js`, Storage klasör politikaları, webhook imzaları ve Auth ayarları ayrı uyumluluk çalışması gerektirdiğinden henüz değiştirilmedi.
 
 ## Bulgular
 
@@ -16,8 +14,8 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 
 | ID | Bulgu | Kanıt / etki | Bu turdaki karar |
 |---|---|---|---|
-| API-01 | `public.products` tablosunda `Public full access on products` politikası `TO public USING (true) WITH CHECK (true)` olarak etkin; ayrıca `public` rolüne INSERT/UPDATE/DELETE grant'i var. | Anonim istemciye yalnızca katalog okuma değil, ürün verisini değiştirme/silme imkânı verebilir. | Canlı RLS/grant değiştirilmedi. Modül 7'nin yazma akışı `/api/module7` üzerinden, server-side service-role ile çalışıyor; ancak tüm harici yazıcılar ve gerçek yetkili kullanıcı akışı henüz kanıtlanmadı. |
-| API-02 | `site_settings` üzerinde `Legacy non-Module-1 settings insert/update/delete` politikaları `TO public` ve yalnızca bazı anahtarları dışlayan denylist kullanıyor. Tabloya public INSERT/UPDATE/DELETE grant'i de mevcut. | İzin listesine alınmamış bazı site ayarları anonim yazmaya açık kalabilir. Korunan anahtarlar hariç yeni/unutulmuş anahtarlar da risk oluşturabilir. | Bot/kampanya ve eski entegrasyon bağımlılıkları nedeniyle canlı politika değiştirilmedi. Önce tüm istemci ve servis yazıcıları doğrulanmalı. |
+| API-01 | `public.products` tablosunda public CRUD policy ve grant'i vardı. | Anonim istemciye ürün verisini değiştirme/silme imkânı verebilirdi. | **Düzeltildi:** `Public full access on products` kaldırıldı; anon/authenticated için yalnızca SELECT kaldı. INSERT/UPDATE/DELETE yalnızca service_role. Modül 7 yazma yolu `/api/module7` ile uyumlu. |
+| API-02 | `site_settings` üzerinde `TO public` denylist tabanlı eski INSERT/UPDATE/DELETE policy'leri vardı. | Kara listeye eklenmemiş yeni veya unutulmuş ayar anahtarları anonim yazmaya açık kalabilirdi. | **Düzeltildi:** Eski üç public denylist policy kaldırıldı; anon DML grant'leri iptal edildi. Authenticated DML grant'i korundu; Modül 2'nin `admin`/`content_manager` + key-scope RLS policy'leri yazma sınırı olarak kaldı. Modül 1/7 yazımları server-side service_role ile devam ediyor. |
 | API-03 | `api/photoroom-campaign.js` POST yolu merkezi rol doğrulaması kullanıyor; kök Photoroom motoru Supabase Storage ve `site_settings` üzerinde ayrıcalıklı yazma yapabiliyor. | Önceki sürümde POST anonim erişime açıktı. Yeni sürümde `admin` veya `product_manager` rolü zorunlu; sağlayıcı anahtarı yalnızca `PHOTOROOM_API_KEY` sunucu ortam değişkeninden okunuyor. | **Düzeltildi:** POST için `authenticateRoles(req, ['admin', 'product_manager'])` eklendi; body içinden API key kabulü kaldırıldı; hata yanıtları ortak `apiError` üzerinden dönüyor. GET mevcut public okuma davranışını koruyor. Dış çağıran envanteri yine tamamlanmalı. |
 | API-04 | `api/render.js` GET/POST üzerinden SVG render ediyor; TikTok POST akışında `SUPABASE_SERVICE_ROLE_KEY` mevcutsa `media/tiktok/` alanına yükleme yapabiliyor. Handler'da merkezi rol doğrulaması görünmüyor. | Açık render/upload yüzeyi maliyet, kaynak tüketimi ve depolama kötüye kullanımı doğurabilir. | Endpoint'in harici tüketicisi ve beklenen erişim modeli netleşmeden auth eklenmedi; aksi hâlde çalışan entegrasyon kırılabilir. |
 | API-09 | `storage.objects` üzerinde `media` bucket'ı için public SELECT ve belirli klasörler HARİÇ public INSERT/UPDATE/DELETE politikaları etkin. | Yeni veya listede olmayan klasörler varsayılan olarak anonim yükleme/değiştirme/silmeye açık kalabilir. | Modül 2 medya akışları korunarak, kullanılan klasörlerin tam envanteri çıkarılmadan policy daraltılmadı.
@@ -48,8 +46,8 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 ## Güvenli uygulama planı
 
 1. **Harici yazıcı envanteri:** Ürün ve site ayarlarına doğrudan Supabase REST/JS ile yazan tüm istemciler, yerel araçlar, cron'lar ve üçüncü taraf entegrasyonlar listelenecek. Depo içi GitHub araması tek başına yeterli kanıt sayılmayacak.
-2. **Ürün tablosu:** Modül 7 gerçek admin/product_manager hesabıyla katalog okuma, ekleme, güncelleme, silme ve görsel yükleme testlerinden geçirilecek. Harici yazıcı kalmadığı doğrulanınca public write grant/policy kaldırılıp yalnızca public SELECT ve server-side service-role yazımı bırakılacak.
-3. **Site ayarları:** Anahtar bazlı mevcut erişim matrisi çıkarılacak. Public denylist yazma politikaları, gerekiyorsa admin rolüne bağlı allowlist ve server-side service-role yazımıyla değiştirilecek. Modül 2'nin mevcut verileri ve kullanıcı akışı korunmadan bu adım uygulanmayacak.
+2. **Ürün tablosu:** Public write grant/policy kaldırıldı; public SELECT ve server-side service-role yazımı kaldı. Sonraki doğrulama, gerçek admin/product_manager hesabıyla Modül 7 katalog CRUD ve medya yükleme testidir.
+3. **Site ayarları:** Eski public denylist yazma policy'leri kaldırıldı; anon DML kapatıldı. Authenticated DML grant'i yalnızca mevcut Modül 2 admin/content_manager key-scope RLS policy'leriyle kullanılabilir. Modül 2 kodu ve policy'leri değiştirilmedi.
 4. **Eski ayrıcalıklı endpoint'ler:** `api/photoroom-campaign.js` POST yolu artık `admin`/`product_manager` rol doğrulaması yapıyor ve sağlayıcı API anahtarını yalnızca sunucu ortamından alıyor. Kalan açık konu `api/render.js`: tüketici/çağıran envanteri ve Modül 2 bağımlılığı doğrulanmadan auth veya rate-limit davranışı değiştirilmemeli.
 5. **Webhook imzaları:** Modül 2 kapsamı yeniden açıldığında Meta/TikTok/YouTube sağlayıcı imzaları ham request body üzerinden doğrulanacak; simülasyon çağrıları ayrı ve yetkili test yoluna taşınacak.
 6. **Auth ayarı:** Leaked-password protection Supabase Dashboard'da açılacak; ardından giriş akışı kontrollü test edilecek.
@@ -83,3 +81,23 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 - `Module 4/takip.html` içinde sipariş geçmişi alanlarında stored XSS riski vardı; `stageName` ve `note` artık `textContent` ile DOM'a yazılıyor.
 - Sayfa tüm Firebase `/siparisler.json` koleksiyonunu istemciye indirip takip koduna göre filtreliyor. Firebase Security Rules canlı konsoldan doğrulanamadığı için veri gizliliği riski koşullu fakat önemli kabul edildi.
 - `/siparis-paneli` route'u henüz müşteri takip sayfasına yönlendirilmedi. Önce Firebase anonim okuma kuralları ve tek siparişe sınırlı sorgu/API modeli doğrulanmalı.
+
+
+## 2 Kasım 2026 — Ürün ve site ayarı yazma yetkileri daraltıldı
+
+Migration `public_catalog_write_restrictions` canlı Supabase projesinde başarıyla uygulandı; depo karşılığı `supabase/migrations/202611020001_public_catalog_write_restrictions.sql`.
+
+**Önceki etkin izinler (has_table_privilege):**
+- `products`: anon ve authenticated SELECT/INSERT/UPDATE/DELETE.
+- `site_settings`: anon ve authenticated SELECT/INSERT/UPDATE/DELETE.
+
+**Migration sonrası doğrulama:**
+- `products`: anon/authenticated yalnızca SELECT; service_role CRUD.
+- `site_settings`: anon yalnızca SELECT; authenticated DML grant'i korunmuş durumda fakat yalnızca mevcut RLS role/key policy'leri yazmaya izin veriyor; service_role CRUD.
+- `products` için tek `Public read products` SELECT policy'si var.
+- `site_settings` üzerindeki üç `Legacy non-Module-1 settings insert/update/delete` policy'si kaldırıldı. Mevcut Modül 2 admin/bot/campaign policy'leri ve safe SELECT policy'si aynen korundu.
+- Migration sonrası pg_policies ve etkin rol grant'leri tekrar sorgulandı. Modül 2 policy adları ve koşulları değişmedi.
+
+**Etki sınırı:** Ürün okuma ve web kataloğu için public SELECT korunur. Modül 7 ürün yazma/silme işlemleri zaten `/api/module7` üzerinden server-side service_role kullanır. Modül 1 ürün web görünürlüğü `product_web_settings` ve CMS API akışını kullanır. Modül 1/7 site ayarı yazımları server-side API üzerinden devam eder. Modül 2 kaynak kodu, prompt, kampanya kayıtları ve bot verileri değiştirilmedi.
+
+**Kalan test:** Gerçek admin/product_manager hesabıyla Modül 7 ekle/güncelle/sil/görsel yükle; admin/content_manager hesabıyla Modül 2 bot ayarı/kampanya yönetimi ve cron yayın akışını test et. Bu testler yapılana kadar daha fazla policy sadeleştirmesi yapılmayacak.
