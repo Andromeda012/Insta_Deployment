@@ -59,9 +59,11 @@ Bunları doğrudan canlıda kapatmak, bilinmeyen harici entegrasyonları veya do
 
 - Kök `supabase_setup.sql` dosyasının başına, mevcut geniş public-write politikaları nedeniyle üretimde tekrar çalıştırılmaması gerektiğini belirten güvenlik uyarısı eklendi. Bu yalnızca depo dosyasını korur; canlı Supabase'e uygulanmış bir değişiklik değildir.
 
-- Yalnızca bu denetim raporu ve depo temizlik envanteri güncellendi.
 - Canlı Supabase şeması, policy'ler, grant'ler, kullanıcılar, Storage nesneleri veya Auth ayarları değiştirilmedi.
-- API endpoint kodu, Modül 2 dosyaları, yayın prompt'u ve canlı veri akışları değiştirilmedi.
+- Modül 4 takip sayfasındaki stored XSS riski `textContent` tabanlı render ile giderildi; Firebase tüm sipariş koleksiyonunu istemciye indirme davranışı ayrı risk olarak belgelendi ve route açılmadı.
+- İki canlı entegrasyon testinin varsayılan çalışması kapatıldı; yalnızca `RUN_LIVE_AI_TESTS=true` ile çalışırlar.
+- `npm run check` ve GitHub Actions statik kalite kapısı eklendi. İlk çalışmada bulunan bozuk galeri JSON dosyası düzeltildi; sonraki statik kontrol başarılı.
+- Modül 2 dosyaları, onaylanmış prompt ve canlı bot/yayın davranışı değiştirilmedi.
 - Bu karar bilinçli: henüz doğrulanmamış harici tüketicileri kırmadan, riskli noktaları ve uygulanma sırasını kayıt altına almak.
 
 
