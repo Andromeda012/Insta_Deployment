@@ -641,65 +641,11 @@
       </div>
     </section>
 
-    <!-- 2. REELS MÜZİK SEÇİMİ VE DEĞİŞİMİ -->
-    <section class="section-card">
-      <div class="card-header">
-        <div class="card-title-group">
-          <span style="font-size:22px;">🎵</span>
-          <div>
-            <h2>Reels Fon Müziği Seçimi &amp; Değişimi</h2>
-            <p>9:16 Reels videolarında kullanılacak kurumsal ses tasarımı.</p>
-          </div>
-        </div>
-        <button class="btn btn-gold" onclick="saveMusicSettings()">💾 Müzik Tercihini Kaydet</button>
-      </div>
-
-      <div class="music-grid">
-        <div class="music-card selected" id="musicCard1" onclick="selectMusicTemplate('modern_acoustic')">
-          <span class="music-icon">🎻</span>
-          <div>
-            <div class="music-name">Lüks Mimari Akustik</div>
-            <div class="music-sub">Modern Warm Acoustic (Önerilen)</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard2" onclick="selectMusicTemplate('minimalist_piano')">
-          <span class="music-icon">🎹</span>
-          <div>
-            <div class="music-name">Minimalist Piyano</div>
-            <div class="music-sub">Cinematic Elegance &amp; Strings</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard3" onclick="selectMusicTemplate('nordic_chill')">
-          <span class="music-icon">☕</span>
-          <div>
-            <div class="music-name">İskandinav Lounge</div>
-            <div class="music-sub">Nordic Deep Ambient Chill</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard4" onclick="selectMusicTemplate('nova_beat')">
-          <span class="music-icon">🎷</span>
-          <div>
-            <div class="music-name">Nova Signature Beat</div>
-            <div class="music-sub">Modern Upbeat Luxury</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ÖZEL MP3 VE OYNATICI -->
-      <div style="background:rgba(11, 17, 32, 0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px;">
-          <label style="font-size:11.5px; color:#94A3B8; font-weight:700; display:block; margin-bottom:5px;">Özel Müzik / MP3 Bağlantısı (URL):</label>
-          <input type="url" class="form-control" id="customMusicUrl" placeholder="https://.../audio.mp3" style="width:100%;" oninput="onCustomMusicUrlChanged()">
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <audio id="audioPreviewPlayer" src="https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4"></audio>
-          <button type="button" class="btn btn-outline" id="btnTogglePlayMusic" onclick="togglePlayMusic()">
-            ▶️ Müziği Dinle
-          </button>
-        </div>
+    <!-- Görsel atmosfer ve müzik tercihleri artık merkezi AI Studio profillerinden yönetilir. -->
+    <section class="section-card" style="border-color:rgba(212,175,55,.28);">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div><strong>🎨 Görsel &amp; Reels yaratıcı tercihleri AI Studio'da yönetilir</strong><p style="margin-top:5px;color:var(--text-muted);font-size:12px;">Işık, atmosfer, renk paleti, dekor, kamera ve müzik ayarları tek merkezden ürün bazında belirlenir.</p></div>
+        <a href="/Module%202/AI%20Studio/index.html" target="_blank" rel="noopener noreferrer" class="btn btn-gold">AI Content Studio ↗</a>
       </div>
     </section>
 
@@ -967,12 +913,7 @@
       });
       updateSlotVisuals();
 
-      // Müzik Seçimi
-      const music = cfg.reels_music || 'modern_acoustic';
-      selectMusicTemplate(music, false);
-      if (cfg.custom_music_url) {
-        document.getElementById('customMusicUrl').value = cfg.custom_music_url;
-      }
+      // Yaratıcı tercihler merkezi AI Studio profilinden okunur.
 
       // Detaylı Gönderi Tiklemeleri
       const specOpts = cfg.spec_post_options || {
@@ -994,61 +935,8 @@
     // =========================================================================
     // MÜZİK ŞABLON SEÇİMİ
     // =========================================================================
-    const MUSIC_URLS = {
-      modern_acoustic: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      minimalist_piano: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      nordic_chill: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      nova_beat: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
-    };
+    // Müzik ve görsel tercihleri AI Studio'dan yönetilir; bot panelinde ikinci bir ayar kaynağı tutulmaz.
 
-    let selectedMusicKey = 'modern_acoustic';
-
-    function selectMusicTemplate(key, updateAudio = true) {
-      selectedMusicKey = key;
-      const cards = {
-        modern_acoustic: document.getElementById('musicCard1'),
-        minimalist_piano: document.getElementById('musicCard2'),
-        nordic_chill: document.getElementById('musicCard3'),
-        nova_beat: document.getElementById('musicCard4')
-      };
-      Object.keys(cards).forEach(k => {
-        if (cards[k]) cards[k].classList.toggle('selected', k === key);
-      });
-
-      if (updateAudio) {
-        const player = document.getElementById('audioPreviewPlayer');
-        const customUrl = document.getElementById('customMusicUrl').value.trim();
-        player.src = customUrl || MUSIC_URLS[key] || MUSIC_URLS.modern_acoustic;
-      }
-    }
-
-    function onCustomMusicUrlChanged() {
-      const customUrl = document.getElementById('customMusicUrl').value.trim();
-      const player = document.getElementById('audioPreviewPlayer');
-      if (customUrl) {
-        player.src = customUrl;
-      } else {
-        player.src = MUSIC_URLS[selectedMusicKey] || MUSIC_URLS.modern_acoustic;
-      }
-    }
-
-    function togglePlayMusic() {
-      const player = document.getElementById('audioPreviewPlayer');
-      const btn = document.getElementById('btnTogglePlayMusic');
-      if (player.paused) {
-        player.play();
-        btn.textContent = '⏸️ Müziği Durdur';
-        btn.style.borderColor = '#D4AF37';
-      } else {
-        player.pause();
-        btn.textContent = '▶️ Müziği Dinle';
-        btn.style.borderColor = 'rgba(255,255,255,0.2)';
-      }
-    }
-
-    // =========================================================================
-    // AYARLARI KAYDETME FONKSİYONLARI
-    // =========================================================================
     async function saveScheduleSettings() {
       if (!botState) botState = { config: {}, rules: [], scheduled_posts: [] };
       if (!botState.config) botState.config = {};
@@ -1061,17 +949,6 @@
 
       await persistBotState();
       showToast('✅ Yayın kuyruğu ve saat ayarları kaydedildi!');
-    }
-
-    async function saveMusicSettings() {
-      if (!botState) botState = { config: {} };
-      if (!botState.config) botState.config = {};
-
-      botState.config.reels_music = selectedMusicKey;
-      botState.config.custom_music_url = document.getElementById('customMusicUrl').value.trim();
-
-      await persistBotState();
-      showToast('✅ Reels fon müziği tercihi kaydedildi!');
     }
 
     async function saveSpecPostSettings() {
