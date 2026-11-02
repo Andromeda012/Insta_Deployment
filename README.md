@@ -94,6 +94,21 @@ Insta_Deployment/
 
 ---
 
+## ✨ AI Studio — Modül 7 / Modül 2 Entegrasyonu
+
+- Modül 7 ürün kataloğuna **AI Studio** profil editörü eklendi.
+- Kategori varsayılanları ve ürün bazlı özel ayarlar Supabase `site_settings` tablosundaki `ai_studio_profiles` kaydında tutulur.
+- Profil alanları: ışıklandırma, atmosfer, renk paleti, dekor, kamera/kadraj ve Reels müzik tercihi.
+- Modül 2'ye **AI Content Studio** sekmesi eklendi. Ürün, platform, format ve kampanya brief'i seçilebilir.
+- `api/module2-ai.js` yetkili kullanıcının seçtiği ürün ve AI Studio profilini birleştirerek prompt önizlemesi sunar.
+- Onaylanan Gemini/Banana ana prompt metni değiştirilmeden korunur. Ürün profili yalnızca ek bağlam olarak birleştirilir; müzik tercihi görsel prompt'una eklenmez.
+- Gemini API anahtarı olmadan canlı görsel üretimi başlatılmaz. API anahtarı ve model/üretim bağlantısı sonraki yapılandırma aşamasındadır.
+
+Yeni dosyalar:
+- `Module 7/ai-studio.js`
+- `Module 2/AI Studio/index.html`
+- `api/module2-ai.js`
+
 ## 🌐 Vercel Dağıtımı (Deployment)
 
 Proje doğrudan Vercel üzerinde tek tıkla çalışacak şekilde yapılandırılmıştır (`"framework": null`).
