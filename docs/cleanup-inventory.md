@@ -39,3 +39,21 @@ Bir dosyanın eski görünmesi veya adında eski bir servis geçmesi tek başın
 - `supabase_photoroom_setup.sql`, Photoroom tablolarında `FOR ALL` ve herkese açık `USING (true)` / `WITH CHECK (true)` politikaları tanımlıyor. Bu SQL dosyası yeniden çalıştırılmamalı; canlı projedeki mevcut tablolar ve politikalar ayrıca denetlenmeli.
 - Photoroom API'si kök `photoroom-engine.js` dosyasını import ediyor. Depo içi aramada görünür çağrı bulunmaması, Vercel endpoint'ine dışarıdan istek gelmediğini kanıtlamaz. Erişim logları ve Supabase bağımlılıkları doğrulanmadan tüm akış birlikte kaldırılmayacak.
 
+## Photoroom / kampanya akışı — canlı Supabase denetimi (2 Kasım 2026)
+
+| Kontrol | Canlı bulgu | Temizlik kararı |
+|---|---|---|
+| `public.social_campaign_assets` tablosu | Mevcut değil | SQL dosyasındaki tablo tanımı canlı şemayla eşleşmiyor; tabloyu oluşturma veya silme işlemi yapılmayacak |
+| `public.photoroom_config` tablosu | Mevcut değil | Eski kurulum SQL'inin bu bölümü canlı sistemde kullanılmıyor görünüyor |
+| `site_settings.social_campaign_assets` | 3 kampanya kaydı var; 31 Ekim ve 2 Kasım 2026 tarihli kayıtlar dahil | Aktif/son dönem kampanya verisi içeriyor; kesinlikle silinmeyecek |
+| Supabase Storage | `media` bucket mevcut; kampanya kayıtları `products/`, `posts/`, `stories/` ve eski `photoroom/` yollarına işaret ediyor | Dosyalar ve bucket korunacak; kullanılmayan nesneler ayrı envanter ve referans taraması olmadan silinmeyecek |
+| `photoroom-engine.js` | `site_settings` içindeki `social_campaign_assets` anahtarına kayıt yazıyor ve oradan okuyor; görselleri `media` bucket'ına yüklüyor | Dosya yalnızca eski Photoroom motoru değil, kampanya veri akışının da parçası. Şimdilik korunacak |
+| `api/photoroom-campaign.js` | Motoru import ediyor; GET kampanyayı okuyor, POST ürün kataloğundan kampanya üretip kaydediyor | Endpoint dışarıdan çağrılabilir. Depo içi çağrı bulunmaması kaldırmak için yeterli değil |
+| `supabase_photoroom_setup.sql` | Olmayan iki tabloyu tanımlıyor ve ikisine de `FOR ALL USING (true) WITH CHECK (true)` politikası öneriyor | **Tekrar çalıştırılmamalı.** Bu geniş izinler yeni oluşturulacak tablolar için güvenli varsayılan değildir. Dosya tarihsel referans olarak tutulacak; canlı politikaları değiştirmek için kullanılmayacak |
+| Vercel runtime logları | Son 30 dakikalık sorguda eşleşme bulunmadı. Hobby planı 1 saatten eski runtime loglarını saklamadığından 7 günlük sorgu reddedildi | Bu sonuç endpoint'in kullanılmadığını kanıtlamaz. Erişim geçmişi için daha uzun saklama/başka log kaynağı gerekir |
+
+### Sonuç
+
+Photoroom adı yanıltıcı: kök `photoroom-engine.js` içinde kampanya motoru Gemini Banana akışını da yürütüyor. Canlı `site_settings` kayıtları ve Storage varlıkları yakın tarihli olduğundan, bu dosyaları veya kampanya verisini şu aşamada kaldırmak güvenli değil. `Module 2/photoroom-engine.js` dondurulmuş Modül 2 kapsamı nedeniyle ayrıca korunur.
+
+Bir sonraki temizlik adımı, `api/photoroom-campaign.js` endpoint'inin tüm HTML/JS/cron/webhook referanslarını ve Vercel erişim isteklerini (mevcut log saklama sınırları dahilinde) doğrulamak; ardından Photoroom adı taşıyan parçaları **aktif Gemini Banana kampanya akışından ayırmak** olmalıdır. Bu ayrım tamamlanmadan dosya silinmeyecek veya API yolu değiştirilmeyecektir.
