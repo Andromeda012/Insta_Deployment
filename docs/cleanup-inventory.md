@@ -142,3 +142,11 @@ Bu bölüm, yukarıdaki tarihsel denetim notlarında sonradan değişen durumlar
 - Modül 7 ürün CRUD ve ayar yazımları zaten `/api/module7` üzerinden service_role kullanıyor; Modül 1 site ayarları CMS API üzerinden yazılıyor. `product_web_settings` public read / service_role write ayrımı değişmedi.
 - Canlı migration adı `public_catalog_write_restrictions`; repo SQL karşılığı `supabase/migrations/20261102093133_public_catalog_write_restrictions.sql`.
 - Migration sonrası `has_table_privilege` ve `pg_policies` sorguları çalıştırıldı. Storage policy'leri, Auth ayarları, Modül 2 kodu/prompt'u ve kampanya verileri değiştirilmedi.
+
+
+## Storage klasör envanteri — 2 Kasım 2026
+
+- Canlı `media` bucket'ında `instagram`, `photoroom`, `posts`, `products`, `samples`, `showroom`, `stories` klasörlerinde nesneler mevcut. Sayımlar ve son güncellemeler `docs/database-access-matrix.md` içinde.
+- Modül 1 upload path'leri mevcut korumalı klasörlerle eşleşiyor. Modül 7 ve kök Gemini Banana motoru `products/`, `posts/`, `stories/` yollarına service_role ile yazıyor.
+- Dondurulmuş Modül 2 Photoroom motoru `photoroom/` yoluna yazar ve anon anahtar fallback'i içerir. `samples/` ve `showroom/` için depo içi yazıcı yok.
+- Storage public-write denylist'i bu turda değiştirilmedi; Modül 2'yi veya harici klasör tüketicilerini kırmamak için önce runtime anahtar kaynağı ve harici yükleyiciler doğrulanacak.
