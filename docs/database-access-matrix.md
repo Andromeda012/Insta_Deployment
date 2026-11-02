@@ -20,11 +20,11 @@
 | İşlem | Anonim | Oturum açmış | Mevcut kural |
 |---|---|---|---|
 | SELECT | Evet | Evet | Bucket genelinde public read policy. |
-| INSERT | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | Public policy yalnızca korunan klasör adlarını hariç tutuyor; `urunler`, `anasayfa`, `galeri`, `blog`, `tedarikciler`, `instagram`, `facebook`, `tiktok`, `youtube`, `posts`, `stories` korunmuş. Modül 1/2 yöneticileri kendi korunan klasörlerine yükleyebilir. |
+| INSERT | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | Public policy yalnızca korunan klasör adlarını hariç tutuyor; `urunler`, `anasayfa`, `galeri`, `blog`, `tedarikciler`, `instagram`, `facebook`, `tiktok`, `youtube`, `posts`, `stories` korunmuş. Canlı nesne envanterinde ayrıca `products` (8), `photoroom` (4), `samples` (2), `showroom` (3) klasörleri bulundu; bunlar public write denylist'inde yer almıyor. `instagram` (19), `posts` (23), `products` (8), `stories` (24), `photoroom` (4), `samples` (2), `showroom` (3) nesneleri mevcut. Modül 1/2 yöneticileri kendi korunan klasörlerine yükleyebilir. |
 | UPDATE | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | INSERT ile benzer denylist mantığı. |
 | DELETE | Evet, bazı klasörler hariç | Evet, bazı klasörlerde rol kontrollü | INSERT ile benzer denylist mantığı. |
 
-**Önemli ayrıntı:** Public Storage yazma politikaları bir allowlist değil, denylist kullanıyor. Korunan klasör listesine eklenmemiş yeni bir klasör açılırsa public write erişimi varsayılan olarak açılabilir. Bu nedenle yeni medya klasörleri oluşturulmadan önce policy envanteri güncellenmeli.
+**Önemli ayrıntı:** Public Storage yazma politikaları bir allowlist değil, denylist kullanıyor. Korunan klasör listesine eklenmemiş yeni bir klasör açılırsa public write erişimi varsayılan olarak açılabilir. Depo kodu incelemesinde Modül 1 `urunler/`, `anasayfa/`, `galeri/`, `blog/`, `tedarikciler/` yollarını kullanıyor. Modül 7 API ve kök Gemini motoru `products/`, `posts/`, `stories/` yollarına service-role ile yazıyor. Dondurulmuş `Module 2/photoroom-engine.js` ise `photoroom/`, `posts/`, `stories/` yollarına yazıyor ve varsayılan yapılandırmasında anon anahtara düşebiliyor. Bu nedenle `photoroom/` klasörünü korumaya almak, üretimde service-role yapılandırması yoksa Modül 2 akışını bozabilir. `samples/` ve `showroom/` için depo içi yazıcı bulunamadı; harici tüketici kaynağı bilinmiyor. Storage policy'leri bu nedenle henüz değiştirilmedi.
 
 ## Yetki sınırları ve önerilen hedef
 
@@ -44,3 +44,18 @@ Migration `public_catalog_write_restrictions` canlı Supabase projesine uyguland
 - Canlı `has_table_privilege` sorgusuyla izinler yeniden doğrulandı. Modül 2 policy envanteri değişmeden kaldı.
 
 Storage policy'leri ve Auth ayarları bu adımda değiştirilmedi.
+
+
+## Storage klasörlerinin canlı kullanım envanteri — 2 Kasım 2026
+
+| Klasör | Canlı nesne | Depo içi kullanım | Güvenli karar |
+|---|---:|---|---|
+| `instagram` | 19 | Varsayılan Reels medyası; Modül 2 yayın varlıkları | Modül 2 kapsamı korunur |
+| `posts` | 23 | Kök ve Modül 2 Gemini/Photoroom motorları | Korunan klasör olarak kalır |
+| `stories` | 24 | Kök ve Modül 2 Gemini/Photoroom motorları | Korunan klasör olarak kalır |
+| `products` | 8 | Modül 7 API ve kök/Modül 2 Gemini motorları | Service-role akışı doğrulanmadan policy değişikliği yapılmaz |
+| `photoroom` | 4 | Modül 2 Photoroom motoru; anon fallback anahtarı mevcut | Modül 2 dondurulmuş; service-role yapılandırması doğrulanmadan public write kapatılmaz |
+| `samples` | 2 | Depo içi yazıcı bulunamadı | Harici tüketici araştırılmalı |
+| `showroom` | 3 | Depo içi yazıcı bulunamadı | Harici tüketici araştırılmalı |
+
+Canlı nesne sorgusunda en son güncellemeler: `posts` ve `stories` 2 Kasım 2026; `products`, `instagram`, `photoroom` 31 Ekim 2026; `showroom` 29 Ekim 2026. Hiçbir nesne silinmedi veya değiştirilmadi.
