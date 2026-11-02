@@ -1,3 +1,11 @@
+-- !!! SECURITY WARNING — DO NOT RUN THIS LEGACY SCRIPT ON PRODUCTION !!!
+-- This historical setup script contains broad public write grants/policies for
+-- public.products and public.site_settings. It can re-open anonymous write
+-- access. The live project is managed by the versioned migrations and the
+-- authenticated Vercel APIs. Review docs/api-security-audit.md and reconcile
+-- every policy before using any section of this file. This warning is not a
+-- replacement for a reviewed migration and does not change the live database.
+--
 -- ============================================================================
 -- GLOBAL KAPAK MOBİLYA — SUPABASE DATABASE & STORAGE KURULUM BETİĞİ (SQL)
 -- Bu kodu Supabase Dashboard -> SQL Editor ekranına yapıştırıp "Run" tuşuna basın.
