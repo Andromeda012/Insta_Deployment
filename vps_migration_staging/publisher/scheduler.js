@@ -171,6 +171,7 @@ export function normalizeContentType(platform, slotType) {
   const t = String(slotType || 'POST').toUpperCase();
 
   if (p === 'instagram') {
+    if (t.includes('CAROUSEL')) return 'CAROUSEL';
     if (t.includes('REEL')) return 'REELS';
     if (t.includes('STOR')) return 'STORIES';
     return 'POST';

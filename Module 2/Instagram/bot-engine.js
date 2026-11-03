@@ -477,17 +477,20 @@ Lütfen görsel tasarım kartının üzerine yazılacak başlıkları ve Instagr
 export async function publishToInstagramGraphApi({
   igUserId,
   accessToken,
-  mediaType = 'POST', // 'POST' | 'REELS' | 'STORIES'
+  mediaType = 'POST', // 'POST' | 'REELS' | 'STORIES' | 'CAROUSEL'
   contentType,        // alias support
   mediaUrl,
+  carouselItems,      // [leftUrl, rightUrl]
   caption = '',
   IsVideo = false
 }) {
   const resolvedType = (mediaType || contentType || 'POST').toUpperCase();
+  const isCarousel = resolvedType === 'CAROUSEL' || (Array.isArray(carouselItems) && carouselItems.length > 0) || (typeof mediaUrl === 'string' && mediaUrl.trim().startsWith('['));
 
   if (!igUserId || !accessToken) {
     // Eğer henüz resmi Meta token girilmemişse bulut otonom simülasyon modunda başarılı kayıt döner
-    const simId = `sim_ig_${resolvedType.toLowerCase()}_${Date.now()}`;
+    const simType = isCarousel ? 'carousel' : resolvedType.toLowerCase();
+    const simId = `sim_ig_${simType}_${Date.now()}`;
     return {
       simulated: true,
       mode: 'CLOUD_AUTONOMOUS_SIMULATION',
@@ -495,7 +498,102 @@ export async function publishToInstagramGraphApi({
       mediaId: simId,
       publishedId: simId,
       publishedAt: new Date().toISOString(),
+      isCarousel: isCarousel,
       note: 'Bulut Otonom Tasarım & Yayın (Canlı Meta Token girildiğinde doğrudan Instagram API çağrılır)'
+    };
+  }
+
+  // ── CAROUSEL YAYIN AKIŞI (İKİLİ PANORAMİK & ÇOKLU MEDYA) ──────────────────
+  if (isCarousel) {
+    let items = [];
+    if (Array.isArray(carouselItems) && carouselItems.length > 0) {
+      items = carouselItems;
+    } else if (typeof mediaUrl === 'string' && mediaUrl.trim().startsWith('[')) {
+      try { items = JSON.parse(mediaUrl); } catch (_) { items = [mediaUrl]; }
+    } else if (typeof mediaUrl === 'string' && mediaUrl.includes(',')) {
+      items = mediaUrl.split(',').map(s => s.trim()).filter(Boolean);
+    } else {
+      items = [mediaUrl];
+    }
+
+    // Adım 1: Her bir carousel öğesi için is_carousel_item=true ile konteyner oluştur
+    const itemContainerIds = [];
+    for (let idx = 0; idx < items.length; idx++) {
+      const itemUrl = items[idx];
+      const itemParams = new URLSearchParams();
+      itemParams.set('access_token', accessToken);
+      itemParams.set('is_carousel_item', 'true');
+      itemParams.set('image_url', itemUrl);
+
+      const itemRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media`, {
+        method: 'POST',
+        body: itemParams
+      });
+      const itemData = await itemRes.json();
+      if (!itemRes.ok || !itemData.id) {
+        throw new Error((itemData && itemData.error && itemData.error.message) || `Carousel öğe konteyneri oluşturulamadı (Sıra: ${idx + 1})`);
+      }
+      itemContainerIds.push(itemData.id);
+    }
+
+    // Adım 2: Carousel Ana Konteyneri Oluştur
+    const carouselParams = new URLSearchParams();
+    carouselParams.set('access_token', accessToken);
+    carouselParams.set('media_type', 'CAROUSEL');
+    carouselParams.set('children', itemContainerIds.join(','));
+    carouselParams.set('caption', caption);
+
+    const carouselRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media`, {
+      method: 'POST',
+      body: carouselParams
+    });
+    const carouselData = await carouselRes.json();
+    if (!carouselRes.ok || !carouselData.id) {
+      throw new Error((carouselData && carouselData.error && carouselData.error.message) || 'Instagram Carousel ana konteyneri oluşturulamadı');
+    }
+
+    const creationId = carouselData.id;
+
+    // Adım 3: Carousel işleme durumunu bekle
+    for (let attempt = 0; attempt < 8; attempt++) {
+      await new Promise(r => setTimeout(r, 2500));
+      try {
+        const statusRes = await fetch(`${GRAPH_API_BASE}/${creationId}?fields=status_code,status&access_token=${encodeURIComponent(accessToken)}`);
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData.status_code === 'FINISHED') break;
+          if (statusData.status_code === 'ERROR') {
+            throw new Error(`Instagram carousel medya işleme hatası: ${statusData.status || 'Bilinmeyen hata'}`);
+          }
+        }
+      } catch (pollErr) {
+        if (pollErr.message.includes('Instagram carousel medya işleme hatası')) throw pollErr;
+      }
+    }
+
+    // Adım 4: Carousel Yayını (media_publish)
+    const pubParams = new URLSearchParams();
+    pubParams.set('creation_id', creationId);
+    pubParams.set('access_token', accessToken);
+
+    const pubRes = await fetch(`${GRAPH_API_BASE}/${igUserId}/media_publish`, {
+      method: 'POST',
+      body: pubParams
+    });
+    const pubData = await pubRes.json();
+    if (!pubRes.ok || !pubData.id) {
+      throw new Error((pubData && pubData.error && pubData.error.message) || 'Instagram Carousel yayınlama başarısız oldu');
+    }
+
+    return {
+      simulated: false,
+      mode: 'LIVE_GRAPH_API_CAROUSEL',
+      containerId: creationId,
+      mediaId: pubData.id,
+      publishedId: pubData.id,
+      isCarousel: true,
+      itemCount: items.length,
+      publishedAt: new Date().toISOString()
     };
   }
 

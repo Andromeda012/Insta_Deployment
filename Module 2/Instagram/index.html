@@ -9,6 +9,9 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/Module%202/nova-studio-engine.js"></script>
   <script src="/nova-studio-engine.js"></script>
+  <script src="/Module%202/panoramic-carousel-engine.js"></script>
+  <script src="/panoramic-carousel-engine.js"></script>
+
 
   <style>
     :root {
@@ -231,6 +234,165 @@
       background: rgba(239, 68, 68, 0.2);
       border: 1px solid rgba(239, 68, 68, 0.4);
       color: #F87171;
+    }
+
+    
+    /* PANORAMIC CAROUSEL STÜDYO STILLERI */
+    .radio-chip-card {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .radio-chip-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      background: rgba(212, 175, 55, 0.04);
+    }
+    .radio-chip-card.active {
+      border-color: var(--accent-gold);
+      background: rgba(212, 175, 55, 0.1);
+      box-shadow: 0 0 16px rgba(212, 175, 55, 0.15);
+    }
+    .panoramic-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-top: 14px;
+    }
+    .preview-panel {
+      background: rgba(11, 17, 32, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .preview-panel .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12.5px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .badge-ratio {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(56, 189, 248, 0.18);
+      color: #38BDF8;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+    }
+    .badge-carousel {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.18);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.35);
+    }
+    .original-image-stage {
+      position: relative;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 200px;
+      max-height: 280px;
+    }
+    .original-image-stage img {
+      max-width: 100%;
+      max-height: 280px;
+      object-fit: contain;
+      display: block;
+    }
+    .split-line-overlay {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      background: #EF4444;
+      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
+      transform: translateX(-50%);
+      pointer-events: none;
+    }
+    .split-line-overlay .seam-label {
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(239, 68, 68, 0.9);
+      color: #fff;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+    .carousel-preview-stage {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      background: #000;
+      padding: 8px;
+      border-radius: 8px;
+      min-height: 200px;
+      align-items: center;
+    }
+    .carousel-slice-card {
+      position: relative;
+      background: #0B1120;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 120px;
+      justify-content: center;
+    }
+    .carousel-slice-card canvas {
+      max-width: 100%;
+      height: auto;
+      display: block;
+    }
+    .carousel-slice-card .slice-badge {
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      background: rgba(11, 17, 32, 0.85);
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      color: #FDE68A;
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      z-index: 2;
+    }
+    .carousel-swipe-info {
+      font-size: 11.5px;
+      color: #CBD5E1;
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 8px;
+      padding: 8px 12px;
+      line-height: 1.4;
+    }
+    .panel-footer {
+      font-size: 11px;
+      color: #94A3B8;
+      text-align: right;
     }
 
     /* FORM & INPUTLAR */
@@ -703,6 +865,134 @@
       </div>
     </section>
 
+
+    <!-- 3. PANORAMİK GÖRSELLERİ İKİLİ INSTAGRAM CAROUSEL'E DÖNÜŞTÜRME STÜDYOSU -->
+    <section class="section-card" id="secPanoramicCarousel">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:24px;">🖼️✂️</span>
+          <div>
+            <h2>Panoramik Görselleri İkili Instagram Carousel'e Dönüştürme</h2>
+            <p>Geniş oda ve showroom fotoğraflarını kalitesini bozmadan dikey ortadan ikiye bölerek 2 sayfalı kaydırmalı Instagram carousel gönderisi oluşturun.</p>
+          </div>
+        </div>
+        <button class="btn btn-gold" onclick="savePanoramicSettings()">💾 Panoramik Ayarları Kaydet</button>
+      </div>
+
+      <!-- KONTROL VE MOD SEÇENEKLERİ (OTOMATİK / MANUEL İKİYE BÖL / TEK GÖRSEL) -->
+      <div style="background:rgba(11, 17, 32, 0.7); border:1px solid rgba(212, 175, 55, 0.25); border-radius:14px; padding:18px; margin-bottom:18px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
+          <div>
+            <span style="font-size:12px; font-weight:800; color:#FDE68A; text-transform:uppercase; letter-spacing:0.5px;">Bölme ve Algılama Modu:</span>
+            <div style="font-size:11.5px; color:#94A3B8; margin-top:3px;">
+              Geniş panoramik görsellerin carousel olarak yayımlanma stratejisini belirleyin.
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <label style="font-size:11.5px; color:#94A3B8; font-weight:700;">En-Boy Oranı Eşiği (≥):</label>
+            <input type="number" id="inpAspectRatioThreshold" class="form-control" value="1.8" step="0.1" min="1.2" max="3.0" style="width:75px; text-align:center; font-weight:800;" onchange="onPanoramicConfigChanged()">
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;" id="panoramicModeContainer">
+          <!-- MOD 1: OTOMATİK (ÖNERİLEN) -->
+          <label class="radio-chip-card active" id="cardModeAuto" onclick="selectPanoramicMode('auto')">
+            <input type="radio" name="panoramic_mode" id="rbModeAuto" value="auto" checked style="accent-color:var(--accent-gold);">
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#fff;">✨ Otomatik (Önerilen)</div>
+              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                Görsel en-boy oranını analiz eder; oran ≥ eşik (1.8) ise otomatik 2 parçalı carousel yapar.
+              </div>
+            </div>
+          </label>
+
+          <!-- MOD 2: İKİ PARÇAYA BÖL (MANUEL) -->
+          <label class="radio-chip-card" id="cardModeSplit" onclick="selectPanoramicMode('split')">
+            <input type="radio" name="panoramic_mode" id="rbModeSplit" value="split" style="accent-color:var(--accent-gold);">
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#fff;">✂️ İki Parçaya Böl (Manuel)</div>
+              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                Görsel geniş olmasa bile her durumda iki parçalı Instagram carousel oluşturur.
+              </div>
+            </div>
+          </label>
+
+          <!-- MOD 3: TEK GÖRSEL OLARAK KULLAN -->
+          <label class="radio-chip-card" id="cardModeSingle" onclick="selectPanoramicMode('single')">
+            <input type="radio" name="panoramic_mode" id="rbModeSingle" value="single" style="accent-color:var(--accent-gold);">
+            <div>
+              <div style="font-size:13px; font-weight:800; color:#fff;">🖼️ Tek Görsel Olarak Kullan</div>
+              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                Otomatik bölmeyi devre dışı bırakır; daima standart tek görsel gönderi yayınlar.
+              </div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- SİSTEM BİLGİLENDİRME BİLDİRİMİ (BANNER) -->
+      <div id="panoramicNoticeBanner" style="display:none; background:rgba(56, 189, 248, 0.12); border:1px solid rgba(56, 189, 248, 0.4); border-radius:10px; padding:12px 16px; margin-bottom:16px; color:#E0F2FE; font-size:12.5px; align-items:center; gap:10px;">
+        <span style="font-size:20px;">💡</span>
+        <div id="panoramicNoticeText">Bu görsel geniş panoramik formatta olduğu için iki sayfalı carousel gönderisine dönüştürüldü.</div>
+      </div>
+
+      <!-- TEST / ÖNİZLEME ÜRÜN SEÇİCİSİ -->
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:280px;">
+          <label style="font-size:12px; font-weight:700; color:#94A3B8; white-space:nowrap;">Analiz Edilecek Ürün:</label>
+          <select class="form-control" id="selPanoramicProduct" style="flex:1;" onchange="onPanoramicProductSelected()">
+            <option value="">Katalog yükleniyor...</option>
+          </select>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-outline" onclick="reAnalyzeSelectedProduct()">🔄 Görseli Yeniden Analiz Et</button>
+          <button type="button" class="btn btn-outline" id="btnToggleSplitState" onclick="toggleSplitStateOverride()">↩️ Tek Görsele Dön</button>
+        </div>
+      </div>
+
+      <!-- ÖNİZLEME ALANI (ORİJİNAL PANORAMİK vs 2 PARÇALI CAROUSEL) -->
+      <div class="panoramic-preview-grid">
+        <!-- SOL: ORİJİNAL GÖRSEL VE KESİM EKSENİ -->
+        <div class="preview-panel">
+          <div class="panel-header">
+            <span>📷 Orijinal Görsel (Katalog Medyası)</span>
+            <span class="badge-ratio" id="badgeOriginalRatio">Oran: Hesaplanıyor...</span>
+          </div>
+          <div class="original-image-stage" id="stageOriginalContainer">
+            <img id="imgOriginalPreview" src="" alt="Orijinal Görsel" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'">
+            <div class="split-line-overlay" id="splitLineOverlay" title="Ortadan İkiye Dikey Kesim Ekseni" style="display:none;">
+              <span class="seam-label">✂️ Kesim Ekseni (W / 2)</span>
+            </div>
+          </div>
+          <div class="panel-footer" id="txtOriginalDimFooter">Çözünürlük: Yükleniyor...</div>
+        </div>
+
+        <!-- SAĞ: İKİ PARÇALI CAROUSEL ÖNİZLEMESİ (SOL PARÇA + SAĞ PARÇA & KAYDIRMA SİMÜLATÖRÜ) -->
+        <div class="preview-panel">
+          <div class="panel-header">
+            <span>📲 Instagram Carousel Önizlemesi (2 Sayfalı)</span>
+            <span class="badge-carousel" id="badgeCarouselStatus">Dikişsiz İkili Carousel</span>
+          </div>
+          <div class="carousel-preview-stage">
+            <!-- 1. SOL SAYFA KARTI -->
+            <div class="carousel-slice-card" id="cardSliceLeft">
+              <div class="slice-badge">1. Sayfa (Sol Yarım)</div>
+              <canvas id="canvasSliceLeft"></canvas>
+            </div>
+            <!-- 2. SAĞ SAYFA KARTI -->
+            <div class="carousel-slice-card" id="cardSliceRight">
+              <div class="slice-badge">2. Sayfa (Sağ Yarım)</div>
+              <canvas id="canvasSliceRight"></canvas>
+            </div>
+          </div>
+          <div class="carousel-swipe-info">
+            👆 <strong>Kullanıcı Deneyimi:</strong> Kullanıcı 1. sayfayı gördükten sonra sola kaydırdığında 2. sayfa gelecek ve iki görsel birleşerek geniş orijinal oda/showroom tasarımını kesintisiz oluşturacaktır.
+          </div>
+        </div>
+      </div>
+    </section>
+
+
     <!-- 3. DETAYLI GÖNDERİ İÇERİK SEÇİMİ (TİKLEME SİSTEMİ) -->
     <section class="section-card">
       <div class="card-header">
@@ -876,6 +1166,11 @@
     let publishedTracker = {};
     let isCycleRunning = false;
 
+    // Panoramik İkili Carousel Stüdyosu Durumu
+    let currentPanoramicProduct = null;
+    let currentSplitResult = null;
+    let panoramicSettings = { mode: 'auto', threshold: 1.8 };
+
     // =========================================================================
     // MENÜ GEÇİŞİ
     // =========================================================================
@@ -972,6 +1267,9 @@
         const el = document.getElementById(`spec_opt_${k}`);
         if (el) el.checked = !!v;
       }
+
+      // Panoramik Carousel Stüdyosu UI Doldur
+      populatePanoramicUI();
     }
 
     function updateSlotVisuals() {
@@ -1140,6 +1438,229 @@
 
       await persistBotState();
       showToast('✅ Detaylı gönderi kapsül tercihleri kaydedildi!');
+    }
+
+
+    // =========================================================================
+    // PANORAMİK İKİLİ CAROUSEL STÜDYOSU FONKSİYONLARI
+    // =========================================================================
+    function populatePanoramicUI() {
+      const cfg = botState?.config || {};
+      const savedPan = cfg.panoramic_settings || { mode: 'auto', threshold: 1.8 };
+      panoramicSettings.mode = savedPan.mode || 'auto';
+      panoramicSettings.threshold = typeof savedPan.threshold === 'number' ? savedPan.threshold : 1.8;
+
+      const inpTh = document.getElementById('inpAspectRatioThreshold');
+      if (inpTh) inpTh.value = panoramicSettings.threshold;
+
+      selectPanoramicMode(panoramicSettings.mode, false);
+
+      // Ürün Seçici Doldur
+      const sel = document.getElementById('selPanoramicProduct');
+      if (sel && catalogProducts.length > 0) {
+        sel.innerHTML = catalogProducts.map((p, idx) => `
+          <option value="${p.slug}" ${idx === 0 ? 'selected' : ''}>
+            ${p.title || p.slug} (${p.kategori || 'Mobilya'})
+          </option>
+        `).join('');
+        onPanoramicProductSelected();
+      }
+    }
+
+    function selectPanoramicMode(mode, triggerReAnalysis = true) {
+      panoramicSettings.mode = mode || 'auto';
+      const modes = ['auto', 'split', 'single'];
+      modes.forEach(m => {
+        const rb = document.getElementById(`rbMode${m.charAt(0).toUpperCase() + m.slice(1)}`);
+        const card = document.getElementById(`cardMode${m.charAt(0).toUpperCase() + m.slice(1)}`);
+        if (rb) rb.checked = (m === panoramicSettings.mode);
+        if (card) card.classList.toggle('active', m === panoramicSettings.mode);
+      });
+
+      if (triggerReAnalysis) {
+        evaluateAndRenderPanoramic();
+      }
+    }
+
+    function onPanoramicConfigChanged() {
+      const inpTh = document.getElementById('inpAspectRatioThreshold');
+      const val = parseFloat(inpTh?.value);
+      panoramicSettings.threshold = (!isNaN(val) && val > 0) ? val : 1.8;
+      evaluateAndRenderPanoramic();
+    }
+
+    function onPanoramicProductSelected() {
+      const sel = document.getElementById('selPanoramicProduct');
+      const slug = sel?.value;
+      if (!slug) return;
+      currentPanoramicProduct = catalogProducts.find(p => p.slug === slug) || catalogProducts[0];
+      evaluateAndRenderPanoramic();
+    }
+
+    function reAnalyzeSelectedProduct() {
+      evaluateAndRenderPanoramic();
+      showToast('🔄 Görsel boyutları ve panoramik en-boy oranı yeniden hesaplandı.');
+    }
+
+    function toggleSplitStateOverride() {
+      if (panoramicSettings.mode === 'single') {
+        selectPanoramicMode('split');
+      } else {
+        selectPanoramicMode('single');
+      }
+    }
+
+    async function evaluateAndRenderPanoramic() {
+      if (!currentPanoramicProduct) {
+        if (catalogProducts.length > 0) currentPanoramicProduct = catalogProducts[0];
+        else return;
+      }
+
+      const imgUrl = currentPanoramicProduct.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+      const imgEl = document.getElementById('imgOriginalPreview');
+      const badgeRatio = document.getElementById('badgeOriginalRatio');
+      const dimFooter = document.getElementById('txtOriginalDimFooter');
+      const splitOverlay = document.getElementById('splitLineOverlay');
+      const noticeBanner = document.getElementById('panoramicNoticeBanner');
+      const noticeText = document.getElementById('panoramicNoticeText');
+      const btnToggle = document.getElementById('btnToggleSplitState');
+      const badgeCarousel = document.getElementById('badgeCarouselStatus');
+
+      imgEl.src = imgUrl;
+
+      // Görsel yüklenmesini bekle
+      await new Promise(resolve => {
+        if (imgEl.complete && imgEl.naturalWidth) return resolve();
+        imgEl.onload = resolve;
+        imgEl.onerror = resolve;
+      });
+
+      const w = imgEl.naturalWidth || 1920;
+      const h = imgEl.naturalHeight || 1080;
+
+      // Panoramic Engine ile analiz et
+      const evaluation = window.PanoramicCarouselEngine.evaluateSplittingMode({
+        width: w,
+        height: h,
+        mode: panoramicSettings.mode,
+        threshold: panoramicSettings.threshold
+      });
+
+      // UI Güncellemeleri
+      badgeRatio.textContent = `${evaluation.analysis.ratio}:1 (${evaluation.analysis.category.toUpperCase()})`;
+      dimFooter.textContent = `Çözünürlük: ${w} × ${h} px • En-Boy Oranı: ${evaluation.analysis.ratio}:1`;
+
+      if (evaluation.shouldSplit) {
+        splitOverlay.style.display = 'block';
+        noticeBanner.style.display = 'flex';
+        noticeText.textContent = evaluation.mode === 'auto'
+          ? 'Bu görsel geniş panoramik formatta olduğu için iki sayfalı carousel gönderisine dönüştürüldü.'
+          : 'Kullanıcı tercihi: Görsel iki sayfalı Instagram carousel gönderisine dönüştürüldü.';
+        badgeCarousel.textContent = '✅ Dikişsiz İkili Carousel Aktif';
+        badgeCarousel.style.background = 'rgba(16, 185, 129, 0.18)';
+        badgeCarousel.style.color = '#34D399';
+        btnToggle.textContent = '↩️ Tek Görsele Dön';
+
+        // Canvas bölme işlemi (Kayıpsız & Deterministik)
+        try {
+          const splitData = await window.PanoramicCarouselEngine.splitImageUsingCanvas(imgEl);
+          currentSplitResult = splitData;
+
+          // Sol Canvas
+          const canvasL = document.getElementById('canvasSliceLeft');
+          canvasL.width = splitData.slices.leftSlice.sw;
+          canvasL.height = splitData.slices.leftSlice.sh;
+          const ctxL = canvasL.getContext('2d');
+          ctxL.drawImage(
+            imgEl,
+            splitData.slices.leftSlice.sx, splitData.slices.leftSlice.sy, splitData.slices.leftSlice.sw, splitData.slices.leftSlice.sh,
+            0, 0, splitData.slices.leftSlice.sw, splitData.slices.leftSlice.sh
+          );
+
+          // Sağ Canvas
+          const canvasR = document.getElementById('canvasSliceRight');
+          canvasR.width = splitData.slices.rightSlice.sw;
+          canvasR.height = splitData.slices.rightSlice.sh;
+          const ctxR = canvasR.getContext('2d');
+          ctxR.drawImage(
+            imgEl,
+            splitData.slices.rightSlice.sx, splitData.slices.rightSlice.sy, splitData.slices.rightSlice.sw, splitData.slices.rightSlice.sh,
+            0, 0, splitData.slices.rightSlice.sw, splitData.slices.rightSlice.sh
+          );
+
+          document.getElementById('cardSliceLeft').style.display = 'flex';
+          document.getElementById('cardSliceRight').style.display = 'flex';
+        } catch (splitErr) {
+          console.warn('Canvas bölme hatası:', splitErr);
+        }
+      } else {
+        splitOverlay.style.display = 'none';
+        noticeBanner.style.display = 'none';
+        badgeCarousel.textContent = 'Standart Tek Görsel (Bölme Devre Dışı)';
+        badgeCarousel.style.background = 'rgba(148, 163, 184, 0.18)';
+        badgeCarousel.style.color = '#94A3B8';
+        btnToggle.textContent = '✂️ İki Parçaya Böl';
+
+        // Tek görsel modunda sol canvas'a tam resmi koy, sağı gizle
+        const canvasL = document.getElementById('canvasSliceLeft');
+        canvasL.width = w;
+        canvasL.height = h;
+        const ctxL = canvasL.getContext('2d');
+        ctxL.drawImage(imgEl, 0, 0);
+        document.getElementById('cardSliceLeft').style.display = 'flex';
+        document.getElementById('cardSliceRight').style.display = 'none';
+        currentSplitResult = null;
+      }
+    }
+
+    async function savePanoramicSettings() {
+      if (!botState) botState = { config: {} };
+      if (!botState.config) botState.config = {};
+
+      botState.config.panoramic_settings = {
+        mode: panoramicSettings.mode,
+        threshold: panoramicSettings.threshold,
+        updated_at: new Date().toISOString()
+      };
+
+      showToast('⏳ Panoramik ayarlar Supabase veritabanına yazılıyor...');
+
+      try {
+        const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            key: 'insta_bot_state',
+            data: botState,
+            updated_at: new Date().toISOString()
+          })
+        });
+
+        if (!saveRes.ok) {
+          throw new Error('Supabase kayıt yanıtı başarısız.');
+        }
+
+        // Doğrulama Okuması
+        const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        const rows = verifyRes.ok ? await verifyRes.json() : [];
+        const verifiedPan = rows && rows[0]?.data?.config?.panoramic_settings;
+
+        if (!verifiedPan || verifiedPan.mode !== panoramicSettings.mode) {
+          throw new Error('Veritabanı kayıt doğrulaması uyuşmadı.');
+        }
+
+        showToast(`✅ Panoramik carousel ayarları kaydedildi ve doğrulandı! (Mod: ${panoramicSettings.mode}, Eşik: ${panoramicSettings.threshold})`);
+      } catch (err) {
+        console.error('Panoramik ayar kaydetme hatası:', err);
+        showToast(`❌ Hata: ${err.message}`);
+      }
     }
 
     async function saveAssistantSettings() {
@@ -1337,6 +1858,40 @@
           mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
         }
 
+        // ── PANORAMİK İKİLİ CAROUSEL KONTROLÜ (FORMAT: POST İSE) ────────────────
+        let finalPublishFormat = format;
+        let carouselSlideUrls = null;
+
+        if (format === 'POST' && window.PanoramicCarouselEngine) {
+          try {
+            const panCfg = (botState?.config?.panoramic_settings) || { mode: 'auto', threshold: 1.8 };
+            // Resim boyutlarını ölç
+            const tempImg = new Image();
+            tempImg.crossOrigin = 'anonymous';
+            tempImg.src = mediaUrl;
+            await new Promise(r => { tempImg.onload = r; tempImg.onerror = r; setTimeout(r, 2000); });
+
+            const evalSplit = window.PanoramicCarouselEngine.evaluateSplittingMode({
+              width: tempImg.naturalWidth || 1080,
+              height: tempImg.naturalHeight || 1080,
+              mode: panCfg.mode || 'auto',
+              threshold: panCfg.threshold || 1.8
+            });
+
+            if (evalSplit.shouldSplit) {
+              finalPublishFormat = 'CAROUSEL';
+              // Orijinal ürün görseli ASLA ezilmez! Türev carousel parçaları hazırlanır
+              const splitRes = await window.PanoramicCarouselEngine.splitImageUsingCanvas(tempImg);
+              const payload = window.PanoramicCarouselEngine.prepareProductCarouselPayload(product, splitRes, { mode: panCfg.mode });
+              carouselSlideUrls = payload.carouselItems.map(item => item.url);
+              mediaUrl = payload.mediaUrlJson;
+              showToast(`✂️ Geniş panoramik görsel tespit edildi: "${product.title}" 2 sayfalı Instagram Carousel olarak yayımlanıyor...`);
+            }
+          } catch (panErr) {
+            console.warn('Panoramik carousel hazırlık uyarısı, tek görsel devam ediyor:', panErr);
+          }
+        }
+
         // Meta Graph API ile Paylaş (Veya Canlı Kaydet)
         const cfg = botState?.config || {};
         const igUserId = cfg.ig_user_id || '17841435882645322';
@@ -1351,29 +1906,68 @@
             caption: caption
           });
 
-          if (format === 'REELS') {
+          if (finalPublishFormat === 'CAROUSEL' && Array.isArray(carouselSlideUrls)) {
+            // İkili Instagram Carousel Yayını
+            const itemIds = [];
+            for (const slideUrl of carouselSlideUrls) {
+              const itemParams = new URLSearchParams({
+                access_token: accessToken,
+                is_carousel_item: 'true',
+                image_url: slideUrl
+              });
+              const iRes = await fetch(createUrl, { method: 'POST', body: itemParams });
+              const iData = await iRes.json();
+              if (iData?.id) itemIds.push(iData.id);
+            }
+            if (itemIds.length >= 2) {
+              const carParams = new URLSearchParams({
+                access_token: accessToken,
+                media_type: 'CAROUSEL',
+                children: itemIds.join(','),
+                caption: caption
+              });
+              const cRes = await fetch(createUrl, { method: 'POST', body: carParams });
+              const cData = await cRes.json();
+              if (cData?.id) {
+                const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
+                const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
+                const pData = await pRes.json();
+                if (pData?.id) publishedSuccess = true;
+              }
+            }
+          } else if (format === 'REELS') {
             params.set('media_type', 'REELS');
             params.set('video_url', mediaUrl);
             params.set('share_to_feed', 'true');
+            const cRes = await fetch(createUrl, { method: 'POST', body: params });
+            const cData = await cRes.json();
+            if (cData?.id) {
+              const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
+              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
+              const pData = await pRes.json();
+              if (pData?.id) publishedSuccess = true;
+            }
           } else if (format === 'STORIES') {
             params.set('media_type', 'STORIES');
             params.set('image_url', mediaUrl);
+            const cRes = await fetch(createUrl, { method: 'POST', body: params });
+            const cData = await cRes.json();
+            if (cData?.id) {
+              const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
+              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
+              const pData = await pRes.json();
+              if (pData?.id) publishedSuccess = true;
+            }
           } else {
             params.set('image_url', mediaUrl);
-          }
-
-          const cRes = await fetch(createUrl, { method: 'POST', body: params });
-          const cData = await cRes.json();
-          if (cData?.id) {
-            // Container oluşturuldu, publish et
-            const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-            const pParams = new URLSearchParams({
-              creation_id: cData.id,
-              access_token: accessToken
-            });
-            const pRes = await fetch(pubUrl, { method: 'POST', body: pParams });
-            const pData = await pRes.json();
-            if (pData?.id) publishedSuccess = true;
+            const cRes = await fetch(createUrl, { method: 'POST', body: params });
+            const cData = await cRes.json();
+            if (cData?.id) {
+              const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
+              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
+              const pData = await pRes.json();
+              if (pData?.id) publishedSuccess = true;
+            }
           }
         } catch (apiErr) {
           console.warn('Meta API canlı çağrı uyarısı:', apiErr);
@@ -1383,7 +1977,7 @@
         const newPostEntry = {
           id: `post-${Date.now()}`,
           title: `NOVA - ${cleanTitle}`,
-          media_type: format,
+          media_type: finalPublishFormat,
           media_url: mediaUrl,
           published_at: new Date().toISOString(),
           status: 'published'
