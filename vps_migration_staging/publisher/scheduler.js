@@ -195,34 +195,46 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
     : DEFAULT_MEDIA_FALLBACK;
 
   let mediaUrl = imageFallback;
-  let caption = `✨ ${product.title || 'Nova Furniture Özel Tasarım Koleksiyonu'} — Mekanınıza değer katan minimalist çizgiler ve kusursuz işçilik.`;
-  let hashtags = '#novafurniture #minimalistmobilya #luxuryfurniture #icmimari #ozelolcumobilya';
+  let caption = GeminiBananaEngine.generateNovaLuxuryCaption
+    ? GeminiBananaEngine.generateNovaLuxuryCaption(product, platform)
+    : `✨ ${product.title || 'Nova Furniture Özel Tasarım Koleksiyonu'} — Mekanınıza değer katan minimalist çizgiler ve kusursuz işçilik.`;
+  let hashtags = GeminiBananaEngine.buildProductHashtags
+    ? GeminiBananaEngine.buildProductHashtags(product, platform)
+    : '#novafurniture #minimalistmobilya #luxuryfurniture #icmimari #ozelolcumobilya';
+  let targetLink = contentType === 'LINK_CARD' ? (slot.target_link || 'https://wa.me/905050151035') : null;
+  let prompt = GeminiBananaEngine.buildGeminiBananaPrompt
+    ? GeminiBananaEngine.buildGeminiBananaPrompt(product)
+    : '';
 
-  // Gemini Banana Entegrasyonu (API anahtarı tanımlı ise canlı mimari kampanya)
-  if (geminiApiKey) {
-    try {
-      const campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
-        product,
-        apiKey: geminiApiKey,
-        allowFallback: true
-      });
+  // Gemini Ücretsiz Katman & Stüdyo Motoru — Her zaman 1080x1080 ve 1080x1920 görselleri üretir
+  try {
+    const campaign = await GeminiBananaEngine.buildAndSaveProductCampaign({
+      product,
+      apiKey: geminiApiKey,
+      allowFallback: true
+    });
 
-      if (campaign) {
+    if (campaign) {
+      if (platform === 'facebook') {
+        if (campaign.facebook_caption || campaign.caption) caption = campaign.facebook_caption || campaign.caption;
+        if (campaign.facebook_hashtags || campaign.hashtags) hashtags = campaign.facebook_hashtags || campaign.hashtags;
+      } else {
         if (campaign.caption) caption = campaign.caption;
         if (campaign.hashtags) hashtags = campaign.hashtags;
-
-        if (contentType === 'REELS' || contentType === 'FB_REELS') {
-          mediaUrl = campaign.reels_video_url || campaign.post_image_url || imageFallback;
-        } else if (contentType === 'STORIES' || contentType === 'FB_STORIES') {
-          mediaUrl = campaign.story_image_url || campaign.post_image_url || imageFallback;
-        } else {
-          mediaUrl = campaign.post_image_url || imageFallback;
-        }
       }
-    } catch (genErr) {
-      console.warn(`[Scheduler] Gemini Banana görsel üretimi fallback'e geçti: ${genErr.message}`);
-      mediaUrl = imageFallback;
+      if (campaign.prompt) prompt = campaign.prompt;
+
+      if (contentType === 'REELS' || contentType === 'FB_REELS') {
+        mediaUrl = campaign.reels_video_url || campaign.post_image_url || imageFallback;
+      } else if (contentType === 'STORIES' || contentType === 'FB_STORIES') {
+        mediaUrl = campaign.story_image_url || campaign.post_image_url || imageFallback;
+      } else {
+        mediaUrl = campaign.post_image_url || imageFallback;
+      }
     }
+  } catch (genErr) {
+    console.warn(`[Scheduler] Görsel kampanya üretimi fallback'e geçti: ${genErr.message}`);
+    mediaUrl = imageFallback;
   }
 
   // Meta API SVG formatını desteklemez; SVG gelirse daima PNG fallback kullan
@@ -234,7 +246,9 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
     contentType,
     mediaUrl,
     caption,
-    hashtags
+    hashtags,
+    targetLink,
+    prompt
   };
 }
 
@@ -261,8 +275,12 @@ export async function checkAndEnqueueSlot({
 
   const { dateStr, timeStr } = istanbulNow;
 
-  // Saat eşleşme kontrolü: Mevcut dakika slot dakikasıyla eşleşiyor mu?
-  if (timeStr !== slotTime) {
+  // Saat eşleşme kontrolü: Mevcut dakika slot dakikasıyla (veya 2 dk gecikme toleransıyla) eşleşiyor mu?
+  const [sh, sm] = slotTime.split(':').map(Number);
+  const [ch, cm] = timeStr.split(':').map(Number);
+  const diffMinutes = (ch * 60 + cm) - (sh * 60 + sm);
+  const isTimeMatched = (timeStr === slotTime) || (diffMinutes >= 0 && diffMinutes <= 2);
+  if (!isTimeMatched) {
     return { status: 'skipped', reason: 'TIME_NOT_MATCHED', expected: slotTime, current: timeStr };
   }
 
@@ -326,7 +344,7 @@ export async function checkAndEnqueueSlot({
     media_url: taskPayload.mediaUrl,
     caption: taskPayload.caption,
     hashtags: taskPayload.hashtags,
-    target_link: null,
+    target_link: taskPayload.targetLink || null,
     status: 'pending',
     idempotency_key: idempotencyKey,
     scheduled_for: scheduledForIso

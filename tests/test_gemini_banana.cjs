@@ -88,7 +88,7 @@ async function runTests() {
   // Test 1: Modül Import ve Export Doğrulaması
   let GeminiBananaEngine;
   try {
-    const imported = await import('./gemini-banana-engine.js');
+    const imported = await import('../gemini-banana-engine.js');
     GeminiBananaEngine = imported.default || imported;
     report('1. Gemini Banana motoru ES modülü olarak sorunsuz yüklendi', Boolean(GeminiBananaEngine.buildGeminiBananaPrompt));
   } catch (err) {

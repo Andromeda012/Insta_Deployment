@@ -2,8 +2,8 @@ import { buildGeminiBananaPrompt } from '../Module 2/gemini-banana-engine.js';
 import {createHash} from 'node:crypto';
 import {authenticateModule2Admin,authorizeVercelCron,supabaseAdminRequest,sendApiError} from './_lib/module2-publishing.js';
 
-const STATE_KEYS=new Set(['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker']);
-const ALLOWED_TYPES={instagram:new Set(['POST','REELS','STORIES']),facebook:new Set(['PHOTO_POST','FB_STORIES','LINK_CARD']),tiktok:new Set(['TIKTOK_VIDEO','TIKTOK_PHOTO_CAROUSEL'])};
+const STATE_KEYS=new Set(['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker','facebook_published_tracker']);
+const ALLOWED_TYPES={instagram:new Set(['POST','REELS','STORIES','CAROUSEL']),facebook:new Set(['PHOTO_POST','FB_STORIES','LINK_CARD']),tiktok:new Set(['TIKTOK_VIDEO','TIKTOK_PHOTO_CAROUSEL'])};
 function validHttpsUrl(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&value.length<=2048;}catch{return false;}}
 function actionOf(req){return String(req.query?.action||new URL(req.url,'https://local.invalid').searchParams.get('action')||'').toLowerCase();}
 

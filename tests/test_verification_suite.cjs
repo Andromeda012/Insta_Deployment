@@ -125,7 +125,7 @@ async function runTestSuite() {
 
   let GeminiBananaEngine;
   try {
-    const mod = await import('./gemini-banana-engine.js');
+    const mod = await import('../gemini-banana-engine.js');
     GeminiBananaEngine = mod.default || mod;
   } catch (e) {
     console.error('gemini-banana-engine.js import edilemedi:', e);
@@ -222,7 +222,7 @@ async function runTestSuite() {
   // ──────────────────────────────────────────────────────────────────────────
   let igInsertedTask = null;
   try {
-    const igCronModule = await import('./api/instagram-cron.js');
+    const igCronModule = await import('../api/instagram-cron.js');
     const igHandler = igCronModule.default || igCronModule;
 
     let resStatusCode = null;
@@ -259,7 +259,7 @@ async function runTestSuite() {
   // ──────────────────────────────────────────────────────────────────────────
   let fbInsertedTask = null;
   try {
-    const fbCronModule = await import('./api/facebook-cron.js');
+    const fbCronModule = await import('../api/facebook-cron.js');
     const fbHandler = fbCronModule.default || fbCronModule;
 
     let resStatusCode = null;
@@ -294,7 +294,7 @@ async function runTestSuite() {
   // TEST 6: Aynı cron iki kez çalıştığında duplicate oluşmaması (Idempotency Key)
   // ──────────────────────────────────────────────────────────────────────────
   try {
-    const igCronModule = await import('./api/instagram-cron.js');
+    const igCronModule = await import('../api/instagram-cron.js');
     const igHandler = igCronModule.default || igCronModule;
 
     let resStatusCode = null;
@@ -393,7 +393,7 @@ async function runTestSuite() {
     // 9.B: Worker tamamlandığında panel sync fonksiyonu çalışmalı ve hatalı görevleri published yapmamalı
     const pubSource = fs.readFileSync('./vps_migration_staging/publisher/index.js', 'utf8');
     const hasSyncFunction = pubSource.includes('syncAdminPanelStatus');
-    const syncPreservesStatus = pubSource.includes('p.status = finalStatus') && !pubSource.includes("p.status = 'published'; // force");
+    const syncPreservesStatus = (pubSource.includes('p.status = finalStatus') || pubSource.includes('item.status = finalStatus')) && !pubSource.includes("p.status = 'published'; // force");
 
     const pass9 = setsPendingOnQueue && hasSyncFunction && syncPreservesStatus;
     recordTest('Panelde kuyruk durumunun doğru gösterilmesi (Pending -> Worker Sonu senkronizasyonu)', pass9, {
