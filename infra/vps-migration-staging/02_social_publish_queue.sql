@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_publish_queue_platform
 ON public.social_publish_queue(platform, status);
 
 ALTER TABLE public.social_publish_queue ENABLE ROW LEVEL SECURITY;
-REVOKE ALL ON public.social_publish_queue FROM PUBLIC;
+REVOKE ALL ON public.social_publish_queue FROM PUBLIC, anon, authenticated;
 
 -- Service role has full permissions (for VPS Publisher runner)
 GRANT ALL ON public.social_publish_queue TO service_role;
