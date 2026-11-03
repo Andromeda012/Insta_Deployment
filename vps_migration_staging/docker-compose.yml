@@ -1,0 +1,35 @@
+# ============================================================================
+# NOVA FURNITURE — VPS DOCKER COMPOSE YAPILANDIRMASI
+# ============================================================================
+# MİMARİ VE GÜVENLİK İLKELERİ:
+# 1. Kapsam İzolasyonu: Yalnızca sosyal medya yayın servisi ('nova-publisher') çalışır.
+# 2. Sıfır Dış Port: Hiçbir port açılmaz (Dışarıdan gelen atak yüzeyi yoktur).
+# 3. Log Boyut Sınırı: json-file sürücüsü ile disk dolması engellenir.
+# 4. Sürüm Tanımı: Kullanılmayan ve artık önerilmeyen 'version' alanı kaldırılmıştır.
+# ============================================================================
+
+services:
+  nova-publisher:
+    build:
+      context: ./publisher
+      dockerfile: Dockerfile
+    container_name: nova_publisher
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=nova-publisher
+      - TZ=Europe/Istanbul
+    # Dışarıya açık port YOKTUR. Tüm iletişim giden (outbound) HTTPS üzerindendir.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - nova_internal_net
+
+networks:
+  nova_internal_net:
+    driver: bridge

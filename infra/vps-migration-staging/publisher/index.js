@@ -28,7 +28,10 @@
 
 import { createClient } from '@supabase/supabase-js';
 import httpClient from './http-client.cjs';
+
 const { fetchWithTimeout } = httpClient;
+
+import { startAutonomousScheduler } from './scheduler.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -96,11 +99,12 @@ async function executePublish(task) {
 
   // DRY-RUN GÜVENCESİ: Kesinlikle hiçbir gerçek platform API çağrısı yapma!
   if (DRY_RUN) {
-    console.log(`[DRY-RUN] Simüle yayın doğrulandı: ${platform} -> ${media_url}`);
+    const isCarousel = content_type === 'CAROUSEL' || (typeof media_url === 'string' && media_url.trim().startsWith('['));
+    console.log(`[DRY-RUN] Simüle yayın doğrulandı: ${platform} (${isCarousel ? 'CAROUSEL' : content_type}) -> ${media_url}`);
     return {
       status: 'dry_run_completed',
-      platformPostId: `SIMULATED_${platform.toUpperCase()}_${Date.now()}`,
-      rawResponse: { mode: 'DRY_RUN_SIMULATION', timestamp: new Date().toISOString() }
+      platformPostId: `SIMULATED_${platform.toUpperCase()}_${isCarousel ? 'CAROUSEL_' : ''}${Date.now()}`,
+      rawResponse: { mode: 'DRY_RUN_SIMULATION', isCarousel: isCarousel, timestamp: new Date().toISOString() }
     };
   }
 
@@ -111,6 +115,108 @@ async function executePublish(task) {
       const igAccessToken = process.env.META_IG_ACCESS_TOKEN;
       if (!igUserId || !igAccessToken) {
         throw new Error('Meta Instagram ortam değişkenleri (META_IG_USER_ID, META_IG_ACCESS_TOKEN) eksik!');
+      }
+
+      const isCarousel = content_type === 'CAROUSEL' || (typeof media_url === 'string' && media_url.trim().startsWith('['));
+
+      // ── CAROUSEL YAYIN AKIŞI (İKİLİ PANORAMİK & ÇOKLU MEDYA) ────────────────
+      if (isCarousel) {
+        let items = [];
+        try {
+          if (typeof media_url === 'string' && media_url.trim().startsWith('[')) {
+            items = JSON.parse(media_url);
+          } else if (typeof media_url === 'string' && media_url.includes(',')) {
+            items = media_url.split(',').map(s => s.trim()).filter(Boolean);
+          } else {
+            items = [media_url];
+          }
+        } catch (_) {
+          items = [media_url];
+        }
+
+        const itemContainerIds = [];
+        for (let i = 0; i < items.length; i++) {
+          const itemUrl = items[i];
+          const itemParams = new URLSearchParams();
+          itemParams.set('access_token', igAccessToken);
+          itemParams.set('is_carousel_item', 'true');
+          itemParams.set('image_url', itemUrl);
+
+          const itemRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media`, {
+            method: 'POST',
+            body: itemParams
+          });
+          const itemData = itemRes.data;
+          if (!itemRes.ok || !itemData.id) {
+            const errMsg = (itemData && itemData.error && itemData.error.message) || (itemData && itemData._rawText) || 'Carousel öğesi oluşturulamadı';
+            throw new Error(`Meta Carousel Öğe Hatası (Sıra ${i + 1}): ${sanitize(errMsg)}`);
+          }
+          itemContainerIds.push(itemData.id);
+        }
+
+        // Carousel Ana Konteyneri
+        const carouselParams = new URLSearchParams();
+        carouselParams.set('access_token', igAccessToken);
+        carouselParams.set('media_type', 'CAROUSEL');
+        carouselParams.set('children', itemContainerIds.join(','));
+        carouselParams.set('caption', fullCaption);
+
+        const containerRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media`, {
+          method: 'POST',
+          body: carouselParams
+        });
+        const containerData = containerRes.data;
+        if (!containerRes.ok || !containerData.id) {
+          const errMsg = (containerData && containerData.error && containerData.error.message) || (containerData && containerData._rawText) || 'Carousel konteyner oluşturulamadı';
+          throw new Error(`Meta Carousel Container Hatası: ${sanitize(errMsg)}`);
+        }
+
+        const creationId = containerData.id;
+
+        // Medya işleme durumunu bekle
+        for (let attempt = 1; attempt <= 10; attempt++) {
+          await new Promise(r => setTimeout(r, 3000));
+          if (attempt % 3 === 0) {
+            const lockOk = await heartbeatLockExtension(task_id, 120);
+            if (!lockOk) {
+              throw new Error('[HeartbeatLost] Kilit süresi doldu veya uzatılamadı. Carousel akışı durduruldu.');
+            }
+          }
+
+          const statusRes = await fetchWithTimeout(
+            `https://graph.facebook.com/v21.0/${creationId}?fields=status_code,status`,
+            {
+              method: 'GET',
+              headers: { 'Authorization': `Bearer ${igAccessToken}` }
+            }
+          );
+          const statusData = statusRes.data;
+          if (statusData && statusData.status_code === 'FINISHED') break;
+          if (statusData && statusData.status_code === 'ERROR') {
+            throw new Error(`Instagram carousel medya işleme hatası: ${sanitize(statusData.status || statusData._rawText || 'Bilinmeyen hata')}`);
+          }
+        }
+
+        // Carousel Yayını (media_publish)
+        const pubParams = new URLSearchParams({
+          creation_id: creationId,
+          access_token: igAccessToken
+        });
+        const pubRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${igUserId}/media_publish`, {
+          method: 'POST',
+          body: pubParams
+        });
+        const pubData = pubRes.data;
+        if (!pubRes.ok || !pubData.id) {
+          const errMsg = (pubData && pubData.error && pubData.error.message) || (pubData && pubData._rawText) || 'Carousel yayınlanamadı';
+          throw new Error(`Meta Carousel Publish Hatası: ${sanitize(errMsg)}`);
+        }
+
+        return {
+          status: 'published',
+          platformPostId: pubData.id,
+          rawResponse: pubData
+        };
       }
 
       const isVideo = content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url);
@@ -595,14 +701,25 @@ async function pollQueueCycle() {
   }
 }
 
-// Zamanlayıcıyı Başlat
+// Otonom Zamanlayıcıyı Başlat (Dinamik Ayar Dinleyicisi)
+
+const schedulerHandle = startAutonomousScheduler(supabase, 30000, process.env.GEMINI_API_KEY);
+
+
+
+// Kuyruk Tüketici Zamanlayıcısını Başlat
+
 const pollIntervalHandle = setInterval(pollQueueCycle, POLL_INTERVAL_MS);
+
 pollQueueCycle();
 
 // ── GRACEFUL SHUTDOWN (KONTROLLÜ KAPATMA) ────────────────────────────────────
 async function handleShutdown(signal) {
   console.log(`\n[Shutdown] ${signal} sinyali alındı. Yeni görev alımı durduruldu. Kapanıyor...`);
   isShuttingDown = true;
+
+  if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
+
   clearInterval(pollIntervalHandle);
 
   if (isTaskRunning) {
