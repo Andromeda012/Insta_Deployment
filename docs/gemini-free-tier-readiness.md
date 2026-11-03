@@ -37,4 +37,4 @@ Bu hazırlık, ücretli görsel üretim modelini veya ücretli video üretimini 
 
 ## Yayın notu
 
-Bu belge yalnızca hazırlık ve teknik karar kaydıdır. `gemini-free-tier-prep` dalında tutulur; `main` dalına birleştirilmediği ve Vercel'e dağıtılmadığı sürece mevcut canlı siteyi değiştirmez.
+Bu belge `main` dalına alınmış bir teknik karar kaydıdır. Belgedeki öneriler, henüz uygulanmış kod değişiklikleri olarak yorumlanmamalıdır. Vercel'e dağıtım ayrıca onaylanmalıdır.
