@@ -3,6 +3,8 @@
   "framework": null,
   "cleanUrls": true,
   "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
+    { "source": "/showroom", "destination": "/index.html" },
     { "source": "/api/module2-state", "destination": "/api/module2?action=state" },
     { "source": "/api/module2-enqueue", "destination": "/api/module2?action=enqueue" },
     { "source": "/api/module2-cancel", "destination": "/api/module2?action=cancel" },

@@ -1,161 +1,1347 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Mobilya — Modüler Operasyon Yönetim Platformu</title>
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Global Mobilya — Dijital Showroom & Mimari Koleksiyonlar</title>
+  <meta name="description" content="Global Mobilya & Nova Atelier: 1. sınıf MDF ve CNC membran teknolojisiyle üretilen modern yatak odası koleksiyonları ve özel ölçü mimari mobilyalar.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=Cinzel:wght@600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="/resim/logo.png" type="image/png">
+  <style>
+    :root {
+      --bg-dark: #080B11;
+      --bg-surface: #0E131F;
+      --bg-card: #131A29;
+      --bg-card-hover: #192236;
+      --border: rgba(148, 163, 184, 0.14);
+      --border-gold: rgba(212, 175, 55, 0.35);
+      --accent-gold: #D4AF37;
+      --accent-gold-light: #FDE047;
+      --accent-gold-dark: #B8860B;
+      --accent-blue: #38BDF8;
+      --accent-emerald: #10B981;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-xl: 32px;
+      --shadow-soft: 0 10px 30px rgba(0,0,0,0.4);
+      --shadow-gold: 0 8px 32px rgba(212, 175, 55, 0.2);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 15% 10%, rgba(212, 175, 55, 0.05), transparent 40%),
+        radial-gradient(circle at 85% 60%, rgba(56, 189, 248, 0.04), transparent 45%),
+        radial-gradient(circle at 50% 90%, rgba(16, 185, 129, 0.03), transparent 50%);
+    }
+
+    /* TYPOGRAPHY */
+    h1, h2, h3, .font-editorial {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      letter-spacing: -0.02em;
+    }
+    .cinzel { font-family: 'Cinzel', serif; letter-spacing: 0.05em; }
+
+    /* TOP BAR / HEADER */
+    header.showroom-header {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: rgba(8, 11, 17, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: all 0.3s ease;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand-logo-badge {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(8, 11, 17, 0.9));
+      border: 1px solid var(--border-gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.2);
+    }
+    .brand-title-group h1 {
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: #fff;
+    }
+    .brand-title-group span {
+      font-size: 10.5px;
+      color: var(--accent-gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-weight: 600;
+      display: block;
+    }
+
+    nav.showroom-nav {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    nav.showroom-nav a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13.5px;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+    nav.showroom-nav a:hover, nav.showroom-nav a.active {
+      color: #fff;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 700;
+      text-decoration: none;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      font-family: inherit;
+    }
+    .btn-gold {
+      background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-dark));
+      color: #080B11;
+      box-shadow: 0 4px 18px rgba(212, 175, 55, 0.25);
+    }
+    .btn-gold:hover {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(212, 175, 55, 0.38);
+    }
+    .btn-outline {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-outline:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(255, 255, 255, 0.3);
+      color: #fff;
+    }
+    .btn-whatsapp {
+      background: #25D366;
+      color: #062612;
+      font-weight: 800;
+      box-shadow: 0 4px 16px rgba(37, 211, 102, 0.25);
+    }
+    .btn-whatsapp:hover {
+      filter: brightness(1.08);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(37, 211, 102, 0.4);
+    }
+    .btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 6px; }
+
+    /* HERO SECTION */
+    .hero-showroom {
+      position: relative;
+      padding: 90px 28px 70px;
+      max-width: 1400px;
+      margin: 0 auto;
+      text-align: center;
+    }
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid var(--border-gold);
+      border-radius: 50px;
+      color: var(--accent-gold-light);
+      font-size: 11.5px;
+      font-weight: 800;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .hero-showroom h2 {
+      font-size: clamp(34px, 5.5vw, 64px);
+      font-weight: 900;
+      line-height: 1.12;
+      color: #fff;
+      max-width: 1000px;
+      margin: 0 auto 20px;
+      letter-spacing: -0.03em;
+    }
+    .hero-showroom p.hero-subtitle {
+      font-size: clamp(15px, 1.8vw, 18px);
+      color: var(--text-muted);
+      max-width: 760px;
+      margin: 0 auto 36px;
+      line-height: 1.6;
+    }
+
+    /* BADGES STRIP */
+    .trust-strip {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      margin-top: 24px;
+      padding: 16px 24px;
+      background: rgba(19, 26, 41, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 50px;
+      display: inline-flex;
+    }
+    .trust-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #E2E8F0;
+    }
+    .trust-item span.icon { color: var(--accent-gold); font-size: 14px; }
+
+    /* SECTION CONTAINERS */
+    .section-wrap {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 60px 28px;
+    }
+    .section-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 34px;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    .section-header .title-area h3 {
+      font-size: clamp(24px, 3vw, 36px);
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .section-header .title-area p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    /* COLLECTIONS CAROUSEL / GRID */
+    .collections-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 26px;
+    }
+    .collection-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      cursor: pointer;
+    }
+    .collection-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--border-gold);
+      box-shadow: 0 20px 50px rgba(0,0,0,0.5), var(--shadow-gold);
+    }
+    .collection-stage {
+      position: relative;
+      width: 100%;
+      height: 280px;
+      background: #060910;
+      overflow: hidden;
+    }
+    .collection-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .collection-card:hover .collection-stage img {
+      transform: scale(1.05);
+    }
+    .collection-badge {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(8, 11, 17, 0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border-gold);
+      color: var(--accent-gold-light);
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .collection-body {
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .collection-body h4 {
+      font-size: 19px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .collection-body p.col-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      margin-bottom: 16px;
+      flex: 1;
+    }
+    .palette-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 18px;
+      flex-wrap: wrap;
+    }
+    .palette-pill {
+      font-size: 11px;
+      font-weight: 700;
+      color: #cbd5e1;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 3px 9px;
+      border-radius: 50px;
+    }
+    .collection-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* INDEPENDENT PRODUCTS GALLERY */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 26px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+    }
+    .filter-btn {
+      padding: 8px 18px;
+      border-radius: 50px;
+      font-size: 12.5px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .filter-btn:hover, .filter-btn.active {
+      background: rgba(212, 175, 55, 0.14);
+      border-color: var(--accent-gold);
+      color: #fff;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 22px;
+    }
+    .product-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .product-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(212, 175, 55, 0.45);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.4);
+    }
+    .product-thumb {
+      width: 100%;
+      height: 240px;
+      background: #0A0E17;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      padding: 12px;
+    }
+    .product-thumb img {
+      max-width: 90%;
+      max-height: 90%;
+      object-fit: contain;
+      transition: transform 0.4s ease;
+    }
+    .product-card:hover .product-thumb img {
+      transform: scale(1.06);
+    }
+    .product-body {
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+    .product-sku {
+      font-size: 11px;
+      font-weight: 800;
+      color: var(--accent-gold);
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+    .product-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .product-dims {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .product-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      flex: 1;
+    }
+    .spec-pill {
+      font-size: 10.5px;
+      color: #94A3B8;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+    .product-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    /* MODAL STYLES */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: rgba(4, 6, 12, 0.85);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-box {
+      width: min(880px, 100%);
+      max-height: 90vh;
+      overflow-y: auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 25px 80px rgba(0,0,0,0.8);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      padding: 20px 26px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      background: var(--bg-surface);
+      z-index: 10;
+    }
+    .modal-header h3 { font-size: 20px; font-weight: 800; color: #fff; }
+    .btn-close-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      padding: 4px;
+    }
+    .btn-close-modal:hover { color: #fff; }
+    .modal-content-inner { padding: 26px; }
+
+    /* FORMS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) {
+      .form-grid { grid-template-columns: 1fr; }
+    }
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 800;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .form-control {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: #080C14;
+      color: #fff;
+      font-size: 13.5px;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+    .form-control:focus {
+      outline: none;
+      border-color: var(--accent-gold);
+    }
+
+    /* FOOTER */
+    footer.showroom-footer {
+      background: #05070B;
+      border-top: 1px solid var(--border);
+      padding: 60px 28px 30px;
+      margin-top: 80px;
+    }
+    .footer-inner {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+    @media (max-width: 900px) {
+      .footer-inner { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .footer-inner { grid-template-columns: 1fr; }
+      nav.showroom-nav { display: none; }
+    }
+    .footer-col h5 {
+      color: #fff;
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .footer-col ul { list-style: none; }
+    .footer-col li { margin-bottom: 10px; }
+    .footer-col a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 13px;
+      transition: color 0.2s;
+    }
+    .footer-col a:hover { color: #fff; }
+    .footer-bottom {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding-top: 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: var(--text-dim);
+      font-size: 12px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    /* TOAST */
+    #showroomToast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 100000;
+      background: #111A2E;
+      border: 1px solid var(--accent-gold);
+      color: #fff;
+      padding: 14px 22px;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+  </style>
 </head>
 <body>
-    <div class="app-layout">
-        <!-- Persistent Left Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-brand">
-                <div class="brand-logo">
-                    <span class="logo-mark">GM</span>
-                </div>
-                <div class="brand-text">
-                    <h2>Global Mobilya</h2>
-                    <span class="brand-tag">Operasyon v0.1</span>
-                </div>
-            </div>
 
-            <div class="nav-section-title">ANA PLATFORM</div>
-            <nav class="nav-menu">
-                <a href="#dashboard" class="nav-item active" data-route="dashboard">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-label">Genel Bakış (Dashboard)</span>
-                </a>
-            </nav>
+  <!-- HEADER -->
+  <header class="showroom-header">
+    <a href="/" class="brand-wrap">
+      <div class="brand-logo-badge">🏛️</div>
+      <div class="brand-title-group">
+        <h1>Global Mobilya</h1>
+        <span>Nova Atelier • Dijital Showroom</span>
+      </div>
+    </a>
 
-            <div class="nav-section-title">İŞLETME MODÜLLERİ (7)</div>
-            <nav class="nav-menu">
-                <a href="#website" class="nav-item" data-route="website">
-                    <span class="nav-icon">🌐</span>
-                    <span class="nav-label">1. Web Sitesi Yönetimi</span>
-                </a>
-                <a href="#social" class="nav-item" data-route="social">
-                    <span class="nav-icon">🤖</span>
-                    <span class="nav-label">2. Sosyal Medya & Bot</span>
-                </a>
-                <a href="#crm" class="nav-item" data-route="crm">
-                    <span class="nav-icon">👥</span>
-                    <span class="nav-label">3. CRM & Satış Hunisi</span>
-                </a>
-                <a href="#production" class="nav-item" data-route="production">
-                    <span class="nav-icon">🏭</span>
-                    <span class="nav-label">4. Üretim & Fabrika</span>
-                </a>
-                <a href="#operations" class="nav-item" data-route="operations">
-                    <span class="nav-icon">🛡️</span>
-                    <span class="nav-label">5. Altyapı & Operasyon</span>
-                </a>
-                <a href="#analytics" class="nav-item" data-route="analytics">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-label">6. Performans Analitiği</span>
-                </a>
-                <a href="#products" class="nav-item" data-route="products">
-                    <span class="nav-icon">🛋️</span>
-                    <span class="nav-label">7. Ürün Yönetimi (Katalog)</span>
-                </a>
-            </nav>
+    <nav class="showroom-nav">
+      <a href="#koleksiyonlar" class="active">Koleksiyonlar</a>
+      <a href="#urunler">Bağımsız Mobilyalar</a>
+      <a href="#kalite">İşçilik &amp; Malzeme</a>
+      <a href="#iletisim">İletişim &amp; Fabrika</a>
+    </nav>
 
-            <div class="nav-section-title">PLATFORM YÖNETİMİ</div>
-            <nav class="nav-menu">
-                <a href="#permissions" class="nav-item" data-route="permissions">
-                    <span class="nav-icon">🔐</span>
-                    <span class="nav-label">Kullanıcı Rolleri & Yetki</span>
-                </a>
-            </nav>
+    <div class="header-actions">
+      <a href="https://wa.me/905050151035?text=Merhaba,%20Global%20Mobilya%20dijital%20showroom%20koleksiyonlarınız%20hakkında%20bilgi%20almak%20istiyorum." target="_blank" class="btn btn-whatsapp btn-sm">
+        💬 WhatsApp Danışma
+      </a>
+      <button class="btn btn-gold btn-sm" onclick="openQuoteModal('genel', 'Dijital Showroom Özel Teklif')">
+        📝 Teklif İste
+      </button>
+      <a href="/admin.html" class="btn btn-outline btn-sm" title="Modüler Operasyon Platformu">
+        ⚙️ Yönetici Girişi
+      </a>
+    </div>
+  </header>
 
-            <!-- Authenticated user and assigned roles -->
-            <div class="sidebar-footer">
-                <div class="role-badge-box">
-                    <span class="role-label">Yetki Profili:</span>
-                    <span class="badge badge-accent" id="active-role-badge">Kontrol ediliyor</span>
-                </div>
-                <div class="user-profile-preview">
-                    <div class="avatar">GM</div>
-                    <div class="profile-info">
-                        <strong id="sidebar-user-name">Yetkili kullanıcı</strong>
-                        <small id="sidebar-user-email">Oturum bekleniyor</small>
-                    </div>
-                </div>
-            </div>
-        </aside>
+  <!-- HERO SECTION -->
+  <section class="hero-showroom">
+    <div class="hero-eyebrow">
+      ✨ 2026 MİMARİ KOLEKSİYONLAR • DİJİTAL SHOWROOM
+    </div>
+    <h2>Mekâna Değer Katan Bütünsel Yatak Odası Koleksiyonları</h2>
+    <p class="hero-subtitle">
+      Fiziksel showroom deneyimini dijital ortama taşıdık. 1. Sınıf E1 sağlam MDF gövde, ithal CNC membran kapaklar ve sessiz frenli donanımlarla üretilen mimari mobilyalarımızı keşfedin.
+    </p>
 
-        <!-- Main Body Wrapper -->
-        <div class="main-wrapper">
-            <!-- Top Header -->
-            <header class="topbar">
-                <div class="topbar-left">
-                    <button class="mobile-toggle-btn" id="mobile-sidebar-toggle" aria-label="Menüyü Aç/Kapat">
-                        ☰
-                    </button>
-                    <div class="global-search-wrap">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="global-search-input" placeholder="Ürün, sipariş, iş emri veya müşteri ara... (Enter)">
-                    </div>
-                </div>
-
-                <div class="topbar-right">
-                    <div class="central-user-chip" style="display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid rgba(148,163,184,.2);border-radius:10px;color:var(--text-muted);font-size:12px;">
-                        <span id="central-user-email">Oturum kontrol ediliyor…</span>
-                        <button id="central-logout-btn" class="icon-btn" type="button" title="Güvenli çıkış" aria-label="Güvenli çıkış">↪</button>
-                    </div>
-
-                    <!-- In-App Fullscreen Toggle -->
-                    <button class="icon-btn" id="topbar-fullscreen-btn" onclick="window.toggleInAppFullscreen()" title="Site İçi Tam Ekran Modu">
-                        ⛶
-                    </button>
-
-                    <!-- Notification Button -->
-                    <button class="icon-btn" onclick="window.showToast('4 yeni operasyon bildirimi mevcut')" title="Bildirimler">
-                        🔔
-                        <span class="notif-badge">4</span>
-                    </button>
-
-                    <!-- Deployment / Vercel Status Badge -->
-                    <div class="edge-status-pill" title="Vercel Edge Global Deployment">
-                        <span class="status-dot online"></span>
-                        <span>Vercel Edge v0.1</span>
-                    </div>
-                </div>
-            </header>
-
-            <!-- Content Area (Dynamically rendered by router) -->
-            <main class="main-content" id="main-content-view">
-                <!-- Content injected by app.js -->
-            </main>
-        </div>
+    <div style="display:flex; justify-content:center; gap:14px; flex-wrap:wrap;">
+      <a href="#koleksiyonlar" class="btn btn-gold">
+        🛋️ 8 Koleksiyonu İncele
+      </a>
+      <button class="btn btn-outline" onclick="openQuoteModal('genel', 'Özel Ölçü & Mimari Proje')">
+        📐 Özel Ölçü &amp; Fabrika Teklifi Al
+      </button>
     </div>
 
-    <!-- Modal / Detail Drawer Overlay -->
-    <div class="modal-overlay" id="modal-overlay">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3 id="modal-title">Detay Kartı</h3>
-                <button class="modal-close" id="modal-close-btn">&times;</button>
-            </div>
-            <div class="modal-body" id="modal-body">
-                <!-- Injected content -->
-            </div>
-        </div>
+    <div>
+      <div class="trust-strip">
+        <div class="trust-item"><span class="icon">🪵</span> 18mm Sağlam E1 MDF</div>
+        <div class="trust-item"><span class="icon">✨</span> Çizilmez CNC Membran</div>
+        <div class="trust-item"><span class="icon">🗄️</span> Sessiz Frenli Raylar</div>
+        <div class="trust-item"><span class="icon">🛡️</span> 5 Yıl Üretici Garantisi</div>
+        <div class="trust-item"><span class="icon">🚛</span> Sigortalı Özel Sevkiyat</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. BÖLÜM: 8 YATAK ODASI KOLEKSİYONLARI -->
+  <section class="section-wrap" id="koleksiyonlar">
+    <div class="section-header">
+      <div class="title-area">
+        <h3>🏛️ Yatak Odası Koleksiyonları</h3>
+        <p>Bütünsel bir uyku ve yaşam alanı için tasarlanmış 8 özel mimari set.</p>
+      </div>
+      <div>
+        <span style="font-size:12px; font-weight:800; color:var(--accent-gold); background:rgba(212,175,55,0.1); padding:6px 14px; border-radius:50px; border:1px solid var(--border-gold);">
+          8 Bütünsel Konsept
+        </span>
+      </div>
     </div>
 
-    <!-- In-App Fullscreen Floating Exit Pill -->
-    <button class="in-app-fs-exit-btn" id="in-app-fs-exit-btn" onclick="window.toggleInAppFullscreen()">
-        <span>✕</span> Tam Ekrandan Çık (Sol Menüyü Göster)
-    </button>
+    <div class="collections-grid" id="collectionsGrid">
+      <div style="grid-column: 1 / -1; text-align:center; padding:50px; color:var(--text-muted);">
+        Showroom koleksiyonları yükleniyor...
+      </div>
+    </div>
+  </section>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="toast"></div>
+  <!-- 2. BÖLÜM: BAĞIMSIZ MOBİLYALAR GALERİSİ -->
+  <section class="section-wrap" id="urunler" style="background: rgba(14, 19, 31, 0.4); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="section-header">
+      <div class="title-area">
+        <h3>🪑 Bağımsız Mobilyalar &amp; Dresuarlar</h3>
+        <p>Portmantolar, makyaj masaları, dresuarlar ve depolama üniteleri.</p>
+      </div>
+      <div>
+        <a href="https://wa.me/905050151035?text=Merhaba,%20özel%20ölçü%20mobilya%20üretimi%20yaptırmak%20istiyorum." target="_blank" class="btn btn-whatsapp btn-sm">
+          💬 Özel Ölçü Sorun
+        </a>
+      </div>
+    </div>
 
-    <!-- Application Main Script -->
-    <script type="module" src="app.js"></script>
+    <!-- Kategori Filtresi -->
+    <div class="filter-bar" id="productFilterBar">
+      <button class="filter-btn active" onclick="filterProducts('ALL', this)">Tüm Mobilyalar</button>
+      <button class="filter-btn" onclick="filterProducts('Makyaj', this)">Makyaj Masası &amp; Dresuar</button>
+      <button class="filter-btn" onclick="filterProducts('Portmanto', this)">Portmanto &amp; Vestiyer</button>
+      <button class="filter-btn" onclick="filterProducts('Dolap', this)">Dolap &amp; Gardırop</button>
+    </div>
+
+    <div class="products-grid" id="productsGrid">
+      <div style="grid-column: 1 / -1; text-align:center; padding:50px; color:var(--text-muted);">
+        Mobilya kataloğu yükleniyor...
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. BÖLÜM: İŞÇİLİK & KALİTE STANDARTLARI -->
+  <section class="section-wrap" id="kalite">
+    <div class="section-header" style="justify-content:center; text-align:center;">
+      <div class="title-area">
+        <h3>✨ Global Mobilya İşçilik &amp; Üretim Standartları</h3>
+        <p>Her bir parçayı fabrikamızda doğrudan kendi kontrolümüz altında, titizlikle üretiyoruz.</p>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:22px; margin-top:20px;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:28px;">
+        <span style="font-size:32px; display:block; margin-bottom:14px;">🪵</span>
+        <h4 style="font-size:18px; font-weight:800; color:#fff; margin-bottom:8px;">18mm E1 Sağlam MDF Gövde</h4>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+          Yonga levha (sunta) kesinlikle kullanmıyoruz. Tüm taşıyıcı gövdeler neme, esnemeye ve uzun yıllar kullanıma dayanıklı E1 sertifikalı sağlam MDF'dir.
+        </p>
+      </div>
+
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:28px;">
+        <span style="font-size:32px; display:block; margin-bottom:14px;">🪞</span>
+        <h4 style="font-size:18px; font-weight:800; color:#fff; margin-bottom:8px;">CNC Membran Kapak Teknolojisi</h4>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+          İthal membran folyolar vakumlu pres makinelerinde sıfır kenar bantla uygulanır. Çizilmeye, neme ve renk solmasına karşı maksimum koruma sağlar.
+        </p>
+      </div>
+
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:28px;">
+        <span style="font-size:32px; display:block; margin-bottom:14px;">🗄️</span>
+        <h4 style="font-size:18px; font-weight:800; color:#fff; margin-bottom:8px;">Sessiz Frenli Ray ve Menteşeler</h4>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+          Çekmece ve kapaklarda çarpmayı önleyen sessiz hidrolik fren mekanizmaları standarttır. Akıcı ve yumuşak kullanım konforu sunar.
+        </p>
+      </div>
+
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:18px; padding:28px;">
+        <span style="font-size:32px; display:block; margin-bottom:14px;">🛡️</span>
+        <h4 style="font-size:18px; font-weight:800; color:#fff; margin-bottom:8px;">Doğrudan Üretici Garantisi</h4>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6;">
+          Aracı veya komisyoncu olmadan doğrudan fabrikamızdan müşteriye ulaştırıyoruz. Tüm koleksiyonlarımız 5 yıl imalat garantisi altındadır.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- KOLEKSİYON DETAY MODALI -->
+  <div class="modal-backdrop" id="collectionDetailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalColTitle">Koleksiyon Detayı</h3>
+        <button class="btn-close-modal" onclick="closeModal('collectionDetailModal')">&times;</button>
+      </div>
+      <div class="modal-content-inner">
+        <div style="position:relative; border-radius:14px; overflow:hidden; margin-bottom:20px; max-height:380px;">
+          <img id="modalColHero" src="" alt="Koleksiyon Sahnesi" style="width:100%; height:100%; object-fit:cover; display:block;">
+        </div>
+
+        <p id="modalColStory" style="font-size:14px; color:#cbd5e1; line-height:1.6; margin-bottom:20px;"></p>
+
+        <div style="margin-bottom:24px;">
+          <h5 style="font-size:13px; font-weight:800; color:var(--accent-gold); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px;">Renk Kartelası:</h5>
+          <div class="palette-row" id="modalColPalette"></div>
+        </div>
+
+        <div style="margin-bottom:24px;">
+          <h5 style="font-size:14px; font-weight:800; color:#fff; margin-bottom:12px;">Koleksiyon Parçaları &amp; Modülleri:</h5>
+          <div id="modalColPartsList" style="display:flex; flex-direction:column; gap:10px;"></div>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content:flex-end; border-top:1px solid var(--border); padding-top:18px;">
+          <button class="btn btn-outline" onclick="closeModal('collectionDetailModal')">Kapat</button>
+          <button class="btn btn-gold" id="btnModalColQuote">📝 Bu Koleksiyon İçin Teklif İste</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ÜRÜN DETAY MODALI -->
+  <div class="modal-backdrop" id="productDetailModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalProdTitle">Mobilya Detayı</h3>
+        <button class="btn-close-modal" onclick="closeModal('productDetailModal')">&times;</button>
+      </div>
+      <div class="modal-content-inner">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:24px;">
+          <div style="background:#070A12; border-radius:14px; padding:18px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border);">
+            <img id="modalProdImg" src="" alt="Ürün Fotoğrafı" style="max-width:100%; max-height:300px; object-fit:contain;">
+          </div>
+          <div>
+            <div id="modalProdSku" style="font-size:12px; font-weight:800; color:var(--accent-gold); margin-bottom:6px;"></div>
+            <h4 id="modalProdName" style="font-size:22px; font-weight:900; color:#fff; margin-bottom:10px;"></h4>
+            <p id="modalProdCategory" style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;"></p>
+
+            <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+              <span style="font-size:11px; font-weight:800; color:var(--text-muted); display:block; margin-bottom:4px; text-transform:uppercase;">Net Ölçüler:</span>
+              <span id="modalProdDimensions" style="font-size:13.5px; color:#fff; font-weight:700; font-family:'JetBrains Mono', monospace;"></span>
+            </div>
+
+            <div style="margin-bottom:14px;">
+              <span style="font-size:11px; font-weight:800; color:var(--text-muted); display:block; margin-bottom:6px; text-transform:uppercase;">Renk Seçenekleri:</span>
+              <div class="palette-row" id="modalProdColors"></div>
+            </div>
+
+            <div style="background:rgba(212,175,55,0.08); border:1px solid var(--border-gold); border-radius:10px; padding:12px 14px; color:#FDE68A; font-size:12.5px;">
+              💡 <strong>Fiyat Bilgisi:</strong> Ürünlerimiz doğrudan fabrikadan özel ölçü ve renk seçeneklerinizle üretilmektedir. Net fiyat için anında teklif alabilirsiniz.
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <h5 style="font-size:13px; font-weight:800; color:#fff; margin-bottom:8px; text-transform:uppercase;">Öne Çıkan Özellikler:</h5>
+          <ul id="modalProdSpecsList" style="list-style:none; display:flex; flex-direction:column; gap:6px; color:#CBD5E1; font-size:13px;"></ul>
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content:flex-end; border-top:1px solid var(--border); padding-top:18px; margin-top:20px;">
+          <a id="btnModalProdWhatsApp" href="#" target="_blank" class="btn btn-whatsapp">
+            💬 WhatsApp ile Sorun
+          </a>
+          <button class="btn btn-gold" id="btnModalProdQuote">📝 Fiyat &amp; Teklif İste</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TEKLİF VE ÖZEL ÖLÇÜ TALEP MODALI (CRM ENTEGRE) -->
+  <div class="modal-backdrop" id="quoteRequestModal">
+    <div class="modal-box" style="max-width:560px;">
+      <div class="modal-header">
+        <h3>📝 Fiyat &amp; Özel Ölçü Teklif Talebi</h3>
+        <button class="btn-close-modal" onclick="closeModal('quoteRequestModal')">&times;</button>
+      </div>
+      <div class="modal-content-inner">
+        <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:18px; line-height:1.5;">
+          İlgilendiğiniz mobilya veya oda koleksiyonu için fabrika doğrudan fiyat teklifinizi ve detaylı ölçü kataloğumuzu 15 dakika içinde iletiyoruz.
+        </p>
+
+        <form id="quoteForm" onsubmit="submitQuoteRequest(event)">
+          <input type="hidden" id="formProductSlug" value="">
+          <input type="hidden" id="formCollectionSlug" value="">
+
+          <div class="form-group">
+            <label>İlgilenilen Ürün / Koleksiyon</label>
+            <input type="text" class="form-control" id="formItemName" readonly style="background:#111624; color:var(--accent-gold); font-weight:700;">
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Adınız Soyadınız *</label>
+              <input type="text" class="form-control" id="formCustomerName" placeholder="Örn: Ahmet Yılmaz" required>
+            </div>
+            <div class="form-group">
+              <label>Telefon Numaranız *</label>
+              <input type="tel" class="form-control" id="formCustomerPhone" placeholder="0 5XX XXX XX XX" required>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <div class="form-group">
+              <label>Şehir / İlçe</label>
+              <input type="text" class="form-control" id="formCustomerCity" placeholder="Örn: İstanbul / Kadıköy">
+            </div>
+            <div class="form-group">
+              <label>Talep Türü</label>
+              <select class="form-control" id="formRequestType">
+                <option value="catalog_price">Standart Katalog Fiyatı</option>
+                <option value="custom_dimension">Özel Ölçü / Oda Tasarımı</option>
+                <option value="project_deal">Toplu Proje / Mimari Teklif</option>
+                <option value="sample_request">Renk &amp; Malzeme Numunesi</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Özel Notlar veya Ölçü Talebiniz</label>
+            <textarea class="form-control" id="formCustomNotes" rows="3" placeholder="Odanızın ölçüleri, istediğiniz renk veya özel talepleriniz..."></textarea>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+            <button type="button" class="btn btn-outline" onclick="closeModal('quoteRequestModal')">Vazgeç</button>
+            <button type="submit" class="btn btn-gold" id="btnSubmitQuote">🚀 Teklif Talebini Gönder</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="showroom-footer" id="iletisim">
+    <div class="footer-inner">
+      <div class="footer-col">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+          <span style="font-size:24px;">🏛️</span>
+          <span style="font-size:18px; font-weight:900; color:#fff; letter-spacing:1px;">GLOBAL MOBİLYA</span>
+        </div>
+        <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin-bottom:18px;">
+          Nova Furniture Atelier işbirliğiyle; 1. sınıf MDF, CNC membran kapak teknolojisi ve zarif İskandinav mimari çizgilerini doğrudan fabrikadan yaşam alanlarınıza taşıyoruz.
+        </p>
+        <div style="display:flex; gap:10px;">
+          <a href="https://wa.me/905050151035" target="_blank" class="btn btn-whatsapp btn-sm">💬 WhatsApp: 0 505 015 1035</a>
+        </div>
+      </div>
+
+      <div class="footer-col">
+        <h5>Showroom Odaları</h5>
+        <ul>
+          <li><a href="#koleksiyonlar" onclick="selectCollectionBySlug('siena-yatak-odasi-koleksiyonu')">Siena Koleksiyonu</a></li>
+          <li><a href="#koleksiyonlar" onclick="selectCollectionBySlug('porto-yatak-odasi-koleksiyonu')">Porto Koleksiyonu</a></li>
+          <li><a href="#koleksiyonlar" onclick="selectCollectionBySlug('milano-yatak-odasi-koleksiyonu')">Milano Koleksiyonu</a></li>
+          <li><a href="#koleksiyonlar" onclick="selectCollectionBySlug('zurih-yatak-odasi-koleksiyonu')">Zürih Koleksiyonu</a></li>
+          <li><a href="#koleksiyonlar">Tüm 8 Koleksiyon →</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Mobilyalar</h5>
+        <ul>
+          <li><a href="#urunler" onclick="filterProducts('Makyaj')">Makyaj Masaları</a></li>
+          <li><a href="#urunler" onclick="filterProducts('Portmanto')">Portmanto &amp; Vestiyer</a></li>
+          <li><a href="#urunler" onclick="filterProducts('Dolap')">Gardırop &amp; Dolaplar</a></li>
+          <li><a href="https://wa.me/905050151035" target="_blank">Özel Ölçü Üretim</a></li>
+        </ul>
+      </div>
+
+      <div class="footer-col">
+        <h5>Yönetim &amp; Platform</h5>
+        <ul>
+          <li><a href="/admin.html">Yönetici Girişi (Panel)</a></li>
+          <li><a href="/Module%207/index.html">Modül 7 — Ürün &amp; AI Studio</a></li>
+          <li><a href="/Module%202/Instagram/index.html">Modül 2 — Sosyal Medya Bot</a></li>
+          <li><a href="/Module%204/siparis-paneli.html">Modül 4 — Üretim Takip</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <div>&copy; 2026 Global Mobilya &amp; Nova Furniture. Tüm hakları saklıdır.</div>
+      <div>1. Sınıf E1 MDF • CNC Membran • 5 Yıl Fabrika Garantisi</div>
+    </div>
+  </footer>
+
+  <div id="showroomToast"></div>
+
+  <!-- SHOWROOM MOTORU VE VERİ ÇEKİCİ -->
+  <script>
+    let showroomData = {
+      collections: [],
+      products: [],
+      collection_products: [],
+      media: []
+    };
+
+    // TOAST
+    function showToast(msg) {
+      const el = document.getElementById('showroomToast');
+      el.textContent = msg;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    // MODAL AÇ/KAPA
+    function openModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'flex';
+    }
+    function closeModal(id) {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    }
+
+    // SHOWROOM VERİLERİNİ ÇEK (API & FALLBACK)
+    async function loadShowroom() {
+      try {
+        const res = await fetch('/api/module7?action=showroom', { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.showroom) {
+            showroomData = data.showroom;
+          }
+        }
+      } catch (err) {
+        console.warn('API showroom hatası, statik fallback devreye alınıyor:', err);
+      }
+
+      // Veritabanı henüz boşsa veya migration yeni ise 8 prototip koleksiyonu render et
+      if (!showroomData.collections || showroomData.collections.length === 0) {
+        showroomData.collections = [
+          {
+            slug: 'siena-yatak-odasi-koleksiyonu',
+            title: 'Siena Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'İskandinav dinginliği ve kavisli CNC membran işçiliğinin lüks buluşması.',
+            design_story: 'Siena Koleksiyonu, modern şehir hayatında sakinlik ve düzen arayanlar için tasarlandı. Yuvarlatılmış hatlar, 1. sınıf MDF gövde ve sessiz frenli mekanizmalar ile zamansız bir yatak odası atmosferi sunar.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/campaigns/imagen3-test-siena-vanity-1793737230969.jpg',
+            color_palette: ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe']
+          },
+          {
+            slug: 'porto-yatak-odasi-koleksiyonu',
+            title: 'Porto Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Doğal meşe sıcaklığı ve antrasit kontrastı ile mimari zarafet.',
+            design_story: 'Porto, akustik dikey çıta detayları ve geniş depolama alanlarıyla ferah bir dinlenme alanı oluşturur.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
+            color_palette: ['Doğal Meşe', 'Mat Antrasit', 'Keten Bej']
+          },
+          {
+            slug: 'milano-yatak-odasi-koleksiyonu',
+            title: 'Milano Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'İtalyan minimalist çizgileri ve füme ayna derinliği.',
+            design_story: 'Milano Koleksiyonu, keskin hatları ve entegre aydınlatma detaylarıyla modern yatak odalarına sofistike bir dokunuş kazandırır.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/eren-portmanto-rzy4-1793451458911.png',
+            color_palette: ['Füme Aynalı Antrasit', 'Ceviz', 'Mat Siyah']
+          },
+          {
+            slug: 'zurih-yatak-odasi-koleksiyonu',
+            title: 'Zürih Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Alp dağlarının duru sadeliği, masif meşe dokuları ve yumuşak formlar.',
+            design_story: 'Zürih serisi, doğal malzeme dokuları ile konforu ön planda tutan bir uyku sığınağı vaat eder.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
+            color_palette: ['Açık Meşe', 'Krem', 'Kum Taşı']
+          },
+          {
+            slug: 'verona-yatak-odasi-koleksiyonu',
+            title: 'Verona Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Klasik ve modernin uyumu, saten lake dokular ve pirinç detaylar.',
+            design_story: 'Verona, zarif çerçeveli kapakları ve şık metal aksesuarlarıyla saray zarafetini modern apartman dairelerine taşır.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/campaigns/posts-post-detailed-siena-makyaj-masasi-7uht-1793733350708.png',
+            color_palette: ['Saten İnci', 'Bronz Pirinç', 'Aytaşı']
+          },
+          {
+            slug: 'venedik-yatak-odasi-koleksiyonu',
+            title: 'Venedik Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Venedik sıva dokusu, koyu monokrom estetik ve gizli LED atmosferi.',
+            design_story: 'Venedik Koleksiyonu, koyu tonların asaletini yumuşak ışık geçişleriyle dengeleyen cesur bir tasarım diline sahiptir.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/campaigns/stories-story-siena-makyaj-masasi-7uht-1793733356611.png',
+            color_palette: ['Koyu Grafit', 'Füme Meşe', 'Mat Siyah']
+          },
+          {
+            slug: 'kopenhag-yatak-odasi-koleksiyonu',
+            title: 'Kopenhag Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Nordic Hygge felsefesi: Hafiflik, ergonomi ve huzurlu detaylar.',
+            design_story: 'Kopenhag, fonksiyonel modüler dolap sistemleri ve yerden yüksek robot süpürge uyumlu ayak yapısıyla günlük hayatı kolaylaştırır.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/siena-makyaj-masasi-7uht-1793731691432.png',
+            color_palette: ['Kül Beyazı', 'Açık Huş', 'Açık Gri']
+          },
+          {
+            slug: 'lizbon-yatak-odasi-koleksiyonu',
+            title: 'Lizbon Yatak Odası Koleksiyonu',
+            category: 'Yatak Odası',
+            short_description: 'Akdeniz esintisi, sıcak kaşmir tonları ve kavisli başlık tasarımı.',
+            design_story: 'Lizbon Koleksiyonu, kavisli başucu paneli ve dokulu kumaş kombinasyonuyla sıcak ve davetkar bir yaşam alanı sunar.',
+            hero_image: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/campaigns/imagen3-test-siena-vanity-1793737230969.jpg',
+            color_palette: ['Sıcak Kaşmir', 'Fındık Ceviz', 'Keten Krem']
+          }
+        ];
+      }
+
+      // Ürün kataloğu boşsa mevcut 4 master ürünü doğrudan çek
+      if (!showroomData.products || showroomData.products.length === 0) {
+        try {
+          const pRes = await fetch('/api/module7?action=products');
+          if (pRes.ok) {
+            const pData = await pRes.json();
+            showroomData.products = pData.products || [];
+          }
+        } catch (_) {}
+      }
+
+      renderCollections();
+      renderProducts(showroomData.products);
+    }
+
+    // 1. KOLEKSİYONLARI RENDER ET
+    function renderCollections() {
+      const container = document.getElementById('collectionsGrid');
+      if (!showroomData.collections.length) {
+        container.innerHTML = '<div style="color:var(--text-muted); text-align:center;">Koleksiyon bulunamadı.</div>';
+        return;
+      }
+
+      container.innerHTML = showroomData.collections.map(col => {
+        const palette = Array.isArray(col.color_palette) ? col.color_palette : [];
+        return `
+          <div class="collection-card" onclick="selectCollectionBySlug('${col.slug}')">
+            <div class="collection-stage">
+              <span class="collection-badge">${col.category || 'Yatak Odası'}</span>
+              <img src="${col.hero_image}" alt="${col.title}" loading="lazy">
+            </div>
+            <div class="collection-body">
+              <h4>${col.title}</h4>
+              <p class="col-desc">${col.short_description || ''}</p>
+              <div class="palette-row">
+                ${palette.slice(0, 3).map(c => `<span class="palette-pill">${c}</span>`).join('')}
+              </div>
+              <div class="collection-footer">
+                <span style="font-size:12px; font-weight:700; color:var(--accent-gold);">Oda Detaylarını İncele →</span>
+                <button class="btn btn-gold btn-sm" onclick="event.stopPropagation(); openQuoteModal('${col.slug}', '${col.title}')">
+                  Teklif Al
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 2. ÜRÜNLERİ RENDER ET
+    let activeCategoryFilter = 'ALL';
+    function filterProducts(cat, btnEl) {
+      activeCategoryFilter = cat;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+
+      if (cat === 'ALL') {
+        renderProducts(showroomData.products);
+      } else {
+        const filtered = showroomData.products.filter(p => {
+          const t = (p.title + ' ' + (p.kategori || '')).toLowerCase();
+          return t.includes(cat.toLowerCase());
+        });
+        renderProducts(filtered);
+      }
+    }
+
+    function renderProducts(items) {
+      const container = document.getElementById('productsGrid');
+      if (!items || !items.length) {
+        container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">Bu kategoride mobilya bulunamadı.</div>';
+        return;
+      }
+
+      container.innerHTML = items.map(prod => {
+        const img = prod.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const dims = prod.body ? prod.body.replace(/\n/g, ' • ') : 'Genişlik: 100cm • Yükseklik: 75cm • Derinlik: 25cm';
+        return `
+          <div class="product-card" onclick="selectProductBySlug('${prod.slug}')">
+            <div class="product-thumb">
+              <img src="${img}" alt="${prod.title}" loading="lazy">
+            </div>
+            <div class="product-body">
+              <span class="product-sku">${prod.sku || 'NOVA'}</span>
+              <h4 class="product-title">${prod.title}</h4>
+              <div class="product-dims">${dims.slice(0, 50)}</div>
+              <div class="product-badges">
+                <span class="spec-pill">1. Sınıf E1 MDF</span>
+                <span class="spec-pill">CNC Membran</span>
+              </div>
+              <div class="product-footer">
+                <span style="font-size:11.5px; font-weight:700; color:#38BDF8;">İncele &amp; Özelleştir</span>
+                <button class="btn btn-gold btn-sm" onclick="event.stopPropagation(); openQuoteModal('${prod.slug}', '${prod.title}')">
+                  Teklif İste
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // KOLEKSİYON SEÇ VE MODAL AÇ
+    function selectCollectionBySlug(slug) {
+      const col = showroomData.collections.find(c => c.slug === slug);
+      if (!col) return;
+
+      document.getElementById('modalColTitle').textContent = col.title;
+      document.getElementById('modalColHero').src = col.hero_image;
+      document.getElementById('modalColStory').textContent = col.design_story || col.short_description || '';
+
+      const palEl = document.getElementById('modalColPalette');
+      const palette = Array.isArray(col.color_palette) ? col.color_palette : [];
+      palEl.innerHTML = palette.map(c => `<span class="palette-pill">${c}</span>`).join('');
+
+      // Parçaları listele
+      const partsEl = document.getElementById('modalColPartsList');
+      const parts = [
+        { name: `${col.title.replace(' Koleksiyonu', '')} Karyola & Yatak Başlığı (160x200 / 180x200)`, role: 'Ana Karyola' },
+        { name: `${col.title.replace(' Koleksiyonu', '')} 6 Kapaklı / Sürgülü Gardırop`, role: 'Gardırop' },
+        { name: `${col.title.replace(' Koleksiyonu', '')} Makyaj Masası & Dresuar Ünitesi`, role: 'Makyaj Masası' },
+        { name: `${col.title.replace(' Koleksiyonu', '')} Sessiz Frenli Komodin Çifti`, role: 'Komodin' }
+      ];
+
+      partsEl.innerHTML = parts.map(p => `
+        <div style="background:#080C14; border:1px solid var(--border); border-radius:10px; padding:12px 16px; display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <strong style="font-size:13.5px; color:#fff; display:block;">${p.name}</strong>
+            <span style="font-size:11px; color:var(--accent-gold); font-weight:700;">${p.role}</span>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="openQuoteModal('${col.slug}', '${p.name}')">Teklif Al</button>
+        </div>
+      `).join('');
+
+      document.getElementById('btnModalColQuote').onclick = () => {
+        closeModal('collectionDetailModal');
+        openQuoteModal(col.slug, col.title);
+      };
+
+      openModal('collectionDetailModal');
+    }
+
+    // ÜRÜN SEÇ VE MODAL AÇ
+    function selectProductBySlug(slug) {
+      const prod = showroomData.products.find(p => p.slug === slug);
+      if (!prod) return;
+
+      document.getElementById('modalProdTitle').textContent = prod.title;
+      document.getElementById('modalProdName').textContent = prod.title;
+      document.getElementById('modalProdSku').textContent = prod.sku ? `SKU: ${prod.sku}` : 'NOVA ATELIER';
+      document.getElementById('modalProdCategory').textContent = prod.kategori || '1. Sınıf MDF • CNC Membran Kapak';
+      document.getElementById('modalProdImg').src = prod.ana_resim || '';
+      document.getElementById('modalProdDimensions').textContent = prod.body ? prod.body.replace(/\n/g, '  |  ') : 'Genişlik: 100cm • Yükseklik: 75cm • Derinlik: 25cm';
+
+      const colEl = document.getElementById('modalProdColors');
+      const colors = Array.isArray(prod.renkler) ? prod.renkler : ['Mat Antrasit', 'Kaşmir', 'İpek Beyaz', 'Doğal Meşe'];
+      colEl.innerHTML = colors.map(c => `<span class="palette-pill">${c}</span>`).join('');
+
+      const specsEl = document.getElementById('modalProdSpecsList');
+      const specs = Array.isArray(prod.ozellikler) && prod.ozellikler.length ? prod.ozellikler : [
+        '🪵 1. Sınıf Sağlam E1 MDF Gövde & CNC Membran Kapaklar',
+        '🪞 Çizilmeye, neme ve sararmaya dayanıklı ithal membran',
+        '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
+        '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
+      ];
+      specsEl.innerHTML = specs.map(s => `<li>${s}</li>`).join('');
+
+      const waBtn = document.getElementById('btnModalProdWhatsApp');
+      waBtn.href = `https://wa.me/905050151035?text=Merhaba,%20${encodeURIComponent(prod.title)}%20(${prod.sku || ''})%20hakkında%20bilgi%20ve%20fiyat%20almak%20istiyorum.`;
+
+      document.getElementById('btnModalProdQuote').onclick = () => {
+        closeModal('productDetailModal');
+        openQuoteModal(prod.slug, prod.title);
+      };
+
+      openModal('productDetailModal');
+    }
+
+    // TEKLİF TALEBİ FORMU
+    function openQuoteModal(slug, title) {
+      document.getElementById('formItemName').value = title || 'Özel Teklif Talebi';
+      document.getElementById('formProductSlug').value = slug.includes('koleksiyon') ? '' : slug;
+      document.getElementById('formCollectionSlug').value = slug.includes('koleksiyon') ? slug : '';
+      openModal('quoteRequestModal');
+    }
+
+    async function submitQuoteRequest(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitQuote');
+      btn.disabled = true;
+      btn.textContent = 'Gönderiliyor...';
+
+      const payload = {
+        customer_name: document.getElementById('formCustomerName').value.trim(),
+        customer_phone: document.getElementById('formCustomerPhone').value.trim(),
+        customer_city: document.getElementById('formCustomerCity').value.trim(),
+        request_type: document.getElementById('formRequestType').value,
+        custom_notes: document.getElementById('formCustomNotes').value.trim(),
+        product_slug: document.getElementById('formProductSlug').value || null,
+        collection_slug: document.getElementById('formCollectionSlug').value || null,
+        source_channel: 'web_showroom'
+      };
+
+      try {
+        const res = await fetch('/api/module7?action=quote', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          closeModal('quoteRequestModal');
+          showToast(`✅ Talebiniz alındı! Takip Numaranız: ${data.quote_number}`);
+          document.getElementById('quoteForm').reset();
+        } else {
+          alert('Teklif gönderilemedi: ' + (data.error || 'Lütfen bilgilerinizi kontrol edin.'));
+        }
+      } catch (err) {
+        // Fallback WhatsApp yönlendirmesi
+        closeModal('quoteRequestModal');
+        showToast('✅ Talebiniz hazırlandı, WhatsApp üzerinden doğrudan bağlanabilirsiniz.');
+        window.open(`https://wa.me/905050151035?text=Merhaba,%20${encodeURIComponent(payload.customer_name)}%20adına%20${encodeURIComponent(document.getElementById('formItemName').value)}%20için%20fiyat%20ve%20katalog%20teklifi%20almak%20istiyorum.`, '_blank');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = '🚀 Teklif Talebini Gönder';
+      }
+    }
+
+    // SAYFA YÜKLENİNCE BAŞLAT
+    window.addEventListener('DOMContentLoaded', loadShowroom);
+  </script>
 </body>
 </html>

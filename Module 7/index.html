@@ -540,6 +540,80 @@
       border-color: #ef4444;
       color: #f87171;
     }
+  
+    /* Sekme ve Showroom CRM Stilleri */
+    .module-nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.16);
+      padding-bottom: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .nav-tab-btn {
+      background: rgba(17, 27, 46, 0.85);
+      border: 1px solid rgba(148, 163, 184, 0.16);
+      color: #94a3b8;
+      padding: 9px 16px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .nav-tab-btn:hover {
+      color: #f8fafc;
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(30, 41, 59, 0.9);
+    }
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(56, 189, 248, 0.15));
+      border-color: #d4af37;
+      color: #fde68a;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.2);
+    }
+    .tab-badge {
+      background: #0284c7;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 99px;
+      font-weight: 800;
+    }
+    .section-tab-view {
+      display: none;
+    }
+    .section-tab-view.active {
+      display: block;
+    }
+    .collection-admin-card {
+      background: #090e1a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+    .collection-admin-card:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      transform: translateY(-2px);
+    }
+    .quote-admin-card {
+      background: #090e1a;
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
   </style>
 </head>
 <body>
@@ -599,7 +673,30 @@
   </section>
 
   <!-- ANA 2 SÜTUNLU YAPI -->
-  <main class="main-grid">
+    <!-- SEKMELER (ÜRÜN KATALOĞU, KOLEKSİYONLAR, TEKLİF CRM) -->
+  <nav class="module-nav-tabs">
+    <button class="nav-tab-btn active" id="tabBtnProducts" onclick="switchModuleTab('products')">
+      🛋️ Ürün Kataloğu & Stüdyo
+    </button>
+    <button class="nav-tab-btn" id="tabBtnCollections" onclick="switchModuleTab('collections')">
+      🏛️ Yatak Odası Koleksiyonları (8 Set)
+    </button>
+    <button class="nav-tab-btn" id="tabBtnQuotes" onclick="switchModuleTab('quotes')">
+      📩 Showroom Teklif Talepleri & CRM <span id="quotesCountBadge" class="tab-badge">0</span>
+    </button>
+    <div style="margin-left:auto; display:flex; gap:8px;">
+      <a href="/" target="_blank" class="btn btn-gold" style="font-size:11.5px; padding:8px 14px; text-decoration:none;">
+        🌐 Dijital Showroom'u Gör ↗
+      </a>
+      <a href="/admin.html" class="btn btn-outline" style="font-size:11.5px; padding:8px 14px; text-decoration:none;">
+        📊 Ana Yönetim Paneli
+      </a>
+    </div>
+  </nav>
+
+  <!-- TAB 1: ÜRÜN KATALOĞU & STÜDYO -->
+  <div id="tabViewProducts" class="section-tab-view active">
+    <main class="main-grid">
 
     <!-- SOL SÜTUN: ÜRÜN & FOTOĞRAF EKLEME / DÜZENLEME FORMU + CANLI ÖNİZLEME -->
     <section class="panel-card">
@@ -749,6 +846,39 @@
     </section>
 
   </main>
+  </div>
+
+  <!-- TAB 2: KOLEKSİYON YÖNETİMİ (8 YATAK ODASI) -->
+  <div id="tabViewCollections" class="section-tab-view">
+    <div class="panel-card" style="margin-bottom:20px;">
+      <div class="panel-title">
+        <span>🏛️ 8 Yatak Odası Koleksiyonu (Master Suites)</span>
+        <span style="font-size:11px; color:var(--accent-gold);">Dijital Showroom Vitrini</span>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
+        Web sitesindeki dijital showroom'da sergilenen bütünsel yatak odası takımları. Her koleksiyonun mimari oda görseli, tasarım hikayesi ve set bileşenleri burada yönetilir.
+      </p>
+      <div id="collectionsAdminGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:18px;">
+        <div style="text-align:center; padding:30px; color:var(--text-muted); grid-column:1/-1;">Koleksiyonlar yükleniyor...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 3: TEKLİF TALEPLERİ & CRM GELEN KUTUSU -->
+  <div id="tabViewQuotes" class="section-tab-view">
+    <div class="panel-card">
+      <div class="panel-title">
+        <span>📩 Showroom Teklif & Özel Ölçü Talepleri</span>
+        <button class="btn btn-outline" style="font-size:11px; padding:4px 10px;" onclick="loadQuotesFromApi()">🔄 Yenile</button>
+      </div>
+      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
+        Web dijital showroom'u üzerinden müşterilerin doğrudan gönderdiği özel ölçü ve fiyat teklifi formları. Müşteriyle WhatsApp üzerinden tek tıkla görüşebilir veya siparişi fabrikaya aktarabilirsiniz.
+      </p>
+      <div id="quotesAdminList" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="text-align:center; padding:30px; color:var(--text-muted);">Gelen teklif talepleri yükleniyor...</div>
+      </div>
+    </div>
+  </div>
 
   <script>
     // =========================================================================
@@ -1354,6 +1484,148 @@
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')
         .replace(/^-+|-+$/g, '') || 'model';
+    }
+
+    
+    // =========================================================================
+    // SEKMELER VE SHOWROOM KOLEKSİYON / TEKLİF YÖNETİMİ
+    // =========================================================================
+    let cachedCollections = [];
+    let cachedQuotes = [];
+
+    function switchModuleTab(tabName) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelectorAll('.section-tab-view').forEach(view => view.classList.remove('active'));
+      if (tabName === 'products') {
+        document.getElementById('tabBtnProducts').classList.add('active');
+        document.getElementById('tabViewProducts').classList.add('active');
+      } else if (tabName === 'collections') {
+        document.getElementById('tabBtnCollections').classList.add('active');
+        document.getElementById('tabViewCollections').classList.add('active');
+        loadCollectionsFromApi();
+      } else if (tabName === 'quotes') {
+        document.getElementById('tabBtnQuotes').classList.add('active');
+        document.getElementById('tabViewQuotes').classList.add('active');
+        loadQuotesFromApi();
+      }
+    }
+
+    async function loadCollectionsFromApi() {
+      const container = document.getElementById('collectionsAdminGrid');
+      try {
+        const res = await module7Api('/api/module7?action=collections');
+        const list = res.data || [];
+        cachedCollections = list;
+        if (list.length === 0) {
+          container.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--text-muted);">Henüz koleksiyon bulunmuyor.</div>';
+          return;
+        }
+        container.innerHTML = list.map(c => {
+          const colors = (c.color_palette || []).map(cp => `<span class="color-chip">${cp}</span>`).join('');
+          return `
+            <div class="collection-admin-card">
+              <div style="width:100%; height:180px; position:relative; overflow:hidden; background:#111b2e;">
+                <img src="${c.hero_image_url || '/placeholder.png'}" alt="${c.name}" style="width:100%; height:100%; object-fit:cover;">
+                <div style="position:absolute; top:8px; right:8px; background:rgba(11,17,32,0.85); border:1px solid #d4af37; color:#fde68a; font-size:10px; font-weight:800; padding:2px 8px; border-radius:6px;">
+                  ${c.status === 'active' ? 'YAYINDA' : c.status}
+                </div>
+              </div>
+              <div style="padding:14px; display:flex; flex-direction:column; gap:8px;">
+                <div style="font-size:15px; font-weight:800; color:#fff;">${c.name}</div>
+                <div style="font-size:11.5px; color:#cbd5e1; line-height:1.4;">${c.design_story || ''}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">${colors}</div>
+                <div style="font-size:10.5px; color:#94a3b8; margin-top:4px;">Stil: ${c.architecture_style || 'Modern Mimari'}</div>
+                <a href="/?collection=${c.slug}" target="_blank" class="btn btn-outline" style="font-size:11px; padding:6px 10px; text-decoration:none; margin-top:6px; text-align:center;">
+                  👁️ Showroom'da İncele ↗
+                </a>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:30px; color:#f87171;">Koleksiyonlar yüklenemedi: ${err.message}</div>`;
+      }
+    }
+
+    async function loadQuotesFromApi() {
+      const container = document.getElementById('quotesAdminList');
+      const badge = document.getElementById('quotesCountBadge');
+      try {
+        const res = await module7Api('/api/module7?action=quotes');
+        const list = res.data || [];
+        cachedQuotes = list;
+        if (badge) badge.textContent = list.length;
+        if (list.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted);">Henüz showroom teklif talebi bulunmuyor.</div>';
+          return;
+        }
+        container.innerHTML = list.map(q => {
+          const statusColors = {
+            new: '#38bdf8',
+            contacted: '#f59e0b',
+            quoted: '#10b981',
+            closed: '#64748b'
+          };
+          const statusLabels = {
+            new: 'Yeni Talep',
+            contacted: 'Görüşüldü',
+            quoted: 'Teklif Verildi',
+            closed: 'Tamamlandı'
+          };
+          const color = statusColors[q.status] || '#94a3b8';
+          const label = statusLabels[q.status] || q.status;
+          const waPhone = (q.customer_phone || '').replace(/[^0-9]/g, '');
+          const waLink = `https://wa.me/${waPhone.startsWith('9') ? waPhone : '90' + waPhone}?text=${encodeURIComponent('Merhaba Sayın ' + q.customer_name + ', Global Mobilya Dijital Showroom üzerinden ilettiğiniz ' + (q.reference_code || '') + ' kodlu teklif talebinizle ilgili görüşmek istiyoruz.')}`;
+
+          return `
+            <div class="quote-admin-card">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:12px; flex-wrap:wrap;">
+                <div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:14px; font-weight:800; color:#fff;">${q.customer_name}</span>
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#d4af37;">[${q.reference_code || 'GM'}]</span>
+                    <span style="font-size:10px; font-weight:800; padding:2px 8px; border-radius:99px; background:${color}22; color:${color}; border:1px solid ${color}44;">${label}</span>
+                  </div>
+                  <div style="font-size:12px; color:#cbd5e1; margin-top:3px;">
+                    📞 ${q.customer_phone} ${q.customer_city ? '• 📍 ' + q.customer_city : ''} ${q.customer_email ? '• ✉️ ' + q.customer_email : ''}
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <a href="${waLink}" target="_blank" class="btn btn-emerald" style="padding:6px 12px; font-size:11px; text-decoration:none;">
+                    💬 WhatsApp'tan Yaz
+                  </a>
+                  <select onchange="updateQuoteStatus('${q.id}', this.value)" class="form-control" style="width:130px; font-size:11px; padding:4px 8px;">
+                    <option value="new" ${q.status === 'new' ? 'selected' : ''}>Yeni</option>
+                    <option value="contacted" ${q.status === 'contacted' ? 'selected' : ''}>Görüşüldü</option>
+                    <option value="quoted" ${q.status === 'quoted' ? 'selected' : ''}>Teklif Verildi</option>
+                    <option value="closed" ${q.status === 'closed' ? 'selected' : ''}>Tamamlandı</option>
+                  </select>
+                </div>
+              </div>
+              <div style="background:#111b2e; padding:10px 14px; border-radius:8px; font-size:11.5px; color:#cbd5e1;">
+                <div style="font-weight:700; color:#fde68a; margin-bottom:3px;">Talep Detayları:</div>
+                <div>${q.custom_dimensions_note || 'Özel ölçü notu belirtilmedi.'}</div>
+                ${q.selected_pieces && q.selected_pieces.length ? '<div style="margin-top:4px; font-size:10.5px; color:#94a3b8;">Parçalar: ' + q.selected_pieces.join(', ') + '</div>' : ''}
+              </div>
+              <div style="font-size:10.5px; color:#64748b; text-align:right;">Tarih: ${new Date(q.created_at).toLocaleString('tr-TR')}</div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:30px; color:#f87171;">Teklifler yüklenemedi: ${err.message}</div>`;
+      }
+    }
+
+    async function updateQuoteStatus(id, newStatus) {
+      try {
+        await module7Api('/api/module7?action=quotes', {
+          method: 'PATCH',
+          body: JSON.stringify({ id, status: newStatus })
+        });
+        await loadQuotesFromApi();
+      } catch (err) {
+        alert('Durum güncellenemedi: ' + err.message);
+      }
     }
 
     async function initializeModule7() {
