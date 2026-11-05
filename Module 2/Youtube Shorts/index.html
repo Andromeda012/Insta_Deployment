@@ -1570,31 +1570,42 @@ async function addYtScheduledPost(publishImmediately = false) {
     btn.textContent = '⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';
   }
 
-  const newItem = {
-    id: 'yt-auto-' + Date.now(),
-    media_type: format,
-    title: videoTitle,
-    headline,
-    subheadline,
-    theme_id: themeKey,
-    door_style: doorStyle,
-    description,
-    pinned_comment: pinnedComment,
-    tags,
-    media_url: mediaUrl,
-    auto_designed: true,
-    scheduled_for: publishImmediately ? new Date().toISOString() : scheduledFor,
-    status: 'draft',
-    published_at: null
-  };
+  const finalScheduledFor = publishImmediately ? new Date().toISOString() : scheduledFor;
+  const fullCaption = `${videoTitle}\n\n${description}`;
 
-  ytState.scheduled_posts.unshift(newItem);
-  await persistYtStateToSupabase(false);
+  try {
+    const enqueueRes = await fetch('/api/module2-enqueue', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${sessionData.session.access_token}`
+      },
+      body: JSON.stringify({
+        platform: 'youtube',
+        content_type: format,
+        slot_label: publishImmediately ? 'Anlık Yayın' : 'Planlı Yayın',
+        product_slug: currentYtSelectedProduct?.slug || null,
+        title: videoTitle,
+        media_url: mediaUrl,
+        caption: fullCaption,
+        hashtags: tags.map(t => t.startsWith('#') ? t : '#' + t.replace(/\s+/g, '')).join(' '),
+        target_link: 'https://globalkapakmobilya.com/galeri.html',
+        scheduled_for: finalScheduledFor
+      })
+    });
+    const enqueueData = await enqueueRes.json().catch(() => ({}));
+    if (!enqueueRes.ok || !enqueueData.ok) {
+      throw new Error(enqueueData.error || 'Yayın kuyruğuna eklenemedi.');
+    }
 
-  if (publishImmediately) {
-    showToast('⚠️ YouTube Shorts gerçek video yükleme motoru tamamlanana kadar bu içerik yalnızca taslak olarak saklandı; yayınlanmadı.');
-  } else {
-    showToast('📝 YouTube Shorts taslağı kaydedildi. Gerçek yayın kuyruğu video yükleme desteği tamamlanınca açılacak.');
+    await loadYtStateFromSupabase();
+    if (publishImmediately) {
+      showToast('🚀 YouTube Shorts içeriği yayın kuyruğuna eklendi! VPS sunucu saniyeler içinde YouTube kanalınızda yayınlayacak.');
+    } else {
+      showToast('⏰ YouTube Shorts içeriği planlanan saatte yayınlanmak üzere kuyruğa eklendi!');
+    }
+  } catch (err) {
+    showToast('❌ Kuyruk hatası: ' + err.message);
   }
 }
 
@@ -1646,7 +1657,7 @@ function deleteYtQueueItem(idx) {
 async function runYtAutonomousCycleNow() {
   await autonomousInventNewYtShort();
   await addYtScheduledPost(false);
-  showToast('📝 Yeni YouTube Shorts taslağı oluşturuldu. Otomatik yayın, video yükleme desteği tamamlanana kadar kapalı.');
+  showToast('🚀 Yeni YouTube Shorts içeriği üretildi ve VPS yayın kuyruğuna gönderildi!');
 }
 
 

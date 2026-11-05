@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
 # Güvenli PID 1 sinyal yönetimi için dumb-init ekle
-RUN apk add --no-cache dumb-init
+RUN apk add --no-cache dumb-init ffmpeg
 
 WORKDIR /app
 

@@ -180,6 +180,12 @@ export function normalizeContentType(platform, slotType) {
     if (t.includes('STOR')) return 'FB_STORIES';
     if (t.includes('LINK')) return 'LINK_CARD';
     return 'PHOTO_POST';
+  } else if (p === 'youtube') {
+    if (t.includes('COMMUNITY')) return 'COMMUNITY_POST';
+    if (t.includes('GUIDE')) return 'SHORTS_GUIDE';
+    if (t.includes('SHOWCASE')) return 'SHORTS_SHOWCASE';
+    if (t.includes('CNC')) return 'SHORTS_CNC';
+    return 'SHORTS';
   }
   return t;
 }
@@ -218,13 +224,18 @@ export async function prepareTaskPayload({ platform, slot, product, geminiApiKey
       if (platform === 'facebook') {
         if (campaign.facebook_caption || campaign.caption) caption = campaign.facebook_caption || campaign.caption;
         if (campaign.facebook_hashtags || campaign.hashtags) hashtags = campaign.facebook_hashtags || campaign.hashtags;
+      } else if (platform === 'youtube') {
+        if (campaign.youtube_caption || campaign.caption) caption = campaign.youtube_caption || campaign.caption;
+        if (campaign.youtube_hashtags || campaign.hashtags) hashtags = campaign.youtube_hashtags || campaign.hashtags;
       } else {
         if (campaign.caption) caption = campaign.caption;
         if (campaign.hashtags) hashtags = campaign.hashtags;
       }
       if (campaign.prompt) prompt = campaign.prompt;
 
-      if (contentType === 'REELS' || contentType === 'FB_REELS') {
+      if (platform === 'youtube') {
+        mediaUrl = campaign.story_image_url || campaign.reels_video_url || imageFallback;
+      } else if (contentType === 'REELS' || contentType === 'FB_REELS') {
         mediaUrl = campaign.reels_video_url || campaign.post_image_url || imageFallback;
       } else if (contentType === 'STORIES' || contentType === 'FB_STORIES') {
         mediaUrl = campaign.story_image_url || campaign.post_image_url || imageFallback;
@@ -460,10 +471,43 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
     }
   }
 
+  // 3. YOUTUBE SHORTS AYARLARI KONTROLÜ
+  const ytState = await fetchSiteSetting(supabase, 'yt_bot_state');
+  const ytSlots = (ytState && ytState.config && ytState.config.posting_slots) || [
+    { type: 'SHORTS_CNC', time: '12:00', active: true, label: 'Öğle YouTube Shorts' },
+    { type: 'SHORTS_SHOWCASE', time: '16:30', active: true, label: 'İkindi Renk & Koleksiyon Shorts' },
+    { type: 'SHORTS_GUIDE', time: '20:30', active: true, label: 'Akşam Prime-Time Shorts' }
+  ];
+
+  const currentYtSlotsSig = JSON.stringify(ytSlots);
+  if (stateCache.ytSlotsSig && stateCache.ytSlotsSig !== currentYtSlotsSig) {
+    console.log(`[Scheduler Dinamik Güncelleme] YouTube slot ayarları güncellendi:`, ytSlots);
+  }
+  stateCache.ytSlotsSig = currentYtSlotsSig;
+
+  for (const slot of ytSlots) {
+    try {
+      await checkAndEnqueueSlot({
+        supabase,
+        platform: 'youtube',
+        slot: {
+          ...slot,
+          enabled: slot.active !== false && slot.enabled !== false
+        },
+        istanbulNow,
+        catalog,
+        geminiApiKey
+      });
+    } catch (err) {
+      console.warn(`[Scheduler YouTube Slot Hatası] ${slot.time}:`, err.message);
+    }
+  }
+
   return {
     istanbulNow,
     instaSlotsCount: instaSlots.length,
-    fbSlotsCount: fbSlots.length
+    fbSlotsCount: fbSlots.length,
+    ytSlotsCount: ytSlots.length
   };
 }
 

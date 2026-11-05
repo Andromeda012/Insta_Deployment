@@ -135,6 +135,9 @@ export function buildProductHashtags(product = {}, platform = 'instagram') {
   if (platform === 'facebook') {
     return `#novafurniture #${slugTag || 'novakoleksiyon'} ${categoryTags} #mdfmobilya #cnckapak #içmimari #özelölçümobilya`;
   }
+  if (platform === 'youtube') {
+    return `#Shorts #novafurniture #${slugTag || 'novakoleksiyon'} ${categoryTags} #mdfmobilya #cnckapak #içmimari #özelölçümobilya`;
+  }
   return `#novafurniture #${slugTag || 'novakoleksiyon'} #minimalistmobilya ${categoryTags} #membrankapak #mdfmobilya #cnckapak #içmimari #iskandinavmobilya #luxuryfurniture`;
 }
 
@@ -173,8 +176,10 @@ export async function generateFreeTierGeminiContent({ product = {}, apiKey = '',
   const geminiKey = (apiKey || (typeof process !== 'undefined' && process.env && process.env.GEMINI_API_KEY) || '').trim();
   const igFallbackCaption = generateNovaLuxuryCaption(product, 'instagram');
   const fbFallbackCaption = generateNovaLuxuryCaption(product, 'facebook');
+  const ytFallbackCaption = generateNovaLuxuryCaption(product, 'youtube');
   const igHashtags = buildProductHashtags(product, 'instagram');
   const fbHashtags = buildProductHashtags(product, 'facebook');
+  const ytHashtags = buildProductHashtags(product, 'youtube');
   const basePrompt = buildGeminiBananaPrompt(product);
 
   // Google AI Studio ücretsiz katman anahtarı (AIza...) varsa gemini-2.5-flash çağrısı yap
@@ -193,6 +198,7 @@ Sadece aşağıdaki JSON formatında yanıt ver (web sitesi linki ve Global Kapa
 {
   "instagram_caption": "thenovafurniture ⛰️ NOVA | ... ile başlayan lüks Instagram satış metni",
   "facebook_caption": "Thenovafurniture kurumsal Facebook katalog metni",
+  "youtube_caption": "İlk satırı #Shorts içeren başlık ve altında zaman damgalı lüks YouTube Shorts açıklaması",
   "visual_notes": "Ürün görselinin kısa estetik analizi"
 }`;
       const parts = [{ text: instruction }];
@@ -221,8 +227,10 @@ Sadece aşağıdaki JSON formatında yanıt ver (web sitesi linki ve Global Kapa
           prompt: basePrompt,
           instagramCaption: parsed.instagram_caption || igFallbackCaption,
           facebookCaption: parsed.facebook_caption || fbFallbackCaption,
+          youtubeCaption: parsed.youtube_caption || ytFallbackCaption,
           instagramHashtags: igHashtags,
           facebookHashtags: fbHashtags,
+          youtubeHashtags: ytHashtags,
           visualNotes: parsed.visual_notes || 'Gemini 2.5 Flash ücretsiz katman ile doğrulandı.'
         };
       }
@@ -236,8 +244,10 @@ Sadece aşağıdaki JSON formatında yanıt ver (web sitesi linki ve Global Kapa
     prompt: basePrompt,
     instagramCaption: igFallbackCaption,
     facebookCaption: fbFallbackCaption,
+    youtubeCaption: ytFallbackCaption,
     instagramHashtags: igHashtags,
     facebookHashtags: fbHashtags,
+    youtubeHashtags: ytHashtags,
     visualNotes: 'Ücretsiz katman mimari stüdyo şablonu ile %100 ürün sadakati korunarak üretildi.'
   };
 }
@@ -378,9 +388,9 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     heroImageUrl: (hero9x16 && hero9x16.ok && hero9x16.imageUrl) ? hero9x16.imageUrl : hero1x1.imageUrl
   });
 
-  // Reels Videosu (varsa)
+  // Reels / Shorts Videosu (varsa ürün videosu, yoksa doğrulanmış dikey MP4 fallback)
   const productVideo = product.reels_video_url || product.video_url || '';
-  const reelsMediaUrl = /\.(mp4|mov)(\?.*)?$/i.test(productVideo) ? productVideo : '';
+  const reelsMediaUrl = /\.(mp4|mov)(\?.*)?$/i.test(productVideo) ? productVideo : SUPABASE_CONFIG.defaultReelsMp4;
 
   // Ücretsiz Katman AI / Şablon Açıklama ve Prompt Üretimi
   const aiContent = await generateFreeTierGeminiContent({ product, apiKey });
@@ -400,8 +410,10 @@ export async function buildAndSaveProductCampaign({ product = {}, apiKey = '', a
     story_image_url: storyPost.imageUrl,
     caption: aiContent.instagramCaption,
     facebook_caption: aiContent.facebookCaption,
+    youtube_caption: aiContent.youtubeCaption,
     hashtags: aiContent.instagramHashtags,
     facebook_hashtags: aiContent.facebookHashtags,
+    youtube_hashtags: aiContent.youtubeHashtags,
     distribution_status: {
       instagram: { status: 'pending', reels_at: '10:00', post_at: '14:30', story_at: '20:00', published: false },
       facebook: { status: 'pending', post_at: '12:00', story_at: '15:00', published: false },
@@ -494,6 +506,29 @@ export function generateNovaLuxuryCaption(product = {}, platform = 'instagram') 
   const dims = formatProductDimensions(product);
   const colors = formatProductColors(product);
   const hashtags = buildProductHashtags(product, platform);
+
+  if (String(platform).toLowerCase() === 'youtube') {
+    const ytTitle = `⛰️ NOVA | ${upperName} Koleksiyonu — 1. Sınıf Lüks Mimari Tasarım #Shorts`;
+    return `${ytTitle}
+
+✨ Modern İskandinav mimarisinin zarif çizgilerini 1. sınıf malzeme kalitesiyle buluşturan ${cleanName}, yaşam alanınıza estetik ve fonksiyonellik katmak için doğrudan fabrikamızdan üretiliyor. #Shorts
+
+✨ Öne Çıkan Kalite Standartlarımız:
+${features.join('\n')}
+
+📐 Net Katalog Ölçüleri:
+${dims.multiline}
+
+🎨 Renk Alternatifleri:
+• ${colors}
+
+🛡️ 5 Yıl Doğrudan Üretici Garantisi | 🚛 Güvenli Paketleme & Sevkiyat
+
+🌐 Dijital Showroom & Koleksiyonlar: https://globalkapakmobilya.com/galeri.html
+📲 WhatsApp Sipariş Hattı: ${BRAND.phone} (${BRAND.whatsapp})
+
+${hashtags}`;
+  }
 
   if (String(platform).toLowerCase() === 'facebook') {
     return `🏛️ NOVA FURNITURE | ${upperName} KOLEKSİYONU

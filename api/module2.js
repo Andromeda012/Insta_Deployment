@@ -1,15 +1,20 @@
-import { buildGeminiBananaPrompt } from '../Module 2/gemini-banana-engine.js';
+import GeminiBananaEngine, { buildGeminiBananaPrompt } from '../Module 2/gemini-banana-engine.js';
 import {createHash} from 'node:crypto';
-import {authenticateModule2Admin,authorizeVercelCron,supabaseAdminRequest,sendApiError} from './_lib/module2-publishing.js';
+import {authenticateModule2Admin,authorizeVercelCron,supabaseAdminRequest,sendApiError,istanbulDateParts} from './_lib/module2-publishing.js';
 
-const STATE_KEYS=new Set(['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker','facebook_published_tracker']);
-const ALLOWED_TYPES={instagram:new Set(['POST','REELS','STORIES','CAROUSEL']),facebook:new Set(['PHOTO_POST','FB_STORIES','LINK_CARD']),tiktok:new Set(['TIKTOK_VIDEO','TIKTOK_PHOTO_CAROUSEL'])};
+const STATE_KEYS=new Set(['insta_bot_state','fb_bot_state','tt_bot_state','yt_bot_state','instagram_published_tracker','facebook_published_tracker','youtube_published_tracker']);
+const ALLOWED_TYPES={
+ instagram:new Set(['POST','REELS','STORIES','CAROUSEL']),
+ facebook:new Set(['PHOTO_POST','FB_STORIES','LINK_CARD']),
+ tiktok:new Set(['TIKTOK_VIDEO','TIKTOK_PHOTO_CAROUSEL']),
+ youtube:new Set(['SHORTS','SHORTS_CNC','SHORTS_SHOWCASE','SHORTS_GUIDE','COMMUNITY_POST'])
+};
 function validHttpsUrl(value){try{const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password&&value.length<=2048;}catch{return false;}}
 function actionOf(req){return String(req.query?.action||new URL(req.url,'https://local.invalid').searchParams.get('action')||'').toLowerCase();}
 
 async function syncPanelQueue(task,payload){
  if(!task?.id)return;
- const map={instagram:['insta_bot_state','scheduled_posts'],facebook:['fb_bot_state','scheduled_posts'],tiktok:['tt_bot_state','scheduledQueue']};
+ const map={instagram:['insta_bot_state','scheduled_posts'],facebook:['fb_bot_state','scheduled_posts'],tiktok:['tt_bot_state','scheduledQueue'],youtube:['yt_bot_state','scheduled_posts']};
  const target=map[payload.platform];if(!target)return;
  const[key,listKey]=target;
  const rows=await supabaseAdminRequest(`/rest/v1/site_settings?key=eq.${key}&select=data&limit=1`);
@@ -18,7 +23,7 @@ async function syncPanelQueue(task,payload){
  const common={queue_task_id:task.id,queue_idempotency_key:payload.idempotency_key,idempotency_key:payload.idempotency_key,content_type:payload.content_type,media_url:payload.media_url,scheduled_for:task.scheduled_for||payload.scheduled_for,status:task.status||'pending',product_slug:payload.product_slug||null,caption:payload.caption||'',hashtags:payload.hashtags||''};
  const item=payload.platform==='tiktok'
   ?{...common,id:`tt_queue_${task.id}`,format:payload.content_type,productSku:payload.product_sku||'',productTitle:payload.title||'TikTok içeriği',mediaUrl:payload.media_url}
-  :{...common,id:task.id,media_type:payload.content_type,title:payload.title||`${payload.platform} içeriği`,target_link:payload.target_link||null};
+  :{...common,id:task.id,media_type:payload.content_type,title:payload.title||`${payload.platform} içeriği`,description:payload.caption||'',target_link:payload.target_link||null};
  const index=list.findIndex(p=>p.queue_task_id===task.id||p.queue_idempotency_key===payload.idempotency_key||p.idempotency_key===payload.idempotency_key);
  if(index>=0)list[index]={...list[index],...item};else list.unshift(item);
  state[listKey]=list.slice(0,60);
@@ -26,7 +31,7 @@ async function syncPanelQueue(task,payload){
 }
 
 async function removePanelQueueItem(task){
- const map={instagram:['insta_bot_state','scheduled_posts'],facebook:['fb_bot_state','scheduled_posts'],tiktok:['tt_bot_state','scheduledQueue']};
+ const map={instagram:['insta_bot_state','scheduled_posts'],facebook:['fb_bot_state','scheduled_posts'],tiktok:['tt_bot_state','scheduledQueue'],youtube:['yt_bot_state','scheduled_posts']};
  const target=map[task.platform];if(!target)return;
  const[key,listKey]=target;
  const rows=await supabaseAdminRequest(`/rest/v1/site_settings?key=eq.${key}&select=data&limit=1`);
@@ -110,7 +115,69 @@ async function handleYoutubeCron(req,res){
  if(req.method==='GET'){
   if(!authorizeVercelCron(req))return res.status(401).json({ok:false});
  }else await authenticateModule2Admin(req);
- return res.status(501).json({ok:false,supported:false,status:'unsupported',error:'YouTube Shorts resumable video upload is not implemented; drafts only.'});
+
+ const products=await supabaseAdminRequest('/rest/v1/products?select=*&order=created_at.desc&limit=100');
+ if(!Array.isArray(products)||!products.length)return res.status(200).json({ok:true,message:'Katalogda ürün bulunamadı.'});
+
+ const reqSlug=String(req.body?.product_slug||req.query?.product_slug||'').trim();
+ const now=new Date();
+ const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,1))/86400000);
+ const picked=products.find(p=>p.slug===reqSlug)||products[dayOfYear%products.length];
+ const contentType=String(req.body?.content_type||req.query?.type||'SHORTS_CNC').toUpperCase();
+
+ const campaign=await GeminiBananaEngine.buildAndSaveProductCampaign({
+  product:picked,
+  apiKey:process.env.GEMINI_API_KEY||'',
+  allowFallback:true
+ });
+
+ const mediaUrl=campaign?.story_image_url||campaign?.reels_video_url||picked.ana_resim;
+ const caption=campaign?.youtube_caption||GeminiBananaEngine.generateNovaLuxuryCaption(picked,'youtube');
+ const hashtags=campaign?.youtube_hashtags||GeminiBananaEngine.buildProductHashtags(picked,'youtube');
+ const {date}=istanbulDateParts();
+ const scheduledIso=new Date().toISOString();
+ const idempotencyKey=`youtube_${picked.slug}_${contentType}_${date}_${scheduledIso.slice(11,16).replace(':','')}`.toLowerCase();
+
+ const payload={
+  platform:'youtube',
+  content_type:ALLOWED_TYPES.youtube.has(contentType)?contentType:'SHORTS_CNC',
+  slot_label:String(req.body?.slot_label||'Otonom YouTube Shorts'),
+  product_slug:picked.slug,
+  media_url:mediaUrl,
+  caption,
+  hashtags,
+  target_link:'https://globalkapakmobilya.com/galeri.html',
+  status:'pending',
+  idempotency_key:idempotencyKey,
+  scheduled_for:scheduledIso
+ };
+
+ const inserted=await supabaseAdminRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key',{
+  method:'POST',
+  headers:{Prefer:'resolution=ignore-duplicates,return=representation'},
+  body:JSON.stringify(payload)
+ });
+ let task=Array.isArray(inserted)?inserted[0]:null,duplicate=false;
+ if(!task){
+  duplicate=true;
+  const rows=await supabaseAdminRequest(`/rest/v1/social_publish_queue?idempotency_key=eq.${encodeURIComponent(idempotencyKey)}&select=id,status,scheduled_for,platform&limit=1`);
+  task=rows?.[0]||null;
+ }
+ if(!task)throw new Error('YouTube queue task could not be confirmed.');
+
+ const firstLine=String(caption||'').split(/\r?\n/)[0]||`⛰️ NOVA | ${picked.title} #Shorts`;
+ await syncPanelQueue(task,{...payload,title:firstLine.slice(0,180),idempotency_key:idempotencyKey});
+ return res.status(duplicate?200:201).json({
+  ok:true,
+  queued:true,
+  duplicate_prevented:duplicate,
+  queue_task_id:task.id,
+  idempotency_key:idempotencyKey,
+  product_slug:picked.slug,
+  media_url:mediaUrl,
+  status:task.status||'pending',
+  scheduled_for:task.scheduled_for||scheduledIso
+ });
 }
 
 export default async function handler(req,res){
