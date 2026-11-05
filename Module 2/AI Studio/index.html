@@ -1,32 +1,1106 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Nova AI Content Studio</title>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#080e19;color:#e5e7eb;font:14px system-ui,-apple-system,Segoe UI,sans-serif}.wrap{padding:24px;max-width:1400px;margin:auto}.eyebrow{color:#d4af37;font-size:11px;font-weight:800;letter-spacing:1.4px}.head{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;margin-bottom:22px}.head h1{margin:5px 0;font-size:25px}.muted{color:#94a3b8;font-size:12px;line-height:1.6}.pill{border:1px solid #475569;border-radius:99px;padding:6px 10px;font-size:11px;color:#fbbf24}.grid{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr);gap:18px}.card{background:#111b2c;border:1px solid #263449;border-radius:14px;padding:18px}.card h2{font-size:15px;margin:0 0 15px}.field{margin-bottom:13px}.field label{display:block;color:#aab8ca;font-size:11px;font-weight:800;margin-bottom:6px}.field input,.field select,.field textarea{width:100%;background:#080f1d;color:#f8fafc;border:1px solid #34445b;border-radius:8px;padding:11px;font:inherit}.field textarea{min-height:100px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:1px solid #475569;background:#1e293b;color:#e5e7eb;border-radius:8px;padding:10px 14px;font-weight:800;cursor:pointer}.btn.gold{background:#d4af37;color:#111827;border-color:#d4af37}.btn:disabled{opacity:.45;cursor:not-allowed}.status{margin-top:12px;font-size:12px;color:#a7f3d0;min-height:18px}.preview{min-height:300px;background:#080f1b;border:1px dashed #475569;border-radius:12px;display:grid;place-items:center;text-align:center;padding:20px;color:#94a3b8}.profile{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:12px 0}.profile div{padding:10px;background:#0a1424;border:1px solid #263449;border-radius:8px}.profile small{display:block;color:#94a3b8;font-size:10px;margin-bottom:4px}.profile strong{font-size:12px}.notice{padding:12px;border-radius:9px;background:#172235;border:1px solid #334155;color:#cbd5e1;font-size:12px;line-height:1.6;margin:12px 0}
-@media(max-width:850px){.grid{grid-template-columns:1fr}.head{display:block}.row{grid-template-columns:1fr}}
-</style></head><body><main class="wrap">
-<header class="head"><div><div class="eyebrow">NOVA • MODULE 2</div><h1>✨ AI Content Studio</h1><p class="muted">Ürün kataloğundan sosyal medya içerik paketi hazırla. Ürün AI Studio profilleri Modül 7 ile ortak kullanılır.</p></div><span class="pill">API BAĞLANTISI SONRA ETKİNLEŞTİRİLECEK</span></header>
-<div class="grid">
-<section class="card"><h2>İçerik brief'i</h2>
-<div class="field"><label>ÜRÜN</label><select id="product"><option value="">Ürünler yükleniyor…</option></select></div>
-<div class="row"><div class="field"><label>PLATFORM</label><select id="platform"><option value="instagram">Instagram</option><option value="facebook">Facebook</option><option value="tiktok">TikTok</option><option value="youtube">YouTube Shorts</option></select></div><div class="field"><label>FORMAT</label><select id="format"><option value="1:1">Gönderi · 1:1</option><option value="9:16">Story / Reels · 9:16</option></select></div></div>
-<div class="field"><label>KAMPANYA / SEZON BAĞLAMI</label><textarea id="campaign" placeholder="Örn. Sonbahar koleksiyonu, yeni sezon lansmanı…"></textarea></div>
-<div class="field"><label>HEDEF KİTLE / MESAJ</label><input id="audience" placeholder="Örn. modern ev dekorasyonuna ilgi duyanlar"></div>
-<div class="field"><label>İÇERİK NOTU</label><textarea id="notes" placeholder="İçerikte özellikle vurgulanmasını istediğiniz noktalar…"></textarea></div>
-<button class="btn gold" id="prepare">İçerik taslağını hazırla</button>
-<div class="status" id="status" role="status"></div>
-</section>
-<section class="card"><h2>AI Studio profili & üretim önizlemesi</h2>
-<div class="muted">Seçilen ürünün Modül 7'de kaydedilmiş profil ayarları</div><div class="profile" id="profile"><div><small>IŞIKLANDIRMA</small><strong>—</strong></div><div><small>ATMOSFER</small><strong>—</strong></div><div><small>RENK PALETİ</small><strong>—</strong></div><div><small>DEKOR</small><strong>—</strong></div><div><small>KAMERA</small><strong>—</strong></div><div><small>MÜZİK (REELS)</small><strong>—</strong></div></div>
-<div class="preview" id="preview"><div><div style="font-size:32px">🪄</div><strong>İçerik önizlemesi</strong><p class="muted">Ürün seçip brief'i hazırladığınızda taslak burada görüntülenecek.</p></div></div>
-<div class="notice"><strong>Ana prompt değişmez.</strong> Onaylanan Gemini/Banana ana prompt'u korunur. Ürün profili ve kampanya brief'i ek bağlam olarak kullanılır. Görsel üretimi, metin üretimi ve müzik/video aşamaları ayrı servis adımlarıdır.</div>
-<div class="row"><button class="btn" disabled title="Gemini API anahtarı tanımlandığında etkinleşecek">Görsel üret (API bekleniyor)</button><button class="btn" disabled title="Yayın entegrasyonu üretim aşamasından sonra etkinleşecek">Yayın kuyruğuna ekle</button></div>
-</section></div></main>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Modül 2 — Koleksiyon Merkezli Pazarlama Kampanyası & AI Content Studio | Global Mobilya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080e19;
+      --card: #111b2c;
+      --card-elevated: #162238;
+      --border: rgba(148, 163, 184, 0.18);
+      --gold: #d4af37;
+      --blue: #38bdf8;
+      --emerald: #10b981;
+      --amber: #f59e0b;
+      --rose: #f43f5e;
+      --purple: #a855f7;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 10% 10%, rgba(212, 175, 55, 0.08), transparent 32%),
+                  radial-gradient(circle at 90% 85%, rgba(56, 189, 248, 0.07), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      font-size: 13.5px;
+      min-height: 100vh;
+      padding: 20px 24px 56px;
+    }
+    .wrap { max-width: 1480px; margin: 0 auto; }
+
+    /* HEADER */
+    .studio-header {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+      padding: 18px 24px; background: linear-gradient(135deg, rgba(17, 27, 44, 0.96), rgba(11, 18, 32, 0.96));
+      border: 1px solid rgba(212, 175, 55, 0.35); border-radius: 16px;
+      margin-bottom: 18px; flex-wrap: wrap;
+    }
+    .eyebrow { color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
+    .studio-header h1 { font-size: 21px; font-weight: 800; margin: 4px 0; }
+    .muted { color: var(--muted); font-size: 12px; line-height: 1.55; }
+
+    /* 4 PLATFORM HEALTH STRIP */
+    .platform-health-bar {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 18px;
+    }
+    @media (max-width: 980px) { .platform-health-bar { grid-template-columns: repeat(2, 1fr); } }
+    .health-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 13px;
+      padding: 12px 15px; display: flex; flex-direction: column; gap: 5px;
+    }
+    .health-top { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 12.5px; }
+    .health-badge {
+      font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 99px;
+      text-transform: uppercase;
+    }
+    .hb-ready { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .hb-waiting { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    /* PIPELINE STEPS BAR */
+    .pipeline-bar {
+      display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px;
+      background: rgba(17, 27, 44, 0.75); border: 1px solid var(--border);
+      border-radius: 12px; padding: 10px; margin-bottom: 18px; overflow-x: auto;
+    }
+    .pipe-step {
+      padding: 7px 8px; border-radius: 8px; background: #09101d;
+      border: 1px solid rgba(148, 163, 184, 0.12); font-size: 10.5px; color: var(--muted);
+    }
+    .pipe-step strong { display: block; color: #e2e8f0; font-size: 11px; margin-bottom: 2px; }
+    .pipe-step.done { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.09); color: #a7f3d0; }
+    .pipe-step.active { border-color: var(--gold); background: rgba(212, 175, 55, 0.14); color: #fde68a; }
+
+    /* MAIN GRID */
+    .studio-grid {
+      display: grid; grid-template-columns: 440px 1fr; gap: 20px; align-items: start;
+    }
+    @media (max-width: 1180px) { .studio-grid { grid-template-columns: 1fr; } }
+
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px 20px; margin-bottom: 18px;
+    }
+    .card-head {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .card-head h2 { font-size: 15px; font-weight: 800; }
+
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block; color: #cbd5e1; font-size: 11px; font-weight: 800;
+      margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .field input, .field select, .field textarea {
+      width: 100%; background: #080f1d; color: var(--text);
+      border: 1px solid #2e3e56; border-radius: 9px; padding: 9px 11px; font: inherit; font-size: 12.5px;
+    }
+    .field textarea { min-height: 70px; resize: vertical; line-height: 1.45; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      border: 1px solid #475569; background: #1e293b; color: #f8fafc;
+      border-radius: 9px; padding: 9px 14px; font-weight: 800; font-size: 12px;
+      cursor: pointer; font-family: inherit; transition: all 0.18s; text-decoration: none;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--blue); transform: translateY(-1px); }
+    .btn.gold { background: linear-gradient(135deg, #d4af37, #b8860b); color: #0b1120; border-color: #d4af37; }
+    .btn.emerald { background: linear-gradient(135deg, #10b981, #059669); color: #fff; border-color: #10b981; }
+    .btn.rose { background: rgba(244, 63, 94, 0.18); color: #fda4af; border-color: rgba(244, 63, 94, 0.4); }
+    .btn.sm { padding: 6px 10px; font-size: 11px; border-radius: 7px; }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* PLATFORM PACKAGE CHECKBOXES */
+    .pkg-check-list { display: flex; flex-direction: column; gap: 6px; max-height: 250px; overflow-y: auto; padding-right: 4px; }
+    .pkg-check-item {
+      display: flex; align-items: flex-start; gap: 8px; padding: 8px 10px;
+      background: #091120; border: 1px solid rgba(148, 163, 184, 0.15); border-radius: 9px; cursor: pointer;
+    }
+    .pkg-check-item input { margin-top: 3px; accent-color: var(--gold); }
+    .pkg-check-item strong { display: block; font-size: 12px; color: #f8fafc; }
+    .pkg-check-item small { display: block; font-size: 10.5px; color: var(--muted); }
+
+    /* DELIVERABLE CARDS */
+    .platform-filter-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .pf-tab {
+      padding: 7px 13px; border-radius: 9px; border: 1px solid var(--border);
+      background: #0b1322; color: var(--muted); font-size: 12px; font-weight: 800; cursor: pointer;
+    }
+    .pf-tab.active { border-color: var(--gold); color: #fde68a; background: rgba(212, 175, 55, 0.15); }
+
+    .deliverable-card {
+      background: #0a1220; border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 14px; padding: 16px; margin-bottom: 16px;
+    }
+    .deliv-top {
+      display: flex; align-items: center; justify-content: space-between; gap: 10px;
+      padding-bottom: 10px; margin-bottom: 12px; border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+      flex-wrap: wrap;
+    }
+    .status-pill {
+      font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 99px;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .st-pending_review { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+    .st-approved { background: rgba(16, 185, 129, 0.16); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .st-revision_required { background: rgba(245, 158, 11, 0.16); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+    .st-queued, .st-publishing { background: rgba(168, 85, 247, 0.16); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.4); }
+    .st-published { background: rgba(16, 185, 129, 0.28); color: #6ee7b7; border: 1px solid #10b981; }
+    .st-failed { background: rgba(244, 63, 94, 0.18); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.4); }
+    .st-awaiting_platform_connection { background: rgba(245, 158, 11, 0.14); color: #fde68a; border: 1px dashed rgba(245, 158, 11, 0.5); }
+
+    /* SLIDES & STORYBOARD STRIP */
+    .slides-strip {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr));
+      gap: 10px; margin: 10px 0 14px;
+    }
+    .slide-box {
+      background: #111b2c; border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 10px; overflow: hidden; display: flex; flex-direction: column;
+    }
+    .slide-box img { width: 100%; height: 135px; object-fit: cover; background: #050911; }
+    .slide-meta { padding: 8px 10px; font-size: 11px; flex: 1; display: flex; flex-direction: column; gap: 4px; }
+
+    .scene-row {
+      background: #111b2c; border: 1px solid rgba(148, 163, 184, 0.18);
+      border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
+      display: grid; grid-template-columns: 95px 1fr 220px auto; gap: 10px; align-items: center;
+    }
+    @media (max-width: 900px) { .scene-row { grid-template-columns: 1fr; } }
+
+    .empty-box {
+      text-align: center; padding: 48px 24px; background: rgba(9, 15, 28, 0.65);
+      border: 1px dashed rgba(148, 163, 184, 0.28); border-radius: 14px; color: var(--muted);
+    }
+    .empty-box h3 { color: #f8fafc; font-size: 16px; margin: 8px 0 6px; }
+  </style>
+</head>
+<body>
+<main class="wrap">
+
+  <!-- ÜST BAŞLIK -->
+  <header class="studio-header">
+    <div>
+      <div class="eyebrow">GLOBAL MOBİLYA • MODÜL 2 & MODÜL 7 MERKEZİ ENTEGRASYON</div>
+      <h1>✨ Koleksiyon Merkezli Pazarlama Kampanyası & AI Content Studio</h1>
+      <p class="muted">
+        Modül 7'deki tekil ürün veya koleksiyon kaynağından beslenir; mevcut ana AI promptunu <strong>değiştirmeden</strong> üzerine koleksiyon profili ve 4 platform (Instagram, Facebook, YouTube, TikTok) içerik paketlerini katmanlar.
+      </p>
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <a href="/Module%207/index.html" class="btn">🛋️ Modül 7 Katalog & Koleksiyonlar</a>
+      <button class="btn gold" onclick="loadStudioInitialData()">🔄 Kampanyaları & Bağlantıları Yenile</button>
+    </div>
+  </header>
+
+  <!-- 4 PLATFORM CANLI BAĞLANTI DURUMU (BÖLÜM 3 & 3.1) -->
+  <section class="platform-health-bar" id="platformHealthBar">
+    <div class="health-card">
+      <div class="health-top"><span>📸 Instagram</span><span class="health-badge hb-ready" id="hb_instagram">Doğrulanıyor...</span></div>
+      <div class="muted" id="hd_instagram">Carousel, Parça Detay, 6'lı Story, 5 Sahneli Reels</div>
+    </div>
+    <div class="health-card">
+      <div class="health-top"><span>📘 Facebook</span><span class="health-badge hb-ready" id="hb_facebook">Doğrulanıyor...</span></div>
+      <div class="muted" id="hd_facebook">Koleksiyon Gönderisi, Albüm, Video, Link & Story</div>
+    </div>
+    <div class="health-card">
+      <div class="health-top"><span>▶️ YouTube Shorts</span><span class="health-badge hb-ready" id="hb_youtube">Doğrulanıyor...</span></div>
+      <div class="muted" id="hd_youtube">9:16 30sn 5 Sahneli Shorts + Resumable API v3</div>
+    </div>
+    <div class="health-card">
+      <div class="health-top"><span>🎵 TikTok</span><span class="health-badge hb-waiting" id="hb_tiktok">Hesap bilgileri eksik</span></div>
+      <div class="muted" id="hd_tiktok">İçerik & senaryo üretimi aktif; canlı yayın bağlantı bekliyor</div>
+    </div>
+  </section>
+
+  <!-- 8 AŞAMALI ÜRETİM AKIŞI GÖSTERGESİ (BÖLÜM 6.2) -->
+  <section class="pipeline-bar" id="pipelineProgressBar">
+    <div class="pipe-step done"><strong>1. Modül 7 Kaynak</strong>Koleksiyon & Parça Snapshot</div>
+    <div class="pipe-step done"><strong>2. AI Strateji</strong>Karakter & Ton Analizi</div>
+    <div class="pipe-step done"><strong>3. İçerik Planı</strong>4 Platform & Maliyet Özeti</div>
+    <div class="pipe-step done"><strong>4. Görsel Üretim</strong>Tekrarsız Kütüphane Kaydı</div>
+    <div class="pipe-step done"><strong>5. Video Senaryo</strong>5 Sahneli Kamera/Işık</div>
+    <div class="pipe-step done"><strong>6. Paketleme</strong>Oran, Altyazı & SEO</div>
+    <div class="pipe-step active"><strong>7. İnsan Onayı</strong>Önizleme & Revizyon</div>
+    <div class="pipe-step"><strong>8. Yayın Kuyruğu</strong>IG • FB • YT (TT Korumalı)</div>
+  </section>
+
+  <div class="studio-grid">
+
+    <!-- SOL SÜTUN: YENİ KAMPANYA / İÇERİK PAKETİ OLUŞTURUCU -->
+    <aside>
+      <section class="card">
+        <div class="card-head">
+          <h2>🚀 1. Yeni Pazarlama Kampanyası Oluştur</h2>
+          <span style="font-size:11px; color:var(--gold); font-weight:800;">MODÜL 7 TEK KAYNAK</span>
+        </div>
+
+        <div class="field">
+          <label>Kaynak Türü (Modül 7):</label>
+          <select id="cmp_target_type" onchange="onTargetTypeChange()">
+            <option value="collection">🏛️ Koleksiyon (Tüm Parçalarıyla Bütünsel Kampanya)</option>
+            <option value="collection_piece">🧩 Koleksiyon Parçası (Tekil Parça Odaklı)</option>
+            <option value="independent">🛋️ Bağımsız Ürün</option>
+          </select>
+        </div>
+
+        <div class="field" id="fieldCollectionSelect">
+          <label>Koleksiyon Seçin:</label>
+          <select id="cmp_collection_slug" onchange="onSourceSelectionChange()"></select>
+        </div>
+
+        <div class="field" id="fieldProductSelect" style="display:none;">
+          <label>Ürün / Koleksiyon Parçası Seçin:</label>
+          <select id="cmp_product_slug" onchange="onSourceSelectionChange()"></select>
+        </div>
+
+        <div class="field">
+          <label>Kampanya Adı:</label>
+          <input type="text" id="cmp_title" placeholder="Örn: Siena Yatak Odası Koleksiyonu — Lansman Paketi">
+        </div>
+
+        <!-- SEÇİLEN KAYNAĞIN AI PAZARLAMA PROFİLİ VE KREATİF KONTROLLER (BÖLÜM 5 & 11) -->
+        <div style="background:#091120; border:1px solid rgba(212,175,55,0.28); border-radius:11px; padding:12px; margin-bottom:12px;">
+          <div style="font-size:11px; font-weight:800; color:#fde68a; margin-bottom:8px;">
+            🎨 Kreatif Kontroller (Modül 7 AI Pazarlama Profilinden Otomatik Gelir)
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Atmosfer:</label>
+              <select id="ctrl_atmosphere">
+                <option value="Lüks">Lüks</option>
+                <option value="Modern">Modern</option>
+                <option value="Minimal">Minimal</option>
+                <option value="Sıcak">Sıcak</option>
+                <option value="Doğal">Doğal</option>
+                <option value="Klasik">Klasik</option>
+                <option value="Mimari">Mimari</option>
+                <option value="Editorial">Editorial</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Işık Karakteri:</label>
+              <select id="ctrl_lighting">
+                <option value="Golden hour">Golden hour</option>
+                <option value="Soft daylight">Soft daylight</option>
+                <option value="Dramatic cinematic lighting">Dramatic cinematic lighting</option>
+                <option value="Warm ambient lighting">Warm ambient lighting</option>
+                <option value="Studio lighting">Studio lighting</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field">
+              <label>Ana Kamera Hareketi:</label>
+              <select id="ctrl_camera_movement">
+                <option value="slow_push_in">Slow Push-In</option>
+                <option value="dolly_in">Wide Dolly-In</option>
+                <option value="lateral_tracking">Lateral Tracking</option>
+                <option value="macro_detail">Macro Detail Shot</option>
+                <option value="subtle_orbit">Subtle Orbit</option>
+                <option value="rack_focus">Rack Focus</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Telifsiz Müzik Stili:</label>
+              <select id="ctrl_music">
+                <option value="Ambient">Ambient</option>
+                <option value="Cinematic">Cinematic</option>
+                <option value="Jazz">Jazz</option>
+                <option value="Classical">Classical</option>
+                <option value="Acoustic">Acoustic</option>
+                <option value="Electronic">Electronic</option>
+                <option value="Minimal instrumental">Minimal Instrumental</option>
+              </select>
+            </div>
+          </div>
+          <div class="row-2">
+            <div class="field" style="margin-bottom:0;">
+              <label>Pazarlama Tonu:</label>
+              <select id="ctrl_tone">
+                <option value="Premium">Premium</option>
+                <option value="Modern">Modern</option>
+                <option value="Sade">Sade</option>
+                <option value="Duygusal">Duygusal</option>
+                <option value="Teknik">Teknik</option>
+                <option value="Hikâye anlatımı odaklı">Hikâye Odaklı</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0;">
+              <label>Reels/Video Süresi (sn):</label>
+              <input type="number" id="ctrl_duration" value="22" min="15" max="30">
+            </div>
+          </div>
+        </div>
+
+        <!-- PLATFORM VE İÇERİK PAKETİ SEÇİMİ -->
+        <div class="field">
+          <label>Üretilecek Çoklu Platform İçerik Paketleri:</label>
+          <div class="pkg-check-list" id="packageCheckList">
+            <label class="pkg-check-item"><input type="checkbox" value="IG_COLLECTION_CAROUSEL" checked><div><strong>📸 IG — Koleksiyon Ana Tanıtım Carousel'i (2 Görsel)</strong><small>Koleksiyonu bütün olarak gösteren 2 tamamlayıcı görsel</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="IG_PIECES_CAROUSEL" checked><div><strong>📸 IG — Koleksiyon Parçaları Detay Carousel'i</strong><small>Karyola, komodin, şifonyer, gardırop, makyaj masası kartları</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="IG_STORY_SERIES" checked><div><strong>📸 IG — 6 Parçalı Story Serisi (9:16)</strong><small>Tanıtım -> Atmosfer -> Ürün -> Doku -> Renk -> Teklif</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="IG_REELS" checked><div><strong>📸 IG — Reels Reklam Videosu (5 Sahneli • 15-30 sn)</strong><small>Sahne bazlı kamera/ışık kurgusu ve telifsiz müzik</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="FB_COLLECTION_POST" checked><div><strong>📘 FB — Koleksiyon Tanıtım Gönderisi</strong><small>Geniş koleksiyon görseli, hikâye ve web bağlantısı</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="FB_PHOTO_ALBUM" checked><div><strong>📘 FB — Koleksiyon Parçaları Fotoğraf Albümü</strong><small>Her parçanın ayrı fotoğrafla incelendiği albüm</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="FB_VIDEO_POST" checked><div><strong>📘 FB — Facebook Video Gönderisi</strong><small>Facebook'a özel başlık, kapak ve açıklamayla paketli video</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="FB_LINK_OFFER_POST" checked><div><strong>📘 FB — Bağlantı ve Teklif Gönderisi (Link Card)</strong><small>Showroom ve teklif formuna doğrudan yönlendirme</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="FB_STORY" checked><div><strong>📘 FB — Facebook Story (9:16)</strong><small>Dikey hikaye paketi</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="YT_SHORTS" checked><div><strong>▶️ YT — YouTube Shorts Koleksiyon Tanıtımı (30 sn)</strong><small>5 aşamalı akış, altyazı, #Shorts SEO ve Resumable API</small></div></label>
+            <label class="pkg-check-item"><input type="checkbox" value="TT_COLLECTION_VIDEO" checked><div><strong>🎵 TT — TikTok Koleksiyon Tanıtım Videosu (25 sn)</strong><small>0-25 sn 5 sahneli kurgu (Bağlantı tamamlanınca yayına açılır)</small></div></label>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Ek Kampanya Notu (Opsiyonel):</label>
+          <textarea id="cmp_notes" placeholder="Kampanyada özellikle vurgulanmasını istediğiniz mimari veya tasarım notları..."></textarea>
+        </div>
+
+        <!-- ÜRETİM KAPSAMI VE MALİYET ÖNİZLEMESİ KUTUSU (BÖLÜM 14) -->
+        <div id="costEstimateBox" style="background:#08111e; border:1px solid rgba(56,189,248,0.28); border-radius:10px; padding:10px 12px; margin-bottom:12px; font-size:11.5px; color:#cbd5e1;">
+          <strong style="color:#38bdf8; display:block; margin-bottom:3px;">📊 Üretim Kapsamı & Maliyet Kontrolü:</strong>
+          <span id="costEstimateText">11 içerik paketi • Kütüphanedeki gerçek görseller yeniden kullanılır • Tekil sahne revizyonu destekli.</span>
+        </div>
+
+        <div style="display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="btn" type="button" onclick="previewCampaignCostEstimate()">🔍 Kapsam & Maliyet Hesapla</button>
+          <button class="btn gold" type="button" id="btnCreateCampaign" style="flex:1;" onclick="createAndGenerateCampaign()">
+            ✨ Kampanya Paketini Üret (8 Aşama)
+          </button>
+        </div>
+        <div id="campaignCreateStatus" style="margin-top:10px; font-size:12px; color:#34d399; min-height:18px;"></div>
+      </section>
+
+      <!-- ANA PROMPT KORUMA VE KATMANLI PROMPT ÖNİZLEME KARTI (BÖLÜM 2.1) -->
+      <section class="card">
+        <div class="card-head">
+          <h2>🛡️ Ana AI Promptu & Katmanlı Bağlam Denetçisi</h2>
+          <span style="font-size:10px; color:#34d399; font-weight:800;">ANA PROMPT %100 KORUNUR</span>
+        </div>
+        <p class="muted" style="margin-bottom:10px;">
+          Onaylanan <code>buildGeminiBananaPrompt</code> ana promptu kesinlikle değiştirilmez. Seçilen ürün/koleksiyon profili ve platform talimatları ayrı katmanlar olarak eklenir.
+        </p>
+        <button class="btn sm" type="button" id="prepare" onclick="previewLayeredPrompt()">🔍 Seçili Kaynak İçin Katmanlı Promptu Göster</button>
+        <div id="preview" style="margin-top:10px;"></div>
+      </section>
+    </aside>
+
+    <!-- SAĞ SÜTUN: KAMPANYA LİSTESİ VE 4 PLATFORM İÇERİK KONTROL PANELLERİ -->
+    <section>
+      <div class="card">
+        <div class="card-head">
+          <div>
+            <h2>📦 Aktif Pazarlama Kampanyaları & 4 Platform İçerik Paketleri</h2>
+            <p class="muted">Her içerik öğesini ayrı ayrı inceleyebilir, slayt sıralamasını değiştirebilir, tek bir video sahnesini yeniden üretebilir ve onaylayarak yayın kuyruğuna gönderebilirsiniz.</p>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <select id="activeCampaignSelect" class="field" style="margin:0; padding:8px 12px; background:#080f1d; color:#fff; border:1px solid #334155; border-radius:9px;" onchange="onSelectActiveCampaign(this.value)">
+              <option value="">— Kampanya Seçin —</option>
+            </select>
+            <button class="btn emerald sm" onclick="approveAndPublishAllReadyInCampaign()">🚀 Onaylı Öğeleri Yayın Kuyruğuna Gönder</button>
+          </div>
+        </div>
+
+        <!-- PLATFORM FİLTRE SEKMELERİ -->
+        <div class="platform-filter-tabs">
+          <button class="pf-tab active" data-plat="ALL" onclick="setPlatformFilter('ALL', this)">🌐 Tüm Platformlar</button>
+          <button class="pf-tab" data-plat="instagram" onclick="setPlatformFilter('instagram', this)">📸 Instagram Paketi (Carousel • Parçalar • 6 Story • Reels)</button>
+          <button class="pf-tab" data-plat="facebook" onclick="setPlatformFilter('facebook', this)">📘 Facebook Paketi (Tanıtım • Albüm • Video • Link • Story)</button>
+          <button class="pf-tab" data-plat="youtube" onclick="setPlatformFilter('youtube', this)">▶️ YouTube Shorts Paketi (5 Sahne • 30 sn • SEO)</button>
+          <button class="pf-tab" data-plat="tiktok" onclick="setPlatformFilter('tiktok', this)">🎵 TikTok Paketi (25 sn Kurgu • Bağlantı Bekleniyor)</button>
+        </div>
+
+        <!-- KAMPANYA ÖZET ŞERİDİ -->
+        <div id="activeCampaignSummaryBar" style="display:none; background:#091120; border:1px solid rgba(212,175,55,0.3); border-radius:12px; padding:12px 16px; margin-bottom:16px;"></div>
+
+        <!-- İÇERİK PAKETLERİ LİSTESİ -->
+        <div id="campaignDeliverablesContainer">
+          <div class="empty-box">
+            <div style="font-size:36px;">✨</div>
+            <h3>Henüz içerik üretilmemiş</h3>
+            <p>Sol taraftaki panelden Modül 7'deki gerçek bir koleksiyonu veya ürünü seçip <strong>"Kampanya Paketini Üret"</strong> düğmesine tıkladığınızda Instagram, Facebook, YouTube ve TikTok içerik paketleri burada oluşturulacaktır.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
 <script>
-const $=id=>document.getElementById(id);let products=[],profiles={categories:{},products:{}};
-async function load(){try{const [p,s]=await Promise.all([fetch('/api/module7?action=products').then(r=>r.json()),fetch('/api/module7?action=ai-profiles').then(r=>r.json())]);if(!p.ok)throw Error(p.error||'Ürünler yüklenemedi');products=p.products||[];profiles=s.profiles||profiles;$('product').innerHTML=products.map(x=>'<option value="'+encodeURIComponent(x.slug)+'">'+String(x.title||x.slug).replace(/[<>&"]/g,'')+'</option>').join('')||'<option value="">Ürün bulunamadı</option>';renderProfile();}catch(e){$('status').textContent=e.message;}}
-function selected(){return products.find(x=>x.slug===decodeURIComponent($('product').value));}
-function renderProfile(){const p=selected();if(!p)return;const v=profiles.products?.[p.slug]||profiles.categories?.[p.kategori||'Genel']||{};const keys=[['lighting','IŞIKLANDIRMA'],['atmosphere','ATMOSFER'],['palette','RENK PALETİ'],['decor','DEKOR'],['camera','KAMERA'],['music','MÜZİK (REELS)']];$('profile').innerHTML=keys.map(([k,l])=>'<div><small>'+l+'</small><strong>'+String(v[k]||'Kategori/ürün profili tanımlanmamış').replace(/[<>&"]/g,'')+'</strong></div>').join('');}
-$('product').addEventListener('change',renderProfile);
-$('prepare').addEventListener('click',async()=>{const p=selected();if(!p)return;$('prepare').disabled=true;$('status').textContent='Ana prompt ve ürün profili birleştiriliyor…';try{let access='';for(const store of [localStorage,sessionStorage]){try{const key=Array.from({length:store.length},(_,i)=>store.key(i)).find(k=>k&&k.startsWith('sb-')&&k.endsWith('-auth-token'));if(key){access=JSON.parse(store.getItem(key)||'{}').access_token||'';if(access)break;}}catch{}}const response=await fetch('/api/module2?action=prompt-preview',{method:'POST',headers:{'Content-Type':'application/json',...(access?{Authorization:'Bearer '+access}:{})},body:JSON.stringify({product_slug:p.slug,platform:$('platform').value,format:$('format').value,season:$('campaign').value,audience:$('audience').value,notes:$('notes').value})});const result=await response.json();if(!response.ok||!result.ok)throw Error(result.error||'Prompt hazırlanamadı.');$('preview').innerHTML='<div style="width:100%;text-align:left"><strong>'+String(result.product.title||p.slug).replace(/[<>&"]/g,'')+'</strong><p class="muted">Platform: '+result.campaign.platform+' · Format: '+result.campaign.format+'</p><p class="muted">AI Studio profili yüklendi. Ana prompt aynen korundu.</p><details style="margin-top:14px"><summary style="cursor:pointer;color:#fbbf24">Birleştirilmiş prompt önizlemesini göster</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;font:11px/1.6 ui-monospace,monospace;color:#cbd5e1;background:#050a12;padding:12px;border-radius:8px;max-height:360px;overflow:auto"></pre></details></div>';$('preview').querySelector('pre').textContent=result.prompt;$('status').textContent=result.api_ready?'Prompt hazır. API yapılandırması mevcut.':'Prompt hazır ve doğrulandı. Görsel üretimi Gemini API anahtarı eklendiğinde etkinleşecek.';}catch(e){$('status').textContent=e.message;}finally{$('prepare').disabled=false;}});
-load();
-</script></body></html>
+  const $ = id => document.getElementById(id);
+  let collectionsList = [];
+  let productsList = [];
+  let aiProfiles = { categories: {}, products: {}, collections: {} };
+  let campaignsList = [];
+  let currentCampaign = null;
+  let currentPlatformFilter = 'ALL';
+  let tiktokConnection = { code: 'missing_credentials', label: 'Hesap bilgileri eksik', canPublish: false };
+
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  }
+
+  function getAuthToken() {
+    for (const store of [localStorage, sessionStorage]) {
+      try {
+        const key = Array.from({ length: store.length }, (_, i) => store.key(i))
+          .find(k => k && k.startsWith('sb-') && k.endsWith('-auth-token'));
+        if (key) {
+          const parsed = JSON.parse(store.getItem(key) || '{}');
+          if (parsed.access_token) return parsed.access_token;
+        }
+      } catch {}
+    }
+    return '';
+  }
+
+  async function apiRequest(url, options = {}) {
+    const token = getAuthToken();
+    const headers = {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: 'Bearer ' + token } : {}),
+      ...(options.headers || {})
+    };
+    const res = await fetch(url, { ...options, headers, cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      throw new Error(data.error || `İstek başarısız (HTTP ${res.status})`);
+    }
+    return data;
+  }
+
+  async function loadStudioInitialData() {
+    try {
+      const [colRes, prodRes, profRes] = await Promise.all([
+        fetch('/api/module7?action=collections').then(r => r.json()).catch(() => ({ collections: [] })),
+        fetch('/api/module7?action=products').then(r => r.json()).catch(() => ({ products: [] })),
+        fetch('/api/module7?action=ai-profiles').then(r => r.json()).catch(() => ({ profiles: { categories: {}, products: {}, collections: {} } }))
+      ]);
+
+      collectionsList = Array.isArray(colRes.collections) ? colRes.collections : [];
+      productsList = Array.isArray(prodRes.products) ? prodRes.products : [];
+      aiProfiles = profRes.profiles || { categories: {}, products: {}, collections: {} };
+
+      populateSourceDropdowns();
+
+      // URL parametresiyle (?collection=... veya ?product=...) gelindiyse otomatik seç
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('collection')) {
+        $('cmp_target_type').value = 'collection';
+        onTargetTypeChange();
+        $('cmp_collection_slug').value = params.get('collection');
+        onSourceSelectionChange();
+      } else if (params.get('product')) {
+        $('cmp_target_type').value = 'independent';
+        onTargetTypeChange();
+        $('cmp_product_slug').value = params.get('product');
+        onSourceSelectionChange();
+      }
+
+      // Platform bağlantı durumunu ve kampanyaları yükle
+      await Promise.all([
+        loadPlatformHealth(),
+        loadCampaigns()
+      ]);
+    } catch (err) {
+      $('campaignCreateStatus').textContent = err.message;
+    }
+  }
+
+  function populateSourceDropdowns() {
+    const colSel = $('cmp_collection_slug');
+    const prodSel = $('cmp_product_slug');
+
+    if (collectionsList.length > 0) {
+      colSel.innerHTML = collectionsList.map(c =>
+        `<option value="${escapeHtml(c.slug)}">${escapeHtml(c.title || c.name)} (${(c.parts || []).length} Parça)</option>`
+      ).join('');
+    } else {
+      colSel.innerHTML = '<option value="">Henüz koleksiyon bulunmuyor (Modül 7\'den ekleyin)</option>';
+    }
+
+    if (productsList.length > 0) {
+      prodSel.innerHTML = productsList.map(p =>
+        `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.title)} ${p.sku ? '[' + escapeHtml(p.sku) + ']' : ''}</option>`
+      ).join('');
+    } else {
+      prodSel.innerHTML = '<option value="">Henüz ürün eklenmemiş (Modül 7\'den ekleyin)</option>';
+    }
+
+    onSourceSelectionChange();
+  }
+
+  function onTargetTypeChange() {
+    const t = $('cmp_target_type').value;
+    if (t === 'collection') {
+      $('fieldCollectionSelect').style.display = 'block';
+      $('fieldProductSelect').style.display = 'none';
+    } else {
+      $('fieldCollectionSelect').style.display = 'none';
+      $('fieldProductSelect').style.display = 'block';
+    }
+    onSourceSelectionChange();
+  }
+
+  function onSourceSelectionChange() {
+    const t = $('cmp_target_type').value;
+    if (t === 'collection') {
+      const slug = $('cmp_collection_slug').value;
+      const col = collectionsList.find(c => c.slug === slug);
+      if (col) {
+        $('cmp_title').value = `${col.title || col.name} — Çoklu Platform Kampanya Paketi`;
+        const prof = aiProfiles.collections?.[slug] || aiProfiles.products?.[slug] || col.marketing_preferences || {};
+        applyProfileToControls(prof);
+      }
+    } else {
+      const slug = $('cmp_product_slug').value;
+      const prod = productsList.find(p => p.slug === slug);
+      if (prod) {
+        $('cmp_title').value = `${prod.title} — Çoklu Platform Kampanya Paketi`;
+        const prof = aiProfiles.products?.[slug] || aiProfiles.categories?.[prod.kategori || 'Genel'] || {};
+        applyProfileToControls(prof);
+      }
+    }
+  }
+
+  function applyProfileToControls(prof = {}) {
+    if (prof.atmosphere) $('ctrl_atmosphere').value = prof.atmosphere;
+    if (prof.lighting) $('ctrl_lighting').value = prof.lighting;
+    if (prof.camera_config?.movement) $('ctrl_camera_movement').value = prof.camera_config.movement;
+    if (prof.music_preference || prof.music) $('ctrl_music').value = prof.music_preference || prof.music;
+    if (prof.marketing_tone) $('ctrl_tone').value = prof.marketing_tone;
+  }
+
+  async function loadPlatformHealth() {
+    try {
+      const res = await apiRequest('/api/module2?action=platform-health');
+      const p = res.platforms || {};
+      if (p.instagram) {
+        $('hb_instagram').textContent = p.instagram.label || 'Bağlantı hazır';
+      }
+      if (p.facebook) {
+        $('hb_facebook').textContent = p.facebook.label || 'Bağlantı hazır';
+      }
+      if (p.youtube) {
+        $('hb_youtube').textContent = p.youtube.label || 'Bağlantı hazır';
+      }
+      if (p.tiktok) {
+        tiktokConnection = p.tiktok;
+        $('hb_tiktok').textContent = p.tiktok.label || 'Hesap bilgileri eksik';
+        $('hb_tiktok').className = 'health-badge ' + (p.tiktok.can_publish ? 'hb-ready' : 'hb-waiting');
+        $('hd_tiktok').textContent = p.tiktok.description || 'TikTok bağlantısı bekleniyor; içerik üretimi aktif.';
+      }
+    } catch {}
+  }
+
+  async function loadCampaigns() {
+    try {
+      const res = await apiRequest('/api/module2?action=campaigns');
+      campaignsList = Array.isArray(res.campaigns) ? res.campaigns : [];
+      if (res.tiktok_connection) tiktokConnection = res.tiktok_connection;
+
+      const sel = $('activeCampaignSelect');
+      if (campaignsList.length === 0) {
+        sel.innerHTML = '<option value="">— Henüz kampanya oluşturulmamış —</option>';
+        currentCampaign = null;
+        renderActiveCampaignDeliverables();
+        return;
+      }
+
+      sel.innerHTML = campaignsList.map(c =>
+        `<option value="${escapeHtml(c.id)}">${escapeHtml(c.title)} (${(c.items || []).length} Paket)</option>`
+      ).join('');
+
+      if (!currentCampaign || !campaignsList.some(c => c.id === currentCampaign.id)) {
+        currentCampaign = campaignsList[0];
+      } else {
+        currentCampaign = campaignsList.find(c => c.id === currentCampaign.id);
+      }
+      sel.value = currentCampaign.id;
+      renderActiveCampaignDeliverables();
+    } catch (err) {
+      console.warn('Kampanyalar okunamadı:', err.message);
+    }
+  }
+
+  function onSelectActiveCampaign(id) {
+    currentCampaign = campaignsList.find(c => c.id === id) || null;
+    renderActiveCampaignDeliverables();
+  }
+
+  function setPlatformFilter(plat, btnEl) {
+    currentPlatformFilter = plat;
+    document.querySelectorAll('.pf-tab').forEach(b => b.classList.remove('active'));
+    if (btnEl) btnEl.classList.add('active');
+    renderActiveCampaignDeliverables();
+  }
+
+  function getSelectedPackagesPayload() {
+    const checked = Array.from(document.querySelectorAll('#packageCheckList input:checked')).map(el => el.value);
+    const platforms = new Set();
+    checked.forEach(code => {
+      if (code.startsWith('IG_')) platforms.add('instagram');
+      if (code.startsWith('FB_')) platforms.add('facebook');
+      if (code.startsWith('YT_')) platforms.add('youtube');
+      if (code.startsWith('TT_')) platforms.add('tiktok');
+    });
+    return {
+      selected_packages: checked,
+      selected_platforms: Array.from(platforms)
+    };
+  }
+
+  async function previewCampaignCostEstimate() {
+    const target_type = $('cmp_target_type').value;
+    const collection_slug = target_type === 'collection' ? $('cmp_collection_slug').value : '';
+    const product_slug = target_type !== 'collection' ? $('cmp_product_slug').value : '';
+    const { selected_packages, selected_platforms } = getSelectedPackagesPayload();
+
+    try {
+      const res = await apiRequest('/api/module2?action=campaigns', {
+        method: 'POST',
+        body: JSON.stringify({
+          dry_estimate: true,
+          target_type,
+          collection_slug,
+          product_slug,
+          selected_platforms,
+          selected_packages,
+          creative_controls: {
+            atmosphere: $('ctrl_atmosphere').value,
+            lighting: $('ctrl_lighting').value,
+            scene_1_movement: $('ctrl_camera_movement').value,
+            music_preference: $('ctrl_music').value,
+            marketing_tone: $('ctrl_tone').value,
+            video_duration: Number($('ctrl_duration').value || 22)
+          }
+        })
+      });
+      const est = res.estimated_cost || {};
+      $('costEstimateText').innerHTML =
+        `Toplam <strong>${est.total_deliverables_count || 0}</strong> platform paketi • ` +
+        `Kütüphaneden yeniden kullanılan gerçek görsel: <strong>${est.reused_library_assets_count || 0}</strong> (%${est.deduplication_savings_percent || 0} tasarruf) • ` +
+        `Video sahnesi: <strong>${est.unique_video_scenes_count || 0}</strong> • ` +
+        `Mod: <strong>${escapeHtml(est.estimated_api_mode || 'Standart')}</strong>`;
+    } catch (err) {
+      $('costEstimateText').textContent = 'Tahmin hesaplanamadı: ' + err.message;
+    }
+  }
+
+  async function createAndGenerateCampaign() {
+    const btn = $('btnCreateCampaign');
+    const statusEl = $('campaignCreateStatus');
+    const target_type = $('cmp_target_type').value;
+    const collection_slug = target_type === 'collection' ? $('cmp_collection_slug').value : '';
+    const product_slug = target_type !== 'collection' ? $('cmp_product_slug').value : '';
+
+    if (target_type === 'collection' && !collection_slug) {
+      return alert('Lütfen Modül 7\'de kayıtlı bir koleksiyon seçin.');
+    }
+    if (target_type !== 'collection' && !product_slug) {
+      return alert('Lütfen Modül 7\'de kayıtlı bir ürün seçin.');
+    }
+
+    const { selected_packages, selected_platforms } = getSelectedPackagesPayload();
+    if (!selected_packages.length) {
+      return alert('Lütfen en az bir içerik paketi seçin.');
+    }
+
+    btn.disabled = true;
+    statusEl.textContent = '⏳ 8 aşamalı kampanya ve çoklu platform içerik paketi üretiliyor...';
+
+    try {
+      const res = await apiRequest('/api/module2?action=campaigns', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: $('cmp_title').value.trim(),
+          target_type,
+          collection_slug,
+          product_slug,
+          selected_platforms,
+          selected_packages,
+          creative_controls: {
+            atmosphere: $('ctrl_atmosphere').value,
+            lighting: $('ctrl_lighting').value,
+            scene_1_movement: $('ctrl_camera_movement').value,
+            music_preference: $('ctrl_music').value,
+            marketing_tone: $('ctrl_tone').value,
+            video_duration: Number($('ctrl_duration').value || 22),
+            notes: $('cmp_notes').value.trim()
+          }
+        })
+      });
+
+      statusEl.textContent = `✅ Kampanya üretildi! ${res.campaign?.items?.length || 0} içerik paketi incelemeye hazır.`;
+      currentCampaign = res.campaign;
+      await loadCampaigns();
+    } catch (err) {
+      statusEl.textContent = '❌ ' + err.message;
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  function renderActiveCampaignDeliverables() {
+    const container = $('campaignDeliverablesContainer');
+    const summaryBar = $('activeCampaignSummaryBar');
+
+    if (!currentCampaign) {
+      summaryBar.style.display = 'none';
+      container.innerHTML = `
+        <div class="empty-box">
+          <div style="font-size:36px;">✨</div>
+          <h3>Bu koleksiyon için kampanya oluşturulmamış</h3>
+          <p>Sol taraftaki panelden Modül 7'deki gerçek bir koleksiyonu veya ürünü seçip <strong>"Kampanya Paketini Üret"</strong> düğmesine tıklayarak 4 platform için içerik paketlerini oluşturabilirsiniz.</p>
+        </div>`;
+      return;
+    }
+
+    const snap = currentCampaign.source_snapshot || {};
+    const strat = currentCampaign.marketing_strategy || {};
+    const allItems = Array.isArray(currentCampaign.items) ? currentCampaign.items : [];
+    const filteredItems = currentPlatformFilter === 'ALL'
+      ? allItems
+      : allItems.filter(i => i.platform === currentPlatformFilter);
+
+    summaryBar.style.display = 'block';
+    summaryBar.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div>
+          <strong style="color:#fde68a; font-size:14px;">${escapeHtml(currentCampaign.title)}</strong>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#38bdf8; margin-left:8px;">[${escapeHtml(currentCampaign.campaign_code)} • Snapshot v${currentCampaign.source_version || 1}]</span>
+          <div class="muted" style="margin-top:3px;">
+            Strateji: ${escapeHtml(strat.core_value_proposition || '')} | Atmosfer: <strong>${escapeHtml(strat.atmosphere_direction || '')}</strong> | Işık: <strong>${escapeHtml(strat.lighting_direction || '')}</strong> | Müzik: <strong>${escapeHtml(strat.music_direction || '')}</strong>
+          </div>
+        </div>
+        <button class="btn rose sm" onclick="deleteCampaign('${escapeHtml(currentCampaign.id)}')">🗑️ Kampanyayı Sil</button>
+      </div>`;
+
+    if (!filteredItems.length) {
+      container.innerHTML = `
+        <div class="empty-box">
+          <h3>Seçili platform filtresinde içerik paketi bulunmuyor</h3>
+          <p>Diğer platform sekmelerini seçebilir veya yeni bir kampanya paketi oluşturabilirsiniz.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = filteredItems.map(item => renderSingleDeliverableCard(item)).join('');
+  }
+
+  function renderSingleDeliverableCard(item) {
+    const platBadges = {
+      instagram: '📸 INSTAGRAM',
+      facebook: '📘 FACEBOOK',
+      youtube: '▶️ YOUTUBE SHORTS',
+      tiktok: '🎵 TIKTOK'
+    };
+    const slides = Array.isArray(item.slides) ? item.slides : [];
+    const scenes = Array.isArray(item.scenes) ? item.scenes : [];
+    const isTikTokBlocked = item.platform === 'tiktok' && !tiktokConnection.canPublish;
+
+    const slidesHtml = slides.length > 0 ? `
+      <div style="margin-top:10px;">
+        <div style="font-size:11px; font-weight:800; color:#fde68a; margin-bottom:6px;">
+          🖼️ Gönderi / Carousel / Story Kareleri (${slides.length} Kare — Sıralanabilir & Değiştirilebilir):
+        </div>
+        <div class="slides-strip">
+          ${slides.map((sl, idx) => `
+            <div class="slide-box">
+              <img src="${escapeHtml(sl.media_url || item.cover_url || '')}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+              <div class="slide-meta">
+                <strong style="color:#fff;">#${idx + 1} ${escapeHtml(sl.title || sl.story_step || sl.role || '')}</strong>
+                <span class="muted">${escapeHtml(sl.subtitle || sl.subtext || (sl.features || []).join(' • ') || '')}</span>
+                <div style="display:flex; gap:4px; margin-top:auto; padding-top:6px;">
+                  ${idx > 0 ? `<button class="btn sm" onclick="moveDeliverableSlide('${item.id}', ${idx}, -1)">◀</button>` : ''}
+                  ${idx < slides.length - 1 ? `<button class="btn sm" onclick="moveDeliverableSlide('${item.id}', ${idx}, 1)">▶</button>` : ''}
+                  <button class="btn sm" onclick="promptReplaceSlideImage('${item.id}', ${idx})">🔄 Görsel</button>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>` : '';
+
+    const scenesHtml = scenes.length > 0 ? `
+      <div style="margin-top:12px;">
+        <div style="font-size:11px; font-weight:800; color:#38bdf8; margin-bottom:6px;">
+          🎬 Sahne Bazlı Video Senaryosu (${scenes.length} Sahne — Tek Sahne Yeniden Üretildiğinde Diğer Sahneler Bozulmaz):
+        </div>
+        ${scenes.map(sc => `
+          <div class="scene-row" id="scene_row_${sc.id}">
+            <div>
+              <strong style="color:#fde68a; font-size:11.5px; display:block;">Sahne ${sc.scene_index} (${escapeHtml(sc.time_range)})</strong>
+              <span class="muted">${sc.duration_seconds} sn</span>
+            </div>
+            <div>
+              <div style="font-weight:700; color:#fff; font-size:12px;">${escapeHtml(sc.title)}</div>
+              <input type="text" id="sc_sub_${sc.id}" value="${escapeHtml(sc.subtitle_text || '')}" style="margin-top:4px; width:100%; background:#070d19; color:#cbd5e1; border:1px solid #2e3e56; border-radius:6px; padding:5px 8px; font-size:11.5px;" placeholder="Sahne altyazısı / ekran metni">
+            </div>
+            <div>
+              <label style="font-size:10px; color:#94a3b8; display:block;">Kamera Hareketi:</label>
+              <select id="sc_cam_${sc.id}" style="width:100%; background:#070d19; color:#fff; border:1px solid #2e3e56; border-radius:6px; padding:5px; font-size:11px;">
+                <option value="slow_push_in" ${sc.camera_movement === 'slow_push_in' ? 'selected' : ''}>Slow Push-In</option>
+                <option value="dolly_in" ${sc.camera_movement === 'dolly_in' ? 'selected' : ''}>Wide Dolly-In</option>
+                <option value="lateral_tracking" ${sc.camera_movement === 'lateral_tracking' ? 'selected' : ''}>Lateral Tracking</option>
+                <option value="macro_detail" ${sc.camera_movement === 'macro_detail' ? 'selected' : ''}>Macro Detail Shot</option>
+                <option value="subtle_orbit" ${sc.camera_movement === 'subtle_orbit' ? 'selected' : ''}>Subtle Orbit</option>
+                <option value="rack_focus" ${sc.camera_movement === 'rack_focus' ? 'selected' : ''}>Rack Focus</option>
+                <option value="match_cut" ${sc.camera_movement === 'match_cut' ? 'selected' : ''}>Match Cut</option>
+                <option value="subtle_speed_ramp" ${sc.camera_movement === 'subtle_speed_ramp' ? 'selected' : ''}>Subtle Speed Ramp</option>
+              </select>
+            </div>
+            <div>
+              <button class="btn sm" onclick="regenerateSingleScene('${sc.id}', '${item.id}', ${sc.scene_index})">
+                🔄 Sahneyi Yenile
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>` : '';
+
+    const tiktokWarningBanner = isTikTokBlocked ? `
+      <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.4); border-radius:9px; padding:9px 12px; margin-bottom:10px; font-size:11.5px; color:#fde68a;">
+        ⚠️ <strong>TikTok Bağlantı Durumu: ${escapeHtml(tiktokConnection.label || 'Hesap bilgileri eksik')}</strong> —
+        Bu TikTok video paketi ve 5 sahneli senaryosu tamamen hazırlandı. TikTok hesap kurtarma ve API yetkilendirmesi tamamlandığında yayın kuyruğuna gönderilebilir. (Instagram, Facebook ve YouTube yayınları bu durumdan etkilenmez.)
+      </div>` : '';
+
+    return `
+      <div class="deliverable-card" id="deliv_${item.id}">
+        <div class="deliv-top">
+          <div>
+            <span style="font-size:10.5px; font-weight:900; color:var(--gold); margin-right:8px;">${platBadges[item.platform] || item.platform.toUpperCase()}</span>
+            <strong style="font-size:14.5px; color:#fff;">${escapeHtml(item.title)}</strong>
+            <span class="muted" style="margin-left:8px;">(${escapeHtml(item.aspect_ratio)} • ${escapeHtml(item.resolution)}${item.duration_seconds ? ' • ' + item.duration_seconds + ' sn' : ''})</span>
+          </div>
+          <span class="status-pill st-${escapeHtml(item.status)}">
+            ● ${escapeHtml(item.status_label_tr || item.status)}
+          </span>
+        </div>
+
+        ${tiktokWarningBanner}
+
+        ${slidesHtml}
+        ${scenesHtml}
+
+        <div class="row-2" style="margin-top:10px;">
+          <div class="field">
+            <label>Gönderi Metni / Açıklama (Caption):</label>
+            <textarea id="cap_${item.id}" style="min-height:95px;">${escapeHtml(item.caption || '')}</textarea>
+          </div>
+          <div>
+            <div class="field">
+              <label>Hashtag Seti:</label>
+              <textarea id="tag_${item.id}" style="min-height:52px;">${escapeHtml(item.hashtags || '')}</textarea>
+            </div>
+            <div class="field">
+              <label>Hedef Bağlantı / CTA:</label>
+              <input type="text" id="lnk_${item.id}" value="${escapeHtml(item.target_link || '')}">
+            </div>
+          </div>
+        </div>
+
+        <details style="margin-bottom:12px;">
+          <summary style="cursor:pointer; font-size:11.5px; color:#94a3b8;">🔍 Katmanlı AI Prompt Yapısını İncele (Ana Prompt Değiştirilmeden Korundu)</summary>
+          <pre style="margin-top:8px; padding:10px; background:#050911; border:1px solid #1e293b; border-radius:8px; font-size:11px; color:#cbd5e1; white-space:pre-wrap; max-height:220px; overflow:auto;">${escapeHtml(item.layered_prompt?.combined_prompt || item.layered_prompt?.core_prompt || '')}</pre>
+        </details>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; border-top:1px solid rgba(148,163,184,0.12); padding-top:10px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button class="btn sm" onclick="saveDeliverableEdits('${item.id}', 'pending_review')">💾 Metin/Kare Değişikliklerini Kaydet</button>
+            <button class="btn sm rose" onclick="saveDeliverableEdits('${item.id}', 'revision_required')">✏️ Revizyon Gerekli İşaretle</button>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn sm emerald" onclick="saveDeliverableEdits('${item.id}', 'approved')">✅ İçeriği Onayla</button>
+            <button class="btn sm gold" ${isTikTokBlocked ? 'disabled title="TikTok bağlantısı tamamlandığında aktifleşir"' : ''} onclick="enqueueSingleDeliverable('${item.id}')">
+              🚀 ${isTikTokBlocked ? 'TikTok Bağlantısı Bekleniyor' : 'Onayla & Yayın Kuyruğuna Gönder'}
+            </button>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function saveDeliverableEdits(itemId, newStatus) {
+    try {
+      const caption = $(`cap_${itemId}`)?.value;
+      const hashtags = $(`tag_${itemId}`)?.value;
+      const target_link = $(`lnk_${itemId}`)?.value;
+      await apiRequest('/api/module2?action=campaign-item-update', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: itemId,
+          caption,
+          hashtags,
+          target_link,
+          status: newStatus
+        })
+      });
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function moveDeliverableSlide(itemId, index, delta) {
+    const item = (currentCampaign?.items || []).find(i => i.id === itemId);
+    if (!item || !Array.isArray(item.slides)) return;
+    const slides = [...item.slides];
+    const targetIdx = index + delta;
+    if (targetIdx < 0 || targetIdx >= slides.length) return;
+    const temp = slides[index];
+    slides[index] = slides[targetIdx];
+    slides[targetIdx] = temp;
+    try {
+      await apiRequest('/api/module2?action=campaign-item-update', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, slides })
+      });
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function promptReplaceSlideImage(itemId, index) {
+    const item = (currentCampaign?.items || []).find(i => i.id === itemId);
+    if (!item || !Array.isArray(item.slides)) return;
+    const currentUrl = item.slides[index]?.media_url || '';
+    const nextUrl = prompt('Bu slayt karesi için yeni görsel URL adresini girin:', currentUrl);
+    if (!nextUrl || nextUrl.trim() === currentUrl) return;
+    const slides = [...item.slides];
+    slides[index] = { ...slides[index], media_url: nextUrl.trim() };
+    try {
+      await apiRequest('/api/module2?action=campaign-item-update', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, slides })
+      });
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function regenerateSingleScene(sceneId, itemId, sceneIndex) {
+    const subtitle_text = $(`sc_sub_${sceneId}`)?.value || '';
+    const camera_movement = $(`sc_cam_${sceneId}`)?.value || 'slow_push_in';
+    try {
+      await apiRequest('/api/module2?action=campaign-scene-regenerate', {
+        method: 'POST',
+        body: JSON.stringify({
+          scene_id: sceneId,
+          item_id: itemId,
+          scene_index: sceneIndex,
+          subtitle_text,
+          camera_movement
+        })
+      });
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function enqueueSingleDeliverable(itemId) {
+    try {
+      // Önce güncel metinleri kaydet ve onayla
+      await saveDeliverableEdits(itemId, 'approved');
+      const res = await apiRequest('/api/module2?action=campaign-approve-publish', {
+        method: 'POST',
+        body: JSON.stringify({
+          campaign_id: currentCampaign?.id,
+          item_ids: [itemId]
+        })
+      });
+      const r = res.results?.[0];
+      if (r && !r.queued) {
+        alert(`Bilgi: ${r.reason}`);
+      }
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function approveAndPublishAllReadyInCampaign() {
+    if (!currentCampaign) return;
+    const readyIds = (currentCampaign.items || [])
+      .filter(i => i.status === 'approved' || i.status === 'pending_review')
+      .map(i => i.id);
+    if (!readyIds.length) return alert('Kuyruğa gönderilecek içerik öğesi bulunamadı.');
+    try {
+      const res = await apiRequest('/api/module2?action=campaign-approve-publish', {
+        method: 'POST',
+        body: JSON.stringify({
+          campaign_id: currentCampaign.id,
+          item_ids: readyIds
+        })
+      });
+      const queuedCount = (res.results || []).filter(r => r.queued).length;
+      const blockedCount = (res.results || []).filter(r => !r.queued).length;
+      alert(`✅ ${queuedCount} içerik paketi yayın kuyruğuna eklendi.` + (blockedCount ? ` (${blockedCount} öğe platform bağlantısı/revizyon bekliyor.)` : ''));
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function deleteCampaign(id) {
+    if (!confirm('Bu kampanyayı silmek istediğinize emin misiniz?')) return;
+    try {
+      await apiRequest('/api/module2?action=campaigns', {
+        method: 'DELETE',
+        body: JSON.stringify({ id })
+      });
+      currentCampaign = null;
+      await loadCampaigns();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function previewLayeredPrompt() {
+    const slug = $('cmp_target_type').value === 'collection'
+      ? (productsList[0]?.slug || '')
+      : $('cmp_product_slug').value;
+    if (!slug) {
+      $('preview').innerHTML = '<div class="muted">Önizleme için Modül 7\'de en az bir ürün bulunmalıdır.</div>';
+      return;
+    }
+    try {
+      const res = await apiRequest('/api/module2?action=prompt-preview', {
+        method: 'POST',
+        body: JSON.stringify({
+          product_slug: slug,
+          platform: 'instagram',
+          format: '1:1',
+          season: $('cmp_title').value,
+          notes: $('cmp_notes').value
+        })
+      });
+      $('preview').innerHTML = `
+        <details open style="margin-top:6px;">
+          <summary style="color:#fde68a; cursor:pointer; font-size:11.5px; font-weight:700;">1. Değiştirilmemiş Ana Prompt (buildGeminiBananaPrompt)</summary>
+          <pre style="white-space:pre-wrap; font:11px/1.5 monospace; color:#a7f3d0; background:#050a12; padding:10px; border-radius:8px; margin-top:6px; max-height:180px; overflow:auto;">${escapeHtml(res.prompt)}</pre>
+        </details>
+        <details style="margin-top:8px;">
+          <summary style="color:#38bdf8; cursor:pointer; font-size:11.5px; font-weight:700;">2. Birleştirilmiş Katmanlı Kampanya Promptu</summary>
+          <pre style="white-space:pre-wrap; font:11px/1.5 monospace; color:#cbd5e1; background:#050a12; padding:10px; border-radius:8px; margin-top:6px; max-height:220px; overflow:auto;">${escapeHtml(res.layered_prompt?.combined_prompt || '')}</pre>
+        </details>`;
+    } catch (err) {
+      $('preview').innerHTML = `<div style="color:#fda4af; font-size:12px;">${escapeHtml(err.message)}</div>`;
+    }
+  }
+
+  loadStudioInitialData();
+</script>
+</body>
+</html>
