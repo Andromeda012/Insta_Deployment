@@ -1704,6 +1704,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 </div>
 
 <script src="/Module%201/js/cms-api.js"></script>
+<script src="/Module%201/js/site-modal-feedback.js"></script>
 <script>
 // ══════════════════════════════════════════════════════════
 // SUPABASE CLOUD DATABASE & STORAGE CONFIGURATION
@@ -1955,27 +1956,55 @@ async function loadAllProducts() {
       }
     } catch (_) {}
 
-    const pieceMap = new Map();
+    // Otomatik Koleksiyon ve Parça Tespiti (Slug Prefix ve Hiyerarşik Eşleme + extCatalog desteği + Parça Deseni Koruması)
+    const PIECE_SLUG_REGEX = /-(?:vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+    const PIECE_SKU_REGEX = /-P\d+$/i;
+
+    const childToParentMap = new Map();
+    const parentToChildrenMap = new Map();
+
+    // 1. Slug prefix analizi ile hiyerarşiyi tespit et
+    for (const p of loaded) {
+      for (const other of loaded) {
+        if (other.slug !== p.slug && other.slug.startsWith(p.slug + '-')) {
+          childToParentMap.set(other.slug, p.slug);
+          if (!parentToChildrenMap.has(p.slug)) parentToChildrenMap.set(p.slug, []);
+          if (!parentToChildrenMap.get(p.slug).some(x => x.slug === other.slug)) {
+            parentToChildrenMap.get(p.slug).push(other);
+          }
+        }
+      }
+    }
+
+    // 2. extCatalog desteği (varsa linkler harmanlanır)
     (extCatalog.collection_products || []).forEach(cp => {
       if (cp.collection_id && cp.product_slug) {
-        if (!pieceMap.has(cp.collection_id)) pieceMap.set(cp.collection_id, new Set());
-        pieceMap.get(cp.collection_id).add(cp.product_slug);
+        childToParentMap.set(cp.product_slug, cp.collection_id);
+        if (!parentToChildrenMap.has(cp.collection_id)) parentToChildrenMap.set(cp.collection_id, []);
+        const matching = loaded.find(x => x.slug === cp.product_slug);
+        if (matching && !parentToChildrenMap.get(cp.collection_id).some(x => x.slug === cp.product_slug)) {
+          parentToChildrenMap.get(cp.collection_id).push(matching);
+        }
       }
     });
 
-    const colSlugSet = new Set((extCatalog.collections || []).map(c => c.slug));
+    const colSlugSet = new Set([
+      ...parentToChildrenMap.keys(),
+      ...(extCatalog.collections || []).map(c => c.slug)
+    ]);
 
     // Ürünleri koleksiyon ve parça tipleriyle zenginleştir
     loaded = loaded.map(product => {
       const meta = extCatalog.product_meta?.[product.slug] || {};
-      const linkedCol = (extCatalog.collection_products || []).find(cp => cp.product_slug === product.slug);
-      const isCol = product.product_type === 'collection' || meta.product_type === 'collection' || colSlugSet.has(product.slug);
-      const isPiece = !isCol && (product.product_type === 'collection_piece' || meta.product_type === 'collection_piece' || !!linkedCol);
+      const parentSlug = childToParentMap.get(product.slug);
+      const isPatternPiece = PIECE_SLUG_REGEX.test(product.slug) || PIECE_SKU_REGEX.test(product.sku || '');
+      const isCol = !isPatternPiece && (colSlugSet.has(product.slug) || product.product_type === 'collection' || meta.product_type === 'collection');
+      const isPiece = isPatternPiece || (!isCol && (!!parentSlug || product.product_type === 'collection_piece' || meta.product_type === 'collection_piece'));
 
       return {
         ...product,
         product_type: isCol ? 'collection' : (isPiece ? 'collection_piece' : (product.product_type || meta.product_type || 'independent')),
-        parent_collection_slug: linkedCol?.collection_id || null,
+        parent_collection_slug: parentSlug || null,
         design_story: meta.design_story || product.design_story || '',
         promo_quote: meta.promo_quote || product.promo_quote || meta.design_story || '',
         collection_pieces: Array.isArray(meta.collection_pieces) ? meta.collection_pieces : []
@@ -1985,8 +2014,7 @@ async function loadAllProducts() {
     // Koleksiyonlara parçalarını bağla
     loaded.forEach(prod => {
       if (prod.product_type === 'collection') {
-        const linkedPieceSlugs = pieceMap.get(prod.slug) || new Set();
-        const childProducts = loaded.filter(p => p.parent_collection_slug === prod.slug || linkedPieceSlugs.has(p.slug) || (p.slug.startsWith(prod.slug + '-') && p.slug !== prod.slug));
+        const childProducts = parentToChildrenMap.get(prod.slug) || loaded.filter(p => p.parent_collection_slug === prod.slug || (p.slug.startsWith(prod.slug + '-') && p.slug !== prod.slug));
 
         const combinedPieces = [];
         const seenSlugs = new Set();
@@ -2000,7 +2028,8 @@ async function loadAllProducts() {
             kisa_aciklama: child.kisa_aciklama || child.body || '',
             web_gorunur: child.web_gorunur !== false,
             anasayfada_goster: child.anasayfada_goster !== false,
-            sku: child.sku || ''
+            sku: child.sku || '',
+            parent_collection_slug: prod.slug
           });
         });
 
@@ -2016,7 +2045,8 @@ async function loadAllProducts() {
               kisa_aciklama: cp.dimensions || cp.notes || '',
               web_gorunur: matchingLoaded ? (matchingLoaded.web_gorunur !== false) : true,
               anasayfada_goster: matchingLoaded ? (matchingLoaded.anasayfada_goster !== false) : false,
-              sku: cp.sku || ''
+              sku: cp.sku || '',
+              parent_collection_slug: prod.slug
             });
           }
         });
@@ -2152,12 +2182,190 @@ function filterProductList() {
   const cat = document.getElementById('productCatFilter').value;
 
   const filtered = allProducts.filter(p => {
+    if (p.product_type === 'collection_piece') return false; // Parçalar ana listede tekil kart olarak sızmaz
     const matchQ = (p.title && p.title.toLowerCase().includes(q)) || (p.sku && p.sku.toLowerCase().includes(q));
     const matchCat = cat === 'all' || p.kategori === cat;
     return matchQ && matchCat;
   });
 
   renderProductGrid(filtered);
+}
+
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function openCollectionPiecesModal(slug) {
+  let modal = document.getElementById('collectionPiecesModal');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'collectionPiecesModal';
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+      <div class="modal-box" style="max-width: 840px; width: 95%; max-height: 90vh; overflow-y: auto;">
+        <button class="modal-close" type="button" onclick="closeCollectionPiecesModal()">&times;</button>
+        <div id="collectionPiecesModalContent"></div>
+      </div>
+    `;
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeCollectionPiecesModal();
+    });
+    document.body.appendChild(modal);
+  }
+
+  renderCollectionPiecesModalContent(slug);
+  modal.classList.add('open');
+}
+
+function closeCollectionPiecesModal() {
+  const modal = document.getElementById('collectionPiecesModal');
+  if (modal) modal.classList.remove('open');
+}
+
+function renderCollectionPiecesModalContent(slug) {
+  const container = document.getElementById('collectionPiecesModalContent');
+  if (!container) return;
+
+  const col = allProducts.find(p => p.slug === slug);
+  if (!col) {
+    container.innerHTML = '<p style="color:var(--text-muted); padding:20px;">Koleksiyon bulunamadı.</p>';
+    return;
+  }
+
+  const pieces = col.pieces || [];
+
+  container.innerHTML = `
+    <div style="border-bottom:1px solid #E2E8F0; padding-bottom:16px; margin-bottom:20px;">
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+        <span style="font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; background:linear-gradient(135deg, #1E293B, #0F172A); color:#FDE68A; border:1px solid rgba(212,175,55,0.4);">
+          🏛️ Koleksiyon
+        </span>
+        <span style="font-size:12px; color:var(--text-muted); font-weight:600;">
+          ${pieces.length} Parça Kayıtlı
+        </span>
+      </div>
+      <h2 style="font-size:20px; font-weight:800; color:var(--navy); margin:0 0 6px 0; font-family:'Montserrat',sans-serif;">
+        ${escapeHtml(col.title)} — Parça &amp; Vitrin Yönetimi
+      </h2>
+      <p style="font-size:13px; color:var(--text-muted); margin:0; line-height:1.5;">
+        Bu koleksiyon web ürünleri listesinde tek bir koleksiyon olarak sunulur. Parçaların sitede görünürlüğünü ve ana sayfa vitrininde açılıp kapatılmasını aşağıdan yönetebilirsiniz.
+      </p>
+    </div>
+
+    ${pieces.length === 0 ? `
+      <div style="text-align:center; padding:40px 20px; background:#F8FAFC; border-radius:12px; border:1px dashed #CBD5E1;">
+        <div style="font-size:32px; margin-bottom:8px;">🧩</div>
+        <p style="font-weight:600; color:var(--navy); margin-bottom:4px;">Bu koleksiyona henüz bağlı parça bulunmuyor.</p>
+        <p style="font-size:12px; color:var(--text-muted);">Modül 7 (Ürün Yönetimi) üzerinden koleksiyon parçalarını ekleyebilirsiniz.</p>
+      </div>
+    ` : `
+      <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:16px;">
+        ${pieces.map((piece, idx) => {
+          const isShown = piece.web_gorunur !== false;
+          const isShowcase = piece.anasayfada_goster !== false;
+          const imgSrc = resolveAssetUrl(piece.ana_resim);
+
+          return `
+          <div style="border:1px solid ${isShown ? '#E2E8F0' : 'rgba(239,68,68,0.35)'}; border-radius:12px; padding:14px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:10px;">
+            <div style="display:flex; gap:12px; align-items:center;">
+              <img src="${imgSrc}" alt="${escapeHtml(piece.title)}" onerror="this.src='/resim/logo.png'" style="width:68px; height:68px; object-fit:cover; border-radius:8px; border:1px solid #E2E8F0; flex-shrink:0; background:#f8fafc;">
+              <div style="flex:1; min-width:0;">
+                <div style="font-size:11px; font-weight:700; color:#D4AF37; text-transform:uppercase; letter-spacing:0.5px;">Parça #${idx + 1}</div>
+                <div style="font-size:14px; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(piece.title)}">${escapeHtml(piece.title)}</div>
+                <div style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(piece.sku || piece.slug)}</div>
+              </div>
+            </div>
+
+            ${piece.kisa_aciklama ? `
+            <div style="font-size:11.5px; color:#64748B; background:#F8FAFC; padding:6px 10px; border-radius:6px; line-height:1.4;">
+              ${escapeHtml(piece.kisa_aciklama)}
+            </div>
+            ` : ''}
+
+            <!-- TOGGLES -->
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:auto; padding-top:8px; border-top:1px solid #F1F5F9;">
+              <button type="button" 
+                      class="btn-sm" 
+                      style="width:100%; justify-content:center; padding:8px 10px; font-weight:700; font-size:11.5px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; ${isShown ? 'background:#ECFDF5; border:1px solid #10B981; color:#047857;' : 'background:#FEF2F2; border:1px solid #EF4444; color:#B91C1C;'}"
+                      onclick="togglePieceWebVisibility('${col.slug}', '${piece.slug}', ${!isShown})">
+                ${isShown ? '👁️ Sitede Yayında (Tıkla: Gizle)' : '🙈 Sitede Gizli (Tıkla: Yayınla)'}
+              </button>
+
+              <button type="button" 
+                      class="btn-sm" 
+                      style="width:100%; justify-content:center; padding:8px 10px; font-weight:700; font-size:11.5px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; ${isShowcase ? 'background:#EFF6FF; border:1px solid #3B82F6; color:#1D4ED8;' : 'background:#F8FAFC; border:1px solid #CBD5E1; color:#64748B;'}"
+                      onclick="togglePieceShowcase('${col.slug}', '${piece.slug}', ${!isShowcase})">
+                ${isShowcase ? '🏠 Vitrinde Açık (Tıkla: Kapat)' : '📁 Vitrinde Kapalı (Tıkla: Aç)'}
+              </button>
+            </div>
+          </div>
+          `;
+        }).join('')}
+      </div>
+    `}
+
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #E2E8F0; display:flex; justify-content:flex-end;">
+      <button type="button" class="btn-secondary btn-sm" onclick="closeCollectionPiecesModal()" style="padding:8px 18px; font-weight:700;">
+        Tamamla &amp; Kapat
+      </button>
+    </div>
+  `;
+}
+
+async function togglePieceWebVisibility(parentSlug, pieceSlug, newStatus) {
+  const parent = allProducts.find(p => p.slug === parentSlug);
+  const piece = parent?.pieces?.find(p => p.slug === pieceSlug);
+  if (!piece) return;
+
+  piece.web_gorunur = !!newStatus;
+  const matchInAll = allProducts.find(p => p.slug === pieceSlug);
+  if (matchInAll) matchInAll.web_gorunur = !!newStatus;
+  renderCollectionPiecesModalContent(parentSlug);
+
+  try {
+    const outcome = await saveModule1Draft('product_web_settings', pieceSlug, {
+      is_visible: !!newStatus,
+      is_featured: piece.anasayfada_goster !== false,
+      sort_order: 0
+    }, `Parça (${piece.title}) görünürlüğü`);
+    if (outcome.published) {
+      piece.web_gorunur = !!newStatus;
+    } else {
+      await loadAllProducts();
+    }
+  } catch (err) {
+    console.warn('Parça görünürlüğü CMS taslağı kaydedilemedi:', err.message);
+  }
+  renderCollectionPiecesModalContent(parentSlug);
+  renderProductGrid(allProducts);
+}
+
+async function togglePieceShowcase(parentSlug, pieceSlug, newStatus) {
+  const parent = allProducts.find(p => p.slug === parentSlug);
+  const piece = parent?.pieces?.find(p => p.slug === pieceSlug);
+  if (!piece) return;
+
+  piece.anasayfada_goster = !!newStatus;
+  const matchInAll = allProducts.find(p => p.slug === pieceSlug);
+  if (matchInAll) matchInAll.anasayfada_goster = !!newStatus;
+  renderCollectionPiecesModalContent(parentSlug);
+
+  try {
+    const outcome = await saveModule1Draft('product_web_settings', pieceSlug, {
+      is_visible: piece.web_gorunur !== false,
+      is_featured: !!newStatus,
+      sort_order: 0
+    }, `Parça (${piece.title}) vitrin durumu`);
+    if (outcome.published) {
+      piece.anasayfada_goster = !!newStatus;
+    } else {
+      await loadAllProducts();
+    }
+  } catch (err) {
+    console.warn('Parça vitrin durumu CMS taslağı kaydedilemedi:', err.message);
+  }
+  renderCollectionPiecesModalContent(parentSlug);
+  renderProductGrid(allProducts);
 }
 
 function startNewProduct() {
@@ -2233,7 +2441,14 @@ async function saveProduct(e) {
 }
 
 async function deleteProduct(slug) {
-  if (!confirm('"' + slug + '" ürün ana kaydını silmeden web kataloğunda gizlemek istiyor musunuz?')) return;
+  const ok = await showCustomModalConfirm({
+    title: 'Ürünü Gizle / Kaldır',
+    message: `"${slug}" ürününü silmeden web kataloğunda gizlemek istiyor musunuz?`,
+    confirmText: 'Evet, Kataloğunda Gizle',
+    cancelText: 'Vazgeç',
+    type: 'delete'
+  });
+  if (!ok) return;
   try {
     await saveModule1Draft('product_web_settings', slug, { is_visible:false, is_featured:false, sort_order:0 }, 'Ürünü web kataloğunda gizleme');
     await loadAllProducts();
@@ -2531,7 +2746,14 @@ async function saveHomeSettings() {
       Module1CmsApi.saveDraft('site_setting', 'genel', { data: genelData })
     ]);
     await refreshCmsRevisionCount();
-    if (confirm('Ana sayfa ve firma ayarları taslak olarak kaydedildi. İkisini şimdi birlikte yayınlamak ister misiniz?')) {
+    const wantPublish = await showCustomModalConfirm({
+      title: 'Ayarları Canlıya Yayınla',
+      message: 'Ana sayfa ve firma ayarları taslak olarak kaydedildi. İkisini şimdi canlı sitede yayınlamak ister misiniz?',
+      confirmText: '🚀 Şimdi Canlıya Yayınla',
+      cancelText: 'Taslak Olarak Bırak',
+      type: 'publish'
+    });
+    if (wantPublish) {
       for (const item of revisions) await Module1CmsApi.publish(item.revision.id);
       showToast('Ana sayfa ve firma ayarları yayınlandı.', 'success');
       await Promise.all([loadHomeSettings(), loadCompanySettings()]);
@@ -2956,7 +3178,14 @@ async function saveGalleryItem(e) {
 }
 
 async function deleteGalleryItem(slug) {
-  if (!confirm('Bu galeri içeriğini silme taslağına almak istiyor musunuz?')) return;
+  const ok = await showCustomModalConfirm({
+    title: 'Galeri İçeriğini Sil',
+    message: 'Bu galeri içeriğini silme taslağına almak istiyor musunuz?',
+    confirmText: 'Evet, Sil',
+    cancelText: 'Vazgeç',
+    type: 'delete'
+  });
+  if (!ok) return;
   try {
     await saveModule1Draft('gallery', slug, { _delete:true }, 'Galeri silme');
     await loadAllGallery();
@@ -3227,7 +3456,14 @@ async function saveBlogItem(e) {
 }
 
 async function deleteBlogItem(slug) {
-  if (!confirm('Bu makaleyi silme taslağına almak istiyor musunuz?')) return;
+  const ok = await showCustomModalConfirm({
+    title: 'Makaleyi Sil',
+    message: 'Bu makaleyi silme taslağına almak istiyor musunuz?',
+    confirmText: 'Evet, Sil',
+    cancelText: 'Vazgeç',
+    type: 'delete'
+  });
+  if (!ok) return;
   try {
     await saveModule1Draft('blog', slug, { _delete:true }, 'Makale silme');
     await loadAllBlogs();
@@ -3507,7 +3743,14 @@ async function saveSupplierItem(e) {
 }
 
 async function deleteSupplierItem(slug) {
-  if (!confirm('Bu tedarikçiyi silme taslağına almak istiyor musunuz?')) return;
+  const ok = await showCustomModalConfirm({
+    title: 'Tedarikçiyi Sil',
+    message: 'Bu tedarikçiyi silme taslağına almak istiyor musunuz?',
+    confirmText: 'Evet, Sil',
+    cancelText: 'Vazgeç',
+    type: 'delete'
+  });
+  if (!ok) return;
   try {
     await saveModule1Draft('supplier', slug, { _delete:true }, 'Tedarikçi silme');
     await loadAllSuppliers();
@@ -3777,7 +4020,7 @@ function renderWebsiteAnalytics() {
 }
 
 function updateExecutiveStripInventory() {
-  const pCount = (allProducts || []).length;
+  const pCount = (allProducts || []).filter(p => p.product_type !== 'collection_piece').length;
   const gCount = (allGallery || []).length;
   const bCount = (allBlogs || []).length;
   const sCount = (allSuppliers || []).length;
@@ -3905,7 +4148,14 @@ async function saveModule1Draft(type,slug,payload,label){
   await refreshCmsRevisionCount();
   showToast(label+': taslak #'+result.revision.revision_number+' kaydedildi.','success');
   let published=false;
-  if(confirm('Taslak kaydedildi. Şimdi canlı siteye yayınlamak ister misiniz?')){
+  const wantPublish = await showCustomModalConfirm({
+    title: 'Canlı Yayına Gönder',
+    message: `${label} taslak #${result.revision.revision_number} olarak kaydedildi. Şimdi canlı siteye yayınlansın mı?`,
+    confirmText: '🚀 Şimdi Canlıya Yayınla',
+    cancelText: 'Taslak Olarak Bırak',
+    type: 'publish'
+  });
+  if(wantPublish){
     await Module1CmsApi.publish(result.revision.id);
     published=true;
     showToast(label+' başarıyla yayınlandı.','success');
@@ -3937,7 +4187,14 @@ async function openCmsRevisions(){
 function closeCmsRevisions(){const el=document.getElementById('cmsRevisionOverlay');if(el)el.style.display='none';}
 async function previewCmsRevision(id){try{const {revision}=await Module1CmsApi.getRevision(id);document.getElementById('cmsRevisionPreview').textContent=JSON.stringify(revision,null,2);}catch(e){showToast(e.message,'error');}}
 async function publishCmsRevision(id){
-  if(!confirm('Bu revizyon canlı siteye yayınlansın mı?'))return;
+  const ok = await showCustomModalConfirm({
+    title: 'Revizyonu Yayınla',
+    message: 'Bu revizyon canlı siteye yayınlansın mı?',
+    confirmText: '🚀 Evet, Yayınla',
+    cancelText: 'Vazgeç',
+    type: 'publish'
+  });
+  if(!ok) return;
   try{await Module1CmsApi.publish(id);showToast('Revizyon başarıyla yayınlandı.','success');await openCmsRevisions();await refreshCmsRevisionCount();await Promise.allSettled([loadAllProducts(),loadCompanySettings(),loadHomeSettings(),loadAllGallery(),loadAllBlogs(),loadAllSuppliers()]);}
   catch(e){showToast(e.message,'error');}
 }

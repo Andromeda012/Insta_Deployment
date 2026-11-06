@@ -439,8 +439,24 @@ async function executePublish(task) {
         return { status: 'published', platformPostId: stData.post_id || upData.id, rawResponse: stData };
       }
 
-      if (content_type === 'FB_REELS' || content_type === 'VIDEO_REELS' || content_type === 'REELS') {
-        return { status: 'unsupported', platformPostId: null, rawResponse: { note: 'Facebook Reels upload is not implemented.' }, errorMessage: '[UNSUPPORTED] Facebook Reels upload is not implemented.' };
+      if (content_type === 'FB_REELS' || content_type === 'VIDEO_REELS' || content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url)) {
+        const vidParams = new URLSearchParams({
+          file_url: media_url,
+          description: fullCaption,
+          title: String(caption || '').split(/\r?\n/)[0]?.slice(0, 90) || 'Nova Furniture',
+          access_token: pageAccessToken
+        });
+        const vidRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/videos`, { method: 'POST', body: vidParams });
+        const vidData = vidRes.data;
+        if (!vidRes.ok || !vidData?.id) {
+          const errMsg = (vidData && vidData.error && vidData.error.message) || (vidData && vidData._rawText) || 'Facebook video yüklenemedi';
+          throw new Error(`Facebook Video Hatası: ${sanitize(errMsg)}`);
+        }
+        return {
+          status: 'published',
+          platformPostId: vidData.id,
+          rawResponse: vidData
+        };
       }
       if (content_type === 'LINK_CARD') {
         if (!target_link || !/^https:\/\//i.test(target_link)) throw new Error('Facebook Link Card requires a valid HTTPS target link.');
@@ -450,7 +466,41 @@ async function executePublish(task) {
         return { status: 'published', platformPostId: result.data.id, rawResponse: result.data };
       }
 
-      // Standart Fotoğraf Gönderisi
+      // Çoklu Fotoğraf / Carousel Gönderisi
+      const isMultiPhoto = typeof media_url === 'string' && media_url.trim().startsWith('[');
+      if (isMultiPhoto) {
+        let items = [];
+        try { items = JSON.parse(media_url); } catch (_) { items = [media_url]; }
+        const attachedMedia = [];
+        for (let i = 0; i < items.length; i++) {
+          const upParams = new URLSearchParams({
+            url: items[i],
+            published: 'false',
+            access_token: pageAccessToken
+          });
+          const upRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/photos`, { method: 'POST', body: upParams });
+          if (upRes.ok && upRes.data && upRes.data.id) {
+            attachedMedia.push({ media_fbid: upRes.data.id });
+          }
+        }
+        if (attachedMedia.length > 0) {
+          const feedParams = new URLSearchParams({
+            message: fullCaption,
+            attached_media: JSON.stringify(attachedMedia),
+            access_token: pageAccessToken
+          });
+          const feedRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/feed`, { method: 'POST', body: feedParams });
+          if (feedRes.ok && (feedRes.data?.id || feedRes.data?.post_id)) {
+            return {
+              status: 'published',
+              platformPostId: feedRes.data.post_id || feedRes.data.id,
+              rawResponse: feedRes.data
+            };
+          }
+        }
+      }
+
+      // Standart Tekil Fotoğraf Gönderisi
       const photoParams = new URLSearchParams({
         url: media_url,
         message: fullCaption,

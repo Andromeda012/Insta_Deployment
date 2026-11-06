@@ -24,6 +24,7 @@
  */
 
 import GeminiBananaEngine from './gemini-banana-engine.js';
+import CollectionFormatEngine, { buildCatalogEntities, prepareFormatPayload } from './collection-format-engine.js';
 
 const DEFAULT_MEDIA_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
@@ -186,6 +187,9 @@ export function normalizeContentType(platform, slotType) {
     if (t.includes('SHOWCASE')) return 'SHORTS_SHOWCASE';
     if (t.includes('CNC')) return 'SHORTS_CNC';
     return 'SHORTS';
+  } else if (p === 'tiktok') {
+    if (t.includes('PHOTO') || t.includes('CAROUSEL')) return 'TIKTOK_PHOTO_CAROUSEL';
+    return 'VIDEO';
   }
   return t;
 }
@@ -337,12 +341,25 @@ export async function checkAndEnqueueSlot({
   }
 
   const pickedProduct = selected.product;
-  const taskPayload = await prepareTaskPayload({
-    platform,
-    slot,
-    product: pickedProduct,
-    geminiApiKey
-  });
+  let taskPayload;
+  try {
+    taskPayload = await prepareFormatPayload({
+      supabase,
+      platform,
+      slotFormat: slot.type,
+      entity: pickedProduct,
+      geminiApiKey,
+      log: console.log
+    });
+  } catch (fmtErr) {
+    console.warn(`[Format Engine Fallback] ${pickedProduct.slug}: ${fmtErr.message}`);
+    taskPayload = await prepareTaskPayload({
+      platform,
+      slot,
+      product: pickedProduct.raw || pickedProduct,
+      geminiApiKey
+    });
+  }
 
   const scheduledForIso = getIstanbulSlotIso(dateStr, slotTime);
   const idempotencyKey = `${platform}_${pickedProduct.slug}_${taskPayload.contentType}_${dateStr}_${slotCode}`.toLowerCase();
@@ -405,7 +422,13 @@ export async function checkAndEnqueueSlot({
  */
 export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey = null) {
   const istanbulNow = getIstanbulTime();
-  const catalog = await fetchProductsCatalog(supabase);
+  const [catalog, extStore, transformSettings] = await Promise.all([
+    fetchProductsCatalog(supabase),
+    fetchSiteSetting(supabase, 'module7_extended_catalog'),
+    fetchSiteSetting(supabase, 'product_transform_settings')
+  ]);
+  const entities = buildCatalogEntities(catalog, extStore, transformSettings);
+  const activeCatalog = entities && entities.length > 0 ? entities : catalog;
 
   // 1. INSTAGRAM AYARLARI KONTROLÜ
   const instaState = await fetchSiteSetting(supabase, 'insta_bot_state');
@@ -430,7 +453,7 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
         platform: 'instagram',
         slot,
         istanbulNow,
-        catalog,
+        catalog: activeCatalog,
         geminiApiKey
       });
     } catch (err) {
@@ -441,9 +464,8 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
   // 2. FACEBOOK AYARLARI KONTROLÜ
   const fbState = await fetchSiteSetting(supabase, 'fb_bot_state');
   const fbSlots = (fbState && fbState.config && fbState.config.posting_slots) || [
-    { type: 'PHOTO_POST', time: '11:00', active: true, label: 'Facebook Gönderi' },
-    { type: 'FB_STORIES', time: '14:00', active: true, label: 'Facebook Hikaye' },
-    { type: 'FB_REELS', time: '18:00', active: true, label: 'Facebook Reels' }
+    { type: 'PHOTO_POST', time: '10:00', active: true, label: "6'lı Koleksiyon Carousel" },
+    { type: 'FB_REELS', time: '19:30', active: true, label: 'Facebook Reels' }
   ];
 
   const currentFbSlotsSig = JSON.stringify(fbSlots);
@@ -463,7 +485,7 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
           enabled: slot.active !== false && slot.enabled !== false
         },
         istanbulNow,
-        catalog,
+        catalog: activeCatalog,
         geminiApiKey
       });
     } catch (err) {
@@ -474,9 +496,9 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
   // 3. YOUTUBE SHORTS AYARLARI KONTROLÜ
   const ytState = await fetchSiteSetting(supabase, 'yt_bot_state');
   const ytSlots = (ytState && ytState.config && ytState.config.posting_slots) || [
-    { type: 'SHORTS_CNC', time: '12:00', active: true, label: 'Öğle YouTube Shorts' },
-    { type: 'SHORTS_SHOWCASE', time: '16:30', active: true, label: 'İkindi Renk & Koleksiyon Shorts' },
-    { type: 'SHORTS_GUIDE', time: '20:30', active: true, label: 'Akşam Prime-Time Shorts' }
+    { type: 'SHORTS_COLLECTION', time: '11:00', active: true, label: 'Koleksiyon Shorts' },
+    { type: 'SHORTS_CNC', time: '16:00', active: true, label: 'Parça Detay Shorts' },
+    { type: 'SHORTS_SHOWROOM', time: '20:30', active: true, label: 'Akşam Prime Shorts' }
   ];
 
   const currentYtSlotsSig = JSON.stringify(ytSlots);
@@ -495,7 +517,7 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
           enabled: slot.active !== false && slot.enabled !== false
         },
         istanbulNow,
-        catalog,
+        catalog: activeCatalog,
         geminiApiKey
       });
     } catch (err) {
@@ -503,11 +525,44 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
     }
   }
 
+  // 4. TIKTOK AYARLARI KONTROLÜ
+  const ttState = await fetchSiteSetting(supabase, 'tt_bot_state');
+  const ttSlots = (ttState && ttState.config && ttState.config.posting_slots) || [
+    { type: 'TT_COLLECTION', time: '12:00', active: true, label: 'Öğle TikTok Keşfet' },
+    { type: 'TT_DETAIL', time: '17:30', active: true, label: 'İkindi Parça Detay' },
+    { type: 'TT_PRIME', time: '21:00', active: true, label: 'Akşam Prime Keşfet' }
+  ];
+
+  const currentTtSlotsSig = JSON.stringify(ttSlots);
+  if (stateCache.ttSlotsSig && stateCache.ttSlotsSig !== currentTtSlotsSig) {
+    console.log(`[Scheduler Dinamik Güncelleme] TikTok slot ayarları güncellendi:`, ttSlots);
+  }
+  stateCache.ttSlotsSig = currentTtSlotsSig;
+
+  for (const slot of ttSlots) {
+    try {
+      await checkAndEnqueueSlot({
+        supabase,
+        platform: 'tiktok',
+        slot: {
+          ...slot,
+          enabled: slot.active !== false && slot.enabled !== false
+        },
+        istanbulNow,
+        catalog: activeCatalog,
+        geminiApiKey
+      });
+    } catch (err) {
+      console.warn(`[Scheduler TikTok Slot Hatası] ${slot.time}:`, err.message);
+    }
+  }
+
   return {
     istanbulNow,
     instaSlotsCount: instaSlots.length,
     fbSlotsCount: fbSlots.length,
-    ytSlotsCount: ytSlots.length
+    ytSlotsCount: ytSlots.length,
+    ttSlotsCount: ttSlots.length
   };
 }
 

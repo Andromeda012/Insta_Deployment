@@ -12,6 +12,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/Module%202/nova-studio-engine.js"></script>
   <script src="/nova-studio-engine.js"></script>
+  <script src="/js/site-modal-feedback.js"></script>
   <style>
     :root {
       --bg: #0A0F1D;
@@ -979,7 +980,7 @@
       const editSlug = document.getElementById('edit_slug').value.trim();
 
       if (!title) {
-        alert('Lütfen model / ürün başlığını yazın (örn: ZÜRİH YATAK ODASI).');
+        showCustomToast('Lütfen model / ürün başlığını yazın (örn: ZÜRİH YATAK ODASI).', 'warning');
         return;
       }
 
@@ -1055,11 +1056,11 @@
         const { error } = await sb.from('products').upsert(payload);
         if (error) throw error;
 
-        alert(`✅ "${title}" başarıyla kaydedildi! 4 sosyal medya botu (Instagram, Facebook, YouTube, TikTok) bu fotoğrafı ve özellikleri lüks afiş formatında yayınlamaya hazır.`);
+        showCustomToast(`✅ "${title}" başarıyla kaydedildi! 4 sosyal medya botu (Instagram, Facebook, YouTube, TikTok) bu fotoğrafı ve özellikleri lüks afiş formatında yayınlamaya hazır.`, 'success');
         resetFormForNew();
         await loadCatalogFromSupabase();
       } catch (err) {
-        alert(`❌ Kayıt Hatası: ${err.message}`);
+        showCustomToast(`❌ Kayıt Hatası: ${err.message}`, 'error');
       } finally {
         btn.disabled = false;
         btn.textContent = '💾 Ürünü Kaydet & 4 Bota Dağıt';
@@ -1084,14 +1085,22 @@
     }
 
     async function deleteProduct(slug, title) {
-      if (!confirm(`"${title}" modelini katalogdan ve bot havuzundan silmek istediğinize emin misiniz?`)) return;
+      const ok = await showCustomModalConfirm({
+        title: 'Modeli Sil',
+        message: `"${title}" modelini katalogdan ve bot havuzundan silmek istediğinize emin misiniz?`,
+        confirmText: 'Evet, Sil',
+        cancelText: 'Vazgeç',
+        type: 'delete'
+      });
+      if (!ok) return;
 
       try {
         const { error } = await sb.from('products').delete().eq('slug', slug);
         if (error) throw error;
+        showCustomToast(`"${title}" modeli silindi.`, 'success');
         await loadCatalogFromSupabase();
       } catch (err) {
-        alert(`Silme hatası: ${err.message}`);
+        showCustomToast(`Silme hatası: ${err.message}`, 'error');
       }
     }
 

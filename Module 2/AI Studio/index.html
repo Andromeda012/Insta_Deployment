@@ -435,6 +435,7 @@
   </div>
 </main>
 
+<script src="/js/site-modal-feedback.js"></script>
 <script>
   const $ = id => document.getElementById(id);
   let collectionsList = [];
@@ -704,15 +705,15 @@
     const product_slug = target_type !== 'collection' ? $('cmp_product_slug').value : '';
 
     if (target_type === 'collection' && !collection_slug) {
-      return alert('Lütfen Modül 7\'de kayıtlı bir koleksiyon seçin.');
+      return showCustomToast('Lütfen Modül 7\'de kayıtlı bir koleksiyon seçin.', 'warning');
     }
     if (target_type !== 'collection' && !product_slug) {
-      return alert('Lütfen Modül 7\'de kayıtlı bir ürün seçin.');
+      return showCustomToast('Lütfen Modül 7\'de kayıtlı bir ürün seçin.', 'warning');
     }
 
     const { selected_packages, selected_platforms } = getSelectedPackagesPayload();
     if (!selected_packages.length) {
-      return alert('Lütfen en az bir içerik paketi seçin.');
+      return showCustomToast('Lütfen en az bir içerik paketi seçin.', 'warning');
     }
 
     btn.disabled = true;
@@ -946,7 +947,7 @@
       });
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
@@ -966,7 +967,7 @@
       });
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
@@ -985,7 +986,7 @@
       });
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
@@ -1005,7 +1006,7 @@
       });
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
@@ -1022,11 +1023,11 @@
       });
       const r = res.results?.[0];
       if (r && !r.queued) {
-        alert(`Bilgi: ${r.reason}`);
+        showCustomToast(`Bilgi: ${r.reason}`, 'info');
       }
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
@@ -1035,7 +1036,7 @@
     const readyIds = (currentCampaign.items || [])
       .filter(i => i.status === 'approved' || i.status === 'pending_review')
       .map(i => i.id);
-    if (!readyIds.length) return alert('Kuyruğa gönderilecek içerik öğesi bulunamadı.');
+    if (!readyIds.length) return showCustomToast('Kuyruğa gönderilecek içerik öğesi bulunamadı.', 'warning');
     try {
       const res = await apiRequest('/api/module2?action=campaign-approve-publish', {
         method: 'POST',
@@ -1046,15 +1047,22 @@
       });
       const queuedCount = (res.results || []).filter(r => r.queued).length;
       const blockedCount = (res.results || []).filter(r => !r.queued).length;
-      alert(`✅ ${queuedCount} içerik paketi yayın kuyruğuna eklendi.` + (blockedCount ? ` (${blockedCount} öğe platform bağlantısı/revizyon bekliyor.)` : ''));
+      showCustomToast(`✅ ${queuedCount} içerik paketi yayın kuyruğuna eklendi.` + (blockedCount ? ` (${blockedCount} öğe platform bağlantısı/revizyon bekliyor.)` : ''), 'success');
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 
   async function deleteCampaign(id) {
-    if (!confirm('Bu kampanyayı silmek istediğinize emin misiniz?')) return;
+    const ok = await showCustomModalConfirm({
+      title: 'Kampanyayı Sil',
+      message: 'Bu kampanyayı silmek istediğinize emin misiniz?',
+      confirmText: 'Evet, Sil',
+      cancelText: 'Vazgeç',
+      type: 'delete'
+    });
+    if (!ok) return;
     try {
       await apiRequest('/api/module2?action=campaigns', {
         method: 'DELETE',
@@ -1063,7 +1071,7 @@
       currentCampaign = null;
       await loadCampaigns();
     } catch (err) {
-      alert(err.message);
+      showCustomToast(err.message, 'error');
     }
   }
 

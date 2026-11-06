@@ -757,25 +757,17 @@
     function populateUIFromState() {
       const cfg = fbState?.config || {};
       const slots = cfg.posting_slots || [
-        { type: 'PHOTO_POST', time: '09:30', active: true },
-        { type: 'FB_STORIES', time: '13:30', active: true },
-        { type: 'LINK_CARD', time: '16:30', active: true },
-        { type: 'FB_REELS', time: '20:00', active: true }
+        { type: 'PHOTO_POST', time: '10:00', active: true },
+        { type: 'FB_REELS', time: '19:30', active: true }
       ];
 
       slots.forEach(s => {
         const isAct = s.active !== false && s.enabled !== false;
         if (s.type === 'PHOTO_POST') {
-          document.getElementById('timeSlotPhoto').value = s.time || '09:30';
+          document.getElementById('timeSlotPhoto').value = s.time || '10:00';
           document.getElementById('chkSlotPhotoActive').checked = isAct;
-        } else if (s.type === 'FB_STORIES') {
-          document.getElementById('timeSlotStory').value = s.time || '13:30';
-          document.getElementById('chkSlotStoryActive').checked = isAct;
-        } else if (s.type === 'LINK_CARD') {
-          document.getElementById('timeSlotLink').value = s.time || '16:30';
-          document.getElementById('chkSlotLinkActive').checked = isAct;
         } else if (s.type === 'FB_REELS') {
-          document.getElementById('timeSlotReels').value = s.time || '20:00';
+          document.getElementById('timeSlotReels').value = s.time || '19:30';
           document.getElementById('chkSlotReelsActive').checked = isAct;
         }
       });
@@ -789,8 +781,6 @@
 
     function updateSlotVisuals() {
       document.getElementById('slotCardPhoto').classList.toggle('inactive', !document.getElementById('chkSlotPhotoActive').checked);
-      if (document.getElementById('slotCardStory')) document.getElementById('slotCardStory').classList.toggle('inactive', !document.getElementById('chkSlotStoryActive')?.checked);
-      if (document.getElementById('slotCardLink')) document.getElementById('slotCardLink').classList.toggle('inactive', !document.getElementById('chkSlotLinkActive')?.checked);
       document.getElementById('slotCardReels').classList.toggle('inactive', !document.getElementById('chkSlotReelsActive').checked);
     }
 
@@ -856,10 +846,8 @@
       if (!fbState.config) fbState.config = {};
 
       fbState.config.posting_slots = [
-        { slot_id: 'fb_slot_1', type: 'PHOTO_POST', time: document.getElementById('timeSlotPhoto').value || '09:30', active: document.getElementById('chkSlotPhotoActive').checked, label: 'Koleksiyon & Katalog Gönderisi' },
-        { slot_id: 'fb_slot_2', type: 'FB_STORIES', time: document.getElementById('timeSlotStory').value || '13:30', active: document.getElementById('chkSlotStoryActive').checked, label: 'Facebook Hikayesi' },
-        { slot_id: 'fb_slot_3', type: 'LINK_CARD', time: document.getElementById('timeSlotLink').value || '16:30', active: document.getElementById('chkSlotLinkActive').checked, label: 'Koleksiyon Parçaları & Bağlantı Kartı' },
-        { slot_id: 'fb_slot_4', type: 'FB_REELS', time: document.getElementById('timeSlotReels').value || '20:00', active: document.getElementById('chkSlotReelsActive').checked, label: 'Facebook Reels / Video' }
+        { slot_id: 'fb_slot_1', type: 'PHOTO_POST', time: document.getElementById('timeSlotPhoto').value || '10:00', active: document.getElementById('chkSlotPhotoActive').checked, label: "6'lı Koleksiyon Carousel / Albüm" },
+        { slot_id: 'fb_slot_2', type: 'FB_REELS', time: document.getElementById('timeSlotReels').value || '19:30', active: document.getElementById('chkSlotReelsActive').checked, label: 'Sinematik Facebook Reels' }
       ];
 
       await persistFbState();
