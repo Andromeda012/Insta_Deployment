@@ -15,7 +15,8 @@ const EXTENDED_PRODUCT_FIELDS = new Set([
   ...CORE_PRODUCT_FIELDS,
   'product_type', 'piece_role', 'design_story', 'materials',
   'dimensions_json', 'olculer', 'technical_specs', 'marketing_preferences',
-  'collection_ids', 'collection_id', 'marketing_profile', 'version'
+  'collection_ids', 'collection_id', 'marketing_profile', 'version',
+  'collection_pieces', 'photo_presentations'
 ]);
 
 const VALID_MEDIA_TYPES = new Set([
@@ -108,6 +109,8 @@ async function products(req, res) {
         dimensions_json: p.dimensions_json || meta.dimensions_json || {},
         technical_specs: p.technical_specs || meta.technical_specs || {},
         marketing_preferences: p.marketing_preferences || meta.marketing_preferences || {},
+        photo_presentations: Array.isArray(meta.photo_presentations) ? meta.photo_presentations : [],
+        collection_pieces: Array.isArray(meta.collection_pieces) ? meta.collection_pieces : [],
         collection_ids: linkedCols,
         version: Number(p.version || meta.version || 1)
       };
@@ -177,10 +180,128 @@ async function products(req, res) {
       dimensions_json: (body.dimensions_json && typeof body.dimensions_json === 'object') ? body.dimensions_json : (prevMeta.dimensions_json || {}),
       technical_specs: (body.technical_specs && typeof body.technical_specs === 'object') ? body.technical_specs : (prevMeta.technical_specs || {}),
       marketing_preferences: (body.marketing_preferences && typeof body.marketing_preferences === 'object') ? body.marketing_preferences : (prevMeta.marketing_preferences || {}),
+      photo_presentations: Array.isArray(body.photo_presentations) ? body.photo_presentations : (prevMeta.photo_presentations || []),
+      collection_pieces: Array.isArray(body.collection_pieces) ? body.collection_pieces : (prevMeta.collection_pieces || []),
       version: nextVersion,
       updated_at: now
     };
     extStore.product_meta[body.slug] = extMeta;
+
+    // Eğer kaydedilen kayıt bir Koleksiyon ise ve beraberinde collection_pieces gönderildiyse:
+    // Koleksiyon kaydını ve tüm parçalarını tek seferde atomik olarak senkronize et
+    if (extMeta.product_type === 'collection') {
+      const colRecord = {
+        id: body.slug,
+        slug: body.slug,
+        title: corePayload.title,
+        code: body.sku || body.slug.toUpperCase(),
+        category: corePayload.kategori || 'Yatak Odası',
+        short_description: corePayload.kisa_aciklama || '',
+        description: corePayload.body || '',
+        design_story: extMeta.design_story || '',
+        hero_image: corePayload.ana_resim || '',
+        color_palette: Array.isArray(corePayload.renkler) ? corePayload.renkler : [],
+        features: Array.isArray(corePayload.ozellikler) ? corePayload.ozellikler : [],
+        materials: extMeta.materials || [],
+        dimensions: extMeta.dimensions_json || {},
+        technical_specs: extMeta.technical_specs || {},
+        marketing_preferences: extMeta.marketing_preferences || {},
+        photo_presentations: extMeta.photo_presentations || [],
+        is_visible: true,
+        version: nextVersion,
+        updated_at: now
+      };
+      const existingColIdx = (extStore.collections || []).findIndex(c => c.slug === body.slug);
+      if (existingColIdx >= 0) extStore.collections[existingColIdx] = colRecord;
+      else extStore.collections.push(colRecord);
+
+      try {
+        await supabase('/rest/v1/collections?on_conflict=slug', SERVICE_KEY, {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({
+            slug: colRecord.slug,
+            title: colRecord.title,
+            category: colRecord.category,
+            short_description: colRecord.short_description,
+            design_story: colRecord.design_story,
+            hero_image: colRecord.hero_image,
+            color_palette: colRecord.color_palette,
+            is_visible: true,
+            updated_at: now
+          })
+        });
+      } catch (_) {}
+
+      if (Array.isArray(body.collection_pieces)) {
+        extStore.collection_products = (extStore.collection_products || []).filter(cp => cp.collection_id !== body.slug);
+        for (let idx = 0; idx < body.collection_pieces.length; idx++) {
+          const piece = body.collection_pieces[idx];
+          if (!piece || typeof piece !== 'object') continue;
+          const pTitle = String(piece.title || '').trim();
+          const pImage = String(piece.ana_resim || piece.image_url || corePayload.ana_resim || '').trim();
+          if (!pTitle && !pImage) continue;
+          const pRole = String(piece.piece_role || 'part').trim();
+          const rawPieceSlug = piece.slug || `${body.slug}-${pRole}-${idx + 1}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '');
+          const pSlug = validSlug(rawPieceSlug) ? rawPieceSlug : `${body.slug}-parca-${idx + 1}`;
+          const pSku = String(piece.sku || `${body.sku || body.slug.toUpperCase()}-P${idx + 1}`).trim();
+          const pieceCore = {
+            slug: pSlug,
+            title: pTitle || `${corePayload.title} - Parça ${idx + 1}`,
+            sku: pSku,
+            kategori: corePayload.kategori || 'Mobilya',
+            kisa_aciklama: piece.dimensions ? `${pTitle} (${piece.dimensions})` : `${corePayload.title} koleksiyon parçası`,
+            body: String(piece.dimensions || piece.notes || ''),
+            ana_resim: pImage || corePayload.ana_resim,
+            renkler: Array.isArray(corePayload.renkler) ? corePayload.renkler : [],
+            ozellikler: Array.isArray(corePayload.ozellikler) ? corePayload.ozellikler : [],
+            populer: false,
+            yeni: true,
+            updated_at: now,
+            created_at: now
+          };
+          try {
+            await supabase('/rest/v1/products?on_conflict=slug', SERVICE_KEY, {
+              method: 'POST',
+              headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+              body: JSON.stringify(pieceCore)
+            });
+          } catch (_) {}
+
+          extStore.product_meta[pSlug] = {
+            product_type: 'collection_piece',
+            piece_role: pRole,
+            design_story: extMeta.design_story,
+            materials: extMeta.materials,
+            dimensions_json: { raw: String(piece.dimensions || '') },
+            technical_specs: extMeta.technical_specs,
+            marketing_preferences: {
+              ...extMeta.marketing_preferences,
+              piece_presentation_mode: String(piece.presentation_mode || 'carousel_and_video')
+            },
+            photo_presentations: [{
+              url: pImage || corePayload.ana_resim,
+              role: pRole,
+              presentation_mode: String(piece.presentation_mode || 'carousel_and_video'),
+              caption: pTitle
+            }],
+            version: nextVersion,
+            updated_at: now
+          };
+
+          extStore.collection_products.push({
+            id: `cp_${body.slug}_${pSlug}`,
+            collection_id: body.slug,
+            product_slug: pSlug,
+            role_in_collection: pRole,
+            presentation_mode: String(piece.presentation_mode || 'carousel_and_video'),
+            dimensions: String(piece.dimensions || ''),
+            sort_order: idx + 1,
+            created_at: now
+          });
+        }
+      }
+    }
 
     // Koleksiyon parçası ise koleksiyon bağlantılarını güncelle (ürünü kopyalamadan bağlar)
     const colIds = Array.isArray(body.collection_ids)

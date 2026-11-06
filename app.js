@@ -1,7 +1,6 @@
 // Global Mobilya — Master Application Coordinator
 import { mockData } from './js/data.js';
 import { initializeCentralAuth, getUserRoles, signOutCentral } from './js/auth.js';
-import { renderDashboard } from './js/modules/dashboard.js';
 import { renderWebsiteModule } from './js/modules/website.js';
 import { renderSocialModule } from './js/modules/social.js';
 import { renderProductsModule } from './js/modules/products.js';
@@ -13,7 +12,7 @@ import { renderPermissionsModule } from './js/modules/permissions.js';
 
 // Application State
 const state = {
-    currentRoute: 'dashboard',
+    currentRoute: 'products',
     currentRole: mockData.roles[0],
     user: null,
     roles: [],
@@ -31,10 +30,16 @@ const modalBody = document.getElementById('modal-body');
 
 function canAccessRoute(route) {
     if (state.roles.includes('admin')) return true;
-    if (route === 'dashboard') return true;
     if (route === 'products') return state.roles.includes('product_manager');
     if (route === 'website' || route === 'social') return state.roles.includes('content_manager');
     return false;
+}
+
+function getDefaultRoute() {
+    if (canAccessRoute('products')) return 'products';
+    if (canAccessRoute('website')) return 'website';
+    if (canAccessRoute('social')) return 'social';
+    return 'products';
 }
 
 function applyAuthenticatedUser(user) {
@@ -67,9 +72,12 @@ function applyAuthenticatedUser(user) {
 
 // Navigation Controller
 export function navigateTo(route) {
+    if (!route || route === 'dashboard') {
+        route = getDefaultRoute();
+    }
     if (!canAccessRoute(route) && !(route === 'permissions' && state.roles.includes('admin'))) {
         showToast('Bu modüle erişim yetkiniz bulunmuyor.');
-        route = 'dashboard';
+        route = getDefaultRoute();
     }
     state.currentRoute = route;
 
@@ -102,9 +110,6 @@ function renderCurrentView() {
     document.body.classList.toggle('module-immersive-view', isEmbeddedModule);
 
     switch (state.currentRoute) {
-        case 'dashboard':
-            contentContainer.innerHTML = renderDashboard(mockData, navigateTo);
-            break;
         case 'website':
             contentContainer.innerHTML = renderWebsiteModule(mockData);
             break;
@@ -130,7 +135,7 @@ function renderCurrentView() {
             contentContainer.innerHTML = renderPermissionsModule(mockData, state.currentRole);
             break;
         default:
-            contentContainer.innerHTML = renderDashboard(mockData, navigateTo);
+            contentContainer.innerHTML = renderProductsModule(mockData);
     }
 }
 
@@ -138,25 +143,6 @@ function renderCurrentView() {
 export function setRole(roleId) {
     showToast('Rol değişikliği kullanıcı hesabının yetkileri üzerinden yönetilir.');
     return;
-
-    const role = mockData.roles.find(r => r.id === roleId);
-    if (!role) return;
-
-    state.currentRole = role;
-
-    if (activeRoleBadge) {
-        activeRoleBadge.textContent = role.badge;
-    }
-    if (roleSelectHeader) {
-        roleSelectHeader.value = role.id;
-    }
-
-    // Sync role with Module 4 (Production Order System)
-    const mod4Role = roleId === 'admin' ? 'admin' : (roleId === 'management' || roleId === 'sales') ? 'staff_authorized' : 'viewer';
-    localStorage.setItem('global_kapak_role', mod4Role);
-
-    showToast(`Aktif Rol Değiştirildi: ${role.name}`);
-    renderCurrentView();
 }
 
 // Toast Notifications
@@ -219,7 +205,6 @@ export function showProductDetail(productId) {
             </div>
             <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
-                <button class="btn btn-primary" onclick="window.showToast('${product.name} için katalog düzenleme modu simüle edildi.'); window.closeModal();">Düzenle</button>
             </div>
         </div>
     `;
@@ -491,11 +476,10 @@ export function switchSocialBotChannel(btnEl, channel) {
     }
 
     const channelMap = {
-        instagram: { path: 'Module%202/Instagram/index.html', label: '📸 Instagram Bulut Bot Kontrol Merkezi aktif.' },
-        facebook: { path: 'Module%202/Facebook/index.html', label: '📘 Facebook Kurumsal Sayfa Botu Kontrol Merkezi aktif.' },
-        youtube: { path: 'Module%202/Youtube%20Shorts/index.html', label: '▶️ YouTube Shorts Bulut Bot Kontrol Merkezi aktif.' },
-        tiktok: { path: 'Module%202/Tiktok/index.html', label: '🎵 TikTok 7/24 Bulut Bot Kontrol Merkezi aktif.' },
-        catalog: { path: 'Module%202/Catalog/index.html', label: '🗂️ Ürün Kataloğu & Medya Havuzu (4 Botun Ortak Kaynağı) aktif.' }
+        instagram: { path: 'Module%202/Instagram/index.html', label: '📸 Instagram Bot Kontrol Merkezi aktif.' },
+        facebook: { path: 'Module%202/Facebook/index.html', label: '📘 Facebook Bot Kontrol Merkezi aktif.' },
+        youtube: { path: 'Module%202/Youtube%20Shorts/index.html', label: '▶️ YouTube Shorts Bot Kontrol Merkezi aktif.' },
+        tiktok: { path: 'Module%202/Tiktok/index.html', label: '🎵 TikTok Bot Kontrol Merkezi aktif.' }
     };
 
     const target = channelMap[channel];
@@ -509,7 +493,6 @@ export function switchSocialBotChannel(btnEl, channel) {
 
 // Initialize Application
 async function initApp() {
-    // Expose helpers globally to window for inline template handlers
     window.navigateTo = navigateTo;
     window.setRole = setRole;
     window.showToast = showToast;
@@ -560,7 +543,6 @@ async function initApp() {
         });
     }
 
-
     // Modal close button
     const modalCloseBtn = document.getElementById('modal-close-btn');
     if (modalCloseBtn) {
@@ -595,8 +577,9 @@ async function initApp() {
     try {
         const user = await initializeCentralAuth();
         applyAuthenticatedUser(user);
-        const initialRoute = window.location.hash ? window.location.hash.replace('#', '') : 'dashboard';
-        navigateTo(initialRoute || 'dashboard');
+        const hashRoute = window.location.hash ? window.location.hash.replace('#', '') : '';
+        const initialRoute = (!hashRoute || hashRoute === 'dashboard') ? getDefaultRoute() : hashRoute;
+        navigateTo(initialRoute);
     } catch (error) {
         console.error('Central authentication initialization failed:', error);
         showToast('Kimlik doğrulama başlatılamadı. Sayfayı yenileyin.');

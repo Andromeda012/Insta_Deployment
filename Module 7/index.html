@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modül 7 — Merkezi Ürün, Koleksiyon & AI Ürün Stüdyosu | Global Mobilya</title>
+  <title>Modül 7 — Merkezi Ürün ve Koleksiyon Yönetimi | Global Mobilya</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -15,20 +15,17 @@
       --card-border: rgba(148, 163, 184, 0.16);
       --accent-blue: #38BDF8;
       --accent-emerald: #10B981;
-      --accent-purple: #A855F7;
-      --accent-pink: #EC4899;
       --accent-gold: #D4AF37;
       --text: #F8FAFC;
       --text-muted: #94A3B8;
-      --navy-dark: #0B1120;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.08), transparent 30%),
-                  radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.06), transparent 35%),
+      background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.07), transparent 30%),
+                  radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05), transparent 35%),
                   var(--bg);
       color: var(--text);
       min-height: 100vh;
@@ -40,36 +37,36 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding: 18px 24px;
+      padding: 16px 22px;
       background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
-      border: 1px solid rgba(56, 189, 248, 0.28);
+      border: 1px solid rgba(212, 175, 55, 0.32);
       border-radius: 16px;
-      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
       margin-bottom: 18px;
       flex-wrap: wrap;
     }
 
     .header-info { display: flex; align-items: center; gap: 14px; }
     .header-icon {
-      width: 50px; height: 50px; border-radius: 14px;
+      width: 46px; height: 46px; border-radius: 12px;
       background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(56, 189, 248, 0.2));
       border: 1px solid rgba(212, 175, 55, 0.45);
-      display: flex; align-items: center; justify-content: center; font-size: 26px;
+      display: flex; align-items: center; justify-content: center; font-size: 24px;
     }
     .header-title h1 {
-      font-size: 19px; font-weight: 800; letter-spacing: -0.3px;
+      font-size: 18px; font-weight: 800; letter-spacing: -0.3px;
       display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     }
-    .header-title p { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+    .header-title p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
     .header-badge {
       background: linear-gradient(90deg, #d4af37, #f59e0b);
       color: #0b1120; font-size: 10px; font-weight: 900;
-      padding: 3px 9px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.5px;
+      padding: 3px 9px; border-radius: 99px; text-transform: uppercase;
     }
 
     .btn {
-      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 9px 16px; border-radius: 10px; font-size: 12.5px; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+      padding: 9px 15px; border-radius: 10px; font-size: 12px; font-weight: 700;
       cursor: pointer; border: none; font-family: inherit; transition: all 0.2s ease; text-decoration: none;
     }
     .btn-primary { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; }
@@ -77,40 +74,10 @@
     .btn-emerald { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
     .btn-outline { background: rgba(30, 41, 59, 0.8); border: 1px solid var(--card-border); color: var(--text); }
     .btn-outline:hover { border-color: var(--accent-blue); }
+    .btn-danger { background: rgba(239, 68, 68, 0.16); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; }
 
-    .kpi-row {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px; margin-bottom: 18px;
-    }
-    .kpi-box {
-      background: var(--card-bg); border: 1px solid var(--card-border);
-      border-radius: 14px; padding: 14px 18px;
-    }
-    .kpi-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; }
-    .kpi-val { font-size: 21px; font-weight: 900; color: #fff; margin-top: 4px; display: flex; align-items: baseline; gap: 8px; }
-    .kpi-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
-
-    .module-nav-tabs {
-      display: flex; gap: 10px; margin-bottom: 18px;
-      border-bottom: 1px solid var(--card-border); padding-bottom: 12px;
-      align-items: center; flex-wrap: wrap;
-    }
-    .nav-tab-btn {
-      background: rgba(17, 27, 46, 0.85); border: 1px solid var(--card-border);
-      color: #94a3b8; padding: 9px 15px; border-radius: 10px; font-size: 12.5px;
-      font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 7px;
-      font-family: inherit; transition: all 0.2s ease;
-    }
-    .nav-tab-btn.active {
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.22), rgba(56, 189, 248, 0.15));
-      border-color: #d4af37; color: #fde68a;
-    }
-    .tab-badge { background: #0284c7; color: #fff; font-size: 10px; padding: 2px 7px; border-radius: 99px; font-weight: 800; }
-    .section-tab-view { display: none; }
-    .section-tab-view.active { display: block; }
-
-    .main-grid { display: grid; grid-template-columns: 500px 1fr; gap: 20px; align-items: start; }
-    @media (max-width: 1150px) { .main-grid { grid-template-columns: 1fr; } }
+    .main-grid { display: grid; grid-template-columns: 560px 1fr; gap: 20px; align-items: start; }
+    @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
 
     .panel-card {
       background: var(--card-bg); border: 1px solid var(--card-border);
@@ -122,86 +89,96 @@
       margin-bottom: 14px; padding-bottom: 11px; border-bottom: 1px solid var(--card-border);
     }
 
-    /* 3 ÜRÜN YAPISI SEÇİCİ KARTLARI (BÖLÜM 4) */
+    /* 2 BİRLEŞTİRİLMİŞ GİRİŞ MODU (KOLEKSİYON+PARÇALAR / BAĞIMSIZ ÜRÜN) */
     .entity-type-selector {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
     }
     .entity-type-btn {
-      background: #090e1a; border: 1.5px solid var(--card-border); border-radius: 11px;
-      padding: 10px 8px; text-align: center; cursor: pointer; color: #cbd5e1; transition: all 0.2s;
+      background: #090e1a; border: 1.5px solid var(--card-border); border-radius: 12px;
+      padding: 12px 10px; text-align: center; cursor: pointer; color: #cbd5e1; transition: all 0.2s;
     }
-    .entity-type-btn strong { display: block; font-size: 12px; color: #fff; margin-top: 3px; }
-    .entity-type-btn small { display: block; font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+    .entity-type-btn strong { display: block; font-size: 13px; color: #fff; margin-top: 4px; }
+    .entity-type-btn small { display: block; font-size: 10.5px; color: var(--text-muted); margin-top: 2px; }
     .entity-type-btn.active {
       border-color: var(--accent-gold);
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.18), rgba(15, 23, 42, 0.9));
+      background: linear-gradient(135deg, rgba(212, 175, 55, 0.2), rgba(15, 23, 42, 0.92));
       color: #fde68a;
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.15);
     }
 
     .form-section-tag {
       font-size: 10.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.6px;
-      padding: 5px 10px; border-radius: 7px; margin: 14px 0 10px;
+      padding: 6px 10px; border-radius: 7px; margin: 16px 0 10px;
       display: flex; align-items: center; justify-content: space-between;
     }
     .tag-required { background: rgba(56, 189, 248, 0.12); color: #38bdf8; border-left: 3px solid #38bdf8; }
-    .tag-optional { background: rgba(148, 163, 184, 0.1); color: #cbd5e1; border-left: 3px solid #64748b; }
+    .tag-pieces { background: rgba(16, 185, 129, 0.12); color: #34d399; border-left: 3px solid #10b981; }
     .tag-profile { background: rgba(212, 175, 55, 0.14); color: #fde68a; border-left: 3px solid #d4af37; }
 
-    .form-group { margin-bottom: 12px; }
+    .form-group { margin-bottom: 11px; }
     .form-group label {
       display: block; font-size: 11px; font-weight: 700; color: var(--text-muted);
-      margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px;
+      margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px;
     }
     .form-control {
-      width: 100%; padding: 9px 12px; border-radius: 9px;
+      width: 100%; padding: 9px 11px; border-radius: 9px;
       border: 1px solid var(--card-border); background: #090e1a;
       color: var(--text); font-size: 12.5px; font-family: inherit;
     }
     .form-control:focus { outline: none; border-color: var(--accent-blue); }
-    textarea.form-control { resize: vertical; min-height: 64px; line-height: 1.45; }
+    textarea.form-control { resize: vertical; min-height: 58px; line-height: 1.45; }
 
     .dropzone-box {
       border: 2px dashed rgba(212, 175, 55, 0.45); background: rgba(11, 17, 32, 0.6);
-      border-radius: 12px; padding: 14px; text-align: center; cursor: pointer;
+      border-radius: 12px; padding: 12px; text-align: center; cursor: pointer;
     }
     .dropzone-preview {
-      width: 100%; height: 165px; border-radius: 10px; object-fit: cover;
-      display: none; margin-top: 10px; border: 1px solid var(--card-border);
+      width: 100%; height: 150px; border-radius: 10px; object-fit: cover;
+      display: none; margin-top: 8px; border: 1px solid var(--card-border);
     }
 
-    .live-preview-box {
-      background: #070a12; border: 1px solid rgba(212, 175, 55, 0.35);
-      border-radius: 14px; padding: 14px; margin-top: 14px;
-      display: flex; flex-direction: column; align-items: center; gap: 10px;
+    /* KOLEKSİYON PARÇALARI DİNAMİK KARTLARI */
+    .pieces-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
+    .piece-item-card {
+      background: #090e1a; border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 12px; padding: 12px; position: relative;
     }
-    .preview-canvas-wrap {
-      width: 100%; display: flex; justify-content: center;
-      background: #000; border-radius: 12px; padding: 8px;
+    .piece-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid rgba(148, 163, 184, 0.12);
     }
-    #catalogLiveCanvas { max-height: 340px; width: auto; max-width: 100%; border-radius: 8px; }
-    .caption-preview-box {
-      width: 100%; background: #090e1a; border: 1px solid rgba(148, 163, 184, 0.18);
-      border-radius: 10px; padding: 10px 12px; font-size: 11px; color: #cbd5e1;
-      white-space: pre-wrap; max-height: 120px; overflow-y: auto; font-family: monospace;
+    .piece-thumb-mini {
+      width: 52px; height: 52px; border-radius: 8px; object-fit: cover;
+      background: #111b2e; border: 1px solid var(--card-border); flex-shrink: 0;
     }
 
+    /* DETAY ROZET SEÇİCİLERİ */
+    .badge-check-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px; margin-top: 6px;
+    }
+    .badge-check-item {
+      display: flex; align-items: center; gap: 7px; padding: 7px 10px;
+      background: #090e1a; border: 1px solid var(--card-border); border-radius: 8px;
+      font-size: 11.5px; color: #cbd5e1; cursor: pointer;
+    }
+    .badge-check-item input { accent-color: #d4af37; width: 15px; height: 15px; }
+
+    /* SAĞ SÜTUN KATALOG KARTLARI */
     .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .catalog-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 15px; max-height: 860px; overflow-y: auto; padding-right: 4px;
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 15px; max-height: 980px; overflow-y: auto; padding-right: 4px;
     }
-    .prod-card, .collection-admin-card {
+    .prod-card {
       background: #090e1a; border: 1px solid var(--card-border);
-      border-radius: 13px; overflow: hidden; display: flex; flex-direction: column;
+      border-radius: 14px; overflow: hidden; display: flex; flex-direction: column;
       transition: all 0.2s ease;
     }
-    .prod-card:hover, .collection-admin-card:hover {
-      transform: translateY(-2px); border-color: rgba(212, 175, 55, 0.5);
-    }
-    .prod-thumb-wrap { width: 100%; height: 160px; background: #111b2e; position: relative; overflow: hidden; cursor: pointer; }
+    .prod-card:hover { border-color: rgba(212, 175, 55, 0.5); }
+    .prod-thumb-wrap { width: 100%; height: 165px; background: #111b2e; position: relative; overflow: hidden; }
     .prod-thumb { width: 100%; height: 100%; object-fit: cover; display: block; }
     .prod-sku-tag {
-      position: absolute; top: 8px; left: 8px; background: rgba(11, 17, 32, 0.88);
+      position: absolute; top: 8px; left: 8px; background: rgba(11, 17, 32, 0.9);
       color: #fde68a; font-size: 10px; font-weight: 800; padding: 3px 8px;
       border-radius: 6px; border: 1px solid rgba(212, 175, 55, 0.4); font-family: 'JetBrains Mono', monospace;
     }
@@ -209,20 +186,30 @@
       position: absolute; top: 8px; right: 8px; font-size: 9.5px; font-weight: 800;
       padding: 3px 8px; border-radius: 6px; text-transform: uppercase;
     }
-    .type-collection { background: rgba(212, 175, 55, 0.9); color: #090e1a; }
-    .type-piece { background: rgba(56, 189, 248, 0.9); color: #090e1a; }
-    .type-independent { background: rgba(16, 185, 129, 0.9); color: #090e1a; }
+    .type-collection { background: rgba(212, 175, 55, 0.95); color: #090e1a; }
+    .type-independent { background: rgba(16, 185, 129, 0.95); color: #090e1a; }
 
-    .prod-body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }
-    .prod-title { font-size: 13.5px; font-weight: 800; color: #fff; margin-bottom: 4px; }
+    .prod-body { padding: 13px 15px; display: flex; flex-direction: column; flex: 1; }
+    .prod-title { font-size: 14px; font-weight: 800; color: #fff; margin-bottom: 3px; }
     .prod-cat { font-size: 11px; color: #f59e0b; font-weight: 600; margin-bottom: 6px; }
-    .prod-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; }
-    .prod-colors-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+    .prod-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px; }
+    .prod-colors-row { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
     .color-chip { font-size: 9.5px; padding: 2px 6px; border-radius: 4px; background: rgba(30, 41, 59, 0.9); color: #cbd5e1; }
-    .prod-actions { display: flex; gap: 6px; margin-top: auto; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top: 10px; flex-wrap: wrap; }
+
+    .linked-pieces-box {
+      background: rgba(17, 27, 46, 0.7); border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 9px; padding: 8px 10px; margin-bottom: 10px; font-size: 11px;
+    }
+    .linked-piece-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 6px;
+      padding: 4px 0; border-bottom: 1px dashed rgba(148, 163, 184, 0.12);
+    }
+    .linked-piece-row:last-child { border-bottom: none; }
+
+    .prod-actions { display: flex; gap: 6px; margin-top: auto; border-top: 1px solid rgba(148, 163, 184, 0.1); padding-top: 10px; }
     .prod-btn {
-      flex: 1; padding: 6px 8px; font-size: 11px; font-weight: 700; border-radius: 7px;
-      border: 1px solid var(--card-border); background: rgba(30, 41, 59, 0.8); color: #cbd5e1; cursor: pointer;
+      flex: 1; padding: 7px 10px; font-size: 11px; font-weight: 700; border-radius: 8px;
+      border: 1px solid var(--card-border); background: rgba(30, 41, 59, 0.85); color: #cbd5e1; cursor: pointer;
     }
     .prod-btn:hover { color: #fff; border-color: #d4af37; }
     .prod-btn-delete:hover { border-color: #ef4444; color: #f87171; }
@@ -231,19 +218,6 @@
       grid-column: 1 / -1; text-align: center; padding: 48px 24px;
       background: rgba(9, 14, 26, 0.65); border: 1px dashed rgba(148, 163, 184, 0.25);
       border-radius: 14px; color: var(--text-muted);
-    }
-    .empty-state-box h3 { color: #f8fafc; font-size: 15px; margin: 8px 0 6px; }
-    .empty-state-box p { font-size: 12.5px; max-width: 520px; margin: 0 auto 14px; line-height: 1.5; }
-
-    .media-tag-chip {
-      display: inline-flex; align-items: center; gap: 5px;
-      padding: 4px 9px; border-radius: 99px; font-size: 11px; font-weight: 700;
-      background: #090e1a; border: 1px solid var(--card-border); color: #cbd5e1; cursor: pointer;
-    }
-    .media-tag-chip input { accent-color: #d4af37; }
-    .quote-admin-card {
-      background: #090e1a; border: 1px solid var(--card-border);
-      border-radius: 14px; padding: 16px 20px; display: flex; flex-direction: column; gap: 10px;
     }
   </style>
 </head>
@@ -255,156 +229,87 @@
       <div class="header-icon">🛋️</div>
       <div class="header-title">
         <h1>
-          Modül 7 — Merkezi Ürün, Koleksiyon & AI Ürün Stüdyosu
-          <span class="header-badge">KOLEKSİYON MERKEZLİ MİMARİ</span>
+          Modül 7 — Merkezi Koleksiyon & Ürün Yönetimi
+          <span class="header-badge">ANA MERKEZ</span>
         </h1>
-        <p>Bir koleksiyon, koleksiyon parçası veya bağımsız ürün buraya bir kez girilir; tüm görsel (9 kategori), teknik ve AI pazarlama profili bilgileri Modül 1 (Web) ve Modül 2 (4 Platform Kampanya Stüdyosu) tarafından merkezi olarak kullanılır.</p>
+        <p>Koleksiyonları (tüm parçalarıyla birlikte) veya bağımsız ürünleri, hangi fotoğrafın nasıl sunulacağını ve müzik/atmosfer tercihlerini tek merkezden yönetin.</p>
       </div>
     </div>
     <div style="display:flex; gap:10px; flex-wrap:wrap;">
-      <button class="btn btn-gold" onclick="resetFormForNew()">✨ Yeni Kayıt Oluştur</button>
-      <button class="btn btn-outline" onclick="loadCatalogFromSupabase()">🔄 Verileri Yenile</button>
+      <button class="btn btn-gold" onclick="resetFormForNew()">✨ Yeni Kayıt</button>
+      <button class="btn btn-outline" onclick="loadCatalogFromSupabase()">🔄 Yenile</button>
     </div>
   </header>
 
-  <!-- KPI METRİK ŞERİDİ -->
-  <section class="kpi-row">
-    <div class="kpi-box">
-      <div class="kpi-label">Kayıtlı Koleksiyonlar</div>
-      <div class="kpi-val">
-        <span id="kpiCollectionsCount">0 Koleksiyon</span>
-        <span style="font-size:12px; color:var(--accent-gold);">Bütünsel Set</span>
+  <main class="main-grid">
+
+    <!-- SOL SÜTUN: BİRLEŞTİRİLMİŞ KOLEKSİYON (+ PARÇALARI) & BAĞIMSIZ ÜRÜN FORMU -->
+    <section class="panel-card">
+      <div class="panel-title">
+        <span id="formModeTitle">➕ Yeni Koleksiyon veya Ürün Girişi</span>
+        <span style="font-size:11px; color:var(--accent-gold); font-weight:800;">%100 ÜRÜN SADAKATİ</span>
       </div>
-      <div class="kpi-sub">Merkezi koleksiyon ve tasarım hikâyeleri</div>
-    </div>
-    <div class="kpi-box">
-      <div class="kpi-label">Ürün & Koleksiyon Parçaları</div>
-      <div class="kpi-val">
-        <span id="kpiTotalCount">0 Ürün</span>
-        <span style="font-size:12px; color:var(--accent-blue);">Parça & Bağımsız</span>
+
+      <input type="hidden" id="edit_slug" value="">
+
+      <!-- ADIM 1: YALNIZCA 2 GİRİŞ MODU (KOLEKSİYON + PARÇALARI BİRLİKTE / BAĞIMSIZ ÜRÜN) -->
+      <div class="entity-type-selector">
+        <div class="entity-type-btn active" id="typeBtn_collection" onclick="setEntityCreationType('collection')">
+          <div style="font-size:20px;">🏛️</div>
+          <strong>Yeni Koleksiyon (Parçalarıyla Birlikte)</strong>
+          <small>Koleksiyon ana görseli ve tüm parçaları aynı anda girilir</small>
+        </div>
+        <div class="entity-type-btn" id="typeBtn_independent" onclick="setEntityCreationType('independent')">
+          <div style="font-size:20px;">🪑</div>
+          <strong>Bağımsız Ürün</strong>
+          <small>Tekil ürün fotoğrafı ve sunum planı girilir</small>
+        </div>
       </div>
-      <div class="kpi-sub">Karyola, gardırop, şifonyer, komodin & bağımsız</div>
-    </div>
-    <div class="kpi-box">
-      <div class="kpi-label">9 Kategorili Medya Havuzu</div>
-      <div class="kpi-val">
-        <span id="kpiPhotoCount">0 Görsel</span>
-        <span style="font-size:12px; color:var(--accent-emerald);">Gerçek + AI</span>
+
+      <!-- BÖLÜM 1: TEMEL BİLGİLER VE ANA FOTOĞRAFIN NASIL YAYINLANACAĞI -->
+      <div class="form-section-tag tag-required">
+        <span>1. Temel Bilgiler & Ana Fotoğrafın Sunum Şekli</span>
+        <span id="entityTypeLabelBadge">Koleksiyon + Parçaları</span>
       </div>
-      <div class="kpi-sub">Hero, Lifestyle, Detail, Isolated, Texture, Color, Video</div>
-    </div>
-    <div class="kpi-box">
-      <div class="kpi-label">Modül 2 Kampanya Entegrasyonu</div>
-      <div class="kpi-val">
-        <span style="color:#10b981;">HAZIR</span>
-        <span style="font-size:12px; color:#f59e0b;">IG • FB • YT • TT</span>
-      </div>
-      <div class="kpi-sub">Tek tıkla çoklu platform kampanya paketi</div>
-    </div>
-  </section>
 
-  <!-- SEKMELER -->
-  <nav class="module-nav-tabs">
-    <button class="nav-tab-btn active" id="tabBtnProducts" onclick="switchModuleTab('products')">
-      🛋️ 1. Ürün, Parça & Koleksiyon Oluşturucu
-    </button>
-    <button class="nav-tab-btn" id="tabBtnCollections" onclick="switchModuleTab('collections')">
-      🏛️ 2. Koleksiyonlar & Bağlı Parçalar (<span id="collectionsCountBadge">0</span>)
-    </button>
-    <button class="nav-tab-btn" id="tabBtnMedia" onclick="switchModuleTab('media')">
-      🖼️ 3. 9 Kategorili Medya Kütüphanesi (Gerçek & AI)
-    </button>
-    <button class="nav-tab-btn" id="tabBtnProfiles" onclick="switchModuleTab('profiles')">
-      🎨 4. AI Pazarlama Profilleri (Atmosfer, Işık, Kamera, Müzik)
-    </button>
-    <button class="nav-tab-btn" id="tabBtnQuotes" onclick="switchModuleTab('quotes')">
-      📩 5. Showroom Teklif Talepleri <span id="quotesCountBadge" class="tab-badge">0</span>
-    </button>
-    <div style="margin-left:auto; display:flex; gap:8px;">
-      <a href="/Module%202/AI%20Studio/index.html" target="_blank" class="btn btn-gold" style="font-size:11.5px; padding:8px 14px;">
-        🚀 Modül 2 Kampanya Stüdyosu ↗
-      </a>
-    </div>
-  </nav>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 1: DINAMİK ÜRÜN / KOLEKSİYON PARÇASI / KOLEKSİYON YÖNETİMİ        -->
-  <!-- ===================================================================== -->
-  <div id="tabViewProducts" class="section-tab-view active">
-    <main class="main-grid">
-
-      <!-- SOL SÜTUN: 3 MODLU DİNAMİK FORM -->
-      <section class="panel-card">
-        <div class="panel-title">
-          <span id="formModeTitle">➕ Yeni Kayıt Oluştur</span>
-          <span style="font-size:11px; color:var(--accent-gold); font-weight:800;">%100 ÜRÜN SADAKATİ</span>
-        </div>
-
-        <input type="hidden" id="edit_slug" value="">
-
-        <!-- ADIM 1: ÜRÜN YAPISI SEÇİMİ (BÖLÜM 4) -->
-        <label style="display:block; font-size:11px; font-weight:800; color:#fde68a; margin-bottom:6px; text-transform:uppercase;">
-          1. Eklenecek Kayıt Yapısını Seçin:
-        </label>
-        <div class="entity-type-selector">
-          <div class="entity-type-btn" id="typeBtn_collection" onclick="setEntityCreationType('collection')">
-            <div style="font-size:18px;">🏛️</div>
-            <strong>Yeni Koleksiyon</strong>
-            <small>Yatak/Salon/Yemek Takımı</small>
-          </div>
-          <div class="entity-type-btn active" id="typeBtn_collection_piece" onclick="setEntityCreationType('collection_piece')">
-            <div style="font-size:18px;">🧩</div>
-            <strong>Koleksiyon Parçası</strong>
-            <small>Karyola, Dolap, Şifonyer...</small>
-          </div>
-          <div class="entity-type-btn" id="typeBtn_independent" onclick="setEntityCreationType('independent')">
-            <div style="font-size:18px;">🛋️</div>
-            <strong>Bağımsız Ürün</strong>
-            <small>Tekil Portmanto, Dresuar...</small>
-          </div>
-        </div>
-
-        <!-- ZORUNLU ALANLAR BÖLÜMÜ -->
-        <div class="form-section-tag tag-required">
-          <span>📌 Zorunlu Temel Bilgiler & Gerçek Görsel</span>
-          <span id="entityTypeLabelBadge">Koleksiyon Parçası</span>
-        </div>
-
-        <!-- KOLEKSİYON PARÇASI İSE BAĞLI OLDUĞU KOLEKSİYON VE ROL SEÇİMİ -->
-        <div id="pieceBindingBox" style="background:rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.3); border-radius:10px; padding:12px; margin-bottom:12px;">
-          <div style="display:grid; grid-template-columns: 1.2fr 1fr; gap:10px;">
-            <div class="form-group" style="margin-bottom:0;">
-              <label>Bağlı Olduğu Koleksiyon (Ürünü Kopyalamadan Bağlar):</label>
-              <select id="prod_parent_collection" class="form-control">
-                <option value="">— Koleksiyon Seçin —</option>
-              </select>
-            </div>
-            <div class="form-group" style="margin-bottom:0;">
-              <label>Koleksiyon Parçası Türü:</label>
-              <select id="prod_piece_role" class="form-control">
-                <option value="main_bed">🛏️ Karyola / Yatak Başlığı</option>
-                <option value="wardrobe">🚪 Gardırop / Ray Dolap</option>
-                <option value="dresser">🗄️ Şifonyer</option>
-                <option value="nightstand">🛋️ Komodin</option>
-                <option value="vanity">🪞 Makyaj Masası / Dresuar</option>
-                <option value="mirror">✨ Ayna Modülü</option>
-                <option value="dining_table">🍽️ Yemek Masası</option>
-                <option value="console">🏛️ Konsol</option>
-                <option value="tv_unit">📺 TV Ünitesi</option>
-                <option value="part">🧩 Diğer Koleksiyon Parçası</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- FOTOĞRAF YÜKLEME ALANI -->
+      <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
         <div class="form-group">
-          <label>Gerçek Ürün / Koleksiyon Ana Fotoğrafı (Hero Görsel):</label>
+          <label id="lblProdTitle">Koleksiyon Adı:</label>
+          <input type="text" id="prod_title" class="form-control" placeholder="Örn: Siena Yatak Odası Koleksiyonu">
+        </div>
+        <div class="form-group">
+          <label>Katalog Kodu (SKU):</label>
+          <input type="text" id="prod_sku" class="form-control" placeholder="Örn: GM-SIENA-01">
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>Ana Kategori:</label>
+          <select id="prod_main_category" class="form-control">
+            <option value="Yatak Odası">Yatak Odası</option>
+            <option value="Salon & Oturma Odası">Salon & Oturma Odası</option>
+            <option value="Yemek Odası">Yemek Odası</option>
+            <option value="Antre & Portmanto">Antre & Portmanto</option>
+            <option value="Makyaj Masası & Dresuar">Makyaj Masası & Dresuar</option>
+            <option value="CNC & Membran Kapak">CNC & Membran Kapak</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Kullanılan Malzemeler (Virgülle):</label>
+          <input type="text" id="prod_category" class="form-control" placeholder="1. Sınıf MDF, CNC Membran, Frenli Ray">
+        </div>
+      </div>
+
+      <!-- ANA GÖRSEL VE NASIL SUNULACAĞI -->
+      <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:12px; padding:12px; margin-bottom:12px;">
+        <div class="form-group">
+          <label id="lblMainPhoto">Koleksiyon Ana Tanıtım Fotoğrafı:</label>
           <div class="dropzone-box" onclick="document.getElementById('fileInput').click()">
             <div id="dropzoneText">
-              <div style="font-size:24px; margin-bottom:4px;">📸</div>
-              <strong style="font-size:12.5px; color:#fde68a;">Gerçek Ürün Fotoğrafı Seçin veya Sürükleyin</strong>
-              <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">PNG, JPG, WEBP — Ürünün gerçek kapak, kulp ve geometrisi %100 korunur</p>
+              <div style="font-size:22px; margin-bottom:2px;">📸</div>
+              <strong style="font-size:12px; color:#fde68a;">Ana Fotoğrafı Seçin veya Sürükleyin</strong>
+              <p style="font-size:10.5px; color:var(--text-muted);">Ürünün gerçek yapısı, rengi ve kulpları %100 korunur</p>
             </div>
             <input type="file" id="fileInput" accept="image/*" style="display:none;" onchange="handleFileSelect(event)">
             <img id="imagePreview" class="dropzone-preview" alt="Önizleme">
@@ -412,444 +317,208 @@
         </div>
 
         <div class="form-group">
-          <label>Veya Doğrudan Görsel URL Adresi:</label>
+          <label>Veya Ana Fotoğraf URL Adresi:</label>
           <input type="text" id="prod_image_url" class="form-control" placeholder="https://..." oninput="handleUrlInput(this.value)">
         </div>
 
-        <div style="display:grid; grid-template-columns: 2fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label id="lblProdTitle">Ürün / Koleksiyon Adı:</label>
-            <input type="text" id="prod_title" class="form-control" placeholder="Ürün veya koleksiyon adını girin" oninput="triggerLivePreviewUpdate()">
-          </div>
-          <div class="form-group">
-            <label>Ürün / Koleksiyon Kodu (SKU):</label>
-            <input type="text" id="prod_sku" class="form-control" placeholder="Örn: GM-001">
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label>Ana Kategori:</label>
-            <select id="prod_main_category" class="form-control" onchange="triggerLivePreviewUpdate()">
-              <option value="Yatak Odası">Yatak Odası Koleksiyonu</option>
-              <option value="Salon & Oturma Odası">Salon & Oturma Odası</option>
-              <option value="Yemek Odası">Yemek Odası</option>
-              <option value="Antre & Portmanto">Antre & Portmanto</option>
-              <option value="Makyaj Masası & Dresuar">Makyaj Masası & Dresuar</option>
-              <option value="CNC & Membran Kapak">CNC & Membran Kapak</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Kullanılan Malzemeler (Virgülle):</label>
-            <input type="text" id="prod_category" class="form-control" placeholder="Örn: 1. Sınıf MDF, CNC Membran, Frenli Ray" oninput="triggerLivePreviewUpdate()">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Kısa Açıklama:</label>
-          <input type="text" id="prod_short_desc" class="form-control" placeholder="Katalog ve sosyal medya özet cümlesi...">
-        </div>
-
-        <!-- OPSİYONEL DETAY VE TEKNİK ALANLAR -->
-        <div class="form-section-tag tag-optional">
-          <span>📐 Opsiyonel Tasarım Hikâyesi, Ölçü ve Teknik Bilgiler</span>
-          <small style="font-size:10px; opacity:0.8;">Girilmeyen fiyat/stok asla uydurulmaz</small>
-        </div>
-
-        <div class="form-group">
-          <label>Tasarım Hikâyesi & Uzun Açıklama:</label>
-          <textarea id="prod_design_story" class="form-control" placeholder="Koleksiyonun veya ürünün mimari ilhamı, kullanım senaryosu ve tasarım karakteri..."></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Öne Çıkan Özellikler (Her satıra bir özellik):</label>
-          <textarea id="prod_features" class="form-control" placeholder="Her satıra bir gerçek ürün özelliği yazın..." oninput="triggerLivePreviewUpdate()"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Net Ölçüler (Genişlik / Yükseklik / Derinlik veya Parça Ölçüleri):</label>
-          <textarea id="prod_dimensions" class="form-control" placeholder="Örn: Genişlik: 240 cm | Yükseklik: 210 cm | Derinlik: 60 cm" oninput="triggerLivePreviewUpdate()"></textarea>
-        </div>
-
-        <div class="form-group">
-          <label>Renk Seçenekleri / Paleti (Virgülle Ayırın):</label>
-          <input type="text" id="prod_colors" class="form-control" placeholder="Örn: Mat Antrasit, Kaşmir, İpek Beyaz, Doğal Meşe">
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label>Liste Fiyatı (Opsiyonel — Boşsa Gösterilmez):</label>
-            <input type="text" id="prod_spec_price" class="form-control" placeholder="Girilmezse fiyat varsayılmaz">
-          </div>
-          <div class="form-group">
-            <label>Teslim / Üretim Bilgisi (Opsiyonel):</label>
-            <input type="text" id="prod_spec_leadtime" class="form-control" placeholder="Girilmezse süre varsayılmaz">
-          </div>
-        </div>
-
-        <!-- HIZLI AI PAZARLAMA PROFİLİ SEÇİMİ (BÖLÜM 5) -->
-        <div class="form-section-tag tag-profile">
-          <span>🎨 AI Pazarlama Profili (Modül 2 İçerik Üretimi İçin)</span>
-          <small style="font-size:10px;">Ana prompt korunur</small>
-        </div>
-
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label>Atmosfer:</label>
-            <select id="prof_atmosphere" class="form-control">
-              <option value="Modern">Modern</option>
-              <option value="Minimal">Minimal</option>
-              <option value="Lüks" selected>Lüks</option>
-              <option value="Sıcak">Sıcak</option>
-              <option value="Doğal">Doğal</option>
-              <option value="Klasik">Klasik</option>
-              <option value="Mimari">Mimari</option>
-              <option value="Editorial">Editorial</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Işık Karakteri:</label>
-            <select id="prof_lighting" class="form-control">
-              <option value="Soft daylight">Soft daylight</option>
-              <option value="Golden hour" selected>Golden hour</option>
-              <option value="Dramatic cinematic lighting">Dramatic cinematic lighting</option>
-              <option value="Warm ambient lighting">Warm ambient lighting</option>
-              <option value="Studio lighting">Studio lighting</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Kamera Hareketi (Reels/Shorts/TikTok):</label>
-            <select id="prof_camera" class="form-control">
-              <option value="slow_push_in">Slow Push-In (Yavaş İleri Yaklaşma)</option>
-              <option value="dolly_in">Wide Dolly-In (Oda İleri Hareket)</option>
-              <option value="lateral_tracking">Lateral Tracking (Yatay Kaydırma)</option>
-              <option value="macro_detail">Macro Detail Shot (Yüzey/Kulp Yakın Plan)</option>
-              <option value="subtle_orbit">Subtle Orbit (Yörünge Dönüşü)</option>
-              <option value="rack_focus">Rack Focus (Odak Geçişi)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Müzik ve Pazarlama Tonu:</label>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px;">
-              <select id="prof_music" class="form-control">
-                <option value="Ambient">Ambient</option>
-                <option value="Cinematic">Cinematic</option>
-                <option value="Jazz">Jazz</option>
-                <option value="Classical">Classical</option>
-                <option value="Acoustic">Acoustic</option>
-                <option value="Electronic">Electronic</option>
-                <option value="Minimal instrumental">Minimal Instrumental</option>
-              </select>
-              <select id="prof_tone" class="form-control">
-                <option value="Premium">Premium</option>
-                <option value="Modern">Modern</option>
-                <option value="Sade">Sade</option>
-                <option value="Duygusal">Duygusal</option>
-                <option value="Teknik">Teknik</option>
-                <option value="Hikâye anlatımı odaklı">Hikâye Odaklı</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        <!-- GEMINI BANANA ÜRÜN DÖNÜŞTÜRME ANAHTARI -->
-        <div style="background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(15,23,42,0.8)); border:1px solid rgba(212,175,55,0.35); border-radius:12px; padding:12px 14px; margin-top:8px;">
-          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
-            <div>
-              <strong style="font-size:12.5px; color:#fde68a;">✨ Fiziksel Ürün Sadakati Korumalı Sahneleme</strong>
-              <p style="font-size:11px; color:#cbd5e1; margin-top:3px; line-height:1.4;">
-                Ürünün kapak sayısı, çekmece yapısı, kulpları ve gerçek rengi %100 korunur.
-              </p>
-            </div>
-            <input type="checkbox" id="chk_transform_image" checked onchange="handleTransformToggle(this.checked)" style="width:20px; height:20px; accent-color:#10b981;">
-          </div>
-          <div id="transform_status_badge" style="margin-top:6px; font-size:11px; color:#38bdf8;">
-            ⚡ Aktif: Mimari stüdyo sahneleme (%100 Ürün Sadakati) uygulanacak.
-          </div>
-        </div>
-
-        <!-- CANLI ÖNİZLEME -->
-        <div class="live-preview-box">
-          <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-            <span style="font-size:12px; font-weight:800; color:#fde68a;">🎬 Canlı Görsel & Video Hareketi Önizleme</span>
-            <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:11px;" id="btnToggleAnim" onclick="toggleKenBurnsPreview()">
-              ▶️ Kamera Hareketi
-            </button>
-          </div>
-          <div class="preview-canvas-wrap">
-            <canvas id="catalogLiveCanvas" width="540" height="960"></canvas>
-          </div>
-          <div style="width:100%;">
-            <div style="font-size:11px; font-weight:700; color:#94a3b8; margin-bottom:4px;">📝 Otomatik Üretilen Açıklama Önizlemesi:</div>
-            <div class="caption-preview-box" id="captionPreviewText">Ürün bilgilerini girdiğinizde önizleme burada oluşturulur.</div>
-          </div>
-        </div>
-
-        <div style="display:flex; gap:10px; margin-top:16px;">
-          <button class="btn btn-gold" id="btnSaveProduct" style="flex:1;" onclick="saveProductToSupabase()">
-            💾 Kaydet & Modül 2 Kampanya Havuzuna Aktar
-          </button>
-          <button class="btn btn-outline" id="btnCancelEdit" style="display:none;" onclick="resetFormForNew()">
-            İptal
-          </button>
-        </div>
-      </section>
-
-      <!-- SAĞ SÜTUN: MEVCUT ÜRÜNLER VE KOLEKSİYON PARÇALARI LİSTESİ -->
-      <section class="panel-card">
-        <div class="panel-title">
-          <span>🗂️ Merkezi Ürün & Koleksiyon Parçaları Havuzu (<span id="catalogCountBadge">0</span>)</span>
-          <span style="font-size:11px; color:var(--text-muted);">Tek Kaynaktan Web & 4 Sosyal Platform</span>
-        </div>
-
-        <div class="filter-bar">
-          <input type="text" id="searchInput" class="form-control" style="flex:1; min-width:180px;" placeholder="Ürün adı, SKU veya özellik ara..." oninput="filterCatalog()">
-          <select id="filterType" class="form-control" style="width:170px;" onchange="filterCatalog()">
-            <option value="ALL">Tüm Yapılar</option>
-            <option value="collection_piece">🧩 Koleksiyon Parçaları</option>
-            <option value="independent">🛋️ Bağımsız Ürünler</option>
+        <div class="form-group" style="margin-bottom:0;">
+          <label style="color:#38bdf8;">📌 Bu Ana Fotoğraf Sosyal Medyada Nasıl Yayınlansın?</label>
+          <select id="main_photo_presentation" class="form-control">
+            <option value="collection_hero_all">✨ Ana Koleksiyon Tanıtım Carousel'i + Story + Video Açılış Sahnesi (Önerilen)</option>
+            <option value="panoramic_split_carousel">✂️ Panoramik İkiye Bölünmüş Dikişsiz İkili Carousel (Sol + Sağ Kaydırmalı)</option>
+            <option value="single_post_and_catalog">🖼️ Standart Tek Görsel Gönderi + Facebook Katalog Kartı</option>
+            <option value="vertical_story_and_video">📱 Yalnızca Dikey Story (9:16) & Kısa Video Sahnesi (Reels/Shorts/TikTok)</option>
           </select>
-          <select id="filterCategory" class="form-control" style="width:180px;" onchange="filterCatalog()">
-            <option value="ALL">Tüm Kategoriler</option>
-          </select>
-        </div>
-
-        <div class="catalog-grid" id="catalogGrid">
-          <div class="empty-state-box">
-            <div style="font-size:32px;">🛋️</div>
-            <h3>Katalog Verileri Yükleniyor...</h3>
-            <p>Merkezi ürün ve koleksiyon veritabanı kontrol ediliyor.</p>
-          </div>
-        </div>
-      </section>
-
-    </main>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 2: KOLEKSİYON YÖNETİMİ VE BAĞLI PARÇALAR                          -->
-  <!-- ===================================================================== -->
-  <div id="tabViewCollections" class="section-tab-view">
-    <div class="panel-card" style="margin-bottom:20px;">
-      <div class="panel-title">
-        <span>🏛️ Koleksiyonlar ve Bağlı Koleksiyon Parçaları</span>
-        <div style="display:flex; gap:8px;">
-          <button class="btn btn-gold" style="font-size:11.5px; padding:6px 12px;" onclick="switchModuleTab('products'); setEntityCreationType('collection');">+ Yeni Koleksiyon Oluştur</button>
-          <button class="btn btn-outline" style="font-size:11.5px; padding:6px 12px;" onclick="loadCollectionsFromApi()">🔄 Yenile</button>
         </div>
       </div>
-      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
-        Her koleksiyon; ana tanıtım görseli, tasarım hikâyesi, renk paleti, kullanılan malzemeler ve bağlı koleksiyon parçalarıyla (Karyola, Komodin, Şifonyer, Gardırop, Makyaj Masası vb.) bir bütün olarak yönetilir.
-      </p>
-      <div id="collectionsAdminGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:18px;"></div>
-    </div>
-  </div>
 
-  <!-- ===================================================================== -->
-  <!-- TAB 3: 9 KATEGORİLİ MEDYA KÜTÜPHANESİ (GERÇEK vs AI AYRIMI)           -->
-  <!-- ===================================================================== -->
-  <div id="tabViewMedia" class="section-tab-view">
-    <div class="main-grid">
-      <section class="panel-card">
-        <div class="panel-title">
-          <span>🖼️ Medya Kütüphanesine Görsel / Video Ekle</span>
-          <span style="font-size:11px; color:var(--accent-emerald);">9 KATEGORİ & ÇOKLU ETİKET</span>
+      <!-- BÖLÜM 2: KOLEKSİYON PARÇALARI (KOLEKSİYON SEÇİLİYKEN AÇIK, AYNI ANDA TÜM PARÇALAR GİRİLİR) -->
+      <div id="collectionPiecesSection">
+        <div class="form-section-tag tag-pieces">
+          <span>2. Koleksiyon Parçaları & Parça Fotoğraflarının Sunum Planı</span>
+          <button type="button" class="btn btn-emerald" style="padding:4px 10px; font-size:11px;" onclick="addCollectionPieceRow()">
+            + Parça Ekle
+          </button>
         </div>
-
-        <div class="form-group">
-          <label>İlgili Koleksiyon (Opsiyonel):</label>
-          <select id="media_collection_id" class="form-control">
-            <option value="">— Koleksiyon Seçin —</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>İlgili Ürün / Koleksiyon Parçası (Opsiyonel):</label>
-          <select id="media_product_slug" class="form-control">
-            <option value="">— Ürün / Parça Seçin —</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Görsel veya Video URL Adresi:</label>
-          <input type="text" id="media_url_input" class="form-control" placeholder="https://...">
-        </div>
-        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-          <div class="form-group">
-            <label>Ana Medya Kategorisi:</label>
-            <select id="media_primary_type" class="form-control">
-              <option value="hero">1. Hero (Ana Tanıtım)</option>
-              <option value="lifestyle">2. Lifestyle (Oda Sahnesi)</option>
-              <option value="detail">3. Detail (Kulp/Kapak Detayı)</option>
-              <option value="isolated">4. Isolated (Dekupe Ürün)</option>
-              <option value="texture">5. Texture (Yüzey/Malzeme Dokusu)</option>
-              <option value="color">6. Color (Renk Varyasyonu)</option>
-              <option value="carousel">7. Carousel (Kaydırmalı Kare)</option>
-              <option value="video">8. Video (Reels/Shorts/TikTok)</option>
-              <option value="technical">9. Technical (Teknik Ölçü Şeması)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Medya Kaynağı (Gerçek / AI Ayrımı):</label>
-            <select id="media_source_type" class="form-control">
-              <option value="real">📸 Gerçek Ürün Fotoğrafı (Real)</option>
-              <option value="ai_generated">✨ AI Üretimi Pazarlama Görseli</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Çoklu Kategori Etiketleri (Bir Görsel Birden Fazla Etiket Alabilir):</label>
-          <div style="display:flex; flex-wrap:wrap; gap:6px;" id="mediaMultiTagsBox">
-            <label class="media-tag-chip"><input type="checkbox" value="hero" checked> Hero</label>
-            <label class="media-tag-chip"><input type="checkbox" value="lifestyle"> Lifestyle</label>
-            <label class="media-tag-chip"><input type="checkbox" value="detail"> Detail</label>
-            <label class="media-tag-chip"><input type="checkbox" value="isolated"> Isolated</label>
-            <label class="media-tag-chip"><input type="checkbox" value="texture"> Texture</label>
-            <label class="media-tag-chip"><input type="checkbox" value="color"> Color</label>
-            <label class="media-tag-chip"><input type="checkbox" value="carousel"> Carousel</label>
-            <label class="media-tag-chip"><input type="checkbox" value="video"> Video</label>
-            <label class="media-tag-chip"><input type="checkbox" value="technical"> Technical</label>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label>Görsel Notu / Açıklama:</label>
-          <input type="text" id="media_caption_input" class="form-control" placeholder="Örn: Siena makyaj masası pirinç kulp makro detay">
-        </div>
-
-        <button class="btn btn-gold" style="width:100%;" onclick="saveMediaAssetToLibrary()">
-          💾 Medya Kütüphanesine Kaydet
-        </button>
-      </section>
-
-      <section class="panel-card">
-        <div class="panel-title">
-          <span>🗂️ Medya Kütüphanesi (<span id="mediaLibraryCountBadge">0</span>)</span>
-          <div style="display:flex; gap:8px;">
-            <select id="filterMediaSource" class="form-control" style="width:175px; padding:5px 8px; font-size:11.5px;" onchange="loadMediaLibraryFromApi()">
-              <option value="">Tüm Kaynaklar (Gerçek + AI)</option>
-              <option value="real">📸 Yalnızca Gerçek Fotoğraflar</option>
-              <option value="ai_generated">✨ Yalnızca AI Üretimi</option>
-            </select>
-            <select id="filterMediaCategory" class="form-control" style="width:150px; padding:5px 8px; font-size:11.5px;" onchange="loadMediaLibraryFromApi()">
-              <option value="">Tüm 9 Kategori</option>
-              <option value="hero">Hero</option>
-              <option value="lifestyle">Lifestyle</option>
-              <option value="detail">Detail</option>
-              <option value="isolated">Isolated</option>
-              <option value="texture">Texture</option>
-              <option value="color">Color</option>
-              <option value="carousel">Carousel</option>
-              <option value="video">Video</option>
-              <option value="technical">Technical</option>
-            </select>
-          </div>
-        </div>
-        <div id="mediaLibraryGrid" class="catalog-grid"></div>
-      </section>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 4: AI PAZARLAMA PROFİLLERİ YÖNETİCİSİ (BÖLÜM 5)                   -->
-  <!-- ===================================================================== -->
-  <div id="tabViewProfiles" class="section-tab-view">
-    <div class="panel-card">
-      <div class="panel-title">
-        <span>🎨 Koleksiyon ve Ürün Bazlı 6 Boyutlu AI Pazarlama Profili</span>
-        <span style="font-size:11px; color:var(--accent-gold);">ANA PROMPT DEĞİŞTİRİLMEZ • EK BAĞLAM KATMANI</span>
+        <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:10px;">
+          Koleksiyona ait tüm parçaların (Karyola, Gardırop, Komodin, Şifonyer, Makyaj Masası vb.) fotoğraflarını ve her parçanın nasıl sunulacağını aşağıda aynı anda belirleyin:
+        </p>
+        <div id="collectionPiecesContainer" class="pieces-list"></div>
       </div>
-      <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:16px;">
-        Burada tanımlanan Atmosfer, Işık, Renk Paleti, Kamera, Müzik ve Pazarlama Tonu tercihleri; mevcut ana AI promptuna dokunmadan üzerine ürün ve koleksiyon katmanı olarak eklenir.
-      </p>
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:14px;">
+
+      <!-- AÇIKLAMA, RENK VE ÖLÇÜ BİLGİLERİ -->
+      <div class="form-group">
+        <label>Kısa Açıklama & Tasarım Özeti:</label>
+        <input type="text" id="prod_short_desc" class="form-control" placeholder="Koleksiyon veya ürünün öne çıkan tasarım özeti...">
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
         <div class="form-group">
-          <label>Hedef Koleksiyon veya Ürün Seçin:</label>
-          <select id="profileTargetSelect" class="form-control" onchange="loadSelectedEntityProfile()"></select>
+          <label>Renk Paleti (Virgülle):</label>
+          <input type="text" id="prod_colors" class="form-control" placeholder="Örn: Kaşmir Grej, Doğal Meşe, Antrasit">
         </div>
         <div class="form-group">
-          <label>1. Atmosfer:</label>
-          <select id="pEdit_atmosphere" class="form-control">
+          <label>Genel Ölçü / Teknik Not (Opsiyonel):</label>
+          <input type="text" id="prod_dimensions" class="form-control" placeholder="Örn: 240x210x60 cm">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Öne Çıkan Özellikler (Her satıra bir özellik):</label>
+        <textarea id="prod_features" class="form-control" placeholder="1. Sınıf 18mm MDF Gövde&#10;CNC Membran Kapak İşçiliği&#10;Sessiz Frenli Ray ve Menteşe Sistemi"></textarea>
+      </div>
+
+      <!-- BÖLÜM 3: MERKEZİ SUNUM, ATMOSFER, FON MÜZİĞİ VE GÖRSEL ÜZERİ DETAY TERCİHLERİ -->
+      <div class="form-section-tag tag-profile">
+        <span>3. Sunum Atmosferi, Video Fon Müziği & Görsel Üzeri Detaylar</span>
+        <small style="font-size:10px;">4 Bot Bu Ayarları Kullanır</small>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+        <div class="form-group">
+          <label>Sahne Atmosferi:</label>
+          <select id="prof_atmosphere" class="form-control">
+            <option value="Lüks" selected>Lüks Mimari Showroom</option>
             <option value="Modern">Modern</option>
             <option value="Minimal">Minimal</option>
-            <option value="Lüks">Lüks</option>
-            <option value="Sıcak">Sıcak</option>
-            <option value="Doğal">Doğal</option>
+            <option value="Sıcak">Sıcak Yaşam Alanı</option>
+            <option value="Doğal">Doğal İskandinav</option>
             <option value="Klasik">Klasik</option>
-            <option value="Mimari">Mimari</option>
-            <option value="Editorial">Editorial</option>
           </select>
         </div>
         <div class="form-group">
-          <label>2. Işık:</label>
-          <select id="pEdit_lighting" class="form-control">
-            <option value="Soft daylight">Soft daylight</option>
-            <option value="Golden hour">Golden hour</option>
-            <option value="Dramatic cinematic lighting">Dramatic cinematic lighting</option>
-            <option value="Warm ambient lighting">Warm ambient lighting</option>
-            <option value="Studio lighting">Studio lighting</option>
+          <label>Işık Karakteri:</label>
+          <select id="prof_lighting" class="form-control">
+            <option value="Golden hour" selected>Golden Hour (Sıcak Gün Batımı)</option>
+            <option value="Soft daylight">Soft Daylight (Doğal Gün Işığı)</option>
+            <option value="Studio lighting">Stüdyo Aydınlatması</option>
+            <option value="Warm ambient lighting">Sıcak Mimari Spot & Ambient</option>
           </select>
         </div>
         <div class="form-group">
-          <label>3. Renk Paleti & Kontrast Tercihi:</label>
-          <input type="text" id="pEdit_palette" class="form-control" placeholder="Ürünün gerçek renkleri, tamamlayıcı oda ve arka plan renkleri">
-        </div>
-        <div class="form-group">
-          <label>4. Kamera Açısı, Lens ve Hareketi:</label>
-          <input type="text" id="pEdit_camera" class="form-control" placeholder="Örn: Eye-level 50mm Prime, slow push-in, shallow DOF">
-        </div>
-        <div class="form-group">
-          <label>5. Müzik Tercihi:</label>
-          <select id="pEdit_music" class="form-control">
-            <option value="Jazz">Jazz</option>
-            <option value="Classical">Classical</option>
-            <option value="Ambient">Ambient</option>
-            <option value="Cinematic">Cinematic</option>
-            <option value="Electronic">Electronic</option>
-            <option value="Acoustic">Acoustic</option>
-            <option value="Minimal instrumental">Minimal instrumental</option>
+          <label>Video Kamera Hareketi:</label>
+          <select id="prof_camera" class="form-control">
+            <option value="slow_push_in">Slow Push-In (Yavaş İleri Yaklaşma)</option>
+            <option value="dolly_in">Wide Dolly-In (Geniş Açı Yaklaşma)</option>
+            <option value="lateral_tracking">Lateral Tracking (Yatay Kaydırma)</option>
+            <option value="macro_detail">Macro Detail (Doku & Kulp Odaklı)</option>
           </select>
         </div>
         <div class="form-group">
-          <label>6. Pazarlama Tonu:</label>
-          <select id="pEdit_tone" class="form-control">
-            <option value="Premium">Premium</option>
-            <option value="Sade">Sade</option>
-            <option value="Duygusal">Duygusal</option>
-            <option value="Teknik">Teknik</option>
-            <option value="Modern">Modern</option>
-            <option value="Hikâye anlatımı odaklı">Hikâye anlatımı odaklı</option>
+          <label>🎵 Video Fon Müziği (Reels / Shorts / TikTok):</label>
+          <select id="prof_music" class="form-control" onchange="toggleCustomMusicBox()">
+            <option value="luxury_piano">🎹 Piyano & Lüks Mimari (Varsayılan)</option>
+            <option value="modern_lofi">🎧 Modern Minimalist Lo-Fi</option>
+            <option value="cinematic_strings">🎻 Sinematik Yaylılar & Kurumsal</option>
+            <option value="warm_acoustic">🎸 Akustik Sıcak Ev & Yaşam</option>
+            <option value="upbeat_interior">✨ Dinamik Modern Tasarım Ritmi</option>
+            <option value="custom">🔗 Özel MP3 Müzik Bağlantısı</option>
           </select>
-        </div>
-        <div class="form-group">
-          <label>Ek Sahne / Dekor Notu:</label>
-          <input type="text" id="pEdit_notes" class="form-control" placeholder="Örn: Venedik sıva duvar, doğal meşe akustik çıtalar">
         </div>
       </div>
-      <div style="margin-top:12px; display:flex; gap:10px; align-items:center;">
-        <button class="btn btn-gold" onclick="saveDedicatedMarketingProfile()">💾 AI Pazarlama Profilini Kaydet</button>
-        <span id="profileSaveStatus" style="font-size:12px; color:#34d399;"></span>
-      </div>
-    </div>
-  </div>
 
-  <!-- ===================================================================== -->
-  <!-- TAB 5: TEKLİF TALEPLERİ & CRM GELEN KUTUSU                            -->
-  <!-- ===================================================================== -->
-  <div id="tabViewQuotes" class="section-tab-view">
-    <div class="panel-card">
-      <div class="panel-title">
-        <span>📩 Showroom Teklif & Özel Ölçü Talepleri</span>
-        <button class="btn btn-outline" style="font-size:11px; padding:4px 10px;" onclick="loadQuotesFromApi()">🔄 Yenile</button>
+      <div class="form-group" id="customMusicUrlGroup" style="display:none;">
+        <label>Özel MP3 Müzik URL Adresi:</label>
+        <input type="text" id="prof_custom_music_url" class="form-control" placeholder="https://.../muzik.mp3">
       </div>
-      <div id="quotesAdminList" style="display:flex; flex-direction:column; gap:12px;"></div>
-    </div>
-  </div>
+
+      <!-- GÖRSEL ÜZERİ DETAY ROZETLERİ -->
+      <div class="form-group">
+        <label>Görsel Üzerinde Gösterilecek Detay Rozetleri:</label>
+        <div class="badge-check-grid">
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_mdf" checked> 🪵 1. Sınıf MDF Gövde</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_craft" checked> 🛠️ CNC Membran İşçilik</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_surface" checked> 🪞 Dayanıklı Yüzey</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_hardware" checked> 🗄️ Sessiz Frenli Donanım</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_dimensions" checked> 📐 Ölçü Bilgisi</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_color" checked> 🎨 Renk Paleti</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_warranty" checked> 🛡️ 5 Yıl Garanti</label>
+          <label class="badge-check-item"><input type="checkbox" id="spec_opt_cta_button" checked> 📲 İletişim Rozeti</label>
+        </div>
+      </div>
+
+      <!-- FİZİKSEL ÜRÜN SADAKATİ KORUMALI SAHNELEME -->
+      <div style="background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(15,23,42,0.8)); border:1px solid rgba(212,175,55,0.35); border-radius:12px; padding:11px 14px; margin-top:8px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+          <div>
+            <strong style="font-size:12px; color:#fde68a;">✨ Mimari Stüdyo Sahneleme (%100 Ürün Sadakati)</strong>
+            <p style="font-size:10.5px; color:#cbd5e1; margin-top:2px;">
+              Ürünün gerçek kapak, çekmece, kulp ve rengi değiştirilmeden seçilen atmosferde sunulur.
+            </p>
+          </div>
+          <input type="checkbox" id="chk_transform_image" checked style="width:18px; height:18px; accent-color:#10b981;">
+        </div>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top:16px;">
+        <button class="btn btn-gold" id="btnSaveProduct" style="flex:1; padding:12px;" onclick="saveProductToSupabase()">
+          💾 Koleksiyonu ve Parçalarını Kaydet
+        </button>
+        <button class="btn btn-outline" id="btnCancelEdit" style="display:none;" onclick="resetFormForNew()">
+          İptal
+        </button>
+      </div>
+    </section>
+
+    <!-- SAĞ SÜTUN: MERKEZİ KOLEKSİYONLAR (PARÇALARIYLA) VE BAĞIMSIZ ÜRÜNLER LİSTESİ -->
+    <section class="panel-card">
+      <div class="panel-title">
+        <span>🗂️ Kayıtlı Koleksiyonlar & Bağımsız Ürünler (<span id="catalogCountBadge">0</span>)</span>
+        <span style="font-size:11px; color:var(--text-muted);" id="kpiSummaryText">0 Koleksiyon • 0 Ürün</span>
+      </div>
+
+      <div class="filter-bar">
+        <input type="text" id="searchInput" class="form-control" style="flex:1; min-width:180px;" placeholder="Koleksiyon, parça veya SKU ara..." oninput="filterCatalog()">
+        <select id="filterType" class="form-control" style="width:200px;" onchange="filterCatalog()">
+          <option value="ALL">Tüm Kayıtlar (Koleksiyon + Bağımsız)</option>
+          <option value="collection">🏛️ Yalnızca Koleksiyonlar</option>
+          <option value="independent">🪑 Yalnızca Bağımsız Ürünler</option>
+        </select>
+        <select id="filterCategory" class="form-control" style="width:170px;" onchange="filterCatalog()">
+          <option value="ALL">Tüm Kategoriler</option>
+        </select>
+      </div>
+
+      <div class="catalog-grid" id="catalogGrid">
+        <div class="empty-state-box">
+          <div style="font-size:32px;">🛋️</div>
+          <h3>Katalog Yükleniyor...</h3>
+          <p>Koleksiyonlar ve ürünler getiriliyor.</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
 
   <script>
     const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
     const REMEMBER_DEVICE_KEY = 'gm_auth_remember_device';
     const AUTH_STORAGE_KEY = 'sb-vrfujrpsjzqjthaqdalx-auth-token';
+
+    const PRESENTATION_LABELS = {
+      collection_hero_all: 'Ana Carousel + Story + Video',
+      panoramic_split_carousel: 'Panoramik İkili Carousel',
+      single_post_and_catalog: 'Tek Görsel + FB Katalog',
+      vertical_story_and_video: 'Story & Kısa Video (9:16)',
+      carousel_and_video: 'Parça Detay Carousel + FB Albüm + Video',
+      piece_panoramic_split: 'Panoramik İkili Parça Carousel',
+      piece_carousel_only: 'Parça Detay Carousel & Albüm',
+      piece_story_video: 'Story & Kısa Video Odak Parçası'
+    };
+
+    const PIECE_ROLE_LABELS = {
+      main_bed: '🛏️ Karyola / Başlık',
+      wardrobe: '🚪 Gardırop',
+      nightstand: '🛋️ Komodin',
+      dresser: '🗄️ Şifonyer',
+      vanity: '🪞 Makyaj Masası',
+      mirror: '✨ Ayna',
+      dining_table: '🍽️ Yemek Masası',
+      console: '🏛️ Konsol',
+      tv_unit: '📺 TV Ünitesi',
+      part: '🧩 Parça'
+    };
 
     function createModule7AuthClient(remember = localStorage.getItem(REMEMBER_DEVICE_KEY) === '1') {
       if (!window.supabase) return null;
@@ -863,22 +532,23 @@
         }
       });
     }
+
     let sb = createModule7AuthClient();
     let accessToken = null;
     let catalogItems = [];
     let cachedCollections = [];
-    let cachedMedia = [];
     let cachedProfiles = { categories: {}, products: {}, collections: {} };
-    let cachedQuotes = [];
-    let currentEntityCreationType = 'collection_piece';
+    let currentEntityCreationType = 'collection';
     let currentImageBase64 = '';
-    let loadedImageEl = null;
-    let animController = null;
-    let isAnimPlaying = false;
-    let productTransformSettings = {};
+    let pieceRowsState = [];
 
     function escapeHtml(str) {
       return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+
+    function toggleCustomMusicBox() {
+      const val = document.getElementById('prof_music').value;
+      document.getElementById('customMusicUrlGroup').style.display = val === 'custom' ? 'block' : 'none';
     }
 
     function showModule7Login(message = '') {
@@ -890,13 +560,13 @@
           <div class="module7-auth-card">
             <div style="font-size:30px;margin-bottom:10px;">🔐</div>
             <h2 style="margin:0 0 8px;color:#f8fafc;">Ürün Yönetimi Oturumu</h2>
-            <p style="margin:0 0 22px;color:#94a3b8;font-size:13px;line-height:1.6;">Devam etmek için yetkili Global Mobilya hesabınızla giriş yapın. Admin veya Ürün Yöneticisi rolü gerekir.</p>
+            <p style="margin:0 0 22px;color:#94a3b8;font-size:13px;line-height:1.6;">Devam etmek için yetkili Global Mobilya hesabınızla giriş yapın.</p>
             <form id="module7-auth-form">
               <label style="display:block;color:#cbd5e1;font-size:12px;margin:0 0 6px;">E-posta</label>
               <input id="module7-auth-email" type="email" autocomplete="username" required placeholder="ornek@globalmobilya.com.tr" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
               <label style="display:block;color:#cbd5e1;font-size:12px;margin:0 0 6px;">Şifre</label>
               <input id="module7-auth-password" type="password" autocomplete="current-password" required placeholder="Şifreniz" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
-              <label style="display:flex;gap:9px;align-items:flex-start;color:#cbd5e1;font-size:12px;margin:2px 0 14px;text-transform:none;">
+              <label style="display:flex;gap:9px;align-items:flex-start;color:#cbd5e1;font-size:12px;margin:2px 0 14px;">
                 <input id="module7-auth-remember" type="checkbox" style="accent-color:#d4af37;margin-top:1px;">
                 <span>Bu cihazda oturumu açık tut</span>
               </label>
@@ -930,15 +600,8 @@
               password: document.getElementById('module7-auth-password').value
             });
             if (error) throw error;
-            const metadata = data.user?.app_metadata || {};
-            const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
-            if (!roles.some(role => ['admin', 'product_manager'].includes(role))) {
-              await sb.auth.signOut();
-              throw new Error('Bu hesapta admin veya product_manager yetkisi bulunmuyor.');
-            }
             accessToken = data.session.access_token;
             overlay.remove();
-            renderModule7Session(data.user);
             await loadCatalogFromSupabase();
           } catch (err) {
             errorBox.textContent = err.message || 'Giriş yapılamadı.';
@@ -953,23 +616,6 @@
         const errorBox = document.getElementById('module7-auth-error');
         if (errorBox) errorBox.textContent = message;
       }
-    }
-
-    function renderModule7Session(user) {
-      let badge = document.getElementById('module7-session-badge');
-      if (!badge) {
-        badge = document.createElement('div');
-        badge.id = 'module7-session-badge';
-        badge.style.cssText = 'position:fixed;right:18px;top:16px;z-index:9000;display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;background:#111b2e;border:1px solid #334155;color:#cbd5e1;font:12px sans-serif;';
-        document.body.appendChild(badge);
-      }
-      badge.innerHTML = `<span>${escapeHtml(user.email || 'Yetkili kullanıcı')}</span><button id="module7-signout" style="border:0;border-radius:7px;padding:6px 9px;background:#334155;color:white;cursor:pointer;">Çıkış</button>`;
-      document.getElementById('module7-signout').addEventListener('click', async () => {
-        await sb.auth.signOut();
-        accessToken = null;
-        badge.remove();
-        showModule7Login();
-      });
     }
 
     async function module7Api(path, options = {}) {
@@ -990,122 +636,167 @@
       return result;
     }
 
-    // 3 ÜRÜN YAPISI MOD SEÇİCİ
+    // 2 GİRİŞ MODU SEÇİCİ (KOLEKSİYON+PARÇALAR VEYA BAĞIMSIZ ÜRÜN)
     function setEntityCreationType(type) {
-      currentEntityCreationType = type;
-      ['collection', 'collection_piece', 'independent'].forEach(t => {
-        const el = document.getElementById('typeBtn_' + t);
-        if (el) el.classList.toggle('active', t === type);
-      });
-      const pieceBox = document.getElementById('pieceBindingBox');
+      currentEntityCreationType = type === 'independent' ? 'independent' : 'collection';
+      document.getElementById('typeBtn_collection').classList.toggle('active', currentEntityCreationType === 'collection');
+      document.getElementById('typeBtn_independent').classList.toggle('active', currentEntityCreationType === 'independent');
+
+      const piecesSection = document.getElementById('collectionPiecesSection');
       const badge = document.getElementById('entityTypeLabelBadge');
       const lblTitle = document.getElementById('lblProdTitle');
+      const lblMainPhoto = document.getElementById('lblMainPhoto');
       const btnSave = document.getElementById('btnSaveProduct');
 
-      if (type === 'collection') {
-        pieceBox.style.display = 'none';
-        badge.textContent = 'Yeni Koleksiyon';
+      if (currentEntityCreationType === 'collection') {
+        piecesSection.style.display = 'block';
+        badge.textContent = 'Koleksiyon + Parçaları';
         lblTitle.textContent = 'Koleksiyon Adı:';
-        btnSave.textContent = '💾 Koleksiyonu Kaydet & Modül 2\'ye Aktar';
-      } else if (type === 'collection_piece') {
-        pieceBox.style.display = 'block';
-        badge.textContent = 'Koleksiyon Parçası';
-        lblTitle.textContent = 'Koleksiyon Parçası Adı (Örn: Karyola, Gardırop):';
-        btnSave.textContent = '💾 Parçayı Kaydet & Koleksiyona Bağla';
+        lblMainPhoto.textContent = 'Koleksiyon Ana Tanıtım Fotoğrafı:';
+        btnSave.textContent = '💾 Koleksiyonu ve Parçalarını Kaydet';
+        if (pieceRowsState.length === 0) {
+          initDefaultCollectionPieceRows();
+        }
       } else {
-        pieceBox.style.display = 'none';
+        piecesSection.style.display = 'none';
         badge.textContent = 'Bağımsız Ürün';
         lblTitle.textContent = 'Bağımsız Ürün Adı:';
+        lblMainPhoto.textContent = 'Ürün Ana Fotoğrafı:';
         btnSave.textContent = '💾 Bağımsız Ürünü Kaydet';
       }
     }
 
-    function handleTransformToggle(isChecked) {
-      const badge = document.getElementById('transform_status_badge');
-      if (badge) {
-        badge.innerHTML = isChecked
-          ? '⚡ Aktif: Mimari stüdyo sahneleme (%100 Ürün Sadakati) uygulanacak.'
-          : '⚪ Pasif: Gerçek fotoğraf olduğu gibi korunacak.';
-        badge.style.color = isChecked ? '#38bdf8' : '#94a3b8';
+    function initDefaultCollectionPieceRows() {
+      pieceRowsState = [
+        { piece_role: 'main_bed', title: '', dimensions: '', ana_resim: '', presentation_mode: 'carousel_and_video' },
+        { piece_role: 'wardrobe', title: '', dimensions: '', ana_resim: '', presentation_mode: 'carousel_and_video' }
+      ];
+      renderCollectionPieceRows();
+    }
+
+    function addCollectionPieceRow(initial = null) {
+      syncPieceRowsFromDOM();
+      pieceRowsState.push(initial || {
+        piece_role: 'dresser',
+        title: '',
+        dimensions: '',
+        ana_resim: '',
+        presentation_mode: 'carousel_and_video'
+      });
+      renderCollectionPieceRows();
+    }
+
+    function removeCollectionPieceRow(idx) {
+      syncPieceRowsFromDOM();
+      pieceRowsState.splice(idx, 1);
+      renderCollectionPieceRows();
+    }
+
+    function syncPieceRowsFromDOM() {
+      const cards = document.querySelectorAll('.piece-item-card');
+      cards.forEach((card, idx) => {
+        if (!pieceRowsState[idx]) return;
+        pieceRowsState[idx].piece_role = card.querySelector('.p-role')?.value || 'part';
+        pieceRowsState[idx].title = card.querySelector('.p-title')?.value || '';
+        pieceRowsState[idx].dimensions = card.querySelector('.p-dims')?.value || '';
+        pieceRowsState[idx].ana_resim = card.querySelector('.p-img-url')?.value || pieceRowsState[idx].ana_resim || '';
+        pieceRowsState[idx].presentation_mode = card.querySelector('.p-pres')?.value || 'carousel_and_video';
+      });
+    }
+
+    function handlePieceFileSelect(idx, event) {
+      syncPieceRowsFromDOM();
+      const file = event.target.files?.[0];
+      if (!file || !pieceRowsState[idx]) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        pieceRowsState[idx].ana_resim = e.target.result;
+        renderCollectionPieceRows();
+      };
+      reader.readAsDataURL(file);
+    }
+
+    function renderCollectionPieceRows() {
+      const container = document.getElementById('collectionPiecesContainer');
+      if (!container) return;
+      if (pieceRowsState.length === 0) {
+        container.innerHTML = `<div style="padding:12px; text-align:center; color:var(--text-muted); font-size:11.5px; border:1px dashed var(--card-border); border-radius:9px;">Koleksiyona parça eklemek için "+ Parça Ekle" butonuna tıklayın.</div>`;
+        return;
       }
+
+      container.innerHTML = pieceRowsState.map((p, idx) => {
+        const thumbSrc = p.ana_resim || 'https://globalmobilyaweb.vercel.app/resim/logo.png';
+        return `
+          <div class="piece-item-card" data-idx="${idx}">
+            <div class="piece-item-header">
+              <strong style="font-size:11.5px; color:#34d399;">🧩 Koleksiyon Parçası #${idx + 1}</strong>
+              <button type="button" class="btn btn-danger" style="padding:3px 8px; font-size:10.5px;" onclick="removeCollectionPieceRow(${idx})">Kaldır</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1.3fr 0.9fr; gap:8px; margin-bottom:8px;">
+              <div>
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Parça Türü</label>
+                <select class="form-control p-role" style="padding:7px 9px; font-size:11.5px;">
+                  ${Object.entries(PIECE_ROLE_LABELS).map(([k, label]) => `<option value="${k}" ${p.piece_role === k ? 'selected' : ''}>${label}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Parça Adı</label>
+                <input type="text" class="form-control p-title" style="padding:7px 9px; font-size:11.5px;" placeholder="Örn: Siena 6 Kapaklı Dolap" value="${escapeHtml(p.title)}">
+              </div>
+              <div>
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Ölçü (Opsiyonel)</label>
+                <input type="text" class="form-control p-dims" style="padding:7px 9px; font-size:11.5px;" placeholder="240x215x60 cm" value="${escapeHtml(p.dimensions)}">
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+              <img src="${escapeHtml(thumbSrc)}" class="piece-thumb-mini" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
+              <div style="flex:1;">
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Parça Fotoğrafı (Dosya Yükle veya URL Gir)</label>
+                <div style="display:flex; gap:6px;">
+                  <button type="button" class="btn btn-outline" style="padding:6px 10px; font-size:11px; white-space:nowrap;" onclick="document.getElementById('pieceFile_${idx}').click()">📷 Fotoğraf Seç</button>
+                  <input type="file" id="pieceFile_${idx}" accept="image/*" style="display:none;" onchange="handlePieceFileSelect(${idx}, event)">
+                  <input type="text" class="form-control p-img-url" style="padding:6px 9px; font-size:11.5px;" placeholder="veya https://... görsel URL" value="${escapeHtml(p.ana_resim && !p.ana_resim.startsWith('data:') ? p.ana_resim : '')}" oninput="pieceRowsState[${idx}].ana_resim = this.value">
+                </div>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:10px; color:#fde68a; font-weight:700; display:block; margin-bottom:3px;">📌 Bu Parça Fotoğrafı Nasıl Sunulsun?</label>
+              <select class="form-control p-pres" style="padding:6px 9px; font-size:11.5px;">
+                <option value="carousel_and_video" ${p.presentation_mode === 'carousel_and_video' ? 'selected' : ''}>✨ Parça Detay Carousel Kartı + Facebook Albüm + Video Parça Sahnesi (Önerilen)</option>
+                <option value="piece_panoramic_split" ${p.presentation_mode === 'piece_panoramic_split' ? 'selected' : ''}>✂️ Panoramik İkiye Bölünmüş Parça Carousel'i (Sol + Sağ)</option>
+                <option value="piece_carousel_only" ${p.presentation_mode === 'piece_carousel_only' ? 'selected' : ''}>📸 Yalnızca Parça Detay Carousel & Facebook Albüm Kartı</option>
+                <option value="piece_story_video" ${p.presentation_mode === 'piece_story_video' ? 'selected' : ''}>📱 Story & Kısa Video Odak Parçası (9:16)</option>
+              </select>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     async function loadCatalogFromSupabase() {
       try {
-        const [prodRes, colRes, profRes, mediaRes] = await Promise.all([
+        const [prodRes, colRes, profRes] = await Promise.all([
           module7Api('/api/module7?action=products').catch(() => ({ products: [] })),
           module7Api('/api/module7?action=collections').catch(() => ({ collections: [] })),
-          module7Api('/api/module7?action=ai-profiles').catch(() => ({ profiles: { categories: {}, products: {}, collections: {} } })),
-          module7Api('/api/module7?action=product-media').catch(() => ({ media: [] }))
+          module7Api('/api/module7?action=ai-profiles').catch(() => ({ profiles: { categories: {}, products: {}, collections: {} } }))
         ]);
 
         catalogItems = Array.isArray(prodRes.products) ? prodRes.products : [];
         cachedCollections = Array.isArray(colRes.collections) ? colRes.collections : [];
         cachedProfiles = profRes.profiles || { categories: {}, products: {}, collections: {} };
-        cachedMedia = Array.isArray(mediaRes.media) ? mediaRes.media : [];
 
-        try {
-          const settings = await module7Api('/api/module7?action=settings');
-          productTransformSettings = settings.settings || {};
-        } catch { productTransformSettings = {}; }
-
-        populateCollectionSelectors();
-        renderCatalogGrid(catalogItems);
-        renderCollectionsGrid(cachedCollections);
-        updateKPIs(catalogItems, cachedCollections, cachedMedia);
-        populateCategoryFilter(catalogItems);
-        populateProfileTargetSelector();
-
-        if (catalogItems.length > 0 && !document.getElementById('edit_slug').value) {
-          selectProductForPreview(catalogItems[0]);
-        } else {
-          triggerLivePreviewUpdate();
-        }
+        populateCategoryFilter(catalogItems, cachedCollections);
+        renderUnifiedCatalog();
       } catch (err) {
         console.error('Katalog çekme hatası:', err);
-        document.getElementById('catalogGrid').innerHTML = `
-          <div class="empty-state-box" style="color:#f87171;">
-            <h3>Katalog Yüklenemedi</h3>
-            <p>${escapeHtml(err.message)}</p>
-          </div>`;
       }
     }
 
-    function populateCollectionSelectors() {
-      const parentSel = document.getElementById('prod_parent_collection');
-      const mediaColSel = document.getElementById('media_collection_id');
-      const mediaProdSel = document.getElementById('media_product_slug');
-
-      const colOpts = '<option value="">— Koleksiyon Seçin —</option>' +
-        cachedCollections.map(c => `<option value="${escapeHtml(c.id || c.slug)}">${escapeHtml(c.title || c.name)}</option>`).join('');
-      if (parentSel) parentSel.innerHTML = colOpts;
-      if (mediaColSel) mediaColSel.innerHTML = colOpts;
-
-      if (mediaProdSel) {
-        mediaProdSel.innerHTML = '<option value="">— Ürün / Parça Seçin —</option>' +
-          catalogItems.map(p => `<option value="${escapeHtml(p.slug)}">${escapeHtml(p.title)}</option>`).join('');
-      }
-    }
-
-    function updateKPIs(items, cols, mediaList) {
-      const colEl = document.getElementById('kpiCollectionsCount');
-      if (colEl) colEl.textContent = `${cols.length} Koleksiyon`;
-      const colBadge = document.getElementById('collectionsCountBadge');
-      if (colBadge) colBadge.textContent = cols.length;
-
-      const totalEl = document.getElementById('kpiTotalCount');
-      if (totalEl) totalEl.textContent = `${items.length} Ürün`;
-
-      const withPhoto = items.filter(i => !!i.ana_resim).length + mediaList.length;
-      const photoEl = document.getElementById('kpiPhotoCount');
-      if (photoEl) photoEl.textContent = `${withPhoto} Medya`;
-
-      const badgeEl = document.getElementById('catalogCountBadge');
-      if (badgeEl) badgeEl.textContent = `${items.length} Kayıt`;
-    }
-
-    function populateCategoryFilter(items) {
-      const cats = Array.from(new Set(items.map(i => i.kategori).filter(Boolean)));
+    function populateCategoryFilter(items, cols) {
+      const cats = Array.from(new Set([
+        ...cols.map(c => c.category),
+        ...items.map(i => i.kategori)
+      ].filter(Boolean)));
       const sel = document.getElementById('filterCategory');
       if (sel) {
         sel.innerHTML = '<option value="ALL">Tüm Kategoriler</option>' +
@@ -1113,49 +804,154 @@
       }
     }
 
-    function renderCatalogGrid(items) {
+    function getUnifiedDisplayList() {
+      // Koleksiyonları (parçalarıyla birlikte) ve bağımsız ürünleri tek bir birleşik listede topla
+      const colSlugs = new Set(cachedCollections.map(c => c.slug));
+      const unified = [];
+
+      // 1. Koleksiyonlar
+      cachedCollections.forEach(c => {
+        const matchingProd = catalogItems.find(p => p.slug === c.slug) || {};
+        const parts = Array.isArray(c.parts) && c.parts.length
+          ? c.parts
+          : (Array.isArray(matchingProd.collection_pieces) ? matchingProd.collection_pieces : []);
+        unified.push({
+          isCollection: true,
+          slug: c.slug,
+          title: c.title || c.name || matchingProd.title || c.slug,
+          sku: c.code || matchingProd.sku || c.slug.toUpperCase(),
+          kategori: c.category || matchingProd.kategori || 'Koleksiyon',
+          ana_resim: c.hero_image || c.hero_image_url || matchingProd.ana_resim || '',
+          kisa_aciklama: c.short_description || c.design_story || matchingProd.kisa_aciklama || '',
+          renkler: Array.isArray(c.color_palette) && c.color_palette.length ? c.color_palette : (matchingProd.renkler || []),
+          ozellikler: Array.isArray(c.features) && c.features.length ? c.features : (matchingProd.ozellikler || []),
+          materials: Array.isArray(c.materials) ? c.materials : (matchingProd.materials || []),
+          olculer: c.dimensions?.raw || matchingProd.body || '',
+          marketing_preferences: c.marketing_preferences || matchingProd.marketing_preferences || {},
+          parts
+        });
+      });
+
+      // 2. Koleksiyon tablosunda henüz olmayan ama product_type === 'collection' olan kayıtlar
+      catalogItems.filter(p => p.product_type === 'collection' && !colSlugs.has(p.slug)).forEach(p => {
+        unified.push({
+          isCollection: true,
+          slug: p.slug,
+          title: p.title,
+          sku: p.sku || p.slug.toUpperCase(),
+          kategori: p.kategori || 'Koleksiyon',
+          ana_resim: p.ana_resim || '',
+          kisa_aciklama: p.kisa_aciklama || p.design_story || '',
+          renkler: Array.isArray(p.renkler) ? p.renkler : [],
+          ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : [],
+          materials: Array.isArray(p.materials) ? p.materials : [],
+          olculer: p.body || '',
+          marketing_preferences: p.marketing_preferences || {},
+          parts: Array.isArray(p.collection_pieces) ? p.collection_pieces : []
+        });
+      });
+
+      // 3. Bağımsız ürünler (koleksiyon parçaları koleksiyon kartının içinde gösterildiği için ayrı kart olarak kalabalık yapmaz)
+      catalogItems.filter(p => p.product_type !== 'collection' && p.product_type !== 'collection_piece' && !colSlugs.has(p.slug)).forEach(p => {
+        unified.push({
+          isCollection: false,
+          slug: p.slug,
+          title: p.title,
+          sku: p.sku || p.slug.slice(0, 8).toUpperCase(),
+          kategori: p.kategori || 'Bağımsız Ürün',
+          ana_resim: p.ana_resim || '',
+          kisa_aciklama: p.kisa_aciklama || p.design_story || '',
+          renkler: Array.isArray(p.renkler) ? p.renkler : [],
+          ozellikler: Array.isArray(p.ozellikler) ? p.ozellikler : [],
+          materials: Array.isArray(p.materials) ? p.materials : [],
+          olculer: p.body || '',
+          marketing_preferences: p.marketing_preferences || {},
+          parts: []
+        });
+      });
+
+      return unified;
+    }
+
+    function renderUnifiedCatalog() {
+      const allUnified = getUnifiedDisplayList();
+      const q = (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
+      const tFilter = document.getElementById('filterType')?.value || 'ALL';
+      const catFilter = document.getElementById('filterCategory')?.value || 'ALL';
+
+      const colCount = allUnified.filter(x => x.isCollection).length;
+      const indCount = allUnified.filter(x => !x.isCollection).length;
+      document.getElementById('catalogCountBadge').textContent = allUnified.length;
+      document.getElementById('kpiSummaryText').textContent = `${colCount} Koleksiyon • ${indCount} Bağımsız Ürün`;
+
+      const filtered = allUnified.filter(item => {
+        const matchesQ = !q ||
+          (item.title && item.title.toLowerCase().includes(q)) ||
+          (item.sku && item.sku.toLowerCase().includes(q)) ||
+          (item.kategori && item.kategori.toLowerCase().includes(q));
+        const matchesType = tFilter === 'ALL' ||
+          (tFilter === 'collection' && item.isCollection) ||
+          (tFilter === 'independent' && !item.isCollection);
+        const matchesCat = catFilter === 'ALL' || item.kategori === catFilter;
+        return matchesQ && matchesType && matchesCat;
+      });
+
       const grid = document.getElementById('catalogGrid');
-      if (!items || items.length === 0) {
+      if (!filtered.length) {
         grid.innerHTML = `
           <div class="empty-state-box">
             <div style="font-size:34px;">🛋️</div>
-            <h3>Henüz ürün eklenmemiş</h3>
-            <p>Katalogda henüz kayıtlı ürün veya koleksiyon parçası bulunmuyor. Sol taraftaki formdan gerçek ürün bilgilerinizi ve fotoğrafınızı ekleyerek başlayabilirsiniz.</p>
+            <h3>Kayıt Bulunamadı</h3>
+            <p>Sol taraftaki formdan yeni bir koleksiyon (tüm parçalarıyla birlikte) veya bağımsız ürün ekleyebilirsiniz.</p>
           </div>`;
         return;
       }
 
-      grid.innerHTML = items.map(item => {
+      grid.innerHTML = filtered.map(item => {
         const imgUrl = item.ana_resim
           ? (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:')
               ? item.ana_resim
               : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`)
           : 'https://globalmobilyaweb.vercel.app/resim/logo.png';
 
-        const sku = item.sku || item.slug.slice(0, 8).toUpperCase();
-        const pType = item.product_type || 'independent';
-        const typeLabel = pType === 'collection_piece' ? '🧩 Koleksiyon Parçası' : (pType === 'collection' ? '🏛️ Koleksiyon' : '🛋️ Bağımsız Ürün');
-        const typeClass = pType === 'collection_piece' ? 'type-piece' : (pType === 'collection' ? 'type-collection' : 'type-independent');
-        const colors = Array.isArray(item.renkler) ? item.renkler : [];
+        const prefs = item.marketing_preferences || {};
+        const mainPresLabel = PRESENTATION_LABELS[prefs.main_photo_presentation] || 'Ana Carousel + Story + Video';
+        const musicLabel = prefs.music_preference || 'luxury_piano';
+        const parts = Array.isArray(item.parts) ? item.parts : [];
 
         return `
           <div class="prod-card">
-            <div class="prod-thumb-wrap" onclick="selectProductForPreviewBySlug('${escapeHtml(item.slug)}')">
-              <span class="prod-sku-tag">${escapeHtml(sku)}</span>
-              <span class="prod-type-badge ${typeClass}">${typeLabel}</span>
-              <img class="prod-thumb" src="${escapeHtml(imgUrl)}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="${escapeHtml(item.title || '')}">
+            <div class="prod-thumb-wrap">
+              <span class="prod-sku-tag">${escapeHtml(item.sku)}</span>
+              <span class="prod-type-badge ${item.isCollection ? 'type-collection' : 'type-independent'}">
+                ${item.isCollection ? `🏛️ KOLEKSİYON (${parts.length} PARÇA)` : '🪑 BAĞIMSIZ ÜRÜN'}
+              </span>
+              <img class="prod-thumb" src="${escapeHtml(imgUrl)}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="${escapeHtml(item.title)}">
             </div>
             <div class="prod-body">
-              <div class="prod-cat">${escapeHtml(item.kategori || '')}</div>
-              <div class="prod-title">${escapeHtml(item.title || 'Başlıksız Ürün')}</div>
-              <div class="prod-desc">${escapeHtml(item.design_story || item.kisa_aciklama || 'Açıklama girilmemiş.')}</div>
+              <div class="prod-cat">${escapeHtml(item.kategori)} • 📌 ${escapeHtml(mainPresLabel)}</div>
+              <div class="prod-title">${escapeHtml(item.title)}</div>
+              <div class="prod-desc">${escapeHtml(item.kisa_aciklama || 'Açıklama girilmemiş.')}</div>
               <div class="prod-colors-row">
-                ${colors.slice(0, 4).map(c => `<span class="color-chip">${escapeHtml(c)}</span>`).join('')}
+                ${(item.renkler || []).slice(0, 4).map(c => `<span class="color-chip">🎨 ${escapeHtml(c)}</span>`).join('')}
+                <span class="color-chip">🎵 ${escapeHtml(musicLabel)}</span>
               </div>
+              ${item.isCollection ? `
+                <div class="linked-pieces-box">
+                  <strong style="color:#38bdf8; display:block; margin-bottom:4px;">🧩 Koleksiyon Parçaları (${parts.length}):</strong>
+                  ${parts.length ? parts.map(p => {
+                    const roleLbl = PIECE_ROLE_LABELS[p.role_in_collection || p.piece_role] || '🧩 Parça';
+                    const presLbl = PRESENTATION_LABELS[p.presentation_mode] || 'Carousel + Video';
+                    return `<div class="linked-piece-row">
+                      <span style="color:#f8fafc; font-weight:600;">${escapeHtml(roleLbl)}: ${escapeHtml(p.title || p.product_slug)}</span>
+                      <span style="color:#fde68a; font-size:10px;">${escapeHtml(presLbl)}</span>
+                    </div>`;
+                  }).join('') : '<span style="color:#94a3b8;">Parça eklenmemiş. Düzenle butonundan parça ekleyebilirsiniz.</span>'}
+                </div>
+              ` : ''}
               <div class="prod-actions">
-                <button class="prod-btn" onclick="editProduct('${escapeHtml(item.slug)}')">✏️ Düzenle</button>
-                <a class="prod-btn" style="text-decoration:none; color:#fde68a; border-color:rgba(212,175,55,0.4);" href="/Module%202/AI%20Studio/index.html?product=${encodeURIComponent(item.slug)}" target="_blank">🚀 Kampanya</a>
-                <button class="prod-btn prod-btn-delete" onclick="deleteProduct('${escapeHtml(item.slug)}', '${escapeHtml(item.title || '')}')">🗑️</button>
+                <button class="prod-btn" onclick="editUnifiedEntity('${escapeHtml(item.slug)}', ${item.isCollection})">✏️ Düzenle</button>
+                <button class="prod-btn prod-btn-delete" onclick="deleteUnifiedEntity('${escapeHtml(item.slug)}', '${escapeHtml(item.title)}', ${item.isCollection})">🗑️ Sil</button>
               </div>
             </div>
           </div>`;
@@ -1163,20 +959,7 @@
     }
 
     function filterCatalog() {
-      const q = (document.getElementById('searchInput').value || '').toLowerCase().trim();
-      const cat = document.getElementById('filterCategory').value;
-      const tFilter = document.getElementById('filterType').value;
-
-      const filtered = catalogItems.filter(item => {
-        const matchesQ = !q ||
-          (item.title && item.title.toLowerCase().includes(q)) ||
-          (item.sku && item.sku.toLowerCase().includes(q)) ||
-          (item.kategori && item.kategori.toLowerCase().includes(q));
-        const matchesCat = cat === 'ALL' || item.kategori === cat;
-        const matchesType = tFilter === 'ALL' || (item.product_type || 'independent') === tFilter;
-        return matchesQ && matchesCat && matchesType;
-      });
-      renderCatalogGrid(filtered);
+      renderUnifiedCatalog();
     }
 
     function handleFileSelect(event) {
@@ -1187,7 +970,6 @@
         currentImageBase64 = e.target.result;
         showImagePreview(currentImageBase64);
         document.getElementById('prod_image_url').value = '';
-        triggerLivePreviewUpdate();
       };
       reader.readAsDataURL(file);
     }
@@ -1197,7 +979,6 @@
       if (val) {
         currentImageBase64 = val;
         showImagePreview(val);
-        triggerLivePreviewUpdate();
       }
     }
 
@@ -1206,89 +987,21 @@
       preview.src = src;
       preview.style.display = 'block';
       document.getElementById('dropzoneText').style.display = 'none';
-
-      loadedImageEl = new Image();
-      if (!src.startsWith('data:')) loadedImageEl.crossOrigin = 'anonymous';
-      loadedImageEl.onload = () => triggerLivePreviewUpdate();
-      loadedImageEl.src = src;
     }
 
-    function getFormProductData() {
-      const title = document.getElementById('prod_title').value.trim() || 'ÜRÜN ÖNİZLEME';
-      const kategori = document.getElementById('prod_category').value.trim() || document.getElementById('prod_main_category').value;
-      const rawFeat = document.getElementById('prod_features').value.trim();
-      const rawDims = document.getElementById('prod_dimensions').value.trim();
-      const ozellikler = rawFeat ? rawFeat.split('\n').map(s => s.trim()).filter(Boolean) : [];
-      return { title, kategori, ozellikler, olculer: rawDims || null, body: rawDims || '' };
-    }
-
-    function triggerLivePreviewUpdate() {
-      if (!window.NovaStudioEngine) return;
-      const canvas = document.getElementById('catalogLiveCanvas');
-      const prod = getFormProductData();
-      if (!isAnimPlaying) {
-        window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
-          productImageEl: loadedImageEl,
-          product: prod,
-          isVertical: true,
-          zoomScale: 1.0,
-          fullRes: false
+    async function uploadImageIfNeeded(slugPrefix, imgDataOrUrl) {
+      if (!imgDataOrUrl) return '';
+      if (imgDataOrUrl.startsWith('data:image')) {
+        const uploaded = await module7Api('/api/module7?action=media', {
+          method: 'POST',
+          body: JSON.stringify({ slug: slugPrefix, data_url: imgDataOrUrl })
         });
+        return uploaded.public_url;
       }
-      const caption = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'instagram');
-      const capEl = document.getElementById('captionPreviewText');
-      if (capEl) capEl.textContent = caption;
+      return imgDataOrUrl;
     }
 
-    function toggleKenBurnsPreview() {
-      if (!window.NovaStudioEngine) return;
-      const btn = document.getElementById('btnToggleAnim');
-      const canvas = document.getElementById('catalogLiveCanvas');
-      const prod = getFormProductData();
-      if (isAnimPlaying) {
-        if (animController) animController.stop();
-        isAnimPlaying = false;
-        btn.textContent = '▶️ Kamera Hareketi';
-        triggerLivePreviewUpdate();
-      } else {
-        isAnimPlaying = true;
-        btn.textContent = '⏹️ Hareketi Durdur';
-        animController = window.NovaStudioEngine.animateKenBurns(canvas, loadedImageEl, prod, true);
-      }
-    }
-
-    function selectProductForPreviewBySlug(slug) {
-      const item = catalogItems.find(i => i.slug === slug);
-      if (item) selectProductForPreview(item);
-    }
-
-    function selectProductForPreview(item) {
-      document.getElementById('prod_title').value = item.title || '';
-      document.getElementById('prod_sku').value = item.sku || '';
-      document.getElementById('prod_category').value = Array.isArray(item.materials) && item.materials.length ? item.materials.join(', ') : (item.kategori || '');
-      document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
-      document.getElementById('prod_design_story').value = item.design_story || '';
-      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
-      document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';
-      const dims = item.olculer || item.body || '';
-      document.getElementById('prod_dimensions').value = typeof dims === 'string' ? dims : JSON.stringify(dims, null, 2);
-
-      const specs = item.technical_specs || {};
-      document.getElementById('prod_spec_price').value = specs.price || '';
-      document.getElementById('prod_spec_leadtime').value = specs.lead_time || '';
-
-      if (item.ana_resim) {
-        const fullImg = (item.ana_resim.startsWith('http') || item.ana_resim.startsWith('data:'))
-          ? item.ana_resim
-          : `https://globalmobilyaweb.vercel.app${item.ana_resim.startsWith('/') ? '' : '/'}${item.ana_resim}`;
-        currentImageBase64 = fullImg;
-        showImagePreview(fullImg);
-        document.getElementById('prod_image_url').value = fullImg;
-      }
-      triggerLivePreviewUpdate();
-    }
-
-    // ÜRÜN, KOLEKSİYON PARÇASI VEYA YENİ KOLEKSİYON KAYDETME
+    // BİRLEŞTİRİLMİŞ KAYIT (KOLEKSİYON + TÜM PARÇALARI + SUNUM & MÜZİK TERCİHLERİ VEYA BAĞIMSIZ ÜRÜN)
     async function saveProductToSupabase() {
       const btn = document.getElementById('btnSaveProduct');
       const title = document.getElementById('prod_title').value.trim();
@@ -1296,153 +1009,133 @@
       const mainCategory = document.getElementById('prod_main_category').value;
       const materialsInput = document.getElementById('prod_category').value.trim();
       const shortDesc = document.getElementById('prod_short_desc').value.trim();
-      const designStory = document.getElementById('prod_design_story').value.trim();
       const rawColors = document.getElementById('prod_colors').value.trim();
       const rawFeatures = document.getElementById('prod_features').value.trim();
       const rawDimensions = document.getElementById('prod_dimensions').value.trim();
-      const specPrice = document.getElementById('prod_spec_price').value.trim();
-      const specLeadTime = document.getElementById('prod_spec_leadtime').value.trim();
       const editSlug = document.getElementById('edit_slug').value.trim();
+      const mainPhotoPres = document.getElementById('main_photo_presentation').value;
 
       if (!title) {
-        alert('Lütfen kayıt başlığını (koleksiyon veya ürün adı) girin.');
+        alert('Lütfen koleksiyon veya ürün adını girin.');
+        return;
+      }
+
+      let rawMainImg = currentImageBase64 || document.getElementById('prod_image_url').value.trim();
+      if (!rawMainImg) {
+        alert('Lütfen ana tanıtım fotoğrafını yükleyin veya URL girin.');
         return;
       }
 
       btn.disabled = true;
-      btn.textContent = '⏳ Kaydediliyor...';
-
-      const renkler = rawColors ? rawColors.split(',').map(s => s.trim()).filter(Boolean) : [];
-      const ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
-      const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(Boolean) : [];
-      const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
-
-      let ana_resim = currentImageBase64 || document.getElementById('prod_image_url').value.trim();
-      if (!ana_resim) {
-        alert('Lütfen gerçek bir ürün/koleksiyon fotoğrafı yükleyin veya görsel URL girin.');
-        btn.disabled = false;
-        btn.textContent = '💾 Kaydet';
-        return;
-      }
-
-      if (currentImageBase64 && currentImageBase64.startsWith('data:image')) {
-        try {
-          const uploaded = await module7Api('/api/module7?action=media', {
-            method: 'POST',
-            body: JSON.stringify({ slug, data_url: currentImageBase64 })
-          });
-          ana_resim = uploaded.public_url;
-        } catch (uploadError) {
-          alert(`❌ Görsel yüklenemedi: ${uploadError.message}`);
-          btn.disabled = false;
-          return;
-        }
-      }
-
-      // Girilmeyen fiyat/stok/teslim süresi ASLA uydurulmaz
-      const technical_specs = {};
-      if (specPrice) technical_specs.price = specPrice;
-      if (specLeadTime) technical_specs.lead_time = specLeadTime;
-
-      const marketing_profile = {
-        atmosphere: document.getElementById('prof_atmosphere').value,
-        lighting: document.getElementById('prof_lighting').value,
-        color_palette: renkler.join(', '),
-        color_palette_config: {
-          product_real_colors: renkler,
-          room_complementary_colors: ['Kaşmir Grej', 'Doğal Meşe'],
-          background_colors: ['Venedik Sıva Antrasit-Grej'],
-          contrast_preference: 'Yüksek mimari kontrast'
-        },
-        camera_config: {
-          angle: 'Architectural eye-level view',
-          movement: document.getElementById('prof_camera').value,
-          lens_character: '50mm Prime Lens'
-        },
-        music_preference: document.getElementById('prof_music').value,
-        marketing_tone: document.getElementById('prof_tone').value
-      };
+      btn.textContent = '⏳ Fotoğraflar ve Sunum Planı Kaydediliyor...';
 
       try {
+        const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
+        const ana_resim = await uploadImageIfNeeded(slug, rawMainImg);
+
+        const renkler = rawColors ? rawColors.split(',').map(s => s.trim()).filter(Boolean) : [];
+        const ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
+        const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        // Koleksiyon parçalarını oku ve varsa base64 fotoğraflarını yükle
+        let uploadedPieces = [];
         if (currentEntityCreationType === 'collection') {
-          await module7Api('/api/module7?action=collections', {
-            method: 'POST',
-            body: JSON.stringify({
-              slug,
-              code: sku || slug.toUpperCase(),
-              title,
-              category: mainCategory,
-              short_description: shortDesc,
-              description: designStory || shortDesc,
-              design_story: designStory,
-              hero_image: ana_resim,
-              color_palette: renkler,
-              materials,
-              features: ozellikler,
-              dimensions: rawDimensions ? { raw: rawDimensions } : {},
-              technical_specs,
-              marketing_preferences: marketing_profile
-            })
-          });
-          await module7Api('/api/module7?action=ai-profiles', {
-            method: 'POST',
-            body: JSON.stringify({ collection_slug: slug, target_type: 'collection', profile: marketing_profile })
-          });
-          alert(`✅ "${title}" koleksiyonu başarıyla kaydedildi! Şimdi bu koleksiyona parçalar bağlayabilir veya Modül 2'de koleksiyon kampanyası başlatabilirsiniz.`);
-        } else {
-          const parentCollectionId = currentEntityCreationType === 'collection_piece'
-            ? document.getElementById('prod_parent_collection').value
-            : '';
-          const pieceRole = currentEntityCreationType === 'collection_piece'
-            ? document.getElementById('prod_piece_role').value
-            : 'part';
-
-          const payload = {
-            slug,
-            title,
-            sku: sku || null,
-            kategori: materialsInput || mainCategory,
-            kisa_aciklama: shortDesc || designStory.slice(0, 160) || mainCategory,
-            ana_resim,
-            renkler,
-            ozellikler,
-            body: rawDimensions || '',
-            product_type: currentEntityCreationType,
-            piece_role: pieceRole,
-            design_story: designStory,
-            materials,
-            technical_specs,
-            collection_ids: parentCollectionId ? [parentCollectionId] : [],
-            marketing_profile,
-            updated_at: new Date().toISOString()
-          };
-
-          await module7Api('/api/module7?action=products', {
-            method: 'POST',
-            body: JSON.stringify(payload)
-          });
-
-          await module7Api('/api/module7?action=ai-profiles', {
-            method: 'POST',
-            body: JSON.stringify({ product_slug: slug, profile: marketing_profile })
-          });
-
-          // Gerçek ürün fotoğrafını 9 kategorili medya havuzuna 'real' olarak kaydet
-          await module7Api('/api/module7?action=product-media', {
-            method: 'POST',
-            body: JSON.stringify({
-              product_slug: slug,
-              collection_id: parentCollectionId || null,
-              media_url: ana_resim,
-              media_type: 'hero',
-              source_type: 'real',
-              tags: ['hero'],
-              caption: `${title} — Gerçek Ürün Fotoğrafı`
-            })
-          }).catch(() => {});
-
-          alert(`✅ "${title}" başarıyla kaydedildi ve Modül 2 kampanya havuzuna aktarıldı.`);
+          syncPieceRowsFromDOM();
+          for (let i = 0; i < pieceRowsState.length; i++) {
+            const pr = pieceRowsState[i];
+            if (!pr.title.trim() && !pr.ana_resim) continue;
+            const pieceSlug = `${slug}-${pr.piece_role || 'parca'}-${i + 1}`.toLowerCase().replace(/[^a-z0-9-]+/g, '-');
+            const pieceImgUrl = pr.ana_resim ? await uploadImageIfNeeded(pieceSlug, pr.ana_resim) : ana_resim;
+            uploadedPieces.push({
+              slug: pieceSlug,
+              piece_role: pr.piece_role || 'part',
+              title: pr.title.trim() || `${title} - ${PIECE_ROLE_LABELS[pr.piece_role] || 'Parça'}`,
+              dimensions: pr.dimensions.trim(),
+              ana_resim: pieceImgUrl,
+              presentation_mode: pr.presentation_mode || 'carousel_and_video'
+            });
+          }
         }
+
+        const spec_post_options = {
+          mdf: document.getElementById('spec_opt_mdf').checked,
+          craft: document.getElementById('spec_opt_craft').checked,
+          surface: document.getElementById('spec_opt_surface').checked,
+          hardware: document.getElementById('spec_opt_hardware').checked,
+          dimensions: document.getElementById('spec_opt_dimensions').checked,
+          color: document.getElementById('spec_opt_color').checked,
+          warranty: document.getElementById('spec_opt_warranty').checked,
+          cta_button: document.getElementById('spec_opt_cta_button').checked
+        };
+
+        const musicPref = document.getElementById('prof_music').value;
+        const customMusicUrl = document.getElementById('prof_custom_music_url').value.trim();
+
+        const marketing_preferences = {
+          main_photo_presentation: mainPhotoPres,
+          panoramic_mode: mainPhotoPres === 'panoramic_split_carousel' ? 'split' : 'auto',
+          atmosphere: document.getElementById('prof_atmosphere').value,
+          lighting: document.getElementById('prof_lighting').value,
+          camera: document.getElementById('prof_camera').value,
+          music_preference: musicPref,
+          custom_music_url: customMusicUrl,
+          spec_post_options,
+          transform_enabled: document.getElementById('chk_transform_image').checked
+        };
+
+        const photo_presentations = [
+          {
+            url: ana_resim,
+            role: 'hero',
+            presentation_mode: mainPhotoPres,
+            caption: title
+          },
+          ...uploadedPieces.map(up => ({
+            url: up.ana_resim,
+            role: up.piece_role,
+            presentation_mode: up.presentation_mode,
+            caption: up.title
+          }))
+        ];
+
+        const payload = {
+          slug,
+          title,
+          sku: sku || slug.toUpperCase(),
+          kategori: mainCategory,
+          kisa_aciklama: shortDesc || `${title} (${mainCategory})`,
+          ana_resim,
+          renkler,
+          ozellikler,
+          body: rawDimensions || '',
+          product_type: currentEntityCreationType,
+          design_story: shortDesc,
+          materials,
+          marketing_preferences,
+          marketing_profile: marketing_preferences,
+          photo_presentations,
+          collection_pieces: uploadedPieces,
+          updated_at: new Date().toISOString()
+        };
+
+        await module7Api('/api/module7?action=products', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        // Dönüştürme ayarını kaydet
+        try {
+          const settingsRes = await module7Api('/api/module7?action=settings').catch(() => ({ settings: {} }));
+          const nextSettings = { ...(settingsRes.settings || {}), [slug]: document.getElementById('chk_transform_image').checked };
+          await module7Api('/api/module7?action=settings', {
+            method: 'PUT',
+            body: JSON.stringify({ settings: nextSettings })
+          });
+        } catch (_) {}
+
+        alert(currentEntityCreationType === 'collection'
+          ? `✅ "${title}" koleksiyonu, ${uploadedPieces.length} koleksiyon parçası ve fotoğraf sunum planı başarıyla kaydedildi! 4 botun sıradaki üretim listesi otomatik güncellendi.`
+          : `✅ "${title}" bağımsız ürünü ve fotoğraf sunum planı başarıyla kaydedildi!`);
 
         resetFormForNew();
         await loadCatalogFromSupabase();
@@ -1454,31 +1147,78 @@
       }
     }
 
-    function editProduct(slug) {
-      const item = catalogItems.find(i => i.slug === slug);
+    function editUnifiedEntity(slug, isCollection) {
+      const allUnified = getUnifiedDisplayList();
+      const item = allUnified.find(x => x.slug === slug);
       if (!item) return;
-      setEntityCreationType(item.product_type || 'independent');
+
+      setEntityCreationType(isCollection ? 'collection' : 'independent');
       document.getElementById('edit_slug').value = item.slug;
-      if (item.collection_ids?.length) {
-        document.getElementById('prod_parent_collection').value = item.collection_ids[0];
+      document.getElementById('prod_title').value = item.title || '';
+      document.getElementById('prod_sku').value = item.sku || '';
+      document.getElementById('prod_main_category').value = item.kategori || 'Yatak Odası';
+      document.getElementById('prod_category').value = Array.isArray(item.materials) ? item.materials.join(', ') : '';
+      document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
+      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
+      document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';
+      document.getElementById('prod_dimensions').value = item.olculer || '';
+
+      const prefs = item.marketing_preferences || {};
+      if (prefs.main_photo_presentation) document.getElementById('main_photo_presentation').value = prefs.main_photo_presentation;
+      if (prefs.atmosphere) document.getElementById('prof_atmosphere').value = prefs.atmosphere;
+      if (prefs.lighting) document.getElementById('prof_lighting').value = prefs.lighting;
+      if (prefs.camera) document.getElementById('prof_camera').value = prefs.camera;
+      if (prefs.music_preference) {
+        document.getElementById('prof_music').value = prefs.music_preference;
+        toggleCustomMusicBox();
       }
-      if (item.piece_role) {
-        document.getElementById('prod_piece_role').value = item.piece_role;
+      if (prefs.custom_music_url) document.getElementById('prof_custom_music_url').value = prefs.custom_music_url;
+
+      if (prefs.spec_post_options) {
+        ['mdf', 'craft', 'surface', 'hardware', 'dimensions', 'color', 'warranty', 'cta_button'].forEach(k => {
+          const chk = document.getElementById('spec_opt_' + k);
+          if (chk && typeof prefs.spec_post_options[k] === 'boolean') chk.checked = prefs.spec_post_options[k];
+        });
       }
-      selectProductForPreview(item);
-      document.getElementById('formModeTitle').textContent = `✏️ Kaydı Düzenle: ${item.title}`;
+
+      if (item.ana_resim) {
+        currentImageBase64 = item.ana_resim;
+        document.getElementById('prod_image_url').value = item.ana_resim;
+        showImagePreview(item.ana_resim);
+      }
+
+      if (isCollection) {
+        const parts = Array.isArray(item.parts) ? item.parts : [];
+        pieceRowsState = parts.map(p => ({
+          piece_role: p.role_in_collection || p.piece_role || 'part',
+          title: p.title || p.product_slug || '',
+          dimensions: p.dimensions || p.olculer || '',
+          ana_resim: p.ana_resim || '',
+          presentation_mode: p.presentation_mode || 'carousel_and_video'
+        }));
+        if (pieceRowsState.length === 0) initDefaultCollectionPieceRows();
+        else renderCollectionPieceRows();
+      }
+
+      document.getElementById('formModeTitle').textContent = `✏️ Düzenle: ${item.title}`;
       document.getElementById('btnSaveProduct').textContent = '💾 Değişiklikleri Güncelle';
       document.getElementById('btnCancelEdit').style.display = 'inline-flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    async function deleteProduct(slug, title) {
-      if (!confirm(`"${title}" kaydını katalogdan silmek istediğinize emin misiniz?`)) return;
+    async function deleteUnifiedEntity(slug, title, isCollection) {
+      if (!confirm(`"${title}" kaydını silmek istediğinize emin misiniz?`)) return;
       try {
+        if (isCollection) {
+          await module7Api('/api/module7?action=collections', {
+            method: 'DELETE',
+            body: JSON.stringify({ slug })
+          }).catch(() => {});
+        }
         await module7Api('/api/module7?action=products', {
           method: 'DELETE',
           body: JSON.stringify({ slug })
-        });
+        }).catch(() => {});
         await loadCatalogFromSupabase();
       } catch (err) {
         alert(`Silme hatası: ${err.message}`);
@@ -1486,315 +1226,40 @@
     }
 
     function resetFormForNew() {
-      if (isAnimPlaying && animController) {
-        animController.stop();
-        isAnimPlaying = false;
-        document.getElementById('btnToggleAnim').textContent = '▶️ Kamera Hareketi';
-      }
       document.getElementById('edit_slug').value = '';
       document.getElementById('prod_title').value = '';
       document.getElementById('prod_sku').value = '';
       document.getElementById('prod_short_desc').value = '';
-      document.getElementById('prod_design_story').value = '';
       document.getElementById('prod_colors').value = '';
       document.getElementById('prod_features').value = '';
       document.getElementById('prod_dimensions').value = '';
-      document.getElementById('prod_spec_price').value = '';
-      document.getElementById('prod_spec_leadtime').value = '';
       document.getElementById('prod_image_url').value = '';
       document.getElementById('fileInput').value = '';
       currentImageBase64 = '';
-      loadedImageEl = null;
       document.getElementById('imagePreview').style.display = 'none';
       document.getElementById('dropzoneText').style.display = 'block';
-      document.getElementById('formModeTitle').textContent = '➕ Yeni Kayıt Oluştur';
+      document.getElementById('formModeTitle').textContent = '➕ Yeni Koleksiyon veya Ürün Girişi';
       document.getElementById('btnCancelEdit').style.display = 'none';
+      initDefaultCollectionPieceRows();
       setEntityCreationType(currentEntityCreationType);
-      triggerLivePreviewUpdate();
     }
 
     function slugify(text) {
       const trMap = { 'ç': 'c', 'ğ': 'g', 'ı': 'i', 'ö': 'o', 'ş': 's', 'ü': 'u', 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
-      return text.replace(/[çğıöşüÇĞİÖŞÜ]/g, m => trMap[m] || m).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'urun';
+      return text.replace(/[çğıöşüÇĞİÖŞÜ]/g, m => trMap[m] || m).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'koleksiyon';
     }
 
-    function switchModuleTab(tabName) {
-      document.querySelectorAll('.nav-tab-btn').forEach(btn => btn.classList.remove('active'));
-      document.querySelectorAll('.section-tab-view').forEach(view => view.classList.remove('active'));
-      const map = {
-        products: ['tabBtnProducts', 'tabViewProducts'],
-        collections: ['tabBtnCollections', 'tabViewCollections'],
-        media: ['tabBtnMedia', 'tabViewMedia'],
-        profiles: ['tabBtnProfiles', 'tabViewProfiles'],
-        quotes: ['tabBtnQuotes', 'tabViewQuotes']
-      };
-      const [btnId, viewId] = map[tabName] || map.products;
-      document.getElementById(btnId)?.classList.add('active');
-      document.getElementById(viewId)?.classList.add('active');
-
-      if (tabName === 'collections') loadCollectionsFromApi();
-      if (tabName === 'media') loadMediaLibraryFromApi();
-      if (tabName === 'profiles') populateProfileTargetSelector();
-      if (tabName === 'quotes') loadQuotesFromApi();
-    }
-
-    function renderCollectionsGrid(list) {
-      const container = document.getElementById('collectionsAdminGrid');
-      if (!container) return;
-      if (!list || list.length === 0) {
-        container.innerHTML = `
-          <div class="empty-state-box">
-            <div style="font-size:34px;">🏛️</div>
-            <h3>Henüz koleksiyon bulunmuyor</h3>
-            <p>Sistemde kayıtlı bir mobilya koleksiyonu yok. "Yeni Koleksiyon Oluştur" düğmesine tıklayarak gerçek katalog koleksiyonunuzu ekleyebilirsiniz.</p>
-          </div>`;
-        return;
-      }
-
-      container.innerHTML = list.map(c => {
-        const colors = (c.color_palette || []).map(cp => `<span class="color-chip">${escapeHtml(cp)}</span>`).join('');
-        const parts = Array.isArray(c.parts) ? c.parts : [];
-        return `
-          <div class="collection-admin-card">
-            <div style="width:100%; height:180px; position:relative; overflow:hidden; background:#111b2e;">
-              <img src="${escapeHtml(c.hero_image || c.hero_image_url || '')}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="${escapeHtml(c.title || c.name)}" style="width:100%; height:100%; object-fit:cover;">
-              <div style="position:absolute; top:8px; left:8px; background:rgba(11,17,32,0.88); border:1px solid #d4af37; color:#fde68a; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px;">
-                ${escapeHtml(c.category || 'Koleksiyon')}
-              </div>
-              <div style="position:absolute; top:8px; right:8px; background:rgba(16,185,129,0.9); color:#052e16; font-size:10px; font-weight:800; padding:3px 8px; border-radius:6px;">
-                ${parts.length} Parça Bağlı
-              </div>
-            </div>
-            <div style="padding:14px; display:flex; flex-direction:column; gap:8px; flex:1;">
-              <div style="font-size:15px; font-weight:800; color:#fff;">${escapeHtml(c.title || c.name)}</div>
-              <div style="font-size:11.5px; color:#cbd5e1; line-height:1.45;">${escapeHtml(c.design_story || c.short_description || 'Tasarım hikâyesi girilmemiş.')}</div>
-              <div style="display:flex; flex-wrap:wrap; gap:4px;">${colors}</div>
-              <div style="background:rgba(15,23,42,0.8); border:1px solid rgba(148,163,184,0.15); border-radius:8px; padding:8px 10px; font-size:11px; color:#cbd5e1;">
-                <strong style="color:#38bdf8; display:block; margin-bottom:4px;">🧩 Koleksiyon Parçaları:</strong>
-                ${parts.length ? parts.map(p => `• ${escapeHtml(p.title || p.product_slug)}`).join('<br>') : '<span style="color:#94a3b8;">Henüz parça bağlanmamış.</span>'}
-              </div>
-              <div style="display:flex; gap:8px; margin-top:auto; padding-top:8px;">
-                <a href="/Module%202/AI%20Studio/index.html?collection=${encodeURIComponent(c.slug)}" target="_blank" class="btn btn-gold" style="flex:1; font-size:11px; padding:7px 10px;">
-                  🚀 Kampanya Paketi Üret
-                </a>
-                <a href="https://globalkapakmobilya.com/galeri.html?collection=${encodeURIComponent(c.slug)}" target="_blank" class="btn btn-outline" style="font-size:11px; padding:7px 10px;">
-                  👁️ Showroom ↗
-                </a>
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-    }
-
-    async function loadCollectionsFromApi() {
+    document.addEventListener('DOMContentLoaded', async () => {
+      initDefaultCollectionPieceRows();
+      setEntityCreationType('collection');
       try {
-        const res = await module7Api('/api/module7?action=collections');
-        cachedCollections = res.collections || res.data || [];
-        renderCollectionsGrid(cachedCollections);
-        populateCollectionSelectors();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // 9 KATEGORİLİ MEDYA KÜTÜPHANESİ İŞLEMLERİ
-    async function loadMediaLibraryFromApi() {
-      const grid = document.getElementById('mediaLibraryGrid');
-      const sourceFilter = document.getElementById('filterMediaSource')?.value || '';
-      const catFilter = document.getElementById('filterMediaCategory')?.value || '';
-      try {
-        let url = '/api/module7?action=product-media';
-        if (sourceFilter) url += `&source_type=${encodeURIComponent(sourceFilter)}`;
-        if (catFilter) url += `&media_type=${encodeURIComponent(catFilter)}`;
-        const res = await module7Api(url);
-        const list = res.media || [];
-        cachedMedia = list;
-        document.getElementById('mediaLibraryCountBadge').textContent = list.length;
-
-        if (!list.length) {
-          grid.innerHTML = `
-            <div class="empty-state-box">
-              <div style="font-size:32px;">🖼️</div>
-              <h3>Medya havuzunda eşleşen görsel bulunmuyor</h3>
-              <p>Sol taraftaki formdan Hero, Lifestyle, Detail, Isolated, Texture, Color, Carousel, Video veya Technical kategorilerinde görsel ekleyebilirsiniz.</p>
-            </div>`;
-          return;
-        }
-
-        grid.innerHTML = list.map(m => {
-          const isReal = m.is_real_photo !== false;
-          const tags = Array.isArray(m.tags) ? m.tags : [m.media_type || 'hero'];
-          return `
-            <div class="prod-card">
-              <div class="prod-thumb-wrap">
-                <span class="prod-sku-tag">${escapeHtml((m.media_type || 'hero').toUpperCase())}</span>
-                <span class="prod-type-badge ${isReal ? 'type-independent' : 'type-collection'}">${isReal ? '📸 GERÇEK FOTO' : '✨ AI ÜRETİMİ'}</span>
-                <img class="prod-thumb" src="${escapeHtml(m.media_url)}" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
-              </div>
-              <div class="prod-body">
-                <div class="prod-title">${escapeHtml(m.caption || m.product_slug || 'Medya Kaydı')}</div>
-                <div class="prod-colors-row" style="margin-top:4px;">
-                  ${tags.map(t => `<span class="color-chip">#${escapeHtml(t)}</span>`).join('')}
-                </div>
-                <div class="prod-actions">
-                  <button class="prod-btn prod-btn-delete" onclick="deleteMediaAsset('${escapeHtml(m.id)}')">🗑️ Sil</button>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-      } catch (err) {
-        grid.innerHTML = `<div class="empty-state-box">${escapeHtml(err.message)}</div>`;
-      }
-    }
-
-    async function saveMediaAssetToLibrary() {
-      const media_url = document.getElementById('media_url_input').value.trim();
-      if (!media_url) return alert('Lütfen medya URL adresini girin.');
-      const collection_id = document.getElementById('media_collection_id').value || null;
-      const product_slug = document.getElementById('media_product_slug').value || null;
-      const media_type = document.getElementById('media_primary_type').value;
-      const source_type = document.getElementById('media_source_type').value;
-      const caption = document.getElementById('media_caption_input').value.trim();
-      const checkedTags = Array.from(document.querySelectorAll('#mediaMultiTagsBox input:checked')).map(el => el.value);
-
-      try {
-        await module7Api('/api/module7?action=product-media', {
-          method: 'POST',
-          body: JSON.stringify({
-            collection_id,
-            product_slug,
-            media_url,
-            media_type,
-            source_type,
-            tags: checkedTags.length ? checkedTags : [media_type],
-            caption
-          })
-        });
-        document.getElementById('media_url_input').value = '';
-        document.getElementById('media_caption_input').value = '';
-        await loadMediaLibraryFromApi();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    async function deleteMediaAsset(id) {
-      if (!confirm('Bu medya kaydını silmek istediğinize emin misiniz?')) return;
-      try {
-        await module7Api('/api/module7?action=product-media', {
-          method: 'DELETE',
-          body: JSON.stringify({ id })
-        });
-        await loadMediaLibraryFromApi();
-      } catch (err) {
-        alert(err.message);
-      }
-    }
-
-    // AI PAZARLAMA PROFİLİ YÖNETİCİSİ
-    function populateProfileTargetSelector() {
-      const sel = document.getElementById('profileTargetSelect');
-      if (!sel) return;
-      const colOpts = cachedCollections.map(c => `<option value="col:${escapeHtml(c.slug)}">🏛️ Koleksiyon: ${escapeHtml(c.title || c.name)}</option>`).join('');
-      const prodOpts = catalogItems.map(p => `<option value="prod:${escapeHtml(p.slug)}">🛋️ Ürün: ${escapeHtml(p.title)}</option>`).join('');
-      sel.innerHTML = colOpts + prodOpts || '<option value="">Henüz koleksiyon veya ürün yok</option>';
-      loadSelectedEntityProfile();
-    }
-
-    function loadSelectedEntityProfile() {
-      const raw = document.getElementById('profileTargetSelect')?.value || '';
-      if (!raw) return;
-      const [kind, slug] = raw.split(':');
-      const p = (kind === 'col' ? cachedProfiles.collections?.[slug] : cachedProfiles.products?.[slug]) || cachedProfiles.products?.[slug] || {};
-      if (p.atmosphere) document.getElementById('pEdit_atmosphere').value = p.atmosphere;
-      if (p.lighting) document.getElementById('pEdit_lighting').value = p.lighting;
-      document.getElementById('pEdit_palette').value = p.color_palette || '';
-      document.getElementById('pEdit_camera').value = p.camera || p.camera_config?.angle || '';
-      if (p.music_preference || p.music) document.getElementById('pEdit_music').value = p.music_preference || p.music;
-      if (p.marketing_tone) document.getElementById('pEdit_tone').value = p.marketing_tone;
-      document.getElementById('pEdit_notes').value = p.notes || '';
-    }
-
-    async function saveDedicatedMarketingProfile() {
-      const raw = document.getElementById('profileTargetSelect')?.value || '';
-      if (!raw) return alert('Lütfen bir koleksiyon veya ürün seçin.');
-      const [kind, slug] = raw.split(':');
-      const statusEl = document.getElementById('profileSaveStatus');
-      statusEl.textContent = 'Kaydediliyor...';
-      try {
-        const profile = {
-          atmosphere: document.getElementById('pEdit_atmosphere').value,
-          lighting: document.getElementById('pEdit_lighting').value,
-          color_palette: document.getElementById('pEdit_palette').value.trim(),
-          camera: document.getElementById('pEdit_camera').value.trim(),
-          camera_config: { angle: document.getElementById('pEdit_camera').value.trim() },
-          music_preference: document.getElementById('pEdit_music').value,
-          music: document.getElementById('pEdit_music').value,
-          marketing_tone: document.getElementById('pEdit_tone').value,
-          notes: document.getElementById('pEdit_notes').value.trim()
-        };
-        await module7Api('/api/module7?action=ai-profiles', {
-          method: 'POST',
-          body: JSON.stringify({
-            slug,
-            target_type: kind === 'col' ? 'collection' : 'product',
-            profile
-          })
-        });
-        statusEl.textContent = '✅ AI Pazarlama Profili kaydedildi.';
-      } catch (err) {
-        statusEl.textContent = '❌ ' + err.message;
-      }
-    }
-
-    async function loadQuotesFromApi() {
-      const container = document.getElementById('quotesAdminList');
-      const badge = document.getElementById('quotesCountBadge');
-      try {
-        const res = await module7Api('/api/module7?action=quotes');
-        const list = res.quotes || res.data || [];
-        cachedQuotes = list;
-        if (badge) badge.textContent = list.length;
-        if (list.length === 0) {
-          container.innerHTML = '<div class="empty-state-box"><h3>Henüz showroom teklif talebi bulunmuyor</h3><p>Müşteriler dijital showroom üzerinden teklif istediğinde burada listelenir.</p></div>';
-          return;
-        }
-        container.innerHTML = list.map(q => {
-          const waPhone = (q.customer_phone || '').replace(/[^0-9]/g, '');
-          const waLink = `https://wa.me/${waPhone.startsWith('9') ? waPhone : '90' + waPhone}`;
-          return `
-            <div class="quote-admin-card">
-              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-                <div>
-                  <strong style="color:#fff;">${escapeHtml(q.customer_name)}</strong>
-                  <span style="color:#d4af37; font-size:11px; margin-left:6px;">[${escapeHtml(q.quote_number || 'GM')}]</span>
-                  <div style="font-size:12px; color:#cbd5e1; margin-top:3px;">📞 ${escapeHtml(q.customer_phone)} ${q.customer_city ? '• 📍 ' + escapeHtml(q.customer_city) : ''}</div>
-                </div>
-                <div style="display:flex; gap:8px;">
-                  <a href="${waLink}" target="_blank" class="btn btn-emerald" style="font-size:11px; padding:6px 12px;">💬 WhatsApp</a>
-                </div>
-              </div>
-            </div>`;
-        }).join('');
-      } catch (err) {
-        container.innerHTML = `<div class="empty-state-box">${escapeHtml(err.message)}</div>`;
-      }
-    }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      try {
-        if (!sb) { showModule7Login('Kimlik doğrulama başlatılamadı.'); return; }
+        if (!sb) throw new Error('Kimlik doğrulama başlatılamadı.');
         const { data } = await sb.auth.getSession();
-        const user = data.session?.user;
-        const metadata = user?.app_metadata || {};
-        const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
-        if (!user || !roles.some(role => ['admin', 'product_manager'].includes(role))) {
+        if (!data.session?.access_token) {
           showModule7Login();
           return;
         }
         accessToken = data.session.access_token;
-        renderModule7Session(user);
-        setEntityCreationType('collection_piece');
         await loadCatalogFromSupabase();
       } catch (err) {
         showModule7Login(err.message);

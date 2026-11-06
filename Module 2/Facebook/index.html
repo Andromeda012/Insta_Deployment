@@ -1,970 +1,736 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Modül 2 — Facebook Sayfa Bulut Botu & 3 Aşamalı Messenger/Yorum Merkezi</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="/Module%202/nova-studio-engine.js"></script>
-<script src="/nova-studio-engine.js"></script>
-<style>
-  :root {
-    --navy: #0A192F;
-    --navy2: #153462;
-    --fb-blue: #1877F2;
-    --fb-blue-dark: #0C5DC7;
-    --fb-grad: linear-gradient(135deg, #0A192F 0%, #153462 45%, #1877F2 100%);
-    --bg: #F4F7FA;
-    --card: #FFFFFF;
-    --border: #DCE5ED;
-    --text: #0F172A;
-    --muted: #64748B;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --danger: #EF4444;
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Otonom Kontrol Merkezi | Nova Furniture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/Module%202/nova-studio-engine.js"></script>
+  <script src="/nova-studio-engine.js"></script>
 
-  /* HEADER */
-  .top-header {
-    background: linear-gradient(90deg, #081426 0%, #102A52 55%, #1877F2 100%);
-    color: #fff;
-    padding: 16px 28px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 16px;
-    flex-wrap: wrap;
-    border-bottom: 1px solid rgba(255,255,255,0.12);
-  }
-  .th-brand {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .th-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: #1877F2;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 22px;
-    box-shadow: 0 8px 20px rgba(24, 119, 242, 0.45);
-    border: 1px solid rgba(255,255,255,0.25);
-  }
-  .th-brand h1 {
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -0.2px;
-  }
-  .th-brand span {
-    font-size: 12px;
-    color: rgba(255,255,255,0.8);
-    display: block;
-    margin-top: 2px;
-  }
-  .th-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
-  .cloud-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(16, 185, 129, 0.18);
-    border: 1px solid rgba(16, 185, 129, 0.45);
-    color: #6EE7B7;
-    padding: 7px 14px;
-    border-radius: 30px;
-    font-size: 12px;
-    font-weight: 700;
-  }
-  .pulse-dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: #10B981;
-    box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.25);
-    animation: pulse 1.8s infinite;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.25); opacity: 0.7; }
-  }
+  <style>
+    :root {
+      --bg: #0A0F1D;
+      --card-bg: #111B2E;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --accent-blue: #1877F2;
+      --accent-sky: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-purple: #A855F7;
+      --accent-gold: #D4AF37;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --navy-dark: #0B1120;
+    }
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
-    padding: 9px 16px;
-    border-radius: 10px;
-    font-size: 12.5px;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    font-family: inherit;
-    transition: all 0.2s ease;
-    text-decoration: none;
-  }
-  .btn-fb {
-    background: linear-gradient(135deg, #1877F2 0%, #0C5DC7 100%);
-    color: #fff;
-    box-shadow: 0 6px 18px rgba(24, 119, 242, 0.3);
-  }
-  .btn-fb:hover { transform: translateY(-1px); opacity: 0.96; }
-  .btn-navy { background: var(--navy); color: #fff; }
-  .btn-navy:hover { background: var(--navy2); }
-  .btn-outline {
-    background: rgba(255,255,255,0.12);
-    color: #fff;
-    border: 1px solid rgba(255,255,255,0.25);
-  }
-  .btn-outline:hover { background: rgba(255,255,255,0.2); }
-  .btn-secondary {
-    background: #F1F5F9;
-    color: var(--navy);
-    border: 1px solid var(--border);
-  }
-  .btn-secondary:hover { background: #E2E8F0; }
-  .btn-success { background: #10B981; color: #fff; }
-  .btn-danger {
-    background: #FEE2E2;
-    color: #B91C1C;
-    border: 1px solid #FECACA;
-  }
-  .btn-sm { padding: 6px 11px; font-size: 11.5px; border-radius: 8px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-  .container {
-    max-width: 1380px;
-    margin: 0 auto;
-    padding: 22px 28px 60px;
-  }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 10%, rgba(24, 119, 242, 0.10), transparent 30%),
+                  radial-gradient(circle at 90% 90%, rgba(212, 175, 55, 0.06), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px 24px 60px;
+    }
 
-  /* KPI STRIP */
-  .kpi-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 22px;
-  }
-  .kpi-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 16px 18px;
-    box-shadow: 0 4px 14px rgba(10,25,47,0.04);
-  }
-  .kpi-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
-  }
-  .kpi-val {
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--navy);
-  }
-  .kpi-sub {
-    font-size: 11.5px;
-    color: var(--muted);
-    margin-top: 4px;
-  }
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(24, 119, 242, 0.4);
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
 
-  /* TABS */
-  .tabs-bar {
-    display: flex;
-    gap: 8px;
-    background: var(--card);
-    padding: 6px;
-    border-radius: 14px;
-    border: 1px solid var(--border);
-    margin-bottom: 22px;
-    flex-wrap: wrap;
-  }
-  .tab-btn {
-    padding: 10px 16px;
-    border-radius: 10px;
-    border: none;
-    background: transparent;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    transition: all 0.2s;
-  }
-  .tab-btn:hover { color: var(--navy); background: #F8FAFC; }
-  .tab-btn.active {
-    background: var(--fb-blue);
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(24,119,242,0.28);
-  }
-  .tab-pane { display: none; }
-  .tab-pane.active { display: block; }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
 
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1.06fr 1fr;
-    gap: 22px;
-  }
-  .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 22px;
-    box-shadow: 0 6px 20px rgba(10,25,47,0.04);
-    margin-bottom: 20px;
-  }
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-    flex-wrap: wrap;
-  }
-  .card-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--navy);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-  }
-  .badge-green { background: #DCFCE7; color: #166534; }
-  .badge-blue { background: #DBEAFE; color: #1E40AF; }
-  .badge-purple { background: #F3E8FF; color: #6B21A8; }
-  .badge-amber { background: #FEF3C7; color: #92400E; }
+    .brand-logo-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #1877F2, #0C52B3);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 16px rgba(24, 119, 242, 0.35);
+    }
 
-  .form-group { margin-bottom: 14px; }
-  .form-group label {
-    display: block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 6px;
-  }
-  .form-control {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 13px;
-    font-family: inherit;
-    color: var(--text);
-    background: #fff;
-  }
-  .form-control:focus { outline: none; border-color: var(--fb-blue); }
-  .form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
+    .header-titles h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
 
-  .slot-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding: 12px 14px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 10px;
-    background: #F8FAFC;
-  }
-  .slot-time {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--fb-blue);
-    background: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    border: 1px solid var(--border);
-  }
+    .header-titles p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
 
-  .queue-item {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 14px;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 10px;
-    background: #fff;
-  }
-  .queue-thumb {
-    width: 72px;
-    height: 48px;
-    border-radius: 8px;
-    background: #0F172A;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
-  .queue-info { flex: 1; min-width: 0; }
-  .queue-info h4 {
-    font-size: 13.5px;
-    font-weight: 700;
-    color: var(--navy);
-    margin-bottom: 3px;
-  }
-  .queue-info p {
-    font-size: 12px;
-    color: var(--muted);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+    .api-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      color: #34D399;
+      padding: 7px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-  /* FACEBOOK FORMAT GUIDE CARDS */
-  .fb-format-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 18px;
-  }
-  .fb-format-box {
-    background: #F8FAFC;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    font-size: 11.5px;
-  }
-  .fb-format-box strong {
-    display: block;
-    color: var(--navy);
-    font-size: 12.5px;
-    margin-bottom: 4px;
-  }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 10px #10B981;
+    }
 
-  /* 3-TIER PIPELINE */
-  .tier-pipeline {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-  }
-  .tier-box {
-    border: 1.5px solid var(--border);
-    border-radius: 14px;
-    padding: 16px;
-    background: #fff;
-  }
-  .tier-box.t1 { border-top: 4px solid #1877F2; }
-  .tier-box.t2 { border-top: 4px solid #8B5CF6; }
-  .tier-box.t3 { border-top: 4px solid #10B981; }
-  .tier-box h4 { font-size: 13.5px; font-weight: 800; color: var(--navy); margin: 6px 0; }
-  .tier-box p { font-size: 12px; color: var(--muted); line-height: 1.55; }
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+    }
 
-  /* MESSENGER CHAT SIMULATOR */
-  .chat-window {
-    background: #0B141A;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #1E293B;
-    display: flex;
-    flex-direction: column;
-    height: 520px;
-  }
-  .chat-header {
-    background: linear-gradient(90deg, #0A192F, #1877F2);
-    color: #fff;
-    padding: 14px 18px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-  .chat-messages {
-    flex: 1;
-    padding: 18px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-  }
-  .msg-bubble {
-    max-width: 82%;
-    padding: 12px 15px;
-    border-radius: 14px;
-    font-size: 13px;
-    line-height: 1.55;
-  }
-  .msg-user {
-    align-self: flex-end;
-    background: #1877F2;
-    color: #fff;
-    border-bottom-right-radius: 4px;
-  }
-  .msg-bot {
-    align-self: flex-start;
-    background: #1E293B;
-    color: #F8FAFC;
-    border: 1px solid #334155;
-    border-bottom-left-radius: 4px;
-  }
-  .msg-tier-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 800;
-    padding: 3px 8px;
-    border-radius: 6px;
-    margin-bottom: 6px;
-    text-transform: uppercase;
-  }
-  .tier-tag-1 { background: rgba(24,119,242,0.28); color: #93C5FD; }
-  .tier-tag-2 { background: rgba(139,92,246,0.25); color: #C4B5FD; }
-  .tier-tag-3 { background: rgba(16,185,129,0.25); color: #6EE7B7; }
-  .chat-input-bar {
-    padding: 12px;
-    background: #111B21;
-    border-top: 1px solid #1E293B;
-    display: flex;
-    gap: 8px;
-  }
-  .chat-input-bar input {
-    flex: 1;
-    background: #1E293B;
-    border: 1px solid #334155;
-    color: #fff;
-    padding: 10px 14px;
-    border-radius: 10px;
-    font-size: 13px;
-    font-family: inherit;
-  }
+    .nav-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: rgba(17, 27, 46, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      color: #94A3B8;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--navy);
-    color: #fff;
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 700;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.25);
-    display: none;
-    z-index: 9999;
-  }
-  .toast.show { display: block; }
+    .nav-tab-btn:hover {
+      background: rgba(17, 27, 46, 0.9);
+      color: #fff;
+      border-color: rgba(56, 189, 248, 0.4);
+    }
 
-  @media (max-width: 980px) {
-    .kpi-grid, .grid-2, .tier-pipeline, .fb-format-grid { grid-template-columns: 1fr; }
-  }
-</style>
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, rgba(24, 119, 242, 0.25), rgba(17, 27, 46, 0.95));
+      border-color: #38BDF8;
+      color: #E0F2FE;
+      box-shadow: 0 4px 18px rgba(24, 119, 242, 0.22);
+    }
+
+    .tab-content-area { display: none; }
+    .tab-content-area.active { display: block; }
+
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+    }
+
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .card-title-group h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-title-group p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+
+    .btn-gold {
+      background: linear-gradient(135deg, #D4AF37, #B8972E);
+      color: #0A0E17;
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+    }
+
+    .btn-fb {
+      background: linear-gradient(135deg, #1877F2, #0C52B3);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(24, 119, 242, 0.35);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #CBD5E1;
+    }
+
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.18);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      color: #F87171;
+    }
+
+    .form-control {
+      background: #0B1120;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .slot-card {
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+
+    .slot-card.inactive {
+      opacity: 0.55;
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .slot-type-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .badge-post { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-story { background: rgba(236, 72, 153, 0.15); color: #F472B6; border: 1px solid rgba(236, 72, 153, 0.3); }
+    .badge-link { background: rgba(212, 175, 55, 0.15); color: #FDE68A; border: 1px solid rgba(212, 175, 55, 0.3); }
+    .badge-reels { background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); }
+
+    .upcoming-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+    }
+
+    .upcoming-card {
+      background: rgba(11, 17, 32, 0.78);
+      border: 1px solid rgba(56, 189, 248, 0.22);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .upcoming-thumb {
+      width: 74px;
+      height: 74px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: #050811;
+      flex-shrink: 0;
+    }
+
+    .upcoming-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .upcoming-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upcoming-plan-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
+
+    .plan-mini-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.06);
+      color: #CBD5E1;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
+
+    .history-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .history-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      background: #000;
+    }
+
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .history-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .history-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.15);
+      color: #34D399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .assistant-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .assistant-grid { grid-template-columns: 1fr; }
+    }
+
+    .chat-simulator-card {
+      background: #070A12;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .chat-user {
+      align-self: flex-end;
+      background: #1E293B;
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-bot {
+      align-self: flex-start;
+      background: rgba(24, 119, 242, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.35);
+      color: #E0F2FE;
+      border-bottom-left-radius: 2px;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #0B1120;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0 0 14px 14px;
+    }
+
+    #toastMessage {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111B2E;
+      border: 1px solid #38BDF8;
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
 
-<header class="top-header">
-  <div class="th-brand">
-    <div class="th-icon">📘</div>
-    <div>
-      <h1>Facebook Kurumsal Sayfa Botu & Otonom İçerik Stüdyosu</h1>
-      <span>7/24 Bulut Sunucu • Foto/Video Girişsiz Katalog, B2B Kart, Reels & Story Üretimi • 3 Aşamalı Messenger & Yorum Yanıt Motoru</span>
+  <!-- ÜST BAŞLIK -->
+  <header class="top-header">
+    <div class="brand-wrap">
+      <div class="brand-logo-badge">f</div>
+      <div class="header-titles">
+        <h1>NOVA FURNITURE — Facebook Otonom Kontrol Merkezi</h1>
+        <p>Sayfa: Thenovafurniture • Üretim Kontrolü, Yayın Akış Saatleri ve Sıradaki İçerik Önizlemesi</p>
+      </div>
     </div>
-  </div>
-  <div class="th-actions">
-    <div class="cloud-pill">
-      <span class="pulse-dot"></span>
-      <span>Facebook Cloud Bot: 7/24 Otonom (Sıfır Medya Girişi)</span>
+    <div style="display:flex; align-items:center; gap:12px;">
+      <div class="api-status-pill">
+        <span class="status-dot"></span>
+        <span>Facebook Page Graph API Aktif</span>
+      </div>
+      <button class="btn btn-fb" id="btnTriggerFbCycle" onclick="triggerAutonomousFbCycleNow()">
+        ⚡ Şimdi Otonom Paylaşım Yap
+      </button>
     </div>
-    <button class="btn btn-outline" onclick="switchTab('tab-simulator')">🧪 Messenger & Yorum Testi</button>
-    <button class="btn btn-fb" onclick="runFbAutonomousCycleNow()">⚡ Şimdi Otonom Tasarla & Facebook'ta Yayınla</button>
-  </div>
-</header>
+  </header>
 
-<div class="container">
-
-  <!-- KPI STRIP -->
-  <div class="kpi-grid">
-    <div class="kpi-card">
-      <div class="kpi-top"><span>📘 Facebook Otonom Mod</span><span class="badge badge-green">Sıfır Medya Girişi</span></div>
-      <div class="kpi-val">4 Format</div>
-      <div class="kpi-sub">Katalog • B2B Link • FB Reels • FB Story</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-top"><span>📢 Üretilen / Yayınlanan</span><span class="badge badge-blue">Onaysız Otomatik</span></div>
-      <div class="kpi-val" id="kpiScheduledCount">0 Gönderi</div>
-      <div class="kpi-sub">Günlük 4 Otonom Saat Dilimi Aktif</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-top"><span>💬 Messenger & Yorumlar</span><span class="badge badge-purple">Sabit + Gemini AI</span></div>
-      <div class="kpi-val" id="kpiRulesCount">5 Kural + AI</div>
-      <div class="kpi-sub">Basit Soruya Sabit, Karmaşığa Gemini AI</div>
-    </div>
-    <div class="kpi-card">
-      <div class="kpi-top"><span>📲 3. Aşama B2B / WhatsApp</span><span class="badge badge-amber">İnsan Devri</span></div>
-      <div class="kpi-val" id="kpiHandoffCount">0 Devir</div>
-      <div class="kpi-sub">WhatsApp (+90 505 015 1035) Otomatik Yönlendirme</div>
-    </div>
-  </div>
-
-  <!-- NAVIGATION TABS -->
-  <div class="tabs-bar">
-    <button class="tab-btn active" data-tab="tab-scheduler" onclick="switchTab('tab-scheduler')">
-      🎨 1. Otonom Facebook Gönderi, Reels, Story & B2B Kart Stüdyosu
+  <!-- ANA 2 MENÜ -->
+  <nav class="nav-tabs">
+    <button class="nav-tab-btn active" data-tab="tab-studio" onclick="switchNavTab('tab-studio')">
+      ⏰ 1. Yayın Akış Saatleri &amp; Sıradaki İçerik
     </button>
-    <button class="tab-btn" data-tab="tab-tier1" onclick="switchTab('tab-tier1')">
-      💬 2. Birinci Aşama: Messenger & Yorum Sabit Cevapları
+    <button class="nav-tab-btn" data-tab="tab-assistant" onclick="switchNavTab('tab-assistant')">
+      💬 2. Messenger &amp; Yorum Asistanı
     </button>
-    <button class="tab-btn" data-tab="tab-tier2" onclick="switchTab('tab-tier2')">
-      🧠 3. İkinci Aşama: Gemini AI Destek Motoru
-    </button>
-    <button class="tab-btn" data-tab="tab-tier3" onclick="switchTab('tab-tier3')">
-      📲 4. Üçüncü Aşama: WhatsApp & Satış Temsilcisi Devri
-    </button>
-    <button class="tab-btn" data-tab="tab-simulator" onclick="switchTab('tab-simulator')">
-      🧪 5. Canlı Facebook Messenger & Yorum Simülatörü
-    </button>
-  </div>
+  </nav>
 
-  <!-- ===================================================================== -->
-  <!-- TAB 1: OTONOM FACEBOOK TASARIM & ZAMANLAYICI                          -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane active" id="tab-scheduler">
+  <!-- ======================================================================= -->
+  <!-- 1. YAYIN AKIŞ SAATLERİ & SIRADAKİ İÇERİK SEKMESİ                         -->
+  <!-- ======================================================================= -->
+  <main class="tab-content-area active" id="tab-studio">
 
-    <!-- FACEBOOK FORMAT REHBERİ (FACEBOOK KULLANMAYANLAR İÇİN ÖZET) -->
-    <div class="fb-format-grid">
-      <div class="fb-format-box">
-        <strong>🖼️ 1. Kurumsal Katalog Gönderisi</strong>
-        <span style="color:var(--muted);">1200×630 yatay kurumsal ürün ve renk kartelası tanıtımı. Doğrudan tıklanabilir web sitesi linki içerir.</span>
-      </div>
-      <div class="fb-format-box">
-        <strong>🔗 2. B2B & Tasarım Modu Kartı</strong>
-        <span style="color:var(--muted);">Mobilya ustaları, iç mimarlar ve ev sahipleri için doğrudan sitemizdeki Canlı Tasarım Moduna yönlendiren kart.</span>
-      </div>
-      <div class="fb-format-box">
-        <strong>🎬 3. Facebook Reels Videosu</strong>
-        <span style="color:var(--muted);">1080×1920 dikey formatta yüksek organik erişim sağlayan CNC kapak ve fabrika tanıtım sahnesi.</span>
-      </div>
-      <div class="fb-format-box">
-        <strong>📱 4. Facebook Sayfa Hikayesi</strong>
-        <span style="color:var(--muted);">Takipçilerin en üst barında 24 saat görünen dikey 9:16 hızlı koleksiyon ve WhatsApp iletişim hikayesi.</span>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <!-- SOL: OTONOM FACEBOOK TASARIM STÜDYOSU -->
-      <div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">🎨 Otonom Facebook Tasarım & İçerik Üretim Motoru</div>
-            <span class="badge badge-green">✓ Fotoğraf/Video Girişi Gerekmez</span>
-          </div>
-
-          <div style="background:linear-gradient(135deg,#0A192F 0%,#1877F2 100%);color:#fff;padding:12px 15px;border-radius:12px;font-size:12px;line-height:1.55;margin-bottom:16px;">
-            📘 <strong>Facebook Otonom Çalışma Prensibi:</strong> Instagram'dan farklı olarak Facebook gönderilerinde <strong>tıklanabilir web sitesi linkleri</strong> doğrudan çalışır ve geniş ekran (1200×630) kurumsal katalog kartları çok yüksek etkileşim alır. Bot bu 4 formatı da kendi kendine tasarlar, metnini yazar ve paylaşır.
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Otonom Üretilecek Facebook Formatı</label>
-              <select class="form-control" id="post_media_type" onchange="renderFbAutonomousCanvasPreview()">
-                <option value="PHOTO_POST">🖼️ Kurumsal Katalog & Ürün Gönderisi (1200×630 Geniş)</option>
-                <option value="LINK_CARD">🔗 B2B & Canlı Tasarım Modu Bağlantı Kartı (1200×630)</option>
-                <option value="FB_REELS">🎬 Facebook Reels (1080×1920 Dikey 9:16)</option>
-                <option value="FB_STORIES">📱 Facebook Sayfa Hikayesi (1080×1920 Dikey Story)</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label>Otomatik Yayın Saati / Tarihi</label>
-              <input type="datetime-local" class="form-control" id="post_scheduled_for">
-            </div>
-          </div>
-
-          <div class="notice" style="background:rgba(212,175,55,.08);border:1px solid rgba(212,175,55,.25);border-radius:9px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#fde68a;">🎨 Renk paleti, sahne atmosferi ve ürün görünümü artık ürün bazlı AI Studio profilinden yönetilir. Bu bot ekranında yalnızca platform formatı ve yayın ayarları bulunur.</div>
-          <input type="hidden" id="auto_theme_select" value="fb-corporate-blue"><input type="hidden" id="auto_door_style" value="shaker">
-
-          <!-- CANLI OTONOM FACEBOOK TASARIM TUVALİ -->
-          <div style="background:#081221;border:1px solid #1E293B;border-radius:14px;padding:16px;margin-bottom:14px;text-align:center;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
-              <span style="font-size:11.5px;font-weight:700;color:#93C5FD;">✨ Lüks Mimari Afiş & Video Sahnesi (Nova Motoru)</span>
-              <div style="display:flex;gap:6px;">
-                <button type="button" class="btn btn-outline btn-sm" id="btnFbKenBurns" onclick="toggleFacebookKenBurns()">
-                  ▶️ Kamera Hareketi (Ken Burns)
-                </button>
-                <button type="button" class="btn btn-fb btn-sm" onclick="autonomousInventNewFbDesign()">
-                  🎲 Katalogdan Yeni Ürün & Tasarım Seç
-                </button>
-              </div>
-            </div>
-            <canvas id="fbAutoDesignCanvas" width="600" height="315" style="max-height:290px;width:auto;max-width:100%;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,0.45);border:1px solid rgba(255,255,255,0.15);"></canvas>
-            <div style="font-size:11px;color:#94A3B8;margin-top:8px;">
-              Tasarım Motoru: Yatay 1200×630 Kurumsal Kart & Dikey 1080×1920 Reels/Story Otomatik Üretim
-            </div>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Tasarım Üzerindeki Ana Başlık (Bot Otomatik Yazar)</label>
-              <input type="text" class="form-control" id="post_title" oninput="renderFbAutonomousCanvasPreview()" value="ÖZEL ÖLÇÜ CNC MEMBRAN KAPAK KOLEKSİYONU">
-            </div>
-            <div class="form-group">
-              <label>Tasarım Alt Başlığı / Teknik Vurgu</label>
-              <input type="text" class="form-control" id="post_subtitle" oninput="renderFbAutonomousCanvasPreview()" value="18mm E1 MDF • Suya & Buhara Dayanıklı • 5 İş Gününde Teslim">
-            </div>
-          </div>
-
-          <div class="form-group">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-              <label style="margin:0;">Otonom Facebook Gönderi Metni & Tıklanabilir Linkler</label>
-              <button type="button" class="btn btn-secondary btn-sm" onclick="autonomousInventNewFbDesign()">✨ Katalog + Gemini AI İle Yeniden Üret</button>
-            </div>
-            <textarea class="form-control" id="post_caption" rows="4" placeholder="Bot bu alanı ürün kataloğunuzdan ve Gemini AI ile otomatik yazar..."></textarea>
-          </div>
-
-          <div class="form-row">
-            <div class="form-group">
-              <label>Yönlendirilecek Tıklanabilir Bağlantı (WhatsApp / DM)</label>
-              <input type="text" class="form-control" id="post_target_link" value="https://wa.me/905050151035">
-            </div>
-            <div class="form-group">
-              <label>Facebook Hashtag Grubu</label>
-              <input type="text" class="form-control" id="post_hashtags" value="#novafurniture #thenovafurniture #mobilyatasarim #luxuryfurniture #evdekorasyonu">
-            </div>
-          </div>
-
-          <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button type="button" class="btn btn-fb" id="btnQueuePost" onclick="addFbScheduledPost(false)" style="flex:1;justify-content:center;">
-              ⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle
-            </button>
-            <button type="button" class="btn btn-navy" onclick="addFbScheduledPost(true)">
-              🚀 Şimdi Otomatik Tasarla & Yayınla
-            </button>
-          </div>
-        </div>
-
-        <!-- GÜNLÜK SAAT ARALIKLARI -->
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">⏰ Günlük Otonom Facebook Paylaşım Saat Aralıkları</div>
-            <button class="btn btn-secondary btn-sm" onclick="saveFbBotConfigToSupabase()">💾 Saatleri Kaydet</button>
-          </div>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:14px;">
-            Bulut sunucu her gün aşağıdaki saatlerde <strong>hiçbir fotoğraf/video girişi veya onay beklemeden</strong> ilgili Facebook formatını kendi tasarlar ve yayınlar:
-          </p>
-          <div id="slotsContainer"></div>
-          <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
-            <input type="time" class="form-control" id="new_slot_time" value="16:30" style="width:130px;">
-            <select class="form-control" id="new_slot_type" style="width:185px;">
-              <option value="PHOTO_POST">🖼️ KATALOG GÖNDERİSİ</option>
-              <option value="LINK_CARD">🔗 B2B BAĞLANTI KARTI</option>
-              <option value="FB_REELS">🎬 FACEBOOK REELS</option>
-              <option value="FB_STORIES">📱 FACEBOOK STORY</option>
-            </select>
-            <input type="text" class="form-control" id="new_slot_label" placeholder="Slot adı (Örn: Akşamüstü B2B Kartı)">
-            <button class="btn btn-navy btn-sm" onclick="addNewFbTimeSlot()" style="white-space:nowrap;">+ Saat Ekle</button>
-          </div>
-        </div>
-      </div>
-
-      <!-- SAĞ: FACEBOOK YAYIN KUYRUĞU VE RESMİ SAYFA API BİLGİLERİ -->
-      <div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📋 Otonom Üretilen & Yayınlanan Facebook Kuyruğu</div>
-            <button class="btn btn-secondary btn-sm" onclick="runFbAutonomousCycleNow()">⚡ Yeni İçerik Tasarla & Şimdi Yayınla</button>
-          </div>
-          <div id="scheduledQueueContainer"></div>
-        </div>
-
-        <!-- Facebook Graph API Bulut Bağlantı Durumu Kartı (Kullanıcı Talebiyle ID & Token Alanları Gizlendi) -->
-        <div style="background:linear-gradient(135deg, rgba(24,119,242,0.1), rgba(15,23,42,0.85));border:1px solid rgba(24,119,242,0.35);border-radius:14px;padding:16px 20px;margin-bottom:14px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#1877F2,#0d5cb6);display:flex;align-items:center;justify-content:center;font-size:22px;color:#fff;">
-                📘
-              </div>
-              <div>
-                <h4 style="font-size:13.5px;font-weight:800;color:#60a5fa;display:flex;align-items:center;gap:8px;">
-                  Facebook Page Graph API Bulut Bağlantısı Aktif
-                </h4>
-                <p style="font-size:11.5px;color:#94a3b8;margin-top:2px;">
-                  Sayfa: <strong style="color:#f8fafc;" id="fbActivePageNameDisplay">Thenovafurniture</strong> • Sayfa ID: <code style="color:#93c5fd;background:rgba(15,23,42,0.7);padding:2px 7px;border-radius:5px;" id="fbActivePageIdDisplay">1436666706190366</code>
-                </p>
-              </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:8px;">
-              <span class="badge badge-green" style="font-size:11px;padding:5px 12px;font-weight:800;">7/24 BULUT AKTİF</span>
-              <button type="button" class="btn btn-fb btn-sm" id="btnFbDirectTestPost" onclick="triggerFbDirectTestPost(this)" style="font-size:11.5px;padding:6px 14px;">
-                🚀 Örnek Test Gönderisi Yayınla
-              </button>
-            </div>
-          </div>
-          <!-- Gizli girdi alanları (Arka plan bot motoru ve Supabase senkronizasyonu için korunmuştur) -->
-          <input type="hidden" id="cfg_page_name" value="Thenovafurniture">
-          <input type="hidden" id="cfg_page_id" value="1436666706190366">
-          <input type="hidden" id="cfg_page_token" value="">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 2: 1. AŞAMA — MESSENGER & YORUM SABİT CEVAP KURALLARI             -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier1">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">➕ Yeni 1. Aşama Facebook Sabit Cevap Kuralı Ekle</div>
-          <span class="badge badge-blue">Messenger + Gönderi Yorumları</span>
-        </div>
-        <div class="form-group">
-          <label>Kural Başlığı</label>
-          <input type="text" class="form-control" id="r_name" placeholder="Örn: Teslimat Süresi & Şehir Dışı Nakliye">
-        </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Geçerli Kanal</label>
-            <select class="form-control" id="r_channel">
-              <option value="BOTH">Messenger DM + Sayfa Yorumları (Her İkisi)</option>
-              <option value="MESSENGER">Sadece Facebook Messenger DM</option>
-              <option value="COMMENT">Sadece Facebook Gönderi/Reels Yorumları</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Eşleşme Tipi</label>
-            <select class="form-control" id="r_match_type">
-              <option value="contains">Kelimeyi İçeriyorsa (Önerilen)</option>
-              <option value="exact">Tam Eşleşme</option>
-            </select>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Tetikleyici Anahtar Kelimeler (Virgülle Ayırın)</label>
-          <input type="text" class="form-control" id="r_keywords" placeholder="teslimat, kaç günde, kargo, termin, nakliye">
-        </div>
-        <div class="form-group">
-          <label>Verilecek Sabit Kurumsal Cevap</label>
-          <textarea class="form-control" id="r_response" rows="4" placeholder="🚚 Tüm özel ölçü membran kapak siparişlerimizi 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz..."></textarea>
-        </div>
-        <button class="btn btn-fb" onclick="addFbTier1Rule()" style="width:100%;justify-content:center;">
-          💾 Sabit Cevap Kuralını Ekle ve Buluta Kaydet
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📚 Aktif 1. Aşama Facebook Sabit Cevap Kuralları</div>
-          <span class="badge badge-green">Milisaniyelik Yanıt</span>
-        </div>
-        <div id="tier1RulesList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 3: 2. AŞAMA — KARMAŞIK SORULAR İÇİN GEMINI AI DESTEK MOTORU      -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier2">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🧠 2. Aşama: Facebook Messenger & Yorumlar İçin Gemini AI</div>
-          <span class="badge badge-purple">2. Aşama: Akıllı Asistan</span>
-        </div>
-        <p style="font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.6;">
-          Facebook takipçinizin Messenger mesajı veya gönderi altındaki yorumu 1. Aşamadaki basit kurallarla eşleşmediğinde <strong>Google Gemini AI</strong> devreye girer. Supabase'deki canlı kapak modellerinizi okuyarak müşteriye veya mobilya ustasına teknik yanıt üretir.
-        </p>
-        <div class="form-row">
-          <div class="form-group">
-            <label>Gemini AI Modeli</label>
-            <select class="form-control" id="cfg_gemini_model">
-              <option value="gemini-2.5-flash">gemini-2.5-flash (Hızlı & Ücretsiz Kota Uyumlu)</option>
-              <option value="gemini-2.5-pro">gemini-2.5-pro (Derin Teknik Analiz)</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>Google Gemini API Key</label>
-            <input type="password" class="form-control" id="cfg_gemini_key" placeholder="AIzaSy...">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Facebook Gemini AI Sistem Talimatı (System Prompt)</label>
-          <textarea class="form-control" id="cfg_tier2_prompt" rows="6"></textarea>
-        </div>
-        <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
-          💾 2. Aşama Gemini AI Ayarlarını Kaydet
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📦 Facebook Botuna Bağlı Canlı Supabase Ürün Kataloğu</div>
-          <span class="badge badge-green">Modül 1 İle Senkronize</span>
-        </div>
-        <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">
-          Hem otonom gönderi tasarımcısı hem de Gemini AI, aşağıdaki canlı ürün kataloğunuzu kullanır:
-        </p>
-        <div id="aiCatalogPreviewList" style="max-height:360px;overflow-y:auto;"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 4: 3. AŞAMA — GERÇEK İNSAN & WHATSAPP / İLETİŞİM YÖNLENDİRME      -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-tier3">
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">📲 3. Aşama: Gerçek İnsan, B2B Bayilik & WhatsApp Yönlendirme</div>
-          <span class="badge badge-amber">3. Aşama: Canlı Temsilci</span>
-        </div>
-        <p style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.6;">
-          Facebook üzerinden özel ölçü fiyat teklifi, toptan/B2B üretim, müteahhit/proje anlaşması veya doğrudan bir yetkiliyle görüşme talep edildiğinde bot müşteriyi tek tıkla açılan hazır mesajlı <strong>WhatsApp</strong> hattınıza ve fabrika telefonunuza yönlendirir.
-        </p>
-        <div class="form-row">
-          <div class="form-group">
-            <label>WhatsApp Yönlendirme Numarası (Ülke Koduyla)</label>
-            <input type="text" class="form-control" id="cfg_wa_number" value="905050151035">
-          </div>
-          <div class="form-group">
-            <label>Gösterilecek Fabrika Telefonu</label>
-            <input type="text" class="form-control" id="cfg_phone_display" value="0 (505) 015 1035">
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Doğrudan 3. Aşamayı Tetikleyen İfadeler (Virgülle Ayırın)</label>
-          <textarea class="form-control" id="cfg_tier3_triggers" rows="3"></textarea>
-        </div>
-        <button class="btn btn-fb" onclick="saveFbBotConfigToSupabase()" style="width:100%;justify-content:center;">
-          💾 3. Aşama İletişim & WhatsApp Devir Ayarlarını Kaydet
-        </button>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">🙋‍♂️ Facebook'tan 3. Aşamaya Aktarılan Müşteriler</div>
-          <span class="badge badge-amber" id="handoffBadgeCount">0 Talep</span>
-        </div>
-        <div id="tier3HandoffList"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ===================================================================== -->
-  <!-- TAB 5: CANLI FACEBOOK MESSENGER & YORUM SİMÜLATÖRÜ                   -->
-  <!-- ===================================================================== -->
-  <div class="tab-pane" id="tab-simulator">
-    <div class="tier-pipeline">
-      <div class="tier-box t1">
-        <span class="badge badge-blue">1. AŞAMA</span>
-        <h4>Basit Sorular → Sabit Cevap</h4>
-        <p>Messenger ve yorumlarda selamlama, 5 iş günü teslimat, 5 yıl garanti, Bağcılar fabrika adresi ve renk kartelası sorularını anında yanıtlar.</p>
-      </div>
-      <div class="tier-box t2">
-        <span class="badge badge-purple">2. AŞAMA</span>
-        <h4>Karmaşık Sorular → Gemini AI</h4>
-        <p>Teknik MDF/membran soruları, model seçimi ve dekorasyon uyumunda canlı Supabase ürün kataloğunu bilen Gemini AI devreye girer.</p>
-      </div>
-      <div class="tier-box t3">
-        <span class="badge badge-green">3. AŞAMA</span>
-        <h4>Sipariş & B2B → WhatsApp / İnsan</h4>
-        <p>Özel ölçü fiyat teklifi, toptan imalat, bayilik ve yetkili taleplerinde hazır mesajlı WhatsApp bağlantısıyla satış ekibine bağlar.</p>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="chat-window">
-        <div class="chat-header">
+    <!-- 1. GÜNLÜK YAYIN SAATLERİ -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">⏰</span>
           <div>
-            <strong style="font-size:14px;">📘 Facebook Messenger & Sayfa Yorum Simülatörü</strong>
-            <div style="font-size:11px;color:#BAE6FD;">Nova Furniture Resmi Facebook Sayfası — 3 Aşamalı Karar Motoru</div>
-          </div>
-          <select id="simChannelSelect" style="background:#0A192F;color:#fff;border:1px solid #3B82F6;padding:5px 10px;border-radius:8px;font-size:11.5px;">
-            <option value="MESSENGER">💬 Kanal: Facebook Messenger DM</option>
-            <option value="COMMENT">📝 Kanal: Facebook Gönderi / Reels Yorumu</option>
-          </select>
-        </div>
-
-        <div class="chat-messages" id="simChatMessages">
-          <div class="msg-bubble msg-bot">
-            <div class="msg-tier-tag tier-tag-1">FACEBOOK BOT HAZIR</div>
-            <div>Merhaba! Aşağıdan hazır test senaryolarına tıklayabilir veya Facebook takipçisi gibi mesaj yazarak <strong>1. Aşama (Sabit)</strong>, <strong>2. Aşama (Gemini AI)</strong> ve <strong>3. Aşama (WhatsApp / İnsan Devri)</strong> yanıtlarını canlı test edebilirsiniz.</div>
+            <h2>Yayın Akış Saatleri &amp; Günlük Otomasyon</h2>
+            <p>Hangi Facebook formatının günün hangi saatinde otomatik üretilip yayınlanacağını belirleyin.</p>
           </div>
         </div>
-
-        <div class="chat-input-bar">
-          <input type="text" id="simUserInput" placeholder="Facebook Messenger mesajı veya yorumu yazın (Enter)..." onkeydown="if(event.key==='Enter') sendFbSimulatedMessage()">
-          <button class="btn btn-fb" onclick="sendFbSimulatedMessage()">Gönder →</button>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-outline" onclick="loadAllData()">🔄 Yenile</button>
+          <button class="btn btn-fb" onclick="saveScheduleSettings()">💾 Saatleri Kaydet</button>
         </div>
       </div>
 
-      <div>
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">⚡ Tek Tıkla Facebook Test Senaryoları</div>
+      <div class="slots-grid">
+        <!-- SLOT 1: KOLEKSİYON & KATALOG GÖNDERİSİ -->
+        <div class="slot-card" id="slotCardPhoto">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-post">🖼️ Koleksiyon &amp; Katalog Gönderisi</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotPhotoActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
           </div>
-          <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('İyi çalışmalar, özel ölçü kapaklarda teslimat süreniz kaç gün ve şehir dışına sevkiyat var mı?')">
-              <span class="badge badge-blue">1. Aşama</span> "İyi çalışmalar, teslimat süreniz kaç gün ve şehir dışına sevkiyat var mı?"
-            </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Fabrikanız tam olarak nerede, cumartesi günleri showroom açık mı?')">
-              <span class="badge badge-blue">1. Aşama</span> "Fabrikanız tam olarak nerede, cumartesi günleri showroom açık mı?"
-            </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Mutfak dolaplarımızda çıtalı country model düşünüyoruz, fjord mavi mi yoksa adaçayı yeşili mi daha modern durur?')">
-              <span class="badge badge-purple">2. Aşama (Gemini AI)</span> "Çıtalı country model düşünüyoruz, fjord mavi mi adaçayı yeşili mi önerirsiniz?"
-            </button>
-            <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left;" onclick="triggerFbQuickSim('Mobilya atölyemiz için düzenli toptan membran kapak alımı yapmak istiyoruz, m2 fiyat teklifi için yetkiliyle görüşebilir miyiz?')">
-              <span class="badge badge-green">3. Aşama (B2B / WhatsApp)</span> "Atölyemiz için toptan kapak alımı ve m2 fiyat teklifi için yetkiliyle görüşebilir miyiz?"
-            </button>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotPhoto" value="09:30" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            Sabah kuşağı: Koleksiyon ana tanıtım görseli ve teknik detay özetiyle yayınlanır.
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">📜 Son Facebook Messenger & Yorum Kayıtları</div>
+        <!-- SLOT 2: FACEBOOK HİKAYESİ -->
+        <div class="slot-card" id="slotCardStory">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-story">📱 Facebook Hikayesi (Story)</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotStoryActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
           </div>
-          <div id="recentConversationsList" style="max-height:240px;overflow-y:auto;"></div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotStory" value="13:30" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            Öğle kuşağı: 9:16 dikey formatta koleksiyon parçaları ve hızlı sipariş yönlendirmesiyle paylaşılır.
+          </div>
+        </div>
+
+        <!-- SLOT 3: KOLEKSİYON PARÇALARI & BAĞLANTI KARTI -->
+        <div class="slot-card" id="slotCardLink">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-link">🔗 Koleksiyon Parçaları &amp; Bağlantı</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotLinkActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotLink" value="16:30" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            İkindi kuşağı: Koleksiyon alt parçaları ve tıklanabilir WhatsApp sipariş bağlantısıyla yayınlanır.
+          </div>
+        </div>
+
+        <!-- SLOT 4: FACEBOOK REELS -->
+        <div class="slot-card" id="slotCardReels">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-reels">🎬 Facebook Reels / Video</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotReelsActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotReels" value="20:00" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            Akşam kuşağı: Ürüne tanımlanan fon müziği ve sinematik kamera hareketiyle paylaşılır.
+          </div>
         </div>
       </div>
+    </section>
+
+    <!-- 2. ÜRETİLECEK SIRADAKİ İÇERİKLERİN KÜÇÜK ÖNİZLEMESİ -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">👁️</span>
+          <div>
+            <h2>Üretilecek Sıradaki İçeriklerin Küçük Önizlemesi</h2>
+            <p>Katalogdaki koleksiyon ve ürünlerin sunum planına göre sıradaki yayınlanacak Facebook içerikleri.</p>
+          </div>
+        </div>
+        <div style="font-size:12px; color:#38BDF8; font-weight:700;" id="txtUpcomingSummary">Hesaplanıyor...</div>
+      </div>
+
+      <div class="upcoming-preview-grid" id="upcomingPreviewContainer">
+        <div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
+          Sıradaki içerik önizlemeleri hazırlanıyor...
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. YAYINLANMIŞ & KUYRUKTAKİ İÇERİKLER -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">🗂️</span>
+          <div>
+            <h2>Yayınlanmış &amp; Kuyruktaki Facebook İçerikleri</h2>
+            <p>Facebook sayfanızda paylaşılan ve yayın kuyruğunda bulunan içeriklerin özeti.</p>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted);" id="txtHistoryCount">Yükleniyor...</div>
+      </div>
+
+      <div class="history-list" id="historyListContainer">
+        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
+          Yayın geçmişi yükleniyor...
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- 2. MESSENGER & YORUM ASİSTANI SEKMESİ                                   -->
+  <!-- ======================================================================= -->
+  <main class="tab-content-area" id="tab-assistant">
+    <div class="assistant-grid">
+
+      <!-- SOL: ASİSTAN AYARLARI -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span style="font-size:22px;">🤖</span>
+            <div>
+              <h2>Facebook Messenger &amp; Yorum Yanıt Kuralları</h2>
+              <p>3 aşamalı otomatik müşteri yanıtlama ve WhatsApp devir sistemi.</p>
+            </div>
+          </div>
+          <button class="btn btn-fb" onclick="saveAssistantSettings()">💾 Ayarları Kaydet</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="background:rgba(56, 189, 248, 0.08); border:1px solid rgba(56, 189, 248, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#38BDF8; display:block; margin-bottom:4px;">1. Kademe: Sabit Kurumsal Yanıtlar (Messenger &amp; Yorum)</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Teslimat süresi (5 iş günü), 5 yıl üretici garantisi, adres ve çalışma saatleri sorularına milisaniyeler içinde sabit kurumsal yanıt verilir.
+            </p>
+          </div>
+
+          <div style="background:rgba(168, 85, 247, 0.08); border:1px solid rgba(168, 85, 247, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#C084FC; display:block; margin-bottom:4px;">2. Kademe: Gemini AI Katalog &amp; Koleksiyon Danışmanı</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Koleksiyon parçaları, ölçüler, 18mm E1 MDF gövde ve CNC membran renk uyumu sorularında Gemini AI katalog verilerini okuyarak yanıt üretir.
+            </p>
+          </div>
+
+          <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#34D399; display:block; margin-bottom:4px;">3. Kademe: B2B, Fiyat Teklifi &amp; WhatsApp Yönlendirmesi</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Özel ölçü fiyat teklifi veya toptan sipariş taleplerinde müşteri doğrudan <strong>0 505 015 1035</strong> WhatsApp satış hattına aktarılır.
+            </p>
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#fff; display:block; margin-bottom:6px;">Gemini AI Modeli:</label>
+            <select class="form-control" id="selGeminiModel" style="width:100%;">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (En Hızlı &amp; Doğal Yanıt)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Derin Teknik Analiz)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: CANLI SİMÜLATÖR -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span style="font-size:22px;">💬</span>
+            <div>
+              <h2>Canlı Messenger &amp; Yorum Testi</h2>
+              <p>Takipçi gibi bir soru yazarak Facebook asistanının yanıtını test edin.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-simulator-card">
+          <div class="chat-messages" id="chatMessagesBox">
+            <div class="chat-bubble chat-bot">
+              👋 Merhaba! Ben Nova Furniture Resmi Facebook Sayfası akıllı asistanıyım. Koleksiyonlarımız, ölçüler ve teslimat süreçlerimiz hakkında sorunuzu yazabilirsiniz.
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input type="text" class="form-control" id="chatInputText" placeholder="Örn: Yatak odası koleksiyonunuzda teslimat süresi kaç gün ve fiyat nedir?" style="flex:1;" onkeydown="if(event.key==='Enter') sendTestChatMessage()">
+            <button class="btn btn-fb" onclick="sendTestChatMessage()">Gönder</button>
+          </div>
+        </div>
+      </div>
+
     </div>
-  </div>
+  </main>
 
-</div>
+  <div id="toastMessage"></div>
 
-<div class="toast" id="toastEl">✅ İşlem tamamlandı</div>
-
-<script>
-// ═══════════════════════════════════════════════════════════════════════════
-// SUPABASE BAĞLANTISI & VARSAYILAN FACEBOOK BOT DURUMU (key = 'fb_bot_state')
-// ═══════════════════════════════════════════════════════════════════════════
-const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
-const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+  <script>
+    const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
@@ -973,1048 +739,366 @@ const sbClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SU
         storageKey: 'sb-vrfujrpsjzqjthaqdalx-auth-token'
       }
     }) : null;
-async function module2StateRequest(key, method='GET', data=null) {
-  if(!sbClient?.auth) throw new Error('Supabase Auth bağlantısı bulunamadı.');
-  const {data:sessionData,error:sessionError}=await sbClient.auth.getSession();
-  const token=sessionData?.session?.access_token;
-  if(sessionError||!token) throw new Error('Modül 2 ayarları için önce Modül 1 yönetici panelinden giriş yapın.');
-  const response=await fetch(method==='GET'?'/api/module2-state?key='+encodeURIComponent(key):'/api/module2-state',{
-    method,headers:{'Content-Type':'application/json','Authorization':`Bearer ${token}`},
-    ...(method==='PUT'?{body:JSON.stringify({key,data})}:{})
-  });
-  const result=await response.json().catch(()=>({}));
-  if(!response.ok||!result.ok) throw new Error(result.error||'Modül 2 ayarları kaydedilemedi.');
-  return result;
-}
 
-const DEFAULT_FB_BOT_STATE = {
-  config: {
-    page_name: 'Thenovafurniture',
-    page_id: '1436666706190366',
-    page_access_token: '',
-    gemini_api_key: '',
-    gemini_model: 'gemini-2.5-flash',
-    auto_publish_enabled: true,
-    require_approval: false,
-    posting_slots: [
-      { slot_id: 'fb_slot_1', time: '09:30', type: 'PHOTO_POST', active: true, label: 'Sabah Kurumsal Katalog & Ürün Kartı (1200×630)' },
-      { slot_id: 'fb_slot_2', time: '13:30', type: 'FB_STORIES', active: true, label: 'Öğle Fabrika & Renk Kartelası Facebook Hikayesi' },
-      { slot_id: 'fb_slot_3', time: '16:30', type: 'LINK_CARD', active: true, label: 'İkindi B2B & Canlı Tasarım Modu Tıklanabilir Bağlantı Kartı' },
-      { slot_id: 'fb_slot_4', time: '20:00', type: 'FB_REELS', active: true, label: 'Akşam 0.01mm CNC İşleme & Mutfak Facebook Reels' }
-    ],
-    tier2_system_prompt: 'Sen Nova Furniture\'ın (@thenovafurniture) resmi Facebook sayfası yapay zeka asistanısın. Modern tesisimizde 1. sınıf 18mm E1 MDF ve suya/neme dayanıklı ithal yüzey teknolojisiyle özel ölçü CNC mobilya, yatak odası, gardırop, banyo ve mutfak kapakları üretmekteyiz. 5 yıl üretici garantisi ve hızlı teslimat sunuyoruz. KESİNLİKLE hiçbir web sitesi linki verme ve "Global Kapak" markasını asla kullanma. Müşteriyi her zaman WhatsApp hattımıza (0 505 015 1035) veya DM ile iletişime yönlendir.',
-    tier3_whatsapp_number: '905050151035',
-    tier3_phone_display: '0 (505) 015 1035',
-    tier3_handoff_triggers: [
-      'sipariş vermek', 'fiyat teklifi', 'net fiyat', 'm2 fiyatı', 'metrekare fiyatı',
-      'kaç tl', 'ne kadar tutar', 'özel ölçü fiyat', 'toptan fiyat', 'bayilik',
-      'müteahhit', 'proje fiyatı', 'yetkili', 'temsilci', 'insanla görüşmek',
-      'ustayla görüşmek', 'toplu alım', 'şikayet', 'whatsapp'
-    ]
-  },
-  rules: [
-    {
-      id: 'fb-rule-1',
-      rule_name: 'Facebook Messenger & Yorum Karşılama',
-      keywords: ['merhaba', 'selam', 'iyi günler', 'iyi çalışmalar', 'kolay gelsin', 'slm', 'mrb'],
-      match_type: 'exact',
-      channel_scope: 'BOTH',
-      response_text: 'Merhaba! 👋 Nova Furniture (@thenovafurniture) resmi sayfasına hoş geldiniz. Özel ölçü mobilya, gardırop, yatak odası, mutfak ve banyo modellerimiz veya renk kartelamız hakkında size nasıl yardımcı olabilirim?'
-    },
-    {
-      id: 'fb-rule-2',
-      rule_name: 'Teslimat Süresi & Türkiye Geneli Sevkiyat',
-      keywords: ['teslimat', 'kaç günde', 'kaç gün', 'termin', 'kargo', 'şehir dışı', 'sevkiyat', 'nakliye'],
-      match_type: 'contains',
-      channel_scope: 'BOTH',
-      response_text: '🚚 Tüm özel ölçü siparişlerimizi modern fabrikamızda 5 iş günü içinde üretip sevkiyata hazır hale getiriyoruz. İstanbul içi ve Türkiye geneli güvenli ambalajla sevkiyatımız mevcuttur.'
-    },
-    {
-      id: 'fb-rule-3',
-      rule_name: 'Garanti & Su/Buhar Dayanımı',
-      keywords: ['garanti', 'kabarma', 'soyulma', 'suya dayanıklı', 'buhar', 'mdf', 'kalite'],
-      match_type: 'contains',
-      channel_scope: 'BOTH',
-      response_text: '🛡️ Ürünlerimizde 1. sınıf 18mm E1 sertifikalı MDF gövde ve yüksek ısı/neme dayanıklı ithal kaplama kullanıyoruz. Tüm ürünlerimiz 5 Yıl Üretici Garantisi altındadır.'
-    },
-    {
-      id: 'fb-rule-4',
-      rule_name: 'Showroom & Çalışma Saatleri',
-      keywords: ['adres', 'nerede', 'konum', 'yeriniz', 'çalışma saat', 'kaça kadar', 'showroom'],
-      match_type: 'contains',
-      channel_scope: 'BOTH',
-      response_text: '📍 Showroom ve üretim tesisimiz İstanbul’dadır. Pzt-Cmt 08:30 – 18:30 saatleri arasında randevuyla ziyaret edebilirsiniz. WhatsApp: 0 (505) 015 1035'
-    },
-    {
-      id: 'fb-rule-5',
-      rule_name: 'Renk Kartelası & Katalog Talebi',
-      keywords: ['renk', 'kartela', 'katalog', 'modeller', 'çeşit', 'tasarım'],
-      match_type: 'contains',
-      channel_scope: 'BOTH',
-      response_text: '🎨 Fjord Mavi, Kuvars Gri, Adaçayı Yeşili ve Kutup Beyazı dahil 50+ renk seçeneğimiz mevcuttur. Dijital kataloğumuzu incelemek için bize DM atabilir veya WhatsApp hattımızdan yazabilirsiniz: 0 (505) 015 1035'
-    }
-  ],
-  scheduled_posts: [
-    {
-      id: 'fb-demo-1',
-      media_type: 'PHOTO_POST',
-      title: '[Otonom Facebook] NOVA FURNITURE ÖZEL ÖLÇÜ MOBİLYA KOLEKSİYONU',
-      caption: '📘 Mutfak, banyo, gardırop ve yatak odası projeleriniz için modern tesisimizde 5 iş gününde teslim özel ölçü mobilya üretimi! 📲 WhatsApp: 0 (505) 015 1035',
-      hashtags: '#novafurniture #thenovafurniture #mobilyatasarim #luxuryfurniture',
-      target_link: 'https://wa.me/905050151035',
-      media_url: 'https://insta-deployment-rho.vercel.app/api/facebook-render?type=PHOTO_POST&theme=fb-corporate-blue&door=shaker',
-      auto_designed: true,
-      scheduled_for: new Date(Date.now() + 2 * 3600 * 1000).toISOString(),
-      status: 'scheduled'
-    },
-    {
-      id: 'fb-demo-2',
-      media_type: 'LINK_CARD',
-      title: '[Otonom Facebook] 2026 ÖZEL RENK & MODEL KOLEKSİYONU',
-      caption: '🎨 Dolap ölçünüzü iletin, Fjord Mavi, Kuvars Gri ve Adaçayı Yeşili renklerimizi mekanınıza özel planlayalım. WhatsApp Katalog: 0 (505) 015 1035',
-      hashtags: '#novafurniture #thenovafurniture #luxuryfurniture #icmimari',
-      target_link: 'https://wa.me/905050151035',
-      media_url: 'https://insta-deployment-rho.vercel.app/api/facebook-render?type=LINK_CARD&theme=nordic-fjord&door=diagonal',
-      auto_designed: true,
-      scheduled_for: new Date(Date.now() + 5 * 3600 * 1000).toISOString(),
-      status: 'scheduled'
-    }
-  ],
-  conversations: []
-};
+    let fbState = null;
+    let catalogProducts = [];
+    let isCycleRunning = false;
 
-let fbState = JSON.parse(JSON.stringify(DEFAULT_FB_BOT_STATE));
-let catalogProducts = [];
-let currentFbSelectedProduct = null;
-let currentFbProductImageEl = null;
-let fbAnimController = null;
-let isFbAnimPlaying = false;
-
-function showToast(msg) {
-  const el = document.getElementById('toastEl');
-  if (!el) return;
-  el.textContent = msg;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3500);
-}
-
-function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === tabId));
-  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === tabId));
-}
-
-async function resolveFacebookCredentials() {
-  let pageId = fbState?.config?.page_id || document.getElementById('cfg_page_id')?.value?.trim();
-  let pageAccessToken = fbState?.config?.page_access_token || document.getElementById('cfg_page_token')?.value?.trim();
-
-  if (!pageId || !pageAccessToken) {
-    try {
-      const stateResult=await module2StateRequest('fb_bot_state');
-      const conf=stateResult.data?.config;
-      if(conf){
-        if(!pageId&&conf.page_id)pageId=conf.page_id;
-        if(!pageAccessToken&&conf.page_access_token)pageAccessToken=conf.page_access_token;
-      }
-    } catch (_) {}
-  }
-
-  if (!pageId) pageId = '1436666706190366';
-  if (!pageAccessToken) pageAccessToken = '';
-
-  if (fbState && fbState.config) {
-    fbState.config.page_id = pageId;
-    fbState.config.page_access_token = pageAccessToken;
-  }
-  const idEl = document.getElementById('cfg_page_id');
-  const tokEl = document.getElementById('cfg_page_token');
-  if (idEl) idEl.value = pageId;
-  if (tokEl) tokEl.value = pageAccessToken;
-
-  return { pageId, pageAccessToken };
-}
-
-async function loadFbStateFromSupabase() {
-  try {
-    const stateResult=await module2StateRequest('fb_bot_state');
-    if(stateResult.data){
-      fbState=Object.assign({},DEFAULT_FB_BOT_STATE,stateResult.data);
-      fbState.config=Object.assign({},DEFAULT_FB_BOT_STATE.config,stateResult.data.config||{});
-    }
-  } catch (e) {
-    console.warn('Facebook Bot Supabase yükleme uyarısı:', e);
-  }
-
-  populateFbFormsAndRenderAll();
-
-  try {
-    const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
-      headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-    });
-    if (prodRes.ok) {
-      catalogProducts = await prodRes.json();
-      renderAiCatalogPreview();
-    }
-  } catch (e) {
-    console.warn('Supabase ürün kataloğu uyarısı:', e);
-  }
-}
-
-async function persistFbStateToSupabase(notify = true) {
-  try {
-    if (notify) showToast('⏳ Facebook ayarları kaydediliyor...');
-    try {
-      await module2StateRequest('fb_bot_state', 'PUT', fbState);
-    } catch (eAuth) {
-      const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify({
-          key: 'fb_bot_state',
-          data: fbState,
-          updated_at: new Date().toISOString()
-        })
-      });
-      if (!saveRes.ok) throw eAuth;
-    }
-    if (notify) showToast('✅ Facebook Bulut Bot ayarları ve saatleri Supabase\'e kaydedildi ve başarıyla doğrulandı!');
-  } catch (e) {
-    console.error('FB state kaydetme hatası:', e);
-    if (notify) showToast('❌ Kayıt hatası: ' + e.message);
-  }
-  populateFbFormsAndRenderAll();
-}
-
-function populateFbFormsAndRenderAll() {
-  const c = fbState.config || {};
-  const setVal = (id, val) => {
-    const el = document.getElementById(id);
-    if (el) el.value = val !== undefined && val !== null ? val : '';
-  };
-  setVal('cfg_page_name', c.page_name || 'Thenovafurniture');
-  setVal('cfg_page_id', c.page_id || '');
-  setVal('cfg_page_token', c.page_access_token || '');
-
-  const nameDisp = document.getElementById('fbActivePageNameDisplay');
-  if (nameDisp) nameDisp.textContent = c.page_name || 'Thenovafurniture';
-  const idDisp = document.getElementById('fbActivePageIdDisplay');
-  if (idDisp) idDisp.textContent = c.page_id || '1436666706190366';
-  setVal('cfg_gemini_model', c.gemini_model || 'gemini-2.5-flash');
-  setVal('cfg_gemini_key', c.gemini_api_key || '');
-  setVal('cfg_tier2_prompt', c.tier2_system_prompt || '');
-  setVal('cfg_wa_number', c.tier3_whatsapp_number || '905050151035');
-  setVal('cfg_phone_display', c.tier3_phone_display || '0 (505) 015 1035');
-  setVal('cfg_tier3_triggers', (c.tier3_handoff_triggers || []).join(', '));
-
-  const dtInput = document.getElementById('post_scheduled_for');
-  if (dtInput && !dtInput.value) {
-    const d = new Date(Date.now() + 3600 * 1000);
-    dtInput.value = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
-  }
-
-  renderFbSlots();
-  renderFbScheduledQueue();
-  renderFbTier1Rules();
-  renderFbAiCatalogPreview();
-  renderFbTier3Handoffs();
-  renderFbRecentConversations();
-  updateFbKpis();
-  renderFbAutonomousCanvasPreview();
-}
-
-function updateFbKpis() {
-  const posts = fbState.scheduled_posts || [];
-  const rules = fbState.rules || [];
-  const convs = fbState.conversations || [];
-  const handoffs = convs.filter(c => c.resolved_tier === 3);
-
-  document.getElementById('kpiScheduledCount').textContent = `${posts.length} Gönderi`;
-  document.getElementById('kpiRulesCount').textContent = `${rules.length} Kural + Gemini AI`;
-  document.getElementById('kpiHandoffCount').textContent = `${handoffs.length} Müşteri Devri`;
-  document.getElementById('handoffBadgeCount').textContent = `${handoffs.length} Talep`;
-}
-
-// ── SAAT ARALIKLARI ──
-function renderFbSlots() {
-  const cont = document.getElementById('slotsContainer');
-  const slots = fbState.config.posting_slots || [];
-  cont.innerHTML = slots.map((s, idx) => `
-    <div class="slot-item" style="${s.active === false ? 'opacity:0.55;background:#f1f5f9;' : ''}">
-      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-          <input type="checkbox" ${s.active !== false ? 'checked' : ''} onchange="toggleFbSlotActive(${idx})">
-          <span style="font-size:11px;font-weight:700;color:var(--navy);">Aktif</span>
-        </label>
-        <input type="time" class="form-control" value="${s.time || '12:00'}" style="width:110px;font-weight:700;" onchange="updateFbSlotTime(${idx}, this.value)">
-        <div>
-          <span class="badge badge-blue">${s.type}</span>
-          <strong style="font-size:13px;color:var(--navy);margin-left:6px;">${s.label || s.type}</strong>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px;">Otomatik Tasarlar ve Facebook Sayfasında Yayınlar</div>
-        </div>
-      </div>
-      <button class="btn btn-danger btn-sm" onclick="removeFbTimeSlot(${idx})">Sil</button>
-    </div>
-  `).join('');
-}
-
-function toggleFbSlotActive(idx) {
-  if (fbState.config.posting_slots[idx]) {
-    fbState.config.posting_slots[idx].active = !fbState.config.posting_slots[idx].active;
-    persistFbStateToSupabase(true);
-  }
-}
-
-function updateFbSlotTime(idx, newTime) {
-  if (fbState.config.posting_slots[idx] && newTime) {
-    fbState.config.posting_slots[idx].time = newTime;
-    persistFbStateToSupabase(true);
-  }
-}
-
-function addNewFbTimeSlot() {
-  const time = document.getElementById('new_slot_time').value || '16:30';
-  const type = document.getElementById('new_slot_type').value || 'PHOTO_POST';
-  const label = document.getElementById('new_slot_label').value.trim() || `Otomatik Facebook ${type}`;
-  fbState.config.posting_slots.push({
-    slot_id: 'fb_slot_' + Date.now(),
-    time,
-    type,
-    active: true,
-    label
-  });
-  document.getElementById('new_slot_label').value = '';
-  persistFbStateToSupabase(true);
-}
-
-function removeFbTimeSlot(idx) {
-  fbState.config.posting_slots.splice(idx, 1);
-  persistFbStateToSupabase(true);
-}
-
-// ── %100 OTONOM FACEBOOK TASARIM MOTORU (1200x630 YATAY KART & 1080x1920 REELS/STORY) ──
-const FB_THEMES = {
-  'fb-corporate-blue': {
-    bgStart: '#0A192F', bgMid: '#153462', bgEnd: '#1877F2',
-    accent: '#60A5FA', doorColor: '#1E3F66', doorStroke: '#93C5FD',
-    swatches: ['#1E3F66', '#1877F2', '#64748B', '#3B6E5C', '#F8FAFC']
-  },
-  'nordic-fjord': {
-    bgStart: '#0B1D33', bgMid: '#163A5F', bgEnd: '#2E6F9E',
-    accent: '#38BDF8', doorColor: '#2B5B84', doorStroke: '#7DD3FC',
-    swatches: ['#1E3F66', '#2E6F9E', '#64748B', '#4D7C6F', '#E2E8F0']
-  },
-  'sage-atelier': {
-    bgStart: '#0D211D', bgMid: '#1B433B', bgEnd: '#2D6A5B',
-    accent: '#34D399', doorColor: '#3B6E5C', doorStroke: '#6EE7B7',
-    swatches: ['#3B6E5C', '#0F253E', '#94A3B8', '#CBD5E1', '#F8FAFC']
-  },
-  'quartz-slate': {
-    bgStart: '#0F172A', bgMid: '#1E293B', bgEnd: '#334155',
-    accent: '#38BDF8', doorColor: '#475569', doorStroke: '#93C5FD',
-    swatches: ['#475569', '#1E3A8A', '#3B6E5C', '#E2E8F0', '#94A3B8']
-  }
-};
-
-function drawFbAutonomousCanvas(canvas, opts = {}) {
-  if (!canvas) return;
-  const mediaType = opts.mediaType || document.getElementById('post_media_type')?.value || 'PHOTO_POST';
-  const headline = (opts.headline || document.getElementById('post_title')?.value || 'NOVA - ZÜRİH YATAK ODASI').toLocaleUpperCase('tr-TR');
-  const subheadline = opts.subheadline || document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak';
-  const isVertical = mediaType === 'FB_REELS' || mediaType === 'FB_STORIES';
-
-  // LÜKS MİMARİ AFİŞ MOTORU (Referans 1 & 2 Görselleri)
-  if (window.NovaStudioEngine) {
-    const prod = currentFbSelectedProduct || {
-      title: headline,
-      kategori: subheadline,
-      ozellikler: [
-        '🪵 1. Sınıf Sağlam MDF Gövde & CNC Membran Kapaklar',
-        '🪞 Çizilmeye dayanıklı ithal membran yüzey teknolojisi',
-        '🗄️ Geniş depolama hacmi ve sessiz frenli ray/menteşe donanımı',
-        '🧹 Robot süpürgeye uygun ergonomik yüksek ayak tasarımı'
-      ]
+    const PRESENTATION_LABELS = {
+      auto_carousel: '✨ Otomatik Sunum',
+      split_carousel: '✂️ Geniş Sunum',
+      single_frame: '🖼️ Tek Görsel Sunum',
+      detail_focus: '🔍 Detay Odaklı Sunum',
+      vertical_story_reels: '📱 9:16 Dikey Akış'
     };
 
-    window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
-      productImageEl: currentFbProductImageEl,
-      product: prod,
-      isVertical,
-      zoomScale: opts.zoomScale || 1.0,
-      panX: opts.panX || 0,
-      panY: opts.panY || 0,
-      fullRes: opts.fullRes !== false
-    });
-    return;
-  }
-
-  const themeKey = opts.themeKey || document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
-  const doorStyle = opts.doorStyle || document.getElementById('auto_door_style')?.value || 'shaker';
-
-  const fullW = isVertical ? 1080 : 1200;
-  const fullH = isVertical ? 1920 : 630;
-  const scale = opts.fullRes ? 1 : (isVertical ? 0.28 : 0.52);
-
-  canvas.width = Math.round(fullW * scale);
-  canvas.height = Math.round(fullH * scale);
-  const ctx = canvas.getContext('2d');
-  const theme = FB_THEMES[themeKey] || FB_THEMES['fb-corporate-blue'];
-
-  ctx.save();
-  ctx.scale(scale, scale);
-
-  const bgGrad = ctx.createLinearGradient(0, 0, fullW, fullH);
-  bgGrad.addColorStop(0, theme.bgStart);
-  bgGrad.addColorStop(0.55, theme.bgMid);
-  bgGrad.addColorStop(1, theme.bgEnd);
-  ctx.fillStyle = bgGrad;
-  ctx.fillRect(0, 0, fullW, fullH);
-
-  if (!isVertical) {
-    // 1200x630 Facebook Geniş Ekran Kurumsal Sunum Kartı
-    ctx.strokeStyle = 'rgba(255,255,255,0.07)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(750, 0); ctx.lineTo(750, 630);
-    ctx.moveTo(0, 545); ctx.lineTo(1200, 545);
-    ctx.stroke();
-
-    // Sol Üst Rozet
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.strokeStyle = theme.accent;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(65, 58, 560, 42, 21);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = theme.accent;
-    ctx.font = '800 16px "Plus Jakarta Sans", sans-serif';
-    ctx.textAlign = 'center';
-    const badgeLabel = mediaType === 'LINK_CARD'
-      ? '🔗 NOVA FURNITURE • ÖZEL KATALOG & TASARIM'
-      : '📘 NOVA FURNITURE • KURUMSAL KATALOG';
-    ctx.fillText(badgeLabel, 345, 85);
-
-    // Sol Başlıklar
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 34px "Plus Jakarta Sans", sans-serif';
-    const words = headline.split(' ');
-    const mid = Math.ceil(words.length / 2);
-    const l1 = words.length > 3 ? words.slice(0, mid).join(' ') : headline;
-    const l2 = words.length > 3 ? words.slice(mid).join(' ') : '';
-    ctx.fillText(l1, 65, 162);
-    if (l2) ctx.fillText(l2, 65, 206);
-
-    ctx.fillStyle = '#CBD5E1';
-    ctx.font = '600 19px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(subheadline.slice(0, 64), 65, l2 ? 252 : 216);
-
-    // WhatsApp ve İletişim Kutu Görünümü
-    ctx.fillStyle = 'rgba(10, 25, 47, 0.6)';
-    ctx.strokeStyle = 'rgba(147, 197, 253, 0.4)';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.roundRect(65, 295, 620, 84, 14);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#93C5FD';
-    ctx.font = '800 15px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('📲 NOVA FURNITURE • ÖZEL SİPARİŞ & DİJİTAL KATALOG', 90, 330);
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '700 18px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('WhatsApp: 0 (505) 015 1035  •  DM: @thenovafurniture', 90, 360);
-
-    // 3 Özellik Rozeti
-    ['5 İş Gününde Teslim', '5 Yıl Garanti', 'Özel Ölçü Tasarım'].forEach((sp, idx) => {
-      const px = 65 + idx * 212;
-      ctx.fillStyle = 'rgba(255,255,255,0.1)';
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.beginPath();
-      ctx.roundRect(px, 418, 198, 44, 22);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '700 15px "Plus Jakarta Sans", sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('✓ ' + sp, px + 99, 446);
-    });
-
-    // Sağ Kısım: 3B CNC Membran Kapak
-    const doorX = 845, doorY = 74, doorW = 240, doorH = 400;
-    ctx.fillStyle = 'rgba(255,255,255,0.06)';
-    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(doorX - 12, doorY - 12, doorW + 24, doorH + 24, 18);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = theme.doorColor;
-    ctx.strokeStyle = theme.doorStroke;
-    ctx.lineWidth = 3.5;
-    ctx.beginPath();
-    ctx.roundRect(doorX, doorY, doorW, doorH, 12);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.strokeStyle = theme.doorStroke;
-    ctx.lineWidth = 2.5;
-    if (doorStyle === 'diagonal') {
-      ctx.strokeRect(doorX + 20, doorY + 20, doorW - 40, doorH - 40);
-      ctx.beginPath();
-      ctx.moveTo(doorX + 20, doorY + 20); ctx.lineTo(doorX + doorW - 20, doorY + doorH - 20);
-      ctx.moveTo(doorX + doorW - 20, doorY + 20); ctx.lineTo(doorX + 20, doorY + doorH - 20);
-      ctx.stroke();
-    } else if (doorStyle === 'fluted') {
-      for (let x = doorX + 24; x < doorX + doorW - 20; x += 18) {
-        ctx.beginPath();
-        ctx.moveTo(x, doorY + 18); ctx.lineTo(x, doorY + doorH - 18);
-        ctx.stroke();
-      }
-    } else {
-      ctx.strokeRect(doorX + 24, doorY + 24, doorW - 48, Math.round(doorH * 0.54));
-      ctx.strokeRect(doorX + 24, doorY + Math.round(doorH * 0.62), doorW - 48, Math.round(doorH * 0.28));
-    }
-
-    // Kulp
-    ctx.fillStyle = '#F8FAFC';
-    ctx.fillRect(doorX + doorW - 18, doorY + doorH / 2 - 32, 6, 64);
-
-    // Renk Kartelası
-    (theme.swatches || []).forEach((c, idx) => {
-      ctx.fillStyle = c;
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 2.5;
-      ctx.beginPath();
-      ctx.arc(doorX + 32 + idx * 44, doorY + doorH + 36, 13, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    });
-
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '700 16px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('📘 Nova Furniture Resmi Facebook Sayfası   |   📞 0 (505) 015 1035   |   🛡️ 5 Yıl Garanti', 65, 592);
-  } else {
-    // 1080x1920 Dikey Facebook Reels / Story
-    ctx.textAlign = 'center';
-    ctx.fillStyle = 'rgba(255,255,255,0.12)';
-    ctx.strokeStyle = theme.accent;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(220, 95, 640, 50, 25);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = theme.accent;
-    ctx.font = '800 20px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(mediaType === 'FB_REELS' ? '🎬 FACEBOOK REELS • NOVA MOBİLYA' : '📱 FACEBOOK STORY • NOVA KOLEKSİYON', fullW / 2, 127);
-
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '900 40px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(headline.slice(0, 32), fullW / 2, 230);
-    ctx.fillStyle = '#CBD5E1';
-    ctx.font = '600 22px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText(subheadline.slice(0, 54), fullW / 2, 290);
-
-    const doorW = 440, doorH = 740, doorX = (fullW - 440) / 2, doorY = 460;
-    ctx.fillStyle = theme.doorColor;
-    ctx.strokeStyle = theme.doorStroke;
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.roundRect(doorX, doorY, doorW, doorH, 16);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.strokeRect(doorX + 34, doorY + 34, doorW - 68, Math.round(doorH * 0.55));
-    ctx.strokeRect(doorX + 34, doorY + Math.round(doorH * 0.63), doorW - 68, Math.round(doorH * 0.28));
-
-    (theme.swatches || []).forEach((c, idx) => {
-      ctx.fillStyle = c;
-      ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.arc(fullW / 2 - 110 + idx * 55, doorY + doorH + 70, 18, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-    });
-
-    ctx.fillStyle = '#94A3B8';
-    ctx.font = '700 22px "Plus Jakarta Sans", sans-serif';
-    ctx.fillText('📘 Nova Furniture   •   📲 WhatsApp: 0 (505) 015 1035', fullW / 2, fullH - 70);
-  }
-
-  ctx.restore();
-}
-
-function renderFbAutonomousCanvasPreview() {
-  const c = document.getElementById('fbAutoDesignCanvas');
-  drawFbAutonomousCanvas(c, { fullRes: false });
-}
-
-function toggleFacebookKenBurns() {
-  if (!window.NovaStudioEngine) return;
-  const btn = document.getElementById('btnFbKenBurns');
-  const previewCanvas = document.getElementById('fbAutoDesignCanvas');
-  const mediaType = document.getElementById('post_media_type')?.value || 'PHOTO_POST';
-  const isVertical = mediaType === 'FB_REELS' || mediaType === 'FB_STORIES';
-
-  const prod = currentFbSelectedProduct || {
-    title: document.getElementById('post_title')?.value || 'ZÜRİH YATAK ODASI',
-    kategori: document.getElementById('post_subtitle')?.value || '1. Sınıf MDF • CNC Membran Kapak'
-  };
-
-  if (isFbAnimPlaying) {
-    if (fbAnimController) fbAnimController.stop();
-    isFbAnimPlaying = false;
-    if (btn) btn.textContent = '▶️ Kamera Hareketi (Ken Burns)';
-    renderFbAutonomousCanvasPreview();
-  } else {
-    isFbAnimPlaying = true;
-    if (btn) btn.textContent = '⏹️ Hareketi Durdur';
-    fbAnimController = window.NovaStudioEngine.animateKenBurns(previewCanvas, currentFbProductImageEl, prod, isVertical);
-  }
-}
-
-async function autonomousInventNewFbDesign() {
-  if (catalogProducts && catalogProducts.length > 0) {
-    const prod = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
-    currentFbSelectedProduct = prod;
-
-    const rawTitle = (prod.title || prod.slug || 'ZÜRİH YATAK ODASI').toUpperCase();
-    const pTitle = rawTitle.startsWith('NOVA') ? rawTitle : `NOVA - ${rawTitle}`;
-    const pSub = prod.kategori || '1. Sınıf MDF • CNC Membran Kapak';
-    const link = 'https://wa.me/905050151035';
-
-    document.getElementById('post_title').value = pTitle;
-    document.getElementById('post_subtitle').value = pSub;
-    if (document.getElementById('post_target_link')) {
-      document.getElementById('post_target_link').value = link;
-    }
-
-    if (window.NovaStudioEngine) {
-      document.getElementById('post_caption').value = window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'facebook');
-    }
-
-    if (prod.ana_resim) {
-      const fullImg = (prod.ana_resim.startsWith('http') || prod.ana_resim.startsWith('data:'))
-        ? prod.ana_resim
-        : 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-      
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        currentFbProductImageEl = img;
-        renderFbAutonomousCanvasPreview();
-      };
-      img.src = fullImg;
-    } else {
-      currentFbProductImageEl = null;
-      renderFbAutonomousCanvasPreview();
-    }
-  }
-
-  showToast('👑 Facebook Botu: Nova lüks mimari posteri ve İskandinav açıklama metni yüklendi!');
-}
-
-async function exportFbAutonomousCanvasAndUpload(mediaType, headline, subheadline, themeKey, doorStyle) {
-  try {
-    const offscreen = document.createElement('canvas');
-    drawFbAutonomousCanvas(offscreen, {
-      fullRes: true,
-      mediaType,
-      themeKey,
-      doorStyle,
-      headline,
-      subheadline
-    });
-
-    const blob = await new Promise(resolve => offscreen.toBlob(resolve, 'image/png', 0.95));
-    if (blob && sbClient) {
-      const filePath = `facebook/fb-auto-${mediaType.toLowerCase()}-${Date.now()}.png`;
-      const { error } = await sbClient.storage.from('media').upload(filePath, blob, {
-        contentType: 'image/png',
-        upsert: true
+    function switchNavTab(tabId) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
       });
-      if (!error) {
-        const { data } = sbClient.storage.from('media').getPublicUrl(filePath);
-        if (data?.publicUrl) return data.publicUrl;
+      document.querySelectorAll('.tab-content-area').forEach(tab => {
+        tab.classList.toggle('active', tab.id === tabId);
+      });
+    }
+
+    async function loadAllData() {
+      showToast('⏳ Facebook bot ayarları ve sıradaki içerikler yükleniyor...');
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.fb_bot_state&select=data`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          if (rows && rows[0]?.data) fbState = rows[0].data;
+        }
+        if (!fbState) fbState = { config: {}, scheduled_posts: [], rules: [] };
+
+        const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (prodRes.ok) {
+          catalogProducts = await prodRes.json();
+        }
+
+        populateUIFromState();
+        renderUpcomingPreviews();
+        renderHistoryList();
+        showToast('✅ Facebook paneli hazır!');
+      } catch (err) {
+        console.error('Facebook yükleme hatası:', err);
+        showToast('⚠️ Bilgiler yüklenirken hata oluştu: ' + err.message);
       }
     }
-  } catch (e) {}
 
-  const params = new URLSearchParams({
-    type: mediaType,
-    badge: 'NOVA FURNITURE • FACEBOOK YAYINI',
-    headline,
-    subheadline,
-    theme: themeKey,
-    door: doorStyle
-  });
-  return `https://insta-deployment-rho.vercel.app/api/facebook-render?${params.toString()}`;
-}
+    function populateUIFromState() {
+      const cfg = fbState?.config || {};
+      const slots = cfg.posting_slots || [
+        { type: 'PHOTO_POST', time: '09:30', active: true },
+        { type: 'FB_STORIES', time: '13:30', active: true },
+        { type: 'LINK_CARD', time: '16:30', active: true },
+        { type: 'FB_REELS', time: '20:00', active: true }
+      ];
 
-async function addFbScheduledPost(publishImmediately = false) {
-  const btn = document.getElementById('btnQueuePost');
-  const mediaType = document.getElementById('post_media_type').value || 'PHOTO_POST';
-  const themeKey = document.getElementById('auto_theme_select')?.value || 'fb-corporate-blue';
-  const doorStyle = document.getElementById('auto_door_style')?.value || 'shaker';
-  if (!['PHOTO_POST', 'FB_STORIES', 'LINK_CARD'].includes(mediaType)) {
-    showToast('⚠️ Bu Facebook formatı yayın motorunda henüz desteklenmiyor. Reels yanlışlıkla fotoğraf olarak gönderilmeyecek.');
-    return;
-  }
-  if (!sbClient?.auth) { showToast('❌ Supabase Auth bağlantısı bulunamadı.'); return; }
-  const { data: sessionData, error: sessionError } = await sbClient.auth.getSession();
-  if (sessionError || !sessionData?.session?.access_token) {
-    showToast('🔐 Önce Modül 1 yönetici panelinden giriş yapın; ardından Facebook yayın kuyruğunu kullanabilirsiniz.');
-    return;
-  }
-  if (!document.getElementById('post_title').value.trim() || !document.getElementById('post_caption').value.trim()) await autonomousInventNewFbDesign();
-  const headline=document.getElementById('post_title').value.trim();
-  const subheadline=document.getElementById('post_subtitle')?.value.trim()||'18mm E1 MDF • 5 Yıl Garanti • 5 İş Gününde Teslim';
-  const caption=document.getElementById('post_caption').value.trim();
-  const hashtags=document.getElementById('post_hashtags').value.trim();
-  const targetLink=document.getElementById('post_target_link').value.trim()||'https://wa.me/905050151035';
-  const scheduledFor=publishImmediately?new Date().toISOString():(document.getElementById('post_scheduled_for').value?new Date(document.getElementById('post_scheduled_for').value).toISOString():new Date(Date.now()+3600000).toISOString());
-  try {
-    if(btn){btn.disabled=true;btn.textContent='🎨 Görsel hazırlanıyor ve yayın kuyruğuna ekleniyor...';}
-    const mediaUrl=await exportFbAutonomousCanvasAndUpload(mediaType,headline,subheadline,themeKey,doorStyle);
-    if(!mediaUrl||!/^https:\/\//i.test(mediaUrl))throw new Error('Facebook medya çıktısı geçerli bir HTTPS adresi değil.');
-    const response=await fetch('/api/module2-enqueue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({
-      platform:'facebook',content_type:mediaType,slot_label:publishImmediately?'Manuel yayın':'Planlı yayın',
-      product_slug:currentFbSelectedProduct?.slug||null,title:headline,media_url:mediaUrl,caption,hashtags,target_link:targetLink,scheduled_for:scheduledFor
-    })});
-    const result=await response.json().catch(()=>({}));
-    if(!response.ok||!result.ok||!result.queued)throw new Error(result.error||`Facebook kuyruğuna eklenemedi (HTTP ${response.status}).`);
-    const item={id:`fb-queue-${result.queue_task_id||Date.now()}`,queue_task_id:result.queue_task_id,queue_idempotency_key:result.idempotency_key,media_type:mediaType,title:`[Otonom Facebook] ${headline}`,headline,subheadline,theme_id:themeKey,door_style:doorStyle,target_link:targetLink,caption,hashtags,media_url:mediaUrl,auto_designed:true,scheduled_for:result.scheduled_for||scheduledFor,status:result.status||'pending'};
-    if(!result.duplicate_prevented){fbState.scheduled_posts=Array.isArray(fbState.scheduled_posts)?fbState.scheduled_posts:[];fbState.scheduled_posts.unshift(item);fbState.scheduled_posts=fbState.scheduled_posts.slice(0,60);}
-    renderFbScheduledQueue();
-    showToast(result.duplicate_prevented?'ℹ️ Bu Facebook içeriği zaten kuyrukta.':'✅ Facebook içeriği yayın kuyruğuna eklendi. Gerçek yayın sonucu worker tarafından doğrulanacak.');
-  } catch(error){console.error('Facebook yayın kuyruğu hatası:',error);showToast(`❌ ${error.message}`);}
-  finally{if(btn){btn.disabled=false;btn.textContent='⏰ Otomatik Tasarla & Saatinde Yayınlamak Üzere Kuyruğa Ekle';}}
-}
-
-
-function renderFbScheduledQueue() {
-  const cont=document.getElementById('scheduledQueueContainer');const posts=fbState.scheduled_posts||[];
-  if(!posts.length){cont.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Kuyrukta bekleyen gönderi yok. Yayınlar Vercel Cron tarafından kuyruğa alınır ve worker sonucu doğrular.</div>`;return;}
-  cont.innerHTML=posts.map((p,idx)=>{
-    const dt=p.scheduled_for?new Date(p.scheduled_for).toLocaleString('tr-TR',{dateStyle:'short',timeStyle:'short'}):'Zamanlanmadı';
-    const isPub=p.status==='published'&&Boolean(p.platform_post_id);const legacyUnverified=p.status==='published'&&!p.platform_post_id;
-    const statusLabel=isPub?'✅ Platformda doğrulandı':legacyUnverified?'⚠️ Eski kayıt — platform onayı yok':p.status==='pending'?'◷ Yayın kuyruğunda':p.status==='failed'?'⚠️ Yayın başarısız':p.status==='dry_run_completed'?'🧪 Simülasyon tamamlandı':'⏳ Zamanlanmış';
-    return `<div class="queue-item">
-      <img class="queue-thumb" src="${p.media_url||''}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="">
-      <div class="queue-info"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap;">
-        <span class="badge badge-blue">${p.media_type||'PHOTO_POST'}</span><span class="badge badge-purple">🎨 Bot Tasarımı</span>
-        <span class="badge ${isPub?'badge-green':'badge-amber'}">${statusLabel}</span><small style="color:var(--muted);font-size:11px;">🕒 ${dt}</small>
-      </div><h4>${p.title||'Facebook içeriği'}</h4><p>${p.caption||''}</p></div>
-      <div style="display:flex;gap:6px;">${!isPub&&!legacyUnverified&&(!p.queue_task_id||p.status==='failed')?`<button class="btn btn-success btn-sm" onclick="publishFbQueueItemNow(${idx})">Kuyruğa Ekle</button>`:''}<button class="btn btn-danger btn-sm" onclick="deleteFbQueueItem(${idx})">Sil</button></div>
-    </div>`;
-  }).join('');
-}
-async function publishFbQueueItemNow(idx){
- const item=fbState.scheduled_posts[idx];if(!item)return;
- if(item.status==='published'&&!item.platform_post_id){showToast('⚠️ Bu eski kayıt platform tarafından doğrulanmamış; otomatik olarak yeniden gönderilmedi.');return;}
- if(item.queue_task_id&&item.status==='pending'){showToast('ℹ️ Bu içerik zaten yayın kuyruğunda. Worker sonucunu bekleyin.');return;}
- if(!item.media_url){showToast('❌ Bu kayıt için medya adresi bulunmuyor.');return;}
- try{
-  const{data:sessionData,error:sessionError}=await sbClient.auth.getSession();if(sessionError||!sessionData?.session?.access_token)throw new Error('Önce Modül 1 yönetici panelinden giriş yapın.');
-  const response=await fetch('/api/module2-enqueue',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({
-   platform:'facebook',content_type:item.media_type,slot_label:'Manuel tekrar kuyruğu',product_slug:item.product_slug||null,media_url:item.media_url,
-   caption:item.caption||'',hashtags:item.hashtags||'',target_link:item.target_link||null,scheduled_for:new Date().toISOString()
-  })});
-  const result=await response.json().catch(()=>({}));if(!response.ok||!result.ok||!result.queued)throw new Error(result.error||'Kuyruğa eklenemedi.');
-  item.queue_task_id=result.queue_task_id;item.queue_idempotency_key=result.idempotency_key;item.status='pending';item.scheduled_for=result.scheduled_for;
-  renderFbScheduledQueue();showToast(result.duplicate_prevented?'ℹ️ Bu içerik zaten kuyrukta.':'✅ İçerik yayın kuyruğuna eklendi.');
- }catch(error){showToast(`❌ ${error.message}`);}
-}
-
-async function deleteFbQueueItem(idx) {
-  const item=fbState.scheduled_posts[idx];if(!item)return;
-  try{
-    let removedByServer=false;
-    if(item.queue_task_id&&item.status==='pending'){
-      const{data:sessionData,error:sessionError}=await sbClient.auth.getSession();
-      if(sessionError||!sessionData?.session?.access_token)throw new Error('İptal için önce Modül 1 yönetici panelinden giriş yapın.');
-      const response=await fetch('/api/module2-cancel',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${sessionData.session.access_token}`},body:JSON.stringify({queue_task_id:item.queue_task_id})});
-      const result=await response.json().catch(()=>({}));
-      if(!response.ok||!result.cancelled)throw new Error(result.error||'Yayın görevi iptal edilemedi; worker görevi işlemeye başlamış olabilir.');
-      removedByServer=true;
-    }
-    fbState.scheduled_posts.splice(idx,1);
-    if(!removedByServer)await persistFbStateToSupabase(true);
-    renderFbScheduledQueue();showToast('Facebook kuyruk kaydı kaldırıldı.');
-  }catch(error){showToast(`❌ ${error.message}`);}
-}
-
-async function runFbAutonomousCycleNow() {
-  await autonomousInventNewFbDesign();
-  await addFbScheduledPost(true);
-}
-
-
-// ── 1. AŞAMA SABİT KURALLAR ──
-function renderFbTier1Rules() {
-  const cont = document.getElementById('tier1RulesList');
-  const rules = fbState.rules || [];
-  cont.innerHTML = rules.map((r, idx) => `
-    <div style="border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px;background:#F8FAFC;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <strong style="font-size:13.5px;color:var(--navy);">💬 ${r.rule_name}</strong>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <span class="badge badge-blue">${r.channel_scope === 'BOTH' ? 'Messenger + Yorum' : r.channel_scope}</span>
-          <button class="btn btn-danger btn-sm" onclick="deleteFbTier1Rule(${idx})">Sil</button>
-        </div>
-      </div>
-      <div style="font-size:11.5px;color:var(--fb-blue);font-weight:700;margin-bottom:6px;">
-        Anahtar Kelimeler: ${(r.keywords || []).map(k => `<code style="background:#DBEAFE;padding:2px 6px;border-radius:4px;margin-right:4px;">${k}</code>`).join('')}
-      </div>
-      <div style="font-size:12.5px;color:var(--text);background:#fff;padding:10px;border-radius:8px;border:1px solid var(--border);">
-        ${r.response_text}
-      </div>
-    </div>
-  `).join('');
-}
-
-function addFbTier1Rule() {
-  const name = document.getElementById('r_name').value.trim();
-  const channel = document.getElementById('r_channel').value;
-  const matchType = document.getElementById('r_match_type').value;
-  const keywords = document.getElementById('r_keywords').value.split(',').map(k => k.trim()).filter(Boolean);
-  const response = document.getElementById('r_response').value.trim();
-
-  if (!name || keywords.length === 0 || !response) {
-    showToast('⚠️ Lütfen kural adı, anahtar kelimeler ve sabit cevabı girin!');
-    return;
-  }
-
-  fbState.rules.push({
-    id: 'fb-rule-' + Date.now(),
-    rule_name: name,
-    channel_scope: channel,
-    match_type: matchType,
-    keywords,
-    response_text: response
-  });
-
-  document.getElementById('r_name').value = '';
-  document.getElementById('r_keywords').value = '';
-  document.getElementById('r_response').value = '';
-  persistFbStateToSupabase(true);
-}
-
-function deleteFbTier1Rule(idx) {
-  fbState.rules.splice(idx, 1);
-  persistFbStateToSupabase(true);
-}
-
-function renderFbAiCatalogPreview() {
-  const cont = document.getElementById('aiCatalogPreviewList');
-  if (!catalogProducts || catalogProducts.length === 0) {
-    cont.innerHTML = `<div style="padding:16px;color:var(--muted);font-size:12.5px;">Supabase ürün kataloğu yükleniyor...</div>`;
-    return;
-  }
-  cont.innerHTML = catalogProducts.map(p => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--border);font-size:12.5px;">
-      <div>
-        <strong style="color:var(--navy);">${p.title || p.slug}</strong>
-        <span style="color:var(--muted);margin-left:6px;">(${p.kategori || 'Membran Kapak'})</span>
-      </div>
-      <span class="badge badge-green">Facebook AI & Tasarımcıda Aktif</span>
-    </div>
-  `).join('');
-}
-
-function renderFbTier3Handoffs() {
-  const cont = document.getElementById('tier3HandoffList');
-  const handoffs = (fbState.conversations || []).filter(c => c.resolved_tier === 3);
-  if (handoffs.length === 0) {
-    cont.innerHTML = `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">Henüz 3. aşamaya devredilen Facebook talebi yok. Simülatör sekmesinden test edebilirsiniz.</div>`;
-    return;
-  }
-  cont.innerHTML = handoffs.map(h => `
-    <div style="border:1px solid #FDE68A;background:#FFFBEB;border-radius:12px;padding:14px;margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <strong style="color:#92400E;font-size:13px;">👤 ${h.sender_name || 'Facebook Müşterisi'} (${h.channel})</strong>
-        <span class="badge badge-amber">3. Aşama: İnsan Devri</span>
-      </div>
-      <div style="font-size:12.5px;color:var(--navy);margin-bottom:8px;">
-        <strong>Müşteri Mesajı:</strong> "${h.incoming_text}"
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
-        <small style="color:var(--muted);">${new Date(h.created_at).toLocaleString('tr-TR')}</small>
-        <a href="${h.whatsapp_link || 'https://wa.me/905050151035'}" target="_blank" class="btn btn-success btn-sm">
-          💬 WhatsApp'tan Müşteriye Yanıt Ver ↗
-        </a>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderFbRecentConversations() {
-  const cont = document.getElementById('recentConversationsList');
-  const convs = (fbState.conversations || []).slice(0, 8);
-  if (convs.length === 0) {
-    cont.innerHTML = `<div style="padding:14px;color:var(--muted);font-size:12.5px;">Henüz test mesajı gönderilmedi.</div>`;
-    return;
-  }
-  cont.innerHTML = convs.map(c => `
-    <div style="padding:10px;border-bottom:1px solid var(--border);font-size:12px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-        <strong>${c.sender_name}: "${c.incoming_text}"</strong>
-        <span class="badge ${c.resolved_tier===1?'badge-blue':c.resolved_tier===2?'badge-purple':'badge-green'}">${c.tier_label}</span>
-      </div>
-      <div style="color:var(--muted);">${c.bot_reply}</div>
-    </div>
-  `).join('');
-}
-
-function saveFbBotConfigToSupabase() {
-  const c = fbState.config;
-  c.page_name = document.getElementById('cfg_page_name').value.trim();
-  c.page_id = document.getElementById('cfg_page_id').value.trim();
-  c.page_access_token = document.getElementById('cfg_page_token').value.trim();
-  c.gemini_model = document.getElementById('cfg_gemini_model').value;
-  c.gemini_api_key = document.getElementById('cfg_gemini_key').value.trim();
-  c.tier2_system_prompt = document.getElementById('cfg_tier2_prompt').value.trim();
-  c.tier3_whatsapp_number = document.getElementById('cfg_wa_number').value.trim();
-  c.tier3_phone_display = document.getElementById('cfg_phone_display').value.trim();
-  c.tier3_handoff_triggers = document.getElementById('cfg_tier3_triggers').value.split(',').map(x => x.trim()).filter(Boolean);
-
-  persistFbStateToSupabase(true);
-}
-
-// ── CANLI FACEBOOK MESSENGER & YORUM SİMÜLATÖRÜ ──
-function triggerFbQuickSim(text) {
-  document.getElementById('simUserInput').value = text;
-  sendFbSimulatedMessage();
-}
-
-async function sendFbSimulatedMessage() {
-  const input = document.getElementById('simUserInput');
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-
-  const channel = document.getElementById('simChannelSelect').value || 'MESSENGER';
-  const chatBox = document.getElementById('simChatMessages');
-
-  chatBox.insertAdjacentHTML('beforeend', `
-    <div class="msg-bubble msg-user">
-      <div style="font-size:10px;opacity:0.85;margin-bottom:3px;">👤 Facebook Takipçisi (${channel})</div>
-      <div>${text}</div>
-    </div>
-  `);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  const decision = await runFbClientSideThreeTierEngine(text, channel);
-
-  const tagClass = decision.resolved_tier === 1 ? 'tier-tag-1' : decision.resolved_tier === 2 ? 'tier-tag-2' : 'tier-tag-3';
-  chatBox.insertAdjacentHTML('beforeend', `
-    <div class="msg-bubble msg-bot">
-      <div class="msg-tier-tag ${tagClass}">${decision.tier_label}</div>
-      <div>${decision.bot_reply.replace(/\n/g, '<br>')}</div>
-      ${decision.whatsapp_link ? `<div style="margin-top:10px;"><a href="${decision.whatsapp_link}" target="_blank" class="btn btn-success btn-sm">📲 WhatsApp Bağlantısını Test Et ↗</a></div>` : ''}
-    </div>
-  `);
-  chatBox.scrollTop = chatBox.scrollHeight;
-
-  fbState.conversations.unshift({
-    id: 'fb-conv-' + Date.now(),
-    sender_name: 'Facebook Ziyaretçisi',
-    channel,
-    incoming_text: text,
-    resolved_tier: decision.resolved_tier,
-    tier_label: decision.tier_label,
-    bot_reply: decision.bot_reply,
-    whatsapp_link: decision.whatsapp_link || '',
-    created_at: new Date().toISOString()
-  });
-
-  await persistFbStateToSupabase(false);
-}
-
-async function runFbClientSideThreeTierEngine(cleanText, channel) {
-  const lowerText = cleanText.toLocaleLowerCase('tr-TR');
-  const c = fbState.config;
-  const waNum = c.tier3_whatsapp_number || '905050151035';
-  const phoneDisp = c.tier3_phone_display || '0 (505) 015 1035';
-
-  // 3. Aşama Doğrudan Tetikleyici Kontrolü
-  const triggers = c.tier3_handoff_triggers || [];
-  const t3Match = triggers.find(t => lowerText.includes(t.toLocaleLowerCase('tr-TR')));
-  if (t3Match) {
-    const waLink = `https://wa.me/${waNum}?text=${encodeURIComponent(`Merhaba Nova Furniture, Facebook sayfanızdan ulaşıyorum. "${cleanText}" konusunda fiyat teklifi ve detaylı katalog rica ediyorum.`)}`;
-    return {
-      resolved_tier: 3,
-      tier_label: '3. AŞAMA: GERÇEK İNSAN & WHATSAPP YÖNLENDİRME',
-      bot_reply: `Memnuniyetle yardımcı olalım! 🙌 Talebiniz ("${t3Match}") özel ölçü hesaplaması ve birebir uzman desteği gerektirdiği için sizi doğrudan Satış Ekibimize bağlıyorum.\n\n📲 Doğrudan WhatsApp Hattımız: ${waLink}\n📞 Telefon: ${phoneDisp}`,
-      whatsapp_link: waLink
-    };
-  }
-
-  // 1. Aşama Sabit Anahtar Kelime Kuralları
-  for (const rule of (fbState.rules || [])) {
-    if (rule.channel_scope !== 'BOTH' && rule.channel_scope !== channel) continue;
-    const hit = (rule.keywords || []).find(kw => {
-      const k = kw.toLocaleLowerCase('tr-TR').trim();
-      if (!k) return false;
-      if (rule.match_type === 'exact') return lowerText === k || lowerText.replace(/[?!.,]/g, '').trim() === k;
-      return lowerText.includes(k);
-    });
-    if (hit) {
-      return {
-        resolved_tier: 1,
-        tier_label: `1. AŞAMA: SABİT CEVAP (${rule.rule_name})`,
-        bot_reply: rule.response_text,
-        whatsapp_link: ''
-      };
-    }
-  }
-
-  // 2. Aşama Gemini AI
-  const gemKey = c.gemini_api_key || '';
-  if (gemKey) {
-    try {
-      const catText = (catalogProducts || []).map(p => `- ${p.title}: ${p.kisa_aciklama || p.kategori}`).join('\n');
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${c.gemini_model || 'gemini-2.5-flash'}:generateContent?key=${encodeURIComponent(gemKey)}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: `${c.tier2_system_prompt}\n\nÜrün Kataloğu:\n${catText}\n\nFacebook Mesajı: "${cleanText}"` }] }]
-        })
+      slots.forEach(s => {
+        const isAct = s.active !== false && s.enabled !== false;
+        if (s.type === 'PHOTO_POST') {
+          document.getElementById('timeSlotPhoto').value = s.time || '09:30';
+          document.getElementById('chkSlotPhotoActive').checked = isAct;
+        } else if (s.type === 'FB_STORIES') {
+          document.getElementById('timeSlotStory').value = s.time || '13:30';
+          document.getElementById('chkSlotStoryActive').checked = isAct;
+        } else if (s.type === 'LINK_CARD') {
+          document.getElementById('timeSlotLink').value = s.time || '16:30';
+          document.getElementById('chkSlotLinkActive').checked = isAct;
+        } else if (s.type === 'FB_REELS') {
+          document.getElementById('timeSlotReels').value = s.time || '20:00';
+          document.getElementById('chkSlotReelsActive').checked = isAct;
+        }
       });
-      if (res.ok) {
-        const d = await res.json();
-        const replyTxt = d?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (replyTxt) {
-          return {
-            resolved_tier: 2,
-            tier_label: `2. AŞAMA: GEMINI AI (${c.gemini_model})`,
-            bot_reply: replyTxt,
-            whatsapp_link: ''
-          };
+
+      if (cfg.gemini_model && document.getElementById('selGeminiModel')) {
+        document.getElementById('selGeminiModel').value = cfg.gemini_model;
+      }
+
+      updateSlotVisuals();
+    }
+
+    function updateSlotVisuals() {
+      document.getElementById('slotCardPhoto').classList.toggle('inactive', !document.getElementById('chkSlotPhotoActive').checked);
+      document.getElementById('slotCardStory').classList.toggle('inactive', !document.getElementById('chkSlotStoryActive').checked);
+      document.getElementById('slotCardLink').classList.toggle('inactive', !document.getElementById('chkSlotLinkActive').checked);
+      document.getElementById('slotCardReels').classList.toggle('inactive', !document.getElementById('chkSlotReelsActive').checked);
+    }
+
+    function renderUpcomingPreviews() {
+      const container = document.getElementById('upcomingPreviewContainer');
+      const summaryEl = document.getElementById('txtUpcomingSummary');
+      if (!container) return;
+
+      if (!catalogProducts || catalogProducts.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Katalogda henüz ürün bulunmuyor.</div>`;
+        if (summaryEl) summaryEl.textContent = '0 Sıradaki İçerik';
+        return;
+      }
+
+      const formats = [
+        { fmt: 'PHOTO_POST', label: '🖼️ Koleksiyon Gönderisi', badgeClass: 'badge-post', slotTime: document.getElementById('timeSlotPhoto')?.value || '09:30' },
+        { fmt: 'FB_STORIES', label: '📱 Facebook Story', badgeClass: 'badge-story', slotTime: document.getElementById('timeSlotStory')?.value || '13:30' },
+        { fmt: 'LINK_CARD', label: '🔗 Parça & Bağlantı Kartı', badgeClass: 'badge-link', slotTime: document.getElementById('timeSlotLink')?.value || '16:30' },
+        { fmt: 'FB_REELS', label: '🎬 Facebook Video', badgeClass: 'badge-reels', slotTime: document.getElementById('timeSlotReels')?.value || '20:00' }
+      ];
+
+      const items = catalogProducts.slice(0, 4).map((prod, idx) => ({
+        product: prod,
+        formatObj: formats[idx % formats.length]
+      }));
+
+      if (summaryEl) summaryEl.textContent = `Sırada ${items.length} İçerik Paketi Hazır`;
+
+      container.innerHTML = items.map((item, idx) => {
+        const p = item.product;
+        const f = item.formatObj;
+        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const prefs = p.marketing_preferences || {};
+        const presMode = prefs.main_photo_presentation || 'auto_carousel';
+        const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
+        const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
+
+        return `
+          <div class="upcoming-card">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <div class="upcoming-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span class="slot-type-badge ${f.badgeClass}">${f.label}</span>
+                <span style="font-size:11px; color:#38BDF8; font-weight:800;">⏰ ${f.slotTime}</span>
+              </div>
+              <div class="upcoming-title">${idx + 1}. ${p.title || p.slug}</div>
+              <div class="upcoming-plan-tags">
+                <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
+                <span class="plan-mini-pill">${PRESENTATION_LABELS[presMode] || '✨ Otomatik Sunum'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveScheduleSettings() {
+      if (!fbState) fbState = { config: {}, scheduled_posts: [] };
+      if (!fbState.config) fbState.config = {};
+
+      fbState.config.posting_slots = [
+        { slot_id: 'fb_slot_1', type: 'PHOTO_POST', time: document.getElementById('timeSlotPhoto').value || '09:30', active: document.getElementById('chkSlotPhotoActive').checked, label: 'Koleksiyon & Katalog Gönderisi' },
+        { slot_id: 'fb_slot_2', type: 'FB_STORIES', time: document.getElementById('timeSlotStory').value || '13:30', active: document.getElementById('chkSlotStoryActive').checked, label: 'Facebook Hikayesi' },
+        { slot_id: 'fb_slot_3', type: 'LINK_CARD', time: document.getElementById('timeSlotLink').value || '16:30', active: document.getElementById('chkSlotLinkActive').checked, label: 'Koleksiyon Parçaları & Bağlantı Kartı' },
+        { slot_id: 'fb_slot_4', type: 'FB_REELS', time: document.getElementById('timeSlotReels').value || '20:00', active: document.getElementById('chkSlotReelsActive').checked, label: 'Facebook Reels / Video' }
+      ];
+
+      await persistFbState();
+      updateSlotVisuals();
+      renderUpcomingPreviews();
+      showToast('✅ Facebook yayın akış saatleri kaydedildi!');
+    }
+
+    async function saveAssistantSettings() {
+      if (!fbState) fbState = { config: {} };
+      if (!fbState.config) fbState.config = {};
+      fbState.config.gemini_model = document.getElementById('selGeminiModel').value;
+      await persistFbState();
+      showToast('✅ Facebook asistan ayarları kaydedildi!');
+    }
+
+    async function persistFbState() {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            key: 'fb_bot_state',
+            data: fbState,
+            updated_at: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.error('fb_bot_state kayıt hatası:', err);
+      }
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('historyListContainer');
+      const countEl = document.getElementById('txtHistoryCount');
+      const posts = fbState?.scheduled_posts || [];
+
+      if (countEl) countEl.textContent = `Toplam ${posts.length} Kayıt`;
+
+      if (posts.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:35px 20px; color:var(--text-muted); font-size:13px;">
+            Henüz yayınlanmış veya kuyruğa alınmış bir Facebook içeriği bulunmuyor.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = posts.slice(0, 25).map(post => {
+        const type = (post.media_type || 'PHOTO_POST').toUpperCase();
+        let badgeHtml = '<span class="slot-type-badge badge-post">🖼️ Gönderi</span>';
+        if (type === 'FB_STORIES') badgeHtml = '<span class="slot-type-badge badge-story">📱 Story</span>';
+        else if (type === 'LINK_CARD') badgeHtml = '<span class="slot-type-badge badge-link">🔗 Bağlantı Kartı</span>';
+        else if (type === 'FB_REELS') badgeHtml = '<span class="slot-type-badge badge-reels">🎬 Video</span>';
+
+        const rawTitle = (post.title || post.headline || 'Nova Furniture Koleksiyon').replace(/^\[Otonom Facebook\]\s*/i, '');
+        const pubTime = (post.published_at || post.scheduled_for) ? new Date(post.published_at || post.scheduled_for).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Yeni';
+        const thumbUrl = post.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const isPub = post.status === 'published';
+
+        return `
+          <div class="history-item">
+            <div class="history-left">
+              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="Thumb">
+              <div class="history-info">
+                <div class="history-title">${rawTitle}</div>
+                <div class="history-meta">
+                  ${badgeHtml}
+                  <span>•</span>
+                  <span>📅 ${pubTime}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="status-badge">${isPub ? '✅ Yayınlandı' : '◷ Kuyrukta'}</span>
+              ${post.media_url ? `<a href="${post.media_url}" target="_blank" class="btn btn-outline" style="padding:4px 10px; font-size:11px;">🔗 Medya</a>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function triggerAutonomousFbCycleNow() {
+      if (isCycleRunning) return;
+      isCycleRunning = true;
+      const btn = document.getElementById('btnTriggerFbCycle');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Üretiliyor & Kuyruğa Ekleniyor...';
+      }
+
+      try {
+        if (!catalogProducts || catalogProducts.length === 0) {
+          throw new Error('Katalogda ürün bulunamadı.');
+        }
+        const prod = catalogProducts[0];
+        const cleanTitle = (prod.title || prod.slug).toUpperCase();
+        const mediaUrl = prod.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const caption = window.NovaStudioEngine
+          ? window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'facebook')
+          : `✨ NOVA FURNITURE — ${cleanTitle}\n1. sınıf 18mm E1 MDF gövde ve CNC membran işçiliği.\n📲 WhatsApp: 0 505 015 1035`;
+
+        let queuedJob = null;
+        if (sb?.auth) {
+          const { data: sessionData } = await sb.auth.getSession();
+          const token = sessionData?.session?.access_token;
+          if (token) {
+            const res = await fetch('/api/module2-enqueue', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({
+                platform: 'facebook',
+                content_type: 'PHOTO_POST',
+                slot_label: 'Otonom Facebook Yayını',
+                product_slug: prod.slug,
+                title: `NOVA - ${cleanTitle}`,
+                media_url: mediaUrl,
+                caption,
+                hashtags: '#novafurniture #thenovafurniture #mobilya',
+                target_link: 'https://wa.me/905050151035',
+                scheduled_for: new Date().toISOString()
+              })
+            });
+            queuedJob = await res.json().catch(() => null);
+          }
+        }
+
+        const newItem = {
+          id: `fb-post-${Date.now()}`,
+          queue_task_id: queuedJob?.queue_task_id || null,
+          title: `NOVA - ${cleanTitle}`,
+          media_type: 'PHOTO_POST',
+          media_url: mediaUrl,
+          caption,
+          scheduled_for: new Date().toISOString(),
+          status: queuedJob?.status || 'pending'
+        };
+
+        if (!fbState.scheduled_posts) fbState.scheduled_posts = [];
+        fbState.scheduled_posts.unshift(newItem);
+        await persistFbState();
+        renderHistoryList();
+        showToast(`✅ "${prod.title}" Facebook yayın akışına eklendi!`);
+      } catch (err) {
+        showToast(`❌ Hata: ${err.message}`);
+      } finally {
+        isCycleRunning = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '⚡ Şimdi Otonom Paylaşım Yap';
         }
       }
-    } catch (e) {}
-  }
+    }
 
-  const prodNames = (catalogProducts || []).slice(0, 3).map(p => p.title || p.slug).join(', ') || 'Fjord Mavi Diyagonal, Kuvars Gri ve Adaçayı Yeşili Country';
-  return {
-    resolved_tier: 2,
-    tier_label: '2. AŞAMA: GEMINI AI AKILLI DANIŞMAN',
-    bot_reply: `Sorunuzu analiz ettim! 🤖 Nova Furniture koleksiyonumuzdaki **${prodNames}** modellerimiz 18mm 1. sınıf E1 MDF üzerine suya ve buhara tam dayanıklı ithal kaplama teknolojisiyle üretilmektedir. Çıtalı Country modellerimizde Fjord Mavi modern bir kontrast yaratırken, Adaçayı Yeşili doğal ve sıcak bir mimari atmosfer sunar.\n\nDetaylı dijital kataloğumuz ve oda ölçülerinize özel teklif için bize WhatsApp üzerinden anında ulaşabilirsiniz: 0 (505) 015 1035`,
-    whatsapp_link: ''
-  };
-}
+    function sendTestChatMessage() {
+      const input = document.getElementById('chatInputText');
+      const text = input.value.trim();
+      if (!text) return;
 
-document.addEventListener('DOMContentLoaded', loadFbStateFromSupabase);
-</script>
+      const box = document.getElementById('chatMessagesBox');
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble chat-user';
+      userBubble.textContent = text;
+      box.appendChild(userBubble);
+      input.value = '';
+
+      setTimeout(() => {
+        const lower = text.toLowerCase();
+        let reply = '';
+        if (/fiyat|ücret|ne kadar|kaça|teklif/i.test(lower)) {
+          reply = '🙌 Merhaba! Özel ölçü ve koleksiyon fiyat tekliflerimiz için sizi doğrudan fabrika satış temsilcimize bağlıyorum. WhatsApp hattımız: https://wa.me/905050151035 (0 505 015 1035)';
+        } else if (/teslimat|kargo|kaç gün/i.test(lower)) {
+          reply = '🚚 Tüm siparişlerimizi modern tesisimizde 5 iş günü içinde üretip güvenli ambalajla sevk ediyoruz. Tüm ürünlerimiz 5 Yıl Üretici Garantilidir.';
+        } else {
+          reply = '✨ Nova Furniture koleksiyonlarımız 1. sınıf 18mm E1 MDF gövde ve çizilmeye dayanıklı membran yüzey teknolojisiyle üretilmektedir. Detaylı katalog ve ölçü bilgisi için WhatsApp: 0 505 015 1035';
+        }
+        const botBubble = document.createElement('div');
+        botBubble.className = 'chat-bubble chat-bot';
+        botBubble.textContent = reply;
+        box.appendChild(botBubble);
+        box.scrollTop = box.scrollHeight;
+      }, 450);
+
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toastMessage');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        el.style.display = 'none';
+      }, 3500);
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadAllData);
+    } else {
+      loadAllData();
+    }
+  </script>
 </body>
 </html>

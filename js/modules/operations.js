@@ -6,7 +6,6 @@ export function renderOperationsModule(data) {
         <div class="page-header" style="margin-bottom: 24px;">
             <div class="page-title-group">
                 <div class="breadcrumbs">
-                    <span onclick="window.navigateTo('dashboard')" style="cursor:pointer; color:#38BDF8;">Ana Sayfa</span> / 
                     <span>Modül 5: Altyapı, Entegrasyonlar & Teknoloji Envanteri</span>
                 </div>
                 <h1 style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">Sistem Mimarisi & Teknoloji Ekipmanları</h1>
@@ -15,9 +14,7 @@ export function renderOperationsModule(data) {
                 </p>
             </div>
             <div class="page-actions" style="display:flex; gap:10px; align-items:center;">
-                <a href="/Module%205/index.html" class="btn btn-secondary" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
-                    🖥️ Tam Ekran Portala Geç
-                </a>
+                
                 <button class="btn btn-primary" onclick="window.showToast('Tüm altyapı servisleri yeşil: Supabase, Vercel, Meta ve Gemini aktif.')" style="font-weight:700;">
                     ⚡ Sistem Sağlık Taraması
                 </button>

@@ -1,1622 +1,1231 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Modül 2 — TikTok İçerik, 5 Sahne Senaryo & Bağlantı Stüdyosu | Global Mobilya</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="/Module%202/nova-studio-engine.js"></script>
-    <script src="/nova-studio-engine.js"></script>
-    <style>
-        :root {
-            --bg-dark: #09090b;
-            --bg-card: #121217;
-            --bg-elevated: #1a1a22;
-            --border: rgba(255, 255, 255, 0.1);
-            --tt-cyan: #00f2fe;
-            --tt-pink: #ff0050;
-            --text-main: #f8fafc;
-            --text-muted: #94a3b8;
-            --success: #10b981;
-            --warning: #f59e0b;
-            --purple: #a855f7;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TikTok Otonom Kontrol Merkezi | Nova Furniture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Cinzel:wght@700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/Module%202/nova-studio-engine.js"></script>
+  <script src="/nova-studio-engine.js"></script>
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+  <style>
+    :root {
+      --bg: #0A0F1D;
+      --card-bg: #111B2E;
+      --card-border: rgba(148, 163, 184, 0.16);
+      --tt-cyan: #00F2FE;
+      --tt-pink: #FF0050;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-gold: #D4AF37;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --navy-dark: #0B1120;
+    }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: radial-gradient(circle at 12% 10%, rgba(0, 242, 254, 0.08), transparent 35%),
-                        radial-gradient(circle at 88% 85%, rgba(255, 0, 80, 0.09), transparent 40%),
-                        var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 18px 22px 42px;
-        }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-        /* Header */
-        .top-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 16px 20px;
-            background: linear-gradient(135deg, rgba(18, 18, 23, 0.95), rgba(26, 26, 34, 0.92));
-            border: 1px solid rgba(0, 242, 254, 0.25);
-            border-radius: 16px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
-            flex-wrap: wrap;
-            margin-bottom: 14px;
-        }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at 10% 10%, rgba(0, 242, 254, 0.08), transparent 30%),
+                  radial-gradient(circle at 90% 90%, rgba(255, 0, 80, 0.08), transparent 35%),
+                  var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 18px 24px 60px;
+    }
 
-        .brand-row {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+    .top-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
 
-        .tt-logo-box {
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
-            background: #000;
-            border: 2px solid var(--tt-cyan);
-            box-shadow: -3px -2px 0 var(--tt-cyan), 3px 2px 0 var(--tt-pink);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-        }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
 
-        .brand-title h1 {
-            font-size: 18px;
-            font-weight: 800;
-            letter-spacing: -0.3px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
+    .brand-logo-badge {
+      width: 46px;
+      height: 46px;
+      border-radius: 12px;
+      background: #050811;
+      border: 2px solid var(--tt-cyan);
+      box-shadow: -2px -2px 0 var(--tt-cyan), 2px 2px 0 var(--tt-pink);
+      color: #fff;
+      font-size: 22px;
+      font-weight: 900;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-        .brand-title p {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 3px;
-        }
+    .header-titles h1 {
+      font-size: 19px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
 
-        .badge-cloud {
-            background: linear-gradient(90deg, var(--tt-cyan), var(--tt-pink));
-            color: #09090b;
-            font-size: 10px;
-            font-weight: 900;
-            padding: 3px 9px;
-            border-radius: 99px;
-            text-transform: uppercase;
-        }
+    .header-titles p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 3px;
+    }
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
+    .api-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.14);
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      color: #FDE68A;
+      padding: 7px 14px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-        .status-pill {
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            padding: 7px 13px;
-            border-radius: 99px;
-            font-size: 12px;
-            font-weight: 700;
-            background: rgba(245, 158, 11, 0.14);
-            border: 1px solid rgba(245, 158, 11, 0.45);
-            color: #fde68a;
-        }
-        .status-pill.ready {
-            background: rgba(16, 185, 129, 0.14);
-            border-color: rgba(16, 185, 129, 0.45);
-            color: #34d399;
-        }
+    .api-status-pill.ready {
+      background: rgba(16, 185, 129, 0.14);
+      border-color: rgba(16, 185, 129, 0.45);
+      color: #34D399;
+    }
 
-        .dot-pulse {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #f59e0b;
-            box-shadow: 0 0 10px #f59e0b;
-        }
-        .status-pill.ready .dot-pulse {
-            background: #10b981;
-            box-shadow: 0 0 10px #10b981;
-        }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #F59E0B;
+      box-shadow: 0 0 10px #F59E0B;
+    }
 
-        /* 4-State Connection Matrix Bar (Section 3.1) */
-        .connection-state-bar {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-bottom: 16px;
-            padding: 12px 14px;
-            background: rgba(18, 18, 23, 0.92);
-            border: 1px solid rgba(245, 158, 11, 0.32);
-            border-radius: 14px;
-        }
-        @media (max-width: 980px) {
-            .connection-state-bar {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-        .conn-step {
-            padding: 9px 12px;
-            border-radius: 10px;
-            background: #0d0d12;
-            border: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            gap: 3px;
-            opacity: 0.55;
-            transition: all 0.2s ease;
-        }
-        .conn-step.active-state {
-            opacity: 1;
-            border-color: #f59e0b;
-            background: rgba(245, 158, 11, 0.1);
-            box-shadow: 0 0 16px rgba(245, 158, 11, 0.14);
-        }
-        .conn-step.ready-state {
-            opacity: 1;
-            border-color: #10b981;
-            background: rgba(16, 185, 129, 0.12);
-        }
-        .conn-step strong {
-            font-size: 11px;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .conn-step span {
-            font-size: 10px;
-            color: var(--text-muted);
-            line-height: 1.35;
-        }
+    .api-status-pill.ready .status-dot {
+      background: #10B981;
+      box-shadow: 0 0 10px #10B981;
+    }
 
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 7px;
-            padding: 9px 15px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            color: var(--text-main);
-            transition: all 0.18s ease;
-        }
+    /* 4-State Connection Matrix Bar */
+    .connection-state-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 12px 14px;
+      background: rgba(17, 27, 46, 0.85);
+      border: 1px solid rgba(245, 158, 11, 0.28);
+      border-radius: 14px;
+    }
 
-        .btn:hover {
-            transform: translateY(-1px);
-            border-color: var(--tt-cyan);
-        }
+    @media (max-width: 980px) {
+      .connection-state-bar { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .btn-tiktok {
-            background: linear-gradient(135deg, var(--tt-pink), #be123c);
-            border-color: rgba(255, 0, 80, 0.6);
-            color: #fff;
-            box-shadow: 0 4px 16px rgba(255, 0, 80, 0.3);
-        }
+    .conn-step {
+      padding: 9px 12px;
+      border-radius: 10px;
+      background: #0B1120;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      opacity: 0.55;
+      transition: all 0.2s ease;
+    }
 
-        .btn-cyan {
-            background: linear-gradient(135deg, #06b6d4, #0284c7);
-            border-color: var(--tt-cyan);
-            color: #fff;
-        }
+    .conn-step.active-state {
+      opacity: 1;
+      border-color: #F59E0B;
+      background: rgba(245, 158, 11, 0.1);
+    }
 
-        /* KPI Strip */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 12px;
-            margin-bottom: 18px;
-        }
+    .conn-step.ready-state {
+      opacity: 1;
+      border-color: #10B981;
+      background: rgba(16, 185, 129, 0.12);
+    }
 
-        .kpi-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 13px;
-            padding: 13px 16px;
-        }
+    .conn-step strong {
+      font-size: 11px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-        .kpi-label {
-            font-size: 11px;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
+    .conn-step span {
+      font-size: 10px;
+      color: var(--text-muted);
+      line-height: 1.35;
+    }
 
-        .kpi-value {
-            font-size: 18px;
-            font-weight: 800;
-            margin-top: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
+    .nav-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 22px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 14px;
+    }
 
-        .kpi-sub {
-            font-size: 11px;
-            color: #38bdf8;
-            margin-top: 3px;
-        }
+    .nav-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 24px;
+      background: rgba(17, 27, 46, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+      border-radius: 12px;
+      color: #94A3B8;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
 
-        /* Main 3-Column Layout */
-        .workspace-grid {
-            display: grid;
-            grid-template-columns: 360px 1fr 410px;
-            gap: 16px;
-            align-items: start;
-        }
+    .nav-tab-btn:hover {
+      background: rgba(17, 27, 46, 0.9);
+      color: #fff;
+      border-color: rgba(0, 242, 254, 0.4);
+    }
 
-        @media (max-width: 1320px) {
-            .workspace-grid {
-                grid-template-columns: 1fr;
-            }
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, rgba(0, 242, 254, 0.18), rgba(255, 0, 80, 0.15));
+      border-color: var(--tt-cyan);
+      color: #E0F2FE;
+      box-shadow: 0 4px 18px rgba(0, 242, 254, 0.18);
+    }
 
-        .panel-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 18px;
-            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
-        }
+    .tab-content-area { display: none; }
+    .tab-content-area.active { display: block; }
 
-        .panel-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-            margin-bottom: 14px;
-            padding-bottom: 11px;
-            border-bottom: 1px solid var(--border);
-        }
+    .section-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 22px 24px;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
 
-        .panel-header h2 {
-            font-size: 14px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-        }
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      flex-wrap: wrap;
+    }
 
-        /* 9:16 TikTok Phone Mockup & Canvas */
-        .tiktok-stage-wrap {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+    .card-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
 
-        .phone-frame {
-            position: relative;
-            width: 306px;
-            height: 544px;
-            border-radius: 26px;
-            border: 3px solid rgba(0, 242, 254, 0.45);
-            box-shadow: -4px -4px 16px rgba(0, 242, 254, 0.14), 4px 4px 16px rgba(255, 0, 80, 0.18);
-            overflow: hidden;
-            background: #000;
-        }
+    .card-title-group h2 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
 
-        #tiktokCanvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
+    .card-title-group p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
 
-        /* TikTok Right Action Bar Overlay */
-        .tt-right-rail {
-            position: absolute;
-            right: 10px;
-            bottom: 72px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 13px;
-            pointer-events: none;
-        }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
 
-        .tt-rail-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            font-size: 10px;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 1px 4px rgba(0,0,0,0.9);
-        }
+    .btn-tt {
+      background: linear-gradient(135deg, var(--tt-pink), #BE123C);
+      color: #fff;
+      box-shadow: 0 4px 14px rgba(255, 0, 80, 0.35);
+    }
 
-        .tt-rail-icon {
-            width: 34px;
-            height: 34px;
-            border-radius: 50%;
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 15px;
-            margin-bottom: 2px;
-        }
+    .btn-cyan {
+      background: linear-gradient(135deg, #06B6D4, #0284C7);
+      color: #fff;
+    }
 
-        /* Format Cards */
-        .format-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
+    .btn-outline {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #CBD5E1;
+    }
 
-        .format-btn {
-            padding: 10px 11px;
-            border-radius: 10px;
-            border: 1px solid var(--border);
-            background: var(--bg-elevated);
-            color: var(--text-main);
-            text-align: left;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+    }
 
-        .format-btn.active {
-            border-color: var(--tt-cyan);
-            background: linear-gradient(135deg, rgba(0, 242, 254, 0.16), rgba(255, 0, 80, 0.14));
-        }
+    .form-control {
+      background: #0B1120;
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      border-radius: 8px;
+      color: #fff;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-family: inherit;
+    }
 
-        .format-btn strong {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 2px;
-        }
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
 
-        .format-btn span {
-            font-size: 10px;
-            color: var(--text-muted);
-        }
+    .slot-card {
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid rgba(0, 242, 254, 0.25);
+      border-radius: 14px;
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
 
-        .form-group {
-            margin-bottom: 12px;
-        }
+    .slot-card.inactive {
+      opacity: 0.55;
+      border-color: rgba(255,255,255,0.1);
+    }
 
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            margin-bottom: 5px;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-        }
+    .slot-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-        .form-control {
-            width: 100%;
-            padding: 9px 12px;
-            border-radius: 9px;
-            border: 1px solid var(--border);
-            background: #0c0c10;
-            color: var(--text-main);
-            font-size: 12px;
-            font-family: inherit;
-        }
+    .slot-type-badge {
+      font-size: 11px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-        textarea.form-control {
-            resize: vertical;
-            min-height: 82px;
-            line-height: 1.45;
-        }
+    .badge-tt-cyan { background: rgba(0, 242, 254, 0.15); color: #00F2FE; border: 1px solid rgba(0, 242, 254, 0.35); }
+    .badge-tt-pink { background: rgba(255, 0, 80, 0.15); color: #FF4D88; border: 1px solid rgba(255, 0, 80, 0.35); }
+    .badge-tt-gold { background: rgba(212, 175, 55, 0.15); color: #FDE68A; border: 1px solid rgba(212, 175, 55, 0.35); }
 
-        /* 5-Scene (0-25s) TikTok Storyboard Grid */
-        .scene-list {
-            display: flex;
-            flex-direction: column;
-            gap: 7px;
-            margin-bottom: 14px;
-        }
-        .scene-row {
-            padding: 8px 11px;
-            border-radius: 9px;
-            background: #0d0d12;
-            border: 1px solid rgba(0, 242, 254, 0.2);
-            display: grid;
-            grid-template-columns: 78px 1fr;
-            gap: 10px;
-            align-items: center;
-            font-size: 11.5px;
-        }
-        .scene-time {
-            font-weight: 800;
-            color: var(--tt-cyan);
-            background: rgba(0, 242, 254, 0.1);
-            padding: 4px 7px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 10.5px;
-        }
+    .upcoming-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
+    }
 
-        /* Schedule & History List */
-        .queue-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            max-height: 225px;
-            overflow-y: auto;
-        }
+    .upcoming-card {
+      background: rgba(11, 17, 32, 0.78);
+      border: 1px solid rgba(0, 242, 254, 0.22);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
 
-        .queue-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-            padding: 9px 12px;
-            border-radius: 10px;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            font-size: 12px;
-        }
+    .upcoming-thumb {
+      width: 68px;
+      height: 88px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      background: #050811;
+      flex-shrink: 0;
+    }
 
-        /* 3-Stage Comment & DM Engine */
-        .stage-badges-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-            margin-bottom: 12px;
-        }
+    .upcoming-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
 
-        .stage-pill {
-            padding: 8px;
-            border-radius: 9px;
-            font-size: 10px;
-            line-height: 1.35;
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-        }
+    .upcoming-title {
+      font-size: 13.5px;
+      font-weight: 800;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
-        .stage-pill strong {
-            display: block;
-            font-size: 11px;
-            margin-bottom: 2px;
-        }
+    .upcoming-plan-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 2px;
+    }
 
-        .chat-feed {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 360px;
-            overflow-y: auto;
-            padding-right: 4px;
-            margin-top: 12px;
-        }
+    .plan-mini-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.06);
+      color: #CBD5E1;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
 
-        .chat-card {
-            background: var(--bg-elevated);
-            border: 1px solid var(--border);
-            border-radius: 11px;
-            padding: 11px 13px;
-            font-size: 12px;
-        }
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
 
-        .chat-card.stage-1 { border-left: 3px solid #10b981; }
-        .chat-card.stage-2 { border-left: 3px solid #00f2fe; }
-        .chat-card.stage-3 { border-left: 3px solid #ff0050; background: rgba(255, 0, 80, 0.07); }
+    .history-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: rgba(11, 17, 32, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      padding: 10px 16px;
+    }
 
-        .preset-chips {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
+    .history-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
 
-        .chip-btn {
-            font-size: 11px;
-            padding: 5px 9px;
-            border-radius: 99px;
-            border: 1px solid var(--border);
-            background: #181820;
-            color: #cbd5e1;
-            cursor: pointer;
-        }
+    .history-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      background: #000;
+    }
 
-        .chip-btn:hover {
-            border-color: var(--tt-cyan);
-            color: #fff;
-        }
+    .history-info {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
 
-        /* Modal */
-        .modal-backdrop {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.78);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 16px;
-        }
+    .history-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #fff;
+    }
 
-        .modal-backdrop.open {
-            display: flex;
-        }
+    .history-meta {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-        .modal-box {
-            width: 100%;
-            max-width: 560px;
-            background: var(--bg-card);
-            border: 1px solid rgba(0, 242, 254, 0.35);
-            border-radius: 16px;
-            padding: 20px;
-        }
-    </style>
+    .status-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(245, 158, 11, 0.16);
+      color: #FDE68A;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+    }
+
+    .assistant-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .assistant-grid { grid-template-columns: 1fr; }
+    }
+
+    .chat-simulator-card {
+      background: #070A12;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 14px;
+      height: 480px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    .chat-user {
+      align-self: flex-end;
+      background: #1E293B;
+      color: #fff;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-bot {
+      align-self: flex-start;
+      background: rgba(0, 242, 254, 0.12);
+      border: 1px solid rgba(0, 242, 254, 0.35);
+      color: #E0F2FE;
+      border-bottom-left-radius: 2px;
+    }
+
+    .chat-input-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 14px;
+      background: #0B1120;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0 0 14px 14px;
+    }
+
+    /* MODAL */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(5px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9000;
+      padding: 18px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .modal-box {
+      background: #111B2E;
+      border: 1px solid rgba(0, 242, 254, 0.4);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 540px;
+      padding: 22px;
+    }
+
+    #toastMessage {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #111B2E;
+      border: 1px solid var(--tt-cyan);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      display: none;
+      z-index: 9999;
+    }
+  </style>
 </head>
 <body>
 
-    <!-- ÜST KONTROL ÇUBUĞU -->
-    <header class="top-header">
-        <div class="brand-row">
-            <div class="tt-logo-box">🎵</div>
-            <div class="brand-title">
-                <h1>
-                    Global Mobilya — TikTok İçerik, 0–25sn Senaryo & Bağlantı Stüdyosu
-                    <span class="badge-cloud">KOLEKSİYON MERKEZLİ • 9:16 DİKEY</span>
-                </h1>
-                <p>0–25 Saniye 5 Sahneli Koleksiyon/Ürün Video Senaryosu, Kapak Tasarımı ve TikTok Content Posting API v2 Hazırlık Paneli</p>
-            </div>
-        </div>
-        <div class="header-actions">
-            <div class="status-pill" id="cloudStatusPill">
-                <span class="dot-pulse"></span>
-                <span id="cloudStatusText">TikTok bağlantısı bekleniyor (Hesap bilgileri eksik)</span>
-            </div>
-            <button class="btn" onclick="openApiModal()">🔑 TikTok API & Hesap Bağlantısı</button>
-            <button class="btn btn-cyan" onclick="generateAutonomousTikTokScene()">✨ Sahne & Senaryo Yenile</button>
-            <button class="btn btn-tiktok" id="btnPublishTikTokHeader" onclick="publishTikTokNow()">🚀 Yayın Kuyruğuna Gönder</button>
-        </div>
-    </header>
-
-    <!-- TIKTOK 4 BAĞLANTI DURUMU MATRİSİ (BÖLÜM 3.1) -->
-    <section class="connection-state-bar" id="tiktokConnectionMatrix">
-        <div class="conn-step active-state" id="connState_missing_credentials">
-            <strong><span>1. Hesap bilgileri eksik</span> <span id="badge_missing_credentials">AKTİF DURUM</span></strong>
-            <span>TikTok hesap erişimi ve Open ID / Client Key bilgileri henüz girilmedi. İçerik ve senaryo üretimi açık, canlı yayın kapalıdır.</span>
-        </div>
-        <div class="conn-step" id="connState_awaiting_authorization">
-            <strong><span>2. API yetkilendirmesi bekleniyor</span> <span id="badge_awaiting_authorization"></span></strong>
-            <span>Uygulama anahtarları tanımlandı, OAuth2 `act.xxx` erişim anahtarı yetkilendirmesi bekleniyor.</span>
-        </div>
-        <div class="conn-step" id="connState_connection_unverified">
-            <strong><span>3. Bağlantı doğrulanmadı</span> <span id="badge_connection_unverified"></span></strong>
-            <span>Token girildi ancak canlı TikTok Content Posting API v2 doğrulaması henüz tamamlanmadı.</span>
-        </div>
-        <div class="conn-step" id="connState_ready">
-            <strong><span>4. Bağlantı hazır</span> <span id="badge_ready"></span></strong>
-            <span>TikTok Content Posting API v2 ve Open ID doğrulandı; onaylanan videolar doğrudan yayınlanabilir.</span>
-        </div>
-    </section>
-
-    <!-- KPI ÖZET ŞERİDİ -->
-    <section class="kpi-grid">
-        <div class="kpi-card">
-            <div class="kpi-label">TikTok Bağlantı Durumu</div>
-            <div class="kpi-value">
-                <span id="kpiConnStateLabel" style="color:#fde68a;">Hesap bilgileri eksik</span>
-                <span style="font-size:11px; color:#f59e0b;" id="kpiConnPublishBadge">Yayın Kilitli</span>
-            </div>
-            <div class="kpi-sub">Diğer 3 platform (IG, FB, YT) bağımsız çalışır</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Merkezi Katalog (Modül 7)</div>
-            <div class="kpi-value">
-                <span id="kpiProductCount">Yükleniyor...</span>
-                <span style="font-size:12px; color:var(--tt-cyan);">Modül 7</span>
-            </div>
-            <div class="kpi-sub">Koleksiyon, koleksiyon parçası ve bağımsız ürünler</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">Video Senaryo Yapısı</div>
-            <div class="kpi-value">
-                <span>0–25 Sn (5 Sahne)</span>
-                <span style="font-size:12px; color:#10b981;">Hazır</span>
-            </div>
-            <div class="kpi-sub">0-2s Hook • 2-8s Genel • 8-15s Parçalar • 15-20s Detay • 20-25s Kapanış</div>
-        </div>
-        <div class="kpi-card">
-            <div class="kpi-label">3 Aşamalı Yorum & DM Motoru</div>
-            <div class="kpi-value">
-                <span id="kpiInteractionCount">0 Etkileşim</span>
-                <span style="font-size:12px; color:var(--tt-pink);">WhatsApp SLA</span>
-            </div>
-            <div class="kpi-sub">Sabit Kural -> Gemini 2.5 AI -> 0505 015 10 35</div>
-        </div>
-    </section>
-
-    <!-- ANA 3 SÜTUNLU ÇALIŞMA ALANI -->
-    <main class="workspace-grid">
-
-        <!-- SOL SÜTUN: 9:16 TIKTOK DİKEY STÜDYO ÖNİZLEME -->
-        <section class="panel-card tiktok-stage-wrap">
-            <div class="panel-header" style="width:100%; display:flex; justify-content:space-between; align-items:center;">
-                <h2>📱 9:16 TikTok Kapak & Sahne Önizleme</h2>
-                <button type="button" class="btn btn-outline" style="padding:4px 10px; font-size:11px;" id="btnTtKenBurns" onclick="toggleTikTokKenBurns()">
-                    ▶️ Kamera Hareketi
-                </button>
-            </div>
-
-            <div class="phone-frame">
-                <canvas id="tiktokCanvas" width="1080" height="1920"></canvas>
-                <div class="tt-right-rail">
-                    <div class="tt-rail-item">
-                        <div class="tt-rail-icon" style="border-color:var(--tt-pink);">🛋️</div>
-                        <span>Takip</span>
-                    </div>
-                    <div class="tt-rail-item">
-                        <div class="tt-rail-icon">❤️</div>
-                        <span>Önizleme</span>
-                    </div>
-                    <div class="tt-rail-item">
-                        <div class="tt-rail-icon">💬</div>
-                        <span>Yorum</span>
-                    </div>
-                    <div class="tt-rail-item">
-                        <div class="tt-rail-icon">🔖</div>
-                        <span>Kaydet</span>
-                    </div>
-                </div>
-            </div>
-
-            <div style="width:100%; margin-top:12px; display:flex; gap:8px;">
-                <button class="btn" style="flex:1;" onclick="generateAutonomousTikTokScene()">🔄 Sahneyi Yenile</button>
-                <button class="btn btn-cyan" style="flex:1;" onclick="downloadTikTokPoster()">⬇️ 1080×1920 PNG İndir</button>
-            </div>
-            <p style="font-size:11px; color:var(--text-muted); margin-top:8px; text-align:center;">
-                TikTok hesap erişimi tamamlanana kadar tüm senaryo, kapak ve altyazı paketleri taslak olarak hazırlanır; canlı yayın adımı güvenli şekilde bekletilir.
-            </p>
-        </section>
-
-        <!-- ORTA SÜTUN: 0-25SN 5 SAHNELİ VİDEO SENARYOSU, FORMAT & KUYRUK -->
-        <section class="panel-card">
-            <div class="panel-header">
-                <h2>🎬 TikTok 0–25 Saniye 5 Sahneli Video Senaryosu & İçerik Paketi</h2>
-                <span style="font-size:11px; color:#f59e0b; font-weight:700;" id="middlePanelStatusBadge">SENARYO ÜRETİMİ AKTİF</span>
-            </div>
-
-            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px; text-transform:uppercase;">
-                1. TikTok İçerik Kurgusu Seçin:
-            </label>
-            <div class="format-grid" id="formatSelectorGrid">
-                <button class="format-btn active" data-format="TIKTOK_COLLECTION_SHOWCASE" onclick="selectTikTokFormat('TIKTOK_COLLECTION_SHOWCASE', this)">
-                    <strong>🛋️ Koleksiyon Tanıtım Videosu</strong>
-                    <span>0–25 sn • 5 sahneli koleksiyon ve parça geçişleri</span>
-                </button>
-                <button class="format-btn" data-format="TIKTOK_ASMR_CNC" onclick="selectTikTokFormat('TIKTOK_ASMR_CNC', this)">
-                    <strong>🔊 Doku, Malzeme & İşçilik Detayı</strong>
-                    <span>0–25 sn • Yakın plan yüzey, ahşap/kumaş ve işçilik</span>
-                </button>
-                <button class="format-btn" data-format="TIKTOK_PHOTO_CAROUSEL" onclick="selectTikTokFormat('TIKTOK_PHOTO_CAROUSEL', this)">
-                    <strong>📸 TikTok Renk & Parça Kartelası</strong>
-                    <span>9:16 • Koleksiyon parçaları ve renk uyumu</span>
-                </button>
-                <button class="format-btn" data-format="TIKTOK_POV_RENOVATION" onclick="selectTikTokFormat('TIKTOK_POV_RENOVATION', this)">
-                    <strong>✨ Mekân Atmosferi & Dönüşüm</strong>
-                    <span>0–25 sn • Yaşam alanında bütünsel görünüm</span>
-                </button>
-            </div>
-
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <div class="form-group">
-                    <label>2. Modül 7 Katalogdan Koleksiyon / Ürün Seçin:</label>
-                    <select id="productSelect" class="form-control" onchange="onProductChange()"></select>
-                </div>
-                <div class="form-group">
-                    <label>Müzik Stili & Ritim Önerisi:</label>
-                    <input type="text" id="trendingAudioInput" class="form-control" readonly />
-                </div>
-            </div>
-
-            <!-- 5 SAHNELİ 0-25SN TIKTOK SENARYO AKIŞI (BÖLÜM 10) -->
-            <div class="form-group">
-                <label>3. 0–25 Saniye 5 Sahneli TikTok Video Akışı (Bölüm 10 Standardı):</label>
-                <div class="scene-list" id="tiktokStoryboardList"></div>
-            </div>
-
-            <div class="form-group">
-                <label>4. İlk 2 Saniye Güçlü Giriş (Hook Metni & Kapak Başlığı):</label>
-                <input type="text" id="hookInput" class="form-control" oninput="renderTikTokCanvas()" />
-            </div>
-
-            <div class="form-group">
-                <label>5. Kısa ve Etkili TikTok Açıklaması & Hashtag Seti:</label>
-                <textarea id="captionInput" class="form-control"></textarea>
-            </div>
-
-            <div class="form-group">
-                <label>6. Altyazı Metni & Harekete Geçirici Mesaj (CTA):</label>
-                <textarea id="pinnedCommentInput" class="form-control" style="min-height:60px;"></textarea>
-            </div>
-
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px;">
-                <button class="btn btn-cyan" onclick="addCurrentDraftToSchedule()">💾 Taslak Paketi Kaydet (`draft`)</button>
-                <button class="btn btn-tiktok" onclick="publishTikTokNow()">🚀 Yayın Kuyruğuna Gönder</button>
-                <a href="/Module%202/AI%20Studio/index.html" class="btn" style="text-decoration:none;">✨ Kampanya Stüdyosunda Aç ↗</a>
-            </div>
-
-            <!-- Gönderi ve Taslak Kuyruğu -->
-            <div class="panel-header" style="margin-top:8px;">
-                <h2>📅 TikTok İçerik Paketi & Kuyruk Durumu</h2>
-                <span id="queueCountBadge" style="font-size:11px; color:var(--tt-cyan); font-weight:700;">0 Kayıt</span>
-            </div>
-            <div class="queue-list" id="publishedQueueList"></div>
-        </section>
-
-        <!-- SAĞ SÜTUN: 3 AŞAMALI HİBRİT TIKTOK YORUM & BUSINESS DM MOTORU -->
-        <section class="panel-card">
-            <div class="panel-header">
-                <h2>💬 3 Aşamalı Hibrit TikTok Yorum & DM Motoru</h2>
-                <span style="font-size:11px; color:var(--tt-pink); font-weight:800;">CANLI SİMÜLATÖR</span>
-            </div>
-
-            <div class="stage-badges-row">
-                <div class="stage-pill" style="border-color:rgba(16,185,129,0.4);">
-                    <strong style="color:#10b981;">1. Aşama: Sabit Kural</strong>
-                    Teslimat, garanti, showroom adres ve genel katalog bilgisi.
-                </div>
-                <div class="stage-pill" style="border-color:rgba(0,242,254,0.4);">
-                    <strong style="color:var(--tt-cyan);">2. Aşama: Gemini AI</strong>
-                    Koleksiyon parçaları, malzeme yapısı ve kombinasyon soruları.
-                </div>
-                <div class="stage-pill" style="border-color:rgba(255,0,80,0.45);">
-                    <strong style="color:var(--tt-pink);">3. Aşama: İnsan Devri</strong>
-                    Fiyat teklifi, özel ölçü ve sipariş -> WhatsApp (0505 015 10 35).
-                </div>
-            </div>
-
-            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:6px;">
-                Hızlı Yorum / DM Senaryosu Test Et:
-            </label>
-            <div class="preset-chips">
-                <button class="chip-btn" onclick="runPresetInteraction('Sipariş versek teslimat ve kurulum süreciniz nasıl işliyor?', 'COMMENT')">🚚 1. Aşama: Teslimat Süreci</button>
-                <button class="chip-btn" onclick="runPresetInteraction('Koleksiyon ürünlerinde kullanılan malzeme ve garanti süresi nedir?', 'COMMENT')">🛡️ 1. Aşama: Malzeme & Garanti</button>
-                <button class="chip-btn" onclick="runPresetInteraction('Yatak odası koleksiyonundaki gardırop ve şifonyer ölçüleri hangi odalara uygundur?', 'COMMENT')">🤖 2. Aşama: Ürün & Mekân Sorusu (Gemini AI)</button>
-                <button class="chip-btn" onclick="runPresetInteraction('Bu koleksiyonun tüm parçaları için fiyat teklifi alabilir miyim?', 'DM')">📲 3. Aşama: Fiyat Teklifi (WhatsApp Devri)</button>
-            </div>
-
-            <div style="display:flex; gap:6px; margin-bottom:8px;">
-                <select id="simChannelSelect" class="form-control" style="width:125px;">
-                    <option value="COMMENT">💬 Yorum</option>
-                    <option value="DM">📩 TikTok DM</option>
-                </select>
-                <input type="text" id="simMessageInput" class="form-control" placeholder="Müşteri yorumu veya DM yazın..." />
-                <button class="btn btn-tiktok" onclick="sendSimulatedInteraction()">Gönder</button>
-            </div>
-
-            <div class="chat-feed" id="interactionFeed"></div>
-        </section>
-
-    </main>
-
-    <!-- TIKTOK API & GEMINI BULUT AYARLARI MODALI -->
-    <div class="modal-backdrop" id="apiModal">
-        <div class="modal-box">
-            <div class="panel-header">
-                <h2>🔑 TikTok Content Posting API v2 & Hesap Yapılandırması</h2>
-                <button class="btn" onclick="closeApiModal()">✕ Kapat</button>
-            </div>
-            <div style="padding:10px 12px; border-radius:10px; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); color:#fde68a; font-size:11.5px; margin-bottom:12px; line-height:1.45;">
-                <strong>Durum Bilgisi:</strong> TikTok hesap kurtarma ve API yetkilendirmesi tamamlandığında Open ID ve OAuth2 Access Token bilgilerini buraya girebilirsiniz. Bilgiler girilene kadar TikTok içerikleri <code>awaiting_platform_connection</code> durumunda güvenle saklanır.
-            </div>
-            <div class="form-group">
-                <label>TikTok Hesap Kullanıcı Adı:</label>
-                <input type="text" id="cfgHandle" class="form-control" value="@thenovafurniture" />
-            </div>
-            <div class="form-group">
-                <label>TikTok OAuth2 Access Token (`act.xxx` — Content Posting API v2):</label>
-                <input type="password" id="cfgAccessToken" class="form-control" placeholder="Yetkilendirme tamamlandığında giriniz..." />
-            </div>
-            <div class="form-group">
-                <label>TikTok Open ID (`open_id`):</label>
-                <input type="text" id="cfgOpenId" class="form-control" placeholder="TikTok Business Open ID" />
-            </div>
-            <div class="form-group">
-                <label>Google Gemini 2.5 Flash API Anahtarı (2. Aşama Teknik Yanıtlar İçin):</label>
-                <input type="password" id="cfgGeminiKey" class="form-control" placeholder="AIzaSy..." />
-            </div>
-            <div class="form-group">
-                <label>3. Aşama Canlı İnsan / WhatsApp İletişim Hattı:</label>
-                <input type="text" id="cfgWhatsapp" class="form-control" value="905050151035" />
-            </div>
-            <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:14px;">
-                <button class="btn" onclick="closeApiModal()">İptal</button>
-                <button class="btn btn-cyan" onclick="saveApiConfig()">💾 Yapılandırmayı Kaydet</button>
-            </div>
-        </div>
+  <!-- ÜST BAŞLIK -->
+  <header class="top-header">
+    <div class="brand-wrap">
+      <div class="brand-logo-badge">♪</div>
+      <div class="header-titles">
+        <h1>NOVA FURNITURE — TikTok Otonom Kontrol Merkezi</h1>
+        <p>@thenovafurniture • Üretim Kontrolü, Yayın Akış Saatleri ve Sıradaki İçerik Önizlemesi</p>
+      </div>
     </div>
+    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+      <div class="api-status-pill" id="topConnStatusPill">
+        <span class="status-dot"></span>
+        <span id="topConnStatusLabel">TikTok Durumu: 1/4 Hesap Bilgileri Eksik</span>
+      </div>
+      <button class="btn btn-outline" onclick="openApiModal()">🔑 TikTok API Bağlantısı</button>
+      <button class="btn btn-tt" id="btnTriggerTtCycle" onclick="triggerAutonomousTtCycleNow()">
+        ⚡ Sıradaki Paketi Hazırla &amp; Kaydet
+      </button>
+    </div>
+  </header>
 
-    <script>
-        const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
-        const supabaseClient = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-                storage: localStorage.getItem('gm_auth_remember_device') === '1' ? localStorage : sessionStorage,
-                storageKey: 'sb-vrfujrpsjzqjthaqdalx-auth-token'
-            }
-        }) : null;
+  <!-- BÖLÜM 3.1: 4 KADEMELİ TIKTOK BAĞLANTI DURUM ÇUBUĞU -->
+  <div class="connection-state-bar" id="connectionStateBar">
+    <div class="conn-step active-state" id="connStep1">
+      <strong><span>1. Hesap Bilgileri Eksik</span><span>🔒</span></strong>
+      <span>Hesap kurtarma veya yeni TikTok Business / Developer hesabı bekleniyor.</span>
+    </div>
+    <div class="conn-step" id="connStep2">
+      <strong><span>2. API Yetkilendirmesi Bekleniyor</span><span>⏳</span></strong>
+      <span>Client Key &amp; Secret girildi, OAuth Token yetkilendirmesi bekleniyor.</span>
+    </div>
+    <div class="conn-step" id="connStep3">
+      <strong><span>3. Bağlantı Doğrulanmadı</span><span>🔍</span></strong>
+      <span>Token bilgileri mevcut, canlı kapsam (video.publish) doğrulaması yapılacak.</span>
+    </div>
+    <div class="conn-step" id="connStep4">
+      <strong><span>4. Bağlantı Hazır (Aktif)</span><span>✅</span></strong>
+      <span>TikTok Content Posting API v2 hazır; kuyruktaki paketler yayınlanabilir.</span>
+    </div>
+  </div>
 
-        async function getAccessToken() {
-            if (!supabaseClient?.auth) return null;
-            const { data } = await supabaseClient.auth.getSession();
-            return data?.session?.access_token || null;
+  <!-- ANA 2 MENÜ -->
+  <nav class="nav-tabs">
+    <button class="nav-tab-btn active" data-tab="tab-studio" onclick="switchNavTab('tab-studio')">
+      ⏰ 1. Yayın Akış Saatleri &amp; Sıradaki İçerik
+    </button>
+    <button class="nav-tab-btn" data-tab="tab-assistant" onclick="switchNavTab('tab-assistant')">
+      💬 2. TikTok Yorum &amp; DM Asistanı
+    </button>
+  </nav>
+
+  <!-- ======================================================================= -->
+  <!-- 1. YAYIN AKIŞ SAATLERİ & SIRADAKİ İÇERİK SEKMESİ                         -->
+  <!-- ======================================================================= -->
+  <main class="tab-content-area active" id="tab-studio">
+
+    <!-- 1. GÜNLÜK YAYIN SAATLERİ -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">⏰</span>
+          <div>
+            <h2>Yayın Akış Saatleri &amp; Günlük Otomasyon</h2>
+            <p>TikTok videolarının günün hangi saatlerinde otomatik üretilip yayınlanacağını belirleyin.</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <button class="btn btn-outline" onclick="loadAllData()">🔄 Yenile</button>
+          <button class="btn btn-cyan" onclick="saveScheduleSettings()">💾 Saatleri Kaydet</button>
+        </div>
+      </div>
+
+      <div class="slots-grid">
+        <!-- SLOT 1 -->
+        <div class="slot-card" id="slotCardNoon">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-tt-cyan">🎵 Koleksiyon Tanıtım Videosu (0–25sn)</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotNoonActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotNoon" value="12:00" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            Öğle kuşağı: 5 sahneli (Hook, Genel Atmosfer, Parça Geçişleri, Malzeme &amp; Ölçü, CTA) koleksiyon videosu.
+          </div>
+        </div>
+
+        <!-- SLOT 2 -->
+        <div class="slot-card" id="slotCardAfternoon">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-tt-gold">🪵 Parça &amp; Malzeme Detay Videosu (9:16)</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotAfternoonActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotAfternoon" value="17:30" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            İkindi kuşağı: 18mm E1 MDF gövde, CNC membran işçilik ve yakın plan doku geçişleri.
+          </div>
+        </div>
+
+        <!-- SLOT 3 -->
+        <div class="slot-card" id="slotCardPrime">
+          <div class="slot-header">
+            <span class="slot-type-badge badge-tt-pink">✨ Akşam Keşfet &amp; Showroom Videosu</span>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+              <input type="checkbox" id="chkSlotPrimeActive" checked onchange="updateSlotVisuals()">
+              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
+            </label>
+          </div>
+          <div>
+            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
+            <input type="time" class="form-control" id="timeSlotPrime" value="21:00" style="width:100%; font-size:14px; font-weight:700;">
+          </div>
+          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
+            Prime-time kuşağı: Ürüne tanımlanan fon müziği ve sinematik kamera hareketiyle 9:16 keşfet videosu.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. ÜRETİLECEK SIRADAKİ İÇERİKLERİN KÜÇÜK ÖNİZLEMESİ -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">👁️</span>
+          <div>
+            <h2>Üretilecek Sıradaki TikTok İçeriklerinin Küçük Önizlemesi</h2>
+            <p>Katalogdaki koleksiyon ve ürünlerin sunum planına göre sıradaki hazırlanacak 0–25sn TikTok paketleri.</p>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--tt-cyan); font-weight:700;" id="txtUpcomingSummary">Hesaplanıyor...</div>
+      </div>
+
+      <div class="upcoming-preview-grid" id="upcomingPreviewContainer">
+        <div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
+          Sıradaki TikTok önizlemeleri hazırlanıyor...
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. KUYRUK & TASLAK GEÇMİŞİ -->
+    <section class="section-card">
+      <div class="card-header">
+        <div class="card-title-group">
+          <span style="font-size:22px;">🗂️</span>
+          <div>
+            <h2>Hazırlanan &amp; Kuyruktaki TikTok İçerikleri</h2>
+            <p>Bağlantı hazır olduğunda otomatik yayınlanacak ve arşivlenen TikTok paketleri.</p>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--text-muted);" id="txtHistoryCount">Yükleniyor...</div>
+      </div>
+
+      <div class="history-list" id="historyListContainer">
+        <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
+          Kuyruk geçmişi yükleniyor...
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ======================================================================= -->
+  <!-- 2. TIKTOK YORUM & DM ASİSTANI SEKMESİ                                   -->
+  <!-- ======================================================================= -->
+  <main class="tab-content-area" id="tab-assistant">
+    <div class="assistant-grid">
+
+      <!-- SOL: ASİSTAN KURALLARI -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span style="font-size:22px;">🤖</span>
+            <div>
+              <h2>TikTok Yorum &amp; DM Akıllı Yanıt Kuralları</h2>
+              <p>TikTok videolarına gelen yorumları 3 kademeli otomatik yanıtlama sistemi.</p>
+            </div>
+          </div>
+          <button class="btn btn-cyan" onclick="saveAssistantSettings()">💾 Ayarları Kaydet</button>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:16px;">
+          <div style="background:rgba(0, 242, 254, 0.08); border:1px solid rgba(0, 242, 254, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#00F2FE; display:block; margin-bottom:4px;">1. Kademe: Yorumda 'FİYAT' &amp; 'ÖLÇÜ' Algılama</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Keşfetten gelen "Fiyat?", "Kaç TL?", "Ölçüleri nedir?" yorumlarına saniyeler içinde kurumsal yanıt verilir.
+            </p>
+          </div>
+
+          <div style="background:rgba(168, 85, 247, 0.08); border:1px solid rgba(168, 85, 247, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#C084FC; display:block; margin-bottom:4px;">2. Kademe: Gemini AI Koleksiyon &amp; Malzeme Bilgisi</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Koleksiyon parçaları, 18mm E1 MDF gövde ve CNC membran yüzey sorularında Gemini AI katalog verilerini okuyarak yanıt üretir.
+            </p>
+          </div>
+
+          <div style="background:rgba(255, 0, 80, 0.08); border:1px solid rgba(255, 0, 80, 0.25); border-radius:10px; padding:12px 14px;">
+            <strong style="font-size:13px; color:#FF4D88; display:block; margin-bottom:4px;">3. Kademe: WhatsApp Sipariş Hattına Yönlendirme</strong>
+            <p style="font-size:12px; color:#CBD5E1; line-height:1.4;">
+              Sipariş ve özel ölçü fiyat teklifi isteyen takipçiler doğrudan <strong>0 505 015 1035</strong> WhatsApp satış hattına yönlendirilir.
+            </p>
+          </div>
+
+          <div>
+            <label style="font-size:12px; font-weight:700; color:#fff; display:block; margin-bottom:6px;">Gemini AI Modeli:</label>
+            <select class="form-control" id="selGeminiModel" style="width:100%;">
+              <option value="gemini-2.5-flash" selected>Gemini 2.5 Flash (En Hızlı &amp; Doğal Yanıt)</option>
+              <option value="gemini-2.5-pro">Gemini 2.5 Pro (Derin Analiz)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- SAĞ: CANLI SİMÜLATÖR -->
+      <div class="section-card">
+        <div class="card-header">
+          <div class="card-title-group">
+            <span style="font-size:22px;">💬</span>
+            <div>
+              <h2>Canlı TikTok Yorum &amp; DM Testi</h2>
+              <p>Takipçi gibi bir yorum yazarak TikTok asistanının yanıtını test edin.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-simulator-card">
+          <div class="chat-messages" id="chatMessagesBox">
+            <div class="chat-bubble chat-bot">
+              👋 Merhaba! Ben Nova Furniture TikTok akıllı asistanıyım. Keşfet videolarımızın altına gelen yorumları burada canlı test edebilirsiniz.
+            </div>
+          </div>
+          <div class="chat-input-bar">
+            <input type="text" class="form-control" id="chatInputText" placeholder="Örn: Videodaki yatak odası koleksiyonunun fiyatı nedir?" style="flex:1;" onkeydown="if(event.key==='Enter') sendTestChatMessage()">
+            <button class="btn btn-tt" onclick="sendTestChatMessage()">Gönder</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- TIKTOK API MODAL -->
+  <div class="modal-backdrop" id="apiModal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+        <h3 style="font-size:16px; font-weight:800;">🔑 TikTok API &amp; Hesap Bağlantısı</h3>
+        <button class="btn btn-outline" style="padding:4px 10px;" onclick="closeApiModal()">✕</button>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:10px;">
+        <div>
+          <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:4px;">Hesap Erişim Durumu</label>
+          <select class="form-control" id="cfgAccountRecoveryStatus" style="width:100%;">
+            <option value="missing_credentials">1. Hesap Bilgileri Eksik</option>
+            <option value="awaiting_oauth">2. API Yetkilendirmesi Bekleniyor</option>
+            <option value="unverified">3. Bağlantı Doğrulanmadı</option>
+            <option value="ready">4. Bağlantı Hazır (Aktif)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:4px;">TikTok Kullanıcı Adı</label>
+          <input type="text" class="form-control" id="cfgHandle" value="@thenovafurniture" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:4px;">Client Key</label>
+          <input type="text" class="form-control" id="cfgClientKey" placeholder="aw8x..." style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:4px;">Client Secret</label>
+          <input type="password" class="form-control" id="cfgClientSecret" placeholder="••••••••" style="width:100%;">
+        </div>
+        <div>
+          <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:4px;">Access Token</label>
+          <input type="password" class="form-control" id="cfgAccessToken" placeholder="act.xxxx..." style="width:100%;">
+        </div>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+          <button class="btn btn-outline" onclick="closeApiModal()">İptal</button>
+          <button class="btn btn-cyan" onclick="saveApiConfig()">💾 Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastMessage"></div>
+
+  <script>
+    const SUPABASE_URL = 'https://vrfujrpsjzqjthaqdalx.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
+    const sb = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+    let ttState = null;
+    let catalogProducts = [];
+    let isCycleRunning = false;
+
+    const MUSIC_LABELS = {
+      modern_acoustic: '🎻 Lüks Mimari Akustik',
+      minimalist_piano: '🎹 Minimalist Piyano',
+      nordic_chill: '☕ İskandinav Lounge',
+      nova_beat: '🎷 Nova Signature Beat'
+    };
+
+    function switchNavTab(tabId) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
+      });
+      document.querySelectorAll('.tab-content-area').forEach(tab => {
+        tab.classList.toggle('active', tab.id === tabId);
+      });
+    }
+
+    function openApiModal() {
+      document.getElementById('apiModal').classList.add('open');
+    }
+
+    function closeApiModal() {
+      document.getElementById('apiModal').classList.remove('open');
+    }
+
+    function evaluateTikTokConnectionState(cfg = {}) {
+      const hasClient = Boolean((cfg.client_key || '').trim() && (cfg.client_secret || '').trim());
+      const hasToken = Boolean((cfg.access_token || '').trim());
+      const isVerified = Boolean(cfg.connection_verified === true && hasToken);
+
+      if (isVerified || cfg.account_recovery_status === 'ready') {
+        return { step: 4, code: 'ready', label: 'TikTok Durumu: 4/4 Bağlantı Hazır', ready: true };
+      }
+      if (hasToken || cfg.account_recovery_status === 'unverified') {
+        return { step: 3, code: 'unverified', label: 'TikTok Durumu: 3/4 Bağlantı Doğrulanmadı', ready: false };
+      }
+      if (hasClient || cfg.account_recovery_status === 'awaiting_oauth') {
+        return { step: 2, code: 'awaiting_oauth', label: 'TikTok Durumu: 2/4 API Yetkilendirmesi Bekleniyor', ready: false };
+      }
+      return { step: 1, code: 'missing_credentials', label: 'TikTok Durumu: 1/4 Hesap Bilgileri Eksik', ready: false };
+    }
+
+    function renderConnectionStateUI() {
+      const info = evaluateTikTokConnectionState(ttState?.config || {});
+      for (let i = 1; i <= 4; i++) {
+        const el = document.getElementById(`connStep${i}`);
+        if (!el) continue;
+        el.classList.remove('active-state', 'ready-state');
+        if (i === info.step) {
+          el.classList.add(info.ready ? 'ready-state' : 'active-state');
+        }
+      }
+      const pill = document.getElementById('topConnStatusPill');
+      const label = document.getElementById('topConnStatusLabel');
+      if (pill) pill.classList.toggle('ready', info.ready);
+      if (label) label.textContent = info.label;
+    }
+
+    async function loadAllData() {
+      showToast('⏳ TikTok bot ayarları ve sıradaki içerikler yükleniyor...');
+      try {
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.tt_bot_state&select=data`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (res.ok) {
+          const rows = await res.json();
+          if (rows && rows[0]?.data) ttState = rows[0].data;
+        }
+        if (!ttState) ttState = { config: {}, queue: [] };
+
+        const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
+          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
+        });
+        if (prodRes.ok) {
+          catalogProducts = await prodRes.json();
         }
 
-        async function module2StateRequest(key, method = 'GET', data = null) {
-            const token = await getAccessToken();
-            if (!token) throw new Error('Modül 2 ayarları için önce yönetici panelinden giriş yapın.');
-            const response = await fetch(
-                method === 'GET' ? `/api/module2?action=state&key=${encodeURIComponent(key)}` : '/api/module2?action=state',
-                {
-                    method,
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    ...(method === 'PUT' ? { body: JSON.stringify({ key, data }) } : {})
-                }
-            );
-            const result = await response.json().catch(() => ({}));
-            if (!response.ok || !result.ok) throw new Error(result.error || 'Modül 2 ayarları kaydedilemedi.');
-            return result;
-        }
+        populateUIFromState();
+        renderConnectionStateUI();
+        renderUpcomingPreviews();
+        renderHistoryList();
+        showToast('✅ TikTok paneli hazır!');
+      } catch (err) {
+        console.error('TikTok yükleme hatası:', err);
+        showToast('⚠️ Bilgiler yüklenirken hata oluştu: ' + err.message);
+      }
+    }
 
-        const FORMAT_CONFIGS = {
-            TIKTOK_COLLECTION_SHOWCASE: {
-                badge: '🛋️ KOLEKSİYON TANITIM VİDEOSU • 0–25 SN',
-                subBadge: 'Koleksiyon Bütünlüğü • Parça Uyumu • Zamansız Tasarım',
-                audio: '🔊 Modern Luxury Interior Beat — Dinamik Koleksiyon Ritmi',
-                hookTemplate: (p) => `${p.title} ile yaşam alanınızda bütünsel tasarım uyumu`,
-                accent1: '#00f2fe',
-                accent2: '#ff0050'
-            },
-            TIKTOK_ASMR_CNC: {
-                badge: '🔊 DOKU, MALZEME & İŞÇİLİK DETAYI',
-                subBadge: 'Doğal Doku • Yüzey Kalitesi • Detay İşçiliği',
-                audio: '🔊 Soft Tactile Craft & Interior Ambience',
-                hookTemplate: (p) => `${p.title}: Yakın plan malzeme ve yüzey işçiliği`,
-                accent1: '#00f2fe',
-                accent2: '#ff0050'
-            },
-            TIKTOK_PHOTO_CAROUSEL: {
-                badge: '📸 RENK PALETİ & PARÇA UYUMU',
-                subBadge: 'Koleksiyon Parçaları • Renk ve Doku Kombinasyonu',
-                audio: '🔊 Aesthetic Interior Lo-Fi — Modern Dekorasyon Sesi',
-                hookTemplate: (p) => `${p.title} renk paleti ve öne çıkan parçaları`,
-                accent1: '#38bdf8',
-                accent2: '#f43f5e'
-            },
-            TIKTOK_POV_RENOVATION: {
-                badge: '✨ MEKÂN ATMOSFERİ & KURGU',
-                subBadge: 'Ferahlık • Mimari Oran • Fonksiyonel Kullanım',
-                audio: '🔊 Warm Architectural Flow — Mekân Dönüşüm Ritmi',
-                hookTemplate: (p) => `${p.title} mekânın atmosferini nasıl değiştiriyor?`,
-                accent1: '#34d399',
-                accent2: '#ff0050'
-            }
+    function populateUIFromState() {
+      const cfg = ttState?.config || {};
+      const slots = cfg.posting_slots || [
+        { type: 'TT_COLLECTION', time: '12:00', active: true },
+        { type: 'TT_DETAIL', time: '17:30', active: true },
+        { type: 'TT_PRIME', time: '21:00', active: true }
+      ];
+
+      if (slots[0]) {
+        document.getElementById('timeSlotNoon').value = slots[0].time || '12:00';
+        document.getElementById('chkSlotNoonActive').checked = slots[0].active !== false;
+      }
+      if (slots[1]) {
+        document.getElementById('timeSlotAfternoon').value = slots[1].time || '17:30';
+        document.getElementById('chkSlotAfternoonActive').checked = slots[1].active !== false;
+      }
+      if (slots[2]) {
+        document.getElementById('timeSlotPrime').value = slots[2].time || '21:00';
+        document.getElementById('chkSlotPrimeActive').checked = slots[2].active !== false;
+      }
+
+      document.getElementById('cfgAccountRecoveryStatus').value = cfg.account_recovery_status || 'missing_credentials';
+      document.getElementById('cfgHandle').value = cfg.handle || '@thenovafurniture';
+      document.getElementById('cfgClientKey').value = cfg.client_key || '';
+      document.getElementById('cfgClientSecret').value = cfg.client_secret || '';
+      document.getElementById('cfgAccessToken').value = cfg.access_token || '';
+
+      updateSlotVisuals();
+    }
+
+    function updateSlotVisuals() {
+      document.getElementById('slotCardNoon').classList.toggle('inactive', !document.getElementById('chkSlotNoonActive').checked);
+      document.getElementById('slotCardAfternoon').classList.toggle('inactive', !document.getElementById('chkSlotAfternoonActive').checked);
+      document.getElementById('slotCardPrime').classList.toggle('inactive', !document.getElementById('chkSlotPrimeActive').checked);
+    }
+
+    function renderUpcomingPreviews() {
+      const container = document.getElementById('upcomingPreviewContainer');
+      const summaryEl = document.getElementById('txtUpcomingSummary');
+      if (!container) return;
+
+      if (!catalogProducts || catalogProducts.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Katalogda henüz ürün bulunmuyor.</div>`;
+        if (summaryEl) summaryEl.textContent = '0 Sıradaki Paket';
+        return;
+      }
+
+      const formats = [
+        { fmt: 'TT_COLLECTION', label: '🎵 0–25sn 5 Sahne Koleksiyon', badgeClass: 'badge-tt-cyan', slotTime: document.getElementById('timeSlotNoon')?.value || '12:00' },
+        { fmt: 'TT_DETAIL', label: '🪵 Parça & Doku Videosu', badgeClass: 'badge-tt-gold', slotTime: document.getElementById('timeSlotAfternoon')?.value || '17:30' },
+        { fmt: 'TT_PRIME', label: '✨ Keşfet Showroom Videosu', badgeClass: 'badge-tt-pink', slotTime: document.getElementById('timeSlotPrime')?.value || '21:00' }
+      ];
+
+      const items = catalogProducts.slice(0, 4).map((prod, idx) => ({
+        product: prod,
+        formatObj: formats[idx % formats.length]
+      }));
+
+      if (summaryEl) summaryEl.textContent = `Sırada ${items.length} TikTok Paketi Hazır`;
+
+      container.innerHTML = items.map((item, idx) => {
+        const p = item.product;
+        const f = item.formatObj;
+        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const prefs = p.marketing_preferences || {};
+        const musicKey = prefs.music_preference || 'nova_beat';
+        const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
+        const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
+
+        return `
+          <div class="upcoming-card">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <div class="upcoming-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span class="slot-type-badge ${f.badgeClass}">${f.label}</span>
+                <span style="font-size:11px; color:var(--tt-cyan); font-weight:800;">⏰ ${f.slotTime}</span>
+              </div>
+              <div class="upcoming-title">${idx + 1}. ${p.title || p.slug}</div>
+              <div class="upcoming-plan-tags">
+                <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
+                <span class="plan-mini-pill">🎬 0-2s Hook • 2-8s Sahne • 20-25s CTA</span>
+                <span class="plan-mini-pill">${MUSIC_LABELS[musicKey] || '🎷 Nova Beat'}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function saveScheduleSettings() {
+      if (!ttState) ttState = { config: {}, queue: [] };
+      if (!ttState.config) ttState.config = {};
+
+      ttState.config.posting_slots = [
+        { type: 'TT_COLLECTION', time: document.getElementById('timeSlotNoon').value || '12:00', active: document.getElementById('chkSlotNoonActive').checked },
+        { type: 'TT_DETAIL', time: document.getElementById('timeSlotAfternoon').value || '17:30', active: document.getElementById('chkSlotAfternoonActive').checked },
+        { type: 'TT_PRIME', time: document.getElementById('timeSlotPrime').value || '21:00', active: document.getElementById('chkSlotPrimeActive').checked }
+      ];
+
+      await persistTtState();
+      updateSlotVisuals();
+      renderUpcomingPreviews();
+      showToast('✅ TikTok yayın akış saatleri kaydedildi!');
+    }
+
+    async function saveApiConfig() {
+      if (!ttState) ttState = { config: {}, queue: [] };
+      if (!ttState.config) ttState.config = {};
+
+      ttState.config.account_recovery_status = document.getElementById('cfgAccountRecoveryStatus').value;
+      ttState.config.handle = document.getElementById('cfgHandle').value.trim();
+      ttState.config.client_key = document.getElementById('cfgClientKey').value.trim();
+      ttState.config.client_secret = document.getElementById('cfgClientSecret').value.trim();
+      ttState.config.access_token = document.getElementById('cfgAccessToken').value.trim();
+      ttState.config.connection_verified = ttState.config.account_recovery_status === 'ready';
+
+      await persistTtState();
+      renderConnectionStateUI();
+      closeApiModal();
+      showToast('✅ TikTok bağlantı ayarları kaydedildi!');
+    }
+
+    async function saveAssistantSettings() {
+      if (!ttState) ttState = { config: {}, queue: [] };
+      if (!ttState.config) ttState.config = {};
+      ttState.config.gemini_model = document.getElementById('selGeminiModel').value;
+      await persistTtState();
+      showToast('✅ TikTok asistan ayarları kaydedildi!');
+    }
+
+    async function persistTtState() {
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            key: 'tt_bot_state',
+            data: ttState,
+            updated_at: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.error('tt_bot_state kayıt hatası:', err);
+      }
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('historyListContainer');
+      const countEl = document.getElementById('txtHistoryCount');
+      const queue = ttState?.queue || [];
+
+      if (countEl) countEl.textContent = `Toplam ${queue.length} Paket`;
+
+      if (queue.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:35px 20px; color:var(--text-muted); font-size:13px;">
+            Henüz kuyruğa eklenmiş bir TikTok paketi bulunmuyor.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = queue.slice(0, 25).map(item => {
+        const thumbUrl = item.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const statusTxt = item.status === 'published' ? '✅ Yayınlandı' : '⏸️ Bağlantı Bekleniyor / Hazır Paket';
+        return `
+          <div class="history-item">
+            <div class="history-left">
+              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="Thumb">
+              <div class="history-info">
+                <div class="history-title">${item.product || item.title || 'Nova Koleksiyon Paketi'}</div>
+                <div class="history-meta">
+                  <span class="slot-type-badge badge-tt-cyan">🎵 0–25sn 5 Sahne</span>
+                  <span>•</span>
+                  <span>📅 ${item.scheduled || 'Hazır'}</span>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span class="status-badge">${statusTxt}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function triggerAutonomousTtCycleNow() {
+      if (isCycleRunning) return;
+      isCycleRunning = true;
+      const btn = document.getElementById('btnTriggerTtCycle');
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = '⏳ Paket Hazırlanıyor...';
+      }
+
+      try {
+        if (!catalogProducts || catalogProducts.length === 0) {
+          throw new Error('Katalogda ürün bulunamadı.');
+        }
+        const prod = catalogProducts[0];
+        const conn = evaluateTikTokConnectionState(ttState?.config || {});
+        const newItem = {
+          id: `tt-pkg-${Date.now()}`,
+          product: prod.title || prod.slug,
+          product_slug: prod.slug,
+          media_url: prod.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
+          scheduled: new Date().toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+          status: conn.ready ? 'queued' : 'connection_pending'
         };
 
-        // Zero fake fallback products (Section 16): start empty and populate from real catalog
-        let catalogProducts = [];
-        let currentFormat = 'TIKTOK_COLLECTION_SHOWCASE';
-        let currentProductIndex = 0;
-        let visualSeed = 0;
-        let currentTtProductImageEl = null;
-        let ttAnimController = null;
-        let isTtAnimPlaying = false;
-        let currentConnectionState = 'missing_credentials'; // missing_credentials | awaiting_authorization | connection_unverified | ready
-
-        let botState = {
-            botActive: false,
-            accountHandle: '@thenovafurniture',
-            tiktokAccessToken: '',
-            tiktokOpenId: '',
-            geminiApiKey: '',
-            whatsappNumber: '905050151035',
-            publishedHistory: [],
-            scheduledQueue: [],
-            interactionLogs: []
-        };
-
-        function computeLocalConnectionState(serverHealthState) {
-            if (serverHealthState && ['missing_credentials', 'awaiting_authorization', 'connection_unverified', 'ready'].includes(serverHealthState)) {
-                if (serverHealthState === 'ready') return 'ready';
-            }
-            const hasToken = Boolean(botState.tiktokAccessToken && botState.tiktokAccessToken.trim());
-            const hasOpenId = Boolean(botState.tiktokOpenId && botState.tiktokOpenId.trim());
-            if (!hasToken && !hasOpenId) {
-                return serverHealthState || 'missing_credentials';
-            }
-            if (hasOpenId && !hasToken) {
-                return 'awaiting_authorization';
-            }
-            return 'connection_unverified';
+        if (!ttState.queue) ttState.queue = [];
+        ttState.queue.unshift(newItem);
+        await persistTtState();
+        renderHistoryList();
+        showToast(conn.ready
+          ? `🚀 "${prod.title}" TikTok yayın kuyruğuna eklendi!`
+          : `⏸️ "${prod.title}" TikTok paketi "Bağlantı Bekleniyor" durumunda kaydedildi!`);
+      } catch (err) {
+        showToast(`❌ Hata: ${err.message}`);
+      } finally {
+        isCycleRunning = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '⚡ Sıradaki Paketi Hazırla & Kaydet';
         }
+      }
+    }
 
-        function renderConnectionMatrix(stateKey) {
-            currentConnectionState = stateKey || 'missing_credentials';
-            const states = {
-                missing_credentials: {
-                    label: 'Hesap bilgileri eksik',
-                    publishBadge: 'Yayın Kilitli • Senaryo Açık',
-                    pillText: 'TikTok bağlantısı bekleniyor (Hesap bilgileri eksik)'
-                },
-                awaiting_authorization: {
-                    label: 'API yetkilendirmesi bekleniyor',
-                    publishBadge: 'OAuth2 Bekleniyor',
-                    pillText: 'TikTok API yetkilendirmesi bekleniyor'
-                },
-                connection_unverified: {
-                    label: 'Bağlantı doğrulanmadı',
-                    publishBadge: 'Doğrulama Bekleniyor',
-                    pillText: 'TikTok bağlantısı doğrulanmadı'
-                },
-                ready: {
-                    label: 'Bağlantı hazır',
-                    publishBadge: 'Canlı Yayına Hazır',
-                    pillText: `TikTok Bağlantısı Hazır (${botState.accountHandle || '@thenovafurniture'})`
-                }
-            };
+    function sendTestChatMessage() {
+      const input = document.getElementById('chatInputText');
+      const text = input.value.trim();
+      if (!text) return;
 
-            const info = states[currentConnectionState] || states.missing_credentials;
-            const pillEl = document.getElementById('cloudStatusPill');
-            const pillTextEl = document.getElementById('cloudStatusText');
-            const kpiLabelEl = document.getElementById('kpiConnStateLabel');
-            const kpiBadgeEl = document.getElementById('kpiConnPublishBadge');
-            const publishBtn = document.getElementById('btnPublishTikTokHeader');
+      const box = document.getElementById('chatMessagesBox');
+      const userBubble = document.createElement('div');
+      userBubble.className = 'chat-bubble chat-user';
+      userBubble.textContent = text;
+      box.appendChild(userBubble);
+      input.value = '';
 
-            if (pillTextEl) pillTextEl.textContent = info.pillText;
-            if (pillEl) pillEl.classList.toggle('ready', currentConnectionState === 'ready');
-            if (kpiLabelEl) {
-                kpiLabelEl.textContent = info.label;
-                kpiLabelEl.style.color = currentConnectionState === 'ready' ? '#34d399' : '#fde68a';
-            }
-            if (kpiBadgeEl) {
-                kpiBadgeEl.textContent = info.publishBadge;
-                kpiBadgeEl.style.color = currentConnectionState === 'ready' ? '#10b981' : '#f59e0b';
-            }
-            if (publishBtn) {
-                publishBtn.textContent = currentConnectionState === 'ready'
-                    ? '🚀 Şimdi TikTok Kuyruğuna Gönder'
-                    : '⏸️ Bağlantı Bekleniyor Olarak Kaydet';
-            }
-
-            ['missing_credentials', 'awaiting_authorization', 'connection_unverified', 'ready'].forEach(k => {
-                const el = document.getElementById(`connState_${k}`);
-                const badge = document.getElementById(`badge_${k}`);
-                if (!el || !badge) return;
-                el.classList.remove('active-state', 'ready-state');
-                badge.textContent = '';
-                if (k === currentConnectionState) {
-                    el.classList.add(k === 'ready' ? 'ready-state' : 'active-state');
-                    badge.textContent = 'AKTİF DURUM';
-                    badge.style.color = k === 'ready' ? '#34d399' : '#fde68a';
-                }
-            });
+      setTimeout(() => {
+        const lower = text.toLowerCase();
+        let reply = '';
+        if (/fiyat|ücret|ne kadar|kaça/i.test(lower)) {
+          reply = '✨ Merhaba! Videodaki koleksiyonumuzun özel ölçü fiyat teklifi ve renk kartelası için WhatsApp hattımızdan bize hemen ulaşabilirsiniz: 0 505 015 1035 📲';
+        } else {
+          reply = '🪵 Tüm koleksiyonlarımız 1. sınıf 18mm E1 MDF gövde, CNC membran yüzey ve 5 yıl üretici garantisiyle üretilmektedir. Detaylar ve sipariş için WhatsApp: 0 505 015 1035';
         }
+        const botBubble = document.createElement('div');
+        botBubble.className = 'chat-bubble chat-bot';
+        botBubble.textContent = reply;
+        box.appendChild(botBubble);
+        box.scrollTop = box.scrollHeight;
+      }, 450);
 
-        async function initTikTokCloudBot() {
-            let serverTikTokState = 'missing_credentials';
-            try {
-                const token = await getAccessToken();
-                const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      box.scrollTop = box.scrollHeight;
+    }
 
-                // 1. Check platform health from /api/module2?action=platform-health
-                const healthRes = await fetch('/api/module2?action=platform-health', { headers });
-                if (healthRes.ok) {
-                    const healthData = await healthRes.json();
-                    if (healthData?.platforms?.tiktok?.connection_state) {
-                        serverTikTokState = healthData.platforms.tiktok.connection_state;
-                    }
-                }
+    function showToast(msg) {
+      const el = document.getElementById('toastMessage');
+      if (!el) return;
+      el.textContent = msg;
+      el.style.display = 'block';
+      clearTimeout(window._toastTimer);
+      window._toastTimer = setTimeout(() => {
+        el.style.display = 'none';
+      }, 3500);
+    }
 
-                // 2. Load real products & collections from Module 7 API
-                const mod7Res = await fetch('/api/module7?action=products', { headers });
-                if (mod7Res.ok) {
-                    const mod7Data = await mod7Res.json();
-                    if (Array.isArray(mod7Data?.products) && mod7Data.products.length > 0) {
-                        catalogProducts = mod7Data.products;
-                    }
-                }
-
-                // 3. Fallback to direct Supabase products table if needed (still real data only)
-                if (catalogProducts.length === 0 && supabaseClient) {
-                    const { data: prods } = await supabaseClient
-                        .from('products')
-                        .select('id, sku, title, kategori, renkler, kisa_aciklama, ana_resim, product_type, materials')
-                        .limit(50);
-                    if (Array.isArray(prods) && prods.length > 0) {
-                        catalogProducts = prods;
-                    }
-                }
-
-                // 4. Load saved TikTok bot state
-                if (token) {
-                    const stateResult = await module2StateRequest('tt_bot_state');
-                    if (stateResult?.data) {
-                        botState = { ...botState, ...stateResult.data };
-                    }
-                }
-            } catch (e) {
-                console.warn('TikTok stüdyo başlangıç kontrolü uyarısı:', e.message);
-            }
-
-            renderConnectionMatrix(computeLocalConnectionState(serverTikTokState));
-
-            const kpiCountEl = document.getElementById('kpiProductCount');
-            if (kpiCountEl) {
-                kpiCountEl.textContent = catalogProducts.length > 0
-                    ? `${catalogProducts.length} Kayıtlı Ürün`
-                    : 'Henüz ürün eklenmemiş';
-            }
-
-            populateProductDropdown();
-            applyDraftFromSelection();
-            renderQueueList();
-            renderInteractionFeed();
-        }
-
-        function populateProductDropdown() {
-            const sel = document.getElementById('productSelect');
-            if (!sel) return;
-            if (catalogProducts.length === 0) {
-                sel.innerHTML = `<option value="-1">Henüz ürün eklenmemiş (Modül 7'den ekleyin)</option>`;
-                return;
-            }
-            sel.innerHTML = catalogProducts.map((p, idx) => {
-                const sku = p.sku || `URN-${idx + 1}`;
-                const typeBadge = p.product_type === 'collection' ? 'KOLEKSİYON' : p.product_type === 'collection_piece' ? 'PARÇA' : 'ÜRÜN';
-                return `<option value="${idx}">[${typeBadge} • ${sku}] ${p.title || 'İsimsiz Ürün'}</option>`;
-            }).join('');
-        }
-
-        function buildFiveSceneTikTokStoryboard(product) {
-            if (!product) {
-                return [
-                    { time: '0–2 sn', title: 'Güçlü Giriş (Hook)', desc: 'Henüz ürün eklenmemiş. Modül 7 üzerinden koleksiyon veya ürün ekleyin.' },
-                    { time: '2–8 sn', title: 'Koleksiyon Genel Sahnesi', desc: 'Geniş açı yaşam alanı ve koleksiyon atmosferi.' },
-                    { time: '8–15 sn', title: 'Öne Çıkan Parçalar', desc: 'Koleksiyon parçaları arasında ritmik geçişler.' },
-                    { time: '15–20 sn', title: 'Detay ve Malzeme Sahnesi', desc: 'Yüzey, doku, kulp ve malzeme işçiliği yakın planı.' },
-                    { time: '20–25 sn', title: 'Sonuç ve Kapanış', desc: 'Koleksiyon adı ve inceleme çağrısı.' }
-                ];
-            }
-            const title = product.title || 'Koleksiyon';
-            const materials = Array.isArray(product.materials) && product.materials.length > 0
-                ? product.materials.join(', ')
-                : (product.kategori || 'Özel yüzey ve malzeme uyumu');
-            const colors = Array.isArray(product.renkler) && product.renkler.length > 0
-                ? product.renkler.join(', ')
-                : 'Doğal renk paleti';
-
-            return [
-                {
-                    time: '0–2 sn',
-                    title: '1. Güçlü Giriş (Hook)',
-                    desc: `${title} ile yaşam alanında ilk bakışta fark yaratan tasarım dili. Kamera: Hızlı odak açılışı.`
-                },
-                {
-                    time: '2–8 sn',
-                    title: '2. Koleksiyon Genel Sahnesi',
-                    desc: `${title} bütünsel mekân yerleşimi ve (${colors}) renk uyumu. Kamera: Geniş açı akıcı pan.`
-                },
-                {
-                    time: '8–15 sn',
-                    title: '3. Öne Çıkan Parçalar',
-                    desc: `Koleksiyonu oluşturan tamamlayıcı parçalar ve fonksiyonel kullanım detayları arasında ritmik geçiş.`
-                },
-                {
-                    time: '15–20 sn',
-                    title: '4. Detay ve Malzeme Sahnesi',
-                    desc: `${materials} dokusu, yüzey kalitesi ve ince işçilik yakın plan çekimi (Macro Detail).`
-                },
-                {
-                    time: '20–25 sn',
-                    title: '5. Sonuç ve Kapanış (CTA)',
-                    desc: `${title} tüm detaylarıyla koleksiyonlarımızda. Detaylı bilgi için profildeki bağlantıyı inceleyin.`
-                }
-            ];
-        }
-
-        function renderStoryboardList(product) {
-            const container = document.getElementById('tiktokStoryboardList');
-            if (!container) return;
-            const scenes = buildFiveSceneTikTokStoryboard(product);
-            container.innerHTML = scenes.map(s => `
-                <div class="scene-row">
-                    <div class="scene-time">${s.time}</div>
-                    <div>
-                        <strong style="color:#fff; display:block; margin-bottom:2px;">${s.title}</strong>
-                        <span style="color:#cbd5e1;">${s.desc}</span>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function selectTikTokFormat(formatKey, btnEl) {
-            currentFormat = formatKey;
-            document.querySelectorAll('#formatSelectorGrid .format-btn').forEach(b => b.classList.remove('active'));
-            if (btnEl) btnEl.classList.add('active');
-            applyDraftFromSelection();
-        }
-
-        function onProductChange() {
-            const val = Number(document.getElementById('productSelect').value);
-            currentProductIndex = val >= 0 ? val : 0;
-            applyDraftFromSelection();
-        }
-
-        function generateAutonomousTikTokScene() {
-            visualSeed = (visualSeed + 1) % 4;
-            if (catalogProducts.length > 0) {
-                currentProductIndex = (currentProductIndex + 1) % catalogProducts.length;
-                document.getElementById('productSelect').value = String(currentProductIndex);
-            }
-            applyDraftFromSelection();
-        }
-
-        function toggleTikTokKenBurns() {
-            if (!window.NovaStudioEngine) return;
-            const btn = document.getElementById('btnTtKenBurns');
-            const canvas = document.getElementById('tiktokCanvas');
-            const p = catalogProducts[currentProductIndex] || null;
-            if (!p) return;
-
-            if (isTtAnimPlaying) {
-                if (ttAnimController) ttAnimController.stop();
-                isTtAnimPlaying = false;
-                if (btn) btn.textContent = '▶️ Kamera Hareketi';
-                renderTikTokCanvas();
-            } else {
-                isTtAnimPlaying = true;
-                if (btn) btn.textContent = '⏹️ Durdur';
-                ttAnimController = window.NovaStudioEngine.animateKenBurns(canvas, currentTtProductImageEl, p, true);
-            }
-        }
-
-        function applyDraftFromSelection() {
-            const p = catalogProducts[currentProductIndex] || null;
-            const cfg = FORMAT_CONFIGS[currentFormat] || FORMAT_CONFIGS.TIKTOK_COLLECTION_SHOWCASE;
-            document.getElementById('trendingAudioInput').value = cfg.audio;
-
-            renderStoryboardList(p);
-
-            if (!p) {
-                document.getElementById('hookInput').value = 'Henüz ürün eklenmemiş — Modül 7 üzerinden ürün veya koleksiyon ekleyin';
-                document.getElementById('captionInput').value = 'Henüz içerik üretilmemiş. Modül 7 üzerinden gerçek ürün veya koleksiyon eklendiğinde TikTok video senaryosu ve açıklaması otomatik oluşturulur.';
-                document.getElementById('pinnedCommentInput').value = 'TikTok bağlantısı bekleniyor.';
-                currentTtProductImageEl = null;
-                renderTikTokCanvas();
-                return;
-            }
-
-            const sku = p.sku || 'KOL-01';
-            const title = p.title || 'Koleksiyon';
-            const colors = Array.isArray(p.renkler) && p.renkler.length > 0 ? p.renkler.join(', ') : (p.renkler || '');
-
-            const hook = cfg.hookTemplate({ sku, title });
-            document.getElementById('hookInput').value = hook;
-
-            const captionLines = [
-                `${hook} ✨`,
-                ``,
-                `🛋️ ${title} (${sku})`,
-                p.kisa_aciklama ? `📐 ${p.kisa_aciklama}` : '',
-                colors ? `🎨 Renk Paleti: ${colors}` : '',
-                ``,
-                `Detaylı koleksiyon incelemesi ve ölçüler için bizimle iletişime geçin.`,
-                `#mobilya #koleksiyon #içmimarlık #dekorasyon #globalmobilya #keşfet`
-            ].filter(Boolean);
-            document.getElementById('captionInput').value = captionLines.join('\n');
-
-            document.getElementById('pinnedCommentInput').value =
-                `📌 ${title} (${sku}) koleksiyonumuzun tüm parça ve ölçü detayları için profilimizdeki iletişim bağlantısından bize ulaşabilirsiniz.`;
-
-            if (p.ana_resim && (p.ana_resim.startsWith('http') || p.ana_resim.startsWith('data:') || p.ana_resim.startsWith('/'))) {
-                const img = new Image();
-                img.crossOrigin = 'anonymous';
-                img.onload = () => {
-                    currentTtProductImageEl = img;
-                    renderTikTokCanvas();
-                };
-                img.onerror = () => {
-                    currentTtProductImageEl = null;
-                    renderTikTokCanvas();
-                };
-                img.src = p.ana_resim;
-            } else {
-                currentTtProductImageEl = null;
-                renderTikTokCanvas();
-            }
-        }
-
-        function renderTikTokCanvas() {
-            const canvas = document.getElementById('tiktokCanvas');
-            if (!canvas) return;
-            const p = catalogProducts[currentProductIndex] || null;
-
-            if (p && window.NovaStudioEngine) {
-                window.NovaStudioEngine.drawNovaLuxuryPoster(canvas, {
-                    productImageEl: currentTtProductImageEl,
-                    product: p,
-                    isVertical: true,
-                    zoomScale: 1.0,
-                    fullRes: true
-                });
-                return;
-            }
-
-            const ctx = canvas.getContext('2d');
-            const W = canvas.width;
-            const H = canvas.height;
-            const cfg = FORMAT_CONFIGS[currentFormat] || FORMAT_CONFIGS.TIKTOK_COLLECTION_SHOWCASE;
-
-            const bgGrad = ctx.createLinearGradient(0, 0, W, H);
-            bgGrad.addColorStop(0, '#09090b');
-            bgGrad.addColorStop(0.5, '#121217');
-            bgGrad.addColorStop(1, '#09090b');
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, W, H);
-
-            ctx.strokeStyle = cfg.accent1;
-            ctx.lineWidth = 3;
-            roundRect(ctx, 70, 120, W - 140, H - 240, 32, false, true);
-
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '800 34px Inter, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(p ? (p.title || 'Koleksiyon') : 'Henüz ürün eklenmemiş', W / 2, H / 2 - 40);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.font = '600 24px Inter, sans-serif';
-            ctx.fillText(
-                p ? `${p.sku || ''} • 0–25sn 5 Sahneli TikTok Paketi` : 'Modül 7 üzerinden ürün veya koleksiyon ekleyin',
-                W / 2,
-                H / 2 + 20
-            );
-
-            ctx.fillStyle = '#fde68a';
-            ctx.font = '700 22px Inter, sans-serif';
-            ctx.fillText('Durum: TikTok bağlantısı bekleniyor', W / 2, H / 2 + 80);
-        }
-
-        function roundRect(ctx, x, y, w, h, r, fill, stroke) {
-            ctx.beginPath();
-            ctx.moveTo(x + r, y);
-            ctx.arcTo(x + w, y, x + w, y + h, r);
-            ctx.arcTo(x + w, y + h, x, y + h, r);
-            ctx.arcTo(x, y + h, x, y, r);
-            ctx.arcTo(x, y, x + w, y, r);
-            ctx.closePath();
-            if (fill) ctx.fill();
-            if (stroke) ctx.stroke();
-        }
-
-        function downloadTikTokPoster() {
-            const canvas = document.getElementById('tiktokCanvas');
-            const link = document.createElement('a');
-            link.download = `tiktok_globalmobilya_${currentFormat.toLowerCase()}_${Date.now()}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        }
-
-        async function saveStateToSupabase() {
-            if (!supabaseClient) return;
-            try {
-                await module2StateRequest('tt_bot_state', 'PUT', botState);
-            } catch (e) {
-                console.warn('Supabase kayıt uyarısı:', e.message);
-            }
-        }
-
-        function renderQueueList() {
-            const listEl = document.getElementById('publishedQueueList');
-            const queued = Array.isArray(botState.scheduledQueue) ? botState.scheduledQueue : [];
-            const published = Array.isArray(botState.publishedHistory) ? botState.publishedHistory : [];
-            const items = [...queued, ...published].slice(0, 60);
-            document.getElementById('queueCountBadge').textContent = `${items.length} Kayıt`;
-
-            if (items.length === 0) {
-                listEl.innerHTML = `<div style="padding:18px; text-align:center; color:var(--text-muted); font-size:12px; border:1px dashed var(--border); border-radius:10px;">Henüz içerik üretilmemiş • TikTok bağlantısı bekleniyor</div>`;
-                return;
-            }
-
-            listEl.innerHTML = items.map(item => {
-                const status = item.status || 'draft';
-                const verifiedPublished = status === 'published' && Boolean(item.platform_post_id);
-                const statusLabel = verifiedPublished
-                    ? '✓ Yayınlandı'
-                    : status === 'awaiting_platform_connection'
-                    ? '⏸ Platform bağlantısı bekleniyor'
-                    : status === 'queued' || status === 'pending'
-                    ? '◷ Yayın kuyruğunda'
-                    : status === 'ready_for_review'
-                    ? '👁 İncelemeye hazır'
-                    : status === 'approved'
-                    ? '✓ Onaylandı'
-                    : status === 'failed'
-                    ? '⚠ Hata oluştu'
-                    : 'Taslak';
-                const statusColor = verifiedPublished
-                    ? '#34d399'
-                    : status === 'awaiting_platform_connection' || status === 'queued' || status === 'pending'
-                    ? '#fbbf24'
-                    : status === 'failed'
-                    ? '#f87171'
-                    : '#94a3b8';
-                return `<div class="queue-item">
-                    <div>
-                        <strong style="color:#fff;">[${item.productSku || 'KOL'}] ${item.productTitle || item.title || 'TikTok Video Paketi'}</strong>
-                        <div style="font-size:11px;color:var(--text-muted);margin-top:2px;">${item.format || item.content_type || '0–25sn 5 Sahne'} • ${item.onScreenHook ? item.onScreenHook.slice(0, 52) : ''}</div>
-                    </div>
-                    <span style="font-size:11px;color:${statusColor};font-weight:700;white-space:nowrap;">${statusLabel}</span>
-                </div>`;
-            }).join('');
-        }
-
-        async function addCurrentDraftToSchedule() {
-            const p = catalogProducts[currentProductIndex] || null;
-            if (!p) {
-                alert('Henüz ürün eklenmemiş. Lütfen önce Modül 7 üzerinden bir ürün veya koleksiyon ekleyin.');
-                return;
-            }
-            const entry = {
-                id: `tt_draft_${Date.now()}`,
-                format: currentFormat,
-                productSku: p.sku || 'KOL',
-                productTitle: p.title || 'Koleksiyon',
-                onScreenHook: document.getElementById('hookInput').value,
-                storyboard: buildFiveSceneTikTokStoryboard(p),
-                status: currentConnectionState === 'ready' ? 'ready_for_review' : 'awaiting_platform_connection',
-                scheduled_for: null
-            };
-            botState.scheduledQueue = [entry, ...(botState.scheduledQueue || [])].slice(0, 60);
-            renderQueueList();
-            await saveStateToSupabase();
-        }
-
-        async function publishTikTokNow() {
-            const p = catalogProducts[currentProductIndex] || null;
-            if (!p) {
-                alert('Henüz ürün eklenmemiş. Lütfen önce Modül 7 üzerinden bir ürün veya koleksiyon ekleyin.');
-                return;
-            }
-
-            // Section 3.1: Never pretend TikTok published live when credentials/connection are missing
-            if (currentConnectionState !== 'ready') {
-                await addCurrentDraftToSchedule();
-                alert('TikTok hesap ve API bağlantısı henüz tamamlanmadığı için (Durum: ' +
-                    (currentConnectionState === 'missing_credentials' ? 'Hesap bilgileri eksik' :
-                     currentConnectionState === 'awaiting_authorization' ? 'API yetkilendirmesi bekleniyor' : 'Bağlantı doğrulanmadı') +
-                    ') 5 sahneli video senaryosu ve kapak paketi "Platform bağlantısı bekleniyor" (awaiting_platform_connection) durumunda kaydedildi. Canlı yayın yapılmadı.');
-                return;
-            }
-
-            try {
-                const token = await getAccessToken();
-                if (!token) throw new Error('Önce yönetici panelinden giriş yapın.');
-                const response = await fetch('/api/module2?action=enqueue', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        platform: 'tiktok',
-                        content_type: 'video',
-                        product_sku: p.sku || '',
-                        title: p.title || 'TikTok Video',
-                        caption: document.getElementById('captionInput').value
-                    })
-                });
-                const result = await response.json().catch(() => ({}));
-                if (!response.ok || !result.ok) {
-                    throw new Error(result.error || `TikTok kuyruğuna eklenemedi (HTTP ${response.status}).`);
-                }
-                await addCurrentDraftToSchedule();
-                alert('TikTok içeriği yayın kuyruğuna eklendi.');
-            } catch (error) {
-                alert(`TikTok yayın kontrolü: ${error.message}`);
-            }
-        }
-
-        // =====================================================================
-        // 3 AŞAMALI HİBRİT TIKTOK YORUM & DM SİMÜLATÖRÜ
-        // =====================================================================
-        function classifyLocalTikTokMessage(text) {
-            const lower = String(text || '').toLowerCase();
-            const stage3Words = ['fiyat', 'ücret', 'kaç tl', 'ne kadar', 'm2', 'metrekare', 'teklif', 'özel ölçü', 'toptan', 'bayilik', 'sipariş'];
-            for (const w of stage3Words) {
-                if (lower.includes(w)) return 3;
-            }
-            if (lower.includes('kaç gün') || lower.includes('teslim') || lower.includes('kargo') || lower.includes('kurulum')) return '1_delivery';
-            if (lower.includes('garanti') || lower.includes('malzeme') || lower.includes('kalite')) return '1_warranty';
-            if (lower.includes('adres') || lower.includes('nerede') || lower.includes('showroom')) return '1_address';
-            if (lower.includes('renk') || lower.includes('kartela')) return '1_color';
-            return 2;
-        }
-
-        async function runPresetInteraction(text, channel) {
-            document.getElementById('simChannelSelect').value = channel;
-            document.getElementById('simMessageInput').value = text;
-            await sendSimulatedInteraction();
-        }
-
-        async function sendSimulatedInteraction() {
-            const inputEl = document.getElementById('simMessageInput');
-            const channel = document.getElementById('simChannelSelect').value;
-            const text = inputEl.value.trim();
-            if (!text) return;
-
-            inputEl.value = '';
-            const stageCode = classifyLocalTikTokMessage(text);
-            let logItem = null;
-
-            if (stageCode === '1_delivery') {
-                logItem = {
-                    stage: 1,
-                    stageBadge: '1. AŞAMA • SABİT KURAL (TESLİMAT & KURULUM)',
-                    channel,
-                    username: 'tiktok_takipci',
-                    userMessage: text,
-                    reply: '🚚 Koleksiyon ve ürün siparişleriniz özenli paketleme ve sevkiyat planlamasıyla adresinize teslim edilmektedir. Detaylı teslimat takvimi için iletişim hattımızdan bilgi alabilirsiniz.',
-                    timestamp: 'Şimdi'
-                };
-            } else if (stageCode === '1_warranty') {
-                logItem = {
-                    stage: 1,
-                    stageBadge: '1. AŞAMA • SABİT KURAL (MALZEME & GARANTİ)',
-                    channel,
-                    username: 'tiktok_takipci',
-                    userMessage: text,
-                    reply: '🛡️ Tüm koleksiyonlarımız yüksek kalite gövde malzemeleri, dayanıklı yüzey kaplamaları ve özenli bağlantı ekipmanlarıyla üretilmektedir.',
-                    timestamp: 'Şimdi'
-                };
-            } else if (stageCode === '1_address') {
-                logItem = {
-                    stage: 1,
-                    stageBadge: '1. AŞAMA • SABİT KURAL (İLETİŞİM & SHOWROOM)',
-                    channel,
-                    username: 'tiktok_takipci',
-                    userMessage: text,
-                    reply: '📍 Koleksiyonlarımızı yakından incelemek ve detaylı bilgi almak için profilimizdeki iletişim kanallarımızdan bize ulaşabilirsiniz.',
-                    timestamp: 'Şimdi'
-                };
-            } else if (stageCode === '1_color') {
-                logItem = {
-                    stage: 1,
-                    stageBadge: '1. AŞAMA • SABİT KURAL (RENK & DOKU SEÇENEKLERİ)',
-                    channel,
-                    username: 'tiktok_takipci',
-                    userMessage: text,
-                    reply: '🎨 Koleksiyonlarımızın renk paleti ve kumaş/ahşap doku alternatiflerini katalog sayfamızda inceleyebilirsiniz.',
-                    timestamp: 'Şimdi'
-                };
-            } else if (stageCode === 3) {
-                logItem = {
-                    stage: 3,
-                    stageBadge: '3. AŞAMA • WHATSAPP & SATIŞ DANIŞMANI DEVRİ',
-                    channel,
-                    username: 'proje_musterisi',
-                    userMessage: text,
-                    reply: 'Merhaba 🙌 Seçtiğiniz koleksiyon ve parçalar için güncel fiyat teklifi paylaşabilmemiz adına satış danışmanımız devreye alındı.\n📲 WhatsApp İletişim Hattımız: https://wa.me/905050151035 (0505 015 10 35)',
-                    timestamp: 'Şimdi'
-                };
-            } else {
-                let aiReply = 'Merhaba 👋 Koleksiyonlarımızdaki tüm parçalar yaşam alanınızın ölçülerine ve dekorasyon bütünlüğüne uyum sağlayacak şekilde tasarlanmıştır. Detaylı ölçü ve kombinasyon bilgisi için WhatsApp hattımızdan (0505 015 10 35) bize ulaşabilirsiniz.';
-                try {
-                    const res = await fetch('/api/tiktok-webhook', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            text,
-                            username: 'tiktok_kullanicisi',
-                            channel,
-                            geminiApiKey: botState.geminiApiKey
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.ok && data.result?.reply) {
-                        aiReply = data.result.reply;
-                    }
-                } catch (_) {}
-
-                logItem = {
-                    stage: 2,
-                    stageBadge: '2. AŞAMA • GEMINI AI (KOLEKSİYON DANIŞMANI)',
-                    channel,
-                    username: 'tiktok_kullanicisi',
-                    userMessage: text,
-                    reply: aiReply,
-                    timestamp: 'Şimdi'
-                };
-            }
-
-            botState.interactionLogs = [logItem, ...(botState.interactionLogs || [])].slice(0, 40);
-            renderInteractionFeed();
-            await saveStateToSupabase();
-        }
-
-        function renderInteractionFeed() {
-            const feed = document.getElementById('interactionFeed');
-            const logs = botState.interactionLogs || [];
-            document.getElementById('kpiInteractionCount').textContent = `${logs.length} Etkileşim`;
-
-            if (logs.length === 0) {
-                feed.innerHTML = `<div style="padding:16px; text-align:center; color:var(--text-muted); font-size:12px; border:1px dashed var(--border); border-radius:10px;">Henüz etkileşim kaydı bulunmuyor. Üstteki örnek butonlarla 3 aşamalı yanıt motorunu test edebilirsiniz.</div>`;
-                return;
-            }
-
-            feed.innerHTML = logs.map(item => `
-                <div class="chat-card stage-${item.stage}">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                        <span style="font-size:10px; font-weight:800; color:${item.stage === 1 ? '#10b981' : item.stage === 2 ? '#00f2fe' : '#ff0050'};">
-                            ${item.stageBadge}
-                        </span>
-                        <span style="font-size:10px; color:var(--text-muted);">
-                            ${item.channel === 'DM' ? '📩 TikTok DM' : '💬 Yorum'} • ${item.timestamp || ''}
-                        </span>
-                    </div>
-                    <div style="font-weight:700; color:#fff; margin-bottom:6px;">
-                        @${item.username}: "${item.userMessage || ''}"
-                    </div>
-                    <div style="color:#cbd5e1; font-size:11.5px; line-height:1.45; white-space:pre-line;">
-                        ${item.reply}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function openApiModal() {
-            document.getElementById('cfgHandle').value = botState.accountHandle || '@thenovafurniture';
-            document.getElementById('cfgAccessToken').value = botState.tiktokAccessToken || '';
-            document.getElementById('cfgOpenId').value = botState.tiktokOpenId || '';
-            document.getElementById('cfgGeminiKey').value = botState.geminiApiKey || '';
-            document.getElementById('cfgWhatsapp').value = botState.whatsappNumber || '905050151035';
-            document.getElementById('apiModal').classList.add('open');
-        }
-
-        function closeApiModal() {
-            document.getElementById('apiModal').classList.remove('open');
-        }
-
-        async function saveApiConfig() {
-            botState.accountHandle = document.getElementById('cfgHandle').value.trim() || '@thenovafurniture';
-            botState.tiktokAccessToken = document.getElementById('cfgAccessToken').value.trim();
-            botState.tiktokOpenId = document.getElementById('cfgOpenId').value.trim();
-            botState.geminiApiKey = document.getElementById('cfgGeminiKey').value.trim();
-            botState.whatsappNumber = document.getElementById('cfgWhatsapp').value.trim() || '905050151035';
-
-            renderConnectionMatrix(computeLocalConnectionState());
-            await saveStateToSupabase();
-            closeApiModal();
-            alert('✅ TikTok bağlantı yapılandırması kaydedildi. Durum: ' + document.getElementById('kpiConnStateLabel').textContent);
-        }
-
-        window.addEventListener('DOMContentLoaded', initTikTokCloudBot);
-    </script>
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', loadAllData);
+    } else {
+      loadAllData();
+    }
+  </script>
 </body>
 </html>

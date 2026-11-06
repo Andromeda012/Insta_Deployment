@@ -6,7 +6,6 @@ export function renderCrmModule(data) {
         <div class="page-header">
             <div class="page-title-group">
                 <div class="breadcrumbs">
-                    <span onclick="window.navigateTo('dashboard')">Ana Sayfa</span> / 
                     <span>Modül 3: CRM & Satış Yönetimi</span>
                 </div>
                 <h1>Müşteri İlişkileri (CRM) & Satış Hunisi</h1>

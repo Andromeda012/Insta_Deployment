@@ -6,7 +6,6 @@ export function renderAnalyticsModule(data) {
         <div class="page-header">
             <div class="page-title-group">
                 <div class="breadcrumbs">
-                    <span onclick="window.navigateTo('dashboard')">Ana Sayfa</span> / 
                     <span>Modül 6: Performans Analitiği</span>
                 </div>
                 <h1>Konsolide İşletme Performans Analitiği</h1>

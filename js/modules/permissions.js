@@ -13,7 +13,6 @@ export function renderPermissionsModule(data, currentRole) {
         <div class="page-header">
             <div class="page-title-group">
                 <div class="breadcrumbs">
-                    <span onclick="window.navigateTo('dashboard')">Ana Sayfa</span> / 
                     <span>Platform Yönetimi: Kullanıcı Rolleri & Yetkilendirme</span>
                 </div>
                 <h1>Kullanıcı Rolleri & Erişim Matrisi (RBAC)</h1>

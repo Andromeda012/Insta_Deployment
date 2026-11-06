@@ -12,7 +12,6 @@
   <script src="/Module%202/panoramic-carousel-engine.js"></script>
   <script src="/panoramic-carousel-engine.js"></script>
 
-
   <style>
     :root {
       --bg: #0A0F1D;
@@ -230,172 +229,6 @@
       color: #fff;
     }
 
-    .btn-danger {
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid rgba(239, 68, 68, 0.4);
-      color: #F87171;
-    }
-
-    
-    /* PANORAMIC CAROUSEL STÜDYO STILLERI */
-    .radio-chip-card {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 10px;
-      padding: 12px 14px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .radio-chip-card:hover {
-      border-color: rgba(212, 175, 55, 0.4);
-      background: rgba(212, 175, 55, 0.04);
-    }
-    .radio-chip-card.active {
-      border-color: var(--accent-gold);
-      background: rgba(212, 175, 55, 0.1);
-      box-shadow: 0 0 16px rgba(212, 175, 55, 0.15);
-    }
-    .panoramic-preview-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 16px;
-      margin-top: 14px;
-    }
-    .preview-panel {
-      background: rgba(11, 17, 32, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .preview-panel .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 12.5px;
-      font-weight: 800;
-      color: #fff;
-    }
-    .badge-ratio {
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(56, 189, 248, 0.18);
-      color: #38BDF8;
-      border: 1px solid rgba(56, 189, 248, 0.35);
-    }
-    .badge-carousel {
-      font-size: 11px;
-      font-weight: 800;
-      padding: 3px 8px;
-      border-radius: 6px;
-      background: rgba(16, 185, 129, 0.18);
-      color: #34D399;
-      border: 1px solid rgba(16, 185, 129, 0.35);
-    }
-    .original-image-stage {
-      position: relative;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 200px;
-      max-height: 280px;
-    }
-    .original-image-stage img {
-      max-width: 100%;
-      max-height: 280px;
-      object-fit: contain;
-      display: block;
-    }
-    .split-line-overlay {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 50%;
-      width: 2px;
-      background: #EF4444;
-      box-shadow: 0 0 8px rgba(239, 68, 68, 0.8);
-      transform: translateX(-50%);
-      pointer-events: none;
-    }
-    .split-line-overlay .seam-label {
-      position: absolute;
-      top: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(239, 68, 68, 0.9);
-      color: #fff;
-      font-size: 9.5px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      white-space: nowrap;
-    }
-    .carousel-preview-stage {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      background: #000;
-      padding: 8px;
-      border-radius: 8px;
-      min-height: 200px;
-      align-items: center;
-    }
-    .carousel-slice-card {
-      position: relative;
-      background: #0B1120;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 120px;
-      justify-content: center;
-    }
-    .carousel-slice-card canvas {
-      max-width: 100%;
-      height: auto;
-      display: block;
-    }
-    .carousel-slice-card .slice-badge {
-      position: absolute;
-      top: 6px;
-      left: 6px;
-      background: rgba(11, 17, 32, 0.85);
-      border: 1px solid rgba(212, 175, 55, 0.4);
-      color: #FDE68A;
-      font-size: 9.5px;
-      font-weight: 800;
-      padding: 2px 6px;
-      border-radius: 4px;
-      z-index: 2;
-    }
-    .carousel-swipe-info {
-      font-size: 11.5px;
-      color: #CBD5E1;
-      background: rgba(212, 175, 55, 0.08);
-      border: 1px solid rgba(212, 175, 55, 0.2);
-      border-radius: 8px;
-      padding: 8px 12px;
-      line-height: 1.4;
-    }
-    .panel-footer {
-      font-size: 11px;
-      color: #94A3B8;
-      text-align: right;
-    }
-
-    /* FORM & INPUTLAR */
     .form-control {
       background: #0B1120;
       border: 1px solid rgba(148, 163, 184, 0.25);
@@ -455,84 +288,71 @@
     .badge-story { background: rgba(236, 72, 153, 0.15); color: #F472B6; border: 1px solid rgba(236, 72, 153, 0.3); }
     .badge-reels { background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); }
 
-    /* CHECKBOX TİKLEME LİSTESİ */
-    .checkbox-grid {
+    /* SIRADAKİ İÇERİK KÜÇÜK ÖNİZLEME KARTLARI */
+    .upcoming-preview-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
     }
 
-    .checkbox-item {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(11, 17, 32, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 12px 14px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .checkbox-item:hover {
-      background: rgba(11, 17, 32, 0.9);
-      border-color: rgba(212, 175, 55, 0.4);
-    }
-
-    .checkbox-item input[type="checkbox"] {
-      width: 18px;
-      height: 18px;
-      accent-color: var(--accent-gold);
-      cursor: pointer;
-    }
-
-    .checkbox-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: #E2E8F0;
-      user-select: none;
-    }
-
-    /* MÜZİK SEÇİM KARTI */
-    .music-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 12px;
-      margin-bottom: 14px;
-    }
-
-    .music-card {
-      background: rgba(11, 17, 32, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
+    .upcoming-card {
+      background: rgba(11, 17, 32, 0.78);
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      border-radius: 14px;
       padding: 14px;
-      cursor: pointer;
       display: flex;
-      align-items: center;
-      gap: 12px;
+      gap: 14px;
+      align-items: flex-start;
       transition: all 0.2s ease;
     }
 
-    .music-card.selected {
-      background: rgba(212, 175, 55, 0.12);
-      border-color: var(--accent-gold);
+    .upcoming-card:hover {
+      border-color: rgba(212, 175, 55, 0.5);
+      background: rgba(11, 17, 32, 0.95);
     }
 
-    .music-icon {
-      font-size: 24px;
-      line-height: 1;
+    .upcoming-thumb {
+      width: 74px;
+      height: 74px;
+      border-radius: 10px;
+      object-fit: cover;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      background: #050811;
+      flex-shrink: 0;
     }
 
-    .music-name {
-      font-size: 13px;
-      font-weight: 700;
+    .upcoming-body {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .upcoming-title {
+      font-size: 13.5px;
+      font-weight: 800;
       color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .music-sub {
-      font-size: 11px;
-      color: var(--text-muted);
+    .upcoming-plan-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
       margin-top: 2px;
+    }
+
+    .plan-mini-pill {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.06);
+      color: #CBD5E1;
+      border: 1px solid rgba(255,255,255,0.1);
     }
 
     /* YAYINLANMIŞ İÇERİKLER TABLOSU (SADE LİSTE) */
@@ -693,7 +513,7 @@
       <div class="brand-logo-badge">N</div>
       <div class="header-titles">
         <h1>NOVA FURNITURE — Instagram Otonom Kontrol Merkezi</h1>
-        <p>@thenovafurniture • Supabase Veritabanı &amp; Meta Graph API Entegre</p>
+        <p>@thenovafurniture • Üretim Kontrolü, Yayın Akış Saatleri ve Sıradaki İçerik Önizlemesi</p>
       </div>
     </div>
     <div style="display:flex; align-items:center; gap:12px;">
@@ -710,7 +530,7 @@
   <!-- ANA 2 MENÜ -->
   <nav class="nav-tabs">
     <button class="nav-tab-btn active" data-tab="tab-studio" onclick="switchNavTab('tab-studio')">
-      🎬 1. Stüdyo &amp; Yayın Kuyruğu
+      ⏰ 1. Yayın Akış Saatleri &amp; Sıradaki İçerik
     </button>
     <button class="nav-tab-btn" data-tab="tab-assistant" onclick="switchNavTab('tab-assistant')">
       💬 2. DM &amp; Yorum Asistanı
@@ -718,7 +538,7 @@
   </nav>
 
   <!-- ======================================================================= -->
-  <!-- 1. STÜDYO & YAYIN KUYRUĞU SEKMESİ                                       -->
+  <!-- 1. YAYIN AKIŞ SAATLERİ & SIRADAKİ İÇERİK SEKMESİ                         -->
   <!-- ======================================================================= -->
   <main class="tab-content-area active" id="tab-studio">
 
@@ -728,12 +548,12 @@
         <div class="card-title-group">
           <span style="font-size:22px;">⏰</span>
           <div>
-            <h2>Yayın Kuyruğu &amp; Günlük Saat Kontrolleri</h2>
-            <p>Hangi formatın günün hangi saatinde otomatik paylaşılacağını belirleyin.</p>
+            <h2>Yayın Akış Saatleri &amp; Günlük Otomasyon</h2>
+            <p>Hangi formatın günün hangi saatinde otomatik üretilip yayınlanacağını kontrol edin.</p>
           </div>
         </div>
         <div style="display:flex; gap:10px;">
-          <button class="btn btn-outline" onclick="loadAllData()">🔄 Ayarları Yenile</button>
+          <button class="btn btn-outline" onclick="loadAllData()">🔄 Yenile</button>
           <button class="btn btn-gold" onclick="saveScheduleSettings()">💾 Saatleri Kaydet</button>
         </div>
       </div>
@@ -742,7 +562,7 @@
         <!-- SLOT 1: GÖNDERİ -->
         <div class="slot-card" id="slotCardPost">
           <div class="slot-header">
-            <span class="slot-type-badge badge-post">📸 Detaylı Gönderi (1080x1080)</span>
+            <span class="slot-type-badge badge-post">📸 Koleksiyon &amp; Ürün Gönderisi (1080x1080)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotPostActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -753,7 +573,7 @@
             <input type="time" class="form-control" id="timeSlotPost" value="10:00" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Sabah kuşağı: En yeni ürünün tam boy stüdyo fotoğrafı ve sağ şeffaf özellik kapsülleri ile paylaşılır.
+            Sabah kuşağı: Ürünün veya koleksiyonun belirlenen sunum planına (İkili Carousel / Tek Görsel) göre yayınlanır.
           </div>
         </div>
 
@@ -771,7 +591,7 @@
             <input type="time" class="form-control" id="timeSlotStory" value="14:30" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Öğle kuşağı: 9:16 dikey formatta lüks çerçeve, özellik hapları ve DM sipariş yönlendirmesiyle yayınlanır.
+            Öğle kuşağı: 9:16 dikey formatta lüks çerçeve, özellik rozetleri ve DM sipariş yönlendirmesiyle yayınlanır.
           </div>
         </div>
 
@@ -789,274 +609,40 @@
             <input type="time" class="form-control" id="timeSlotReels" value="19:30" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Akşam kuşağı: Seçilen kurumsal fon müziği ve sinematik Ken Burns kamera hareketi ile video olarak paylaşılır.
+            Akşam kuşağı: Ürüne tanımlanan fon müziği ve sinematik kamera hareketi ile 9:16 video olarak paylaşılır.
           </div>
-        </div>
-      </div>
-
-      <!-- BOT DAĞITIM VE ÖNCELİK BİLGİLENDİRMESİ -->
-      <div style="background:rgba(212, 175, 55, 0.08); border:1px solid rgba(212, 175, 55, 0.3); border-radius:10px; padding:12px 16px; font-size:12px; color:#FDE68A; display:flex; align-items:center; gap:10px;">
-        <span style="font-size:18px;">🎯</span>
-        <div>
-          <strong>Akıllı Dağıtım Kuralı:</strong> Botlar daima <strong>en yeni eklenen ürünün</strong> dağıtımına öncelik verir. 3 formatta da (Gönderi, Story, Reels) yayınlanan ürünler tekrar paylaşılmaz. Eğer katalogdaki tüm ürünler her 3 formatta da yayınlandıysa, sistem döngüyü korumak için <strong>sadece rastgele bir ürünün Story'sini</strong> yayınlar.
         </div>
       </div>
     </section>
 
-    <!-- 2. REELS MÜZİK SEÇİMİ VE DEĞİŞİMİ -->
+    <!-- 2. ÜRETİLECEK SIRADAKİ İÇERİKLERİN KÜÇÜK ÖNİZLEMESİ -->
     <section class="section-card">
       <div class="card-header">
         <div class="card-title-group">
-          <span style="font-size:22px;">🎵</span>
+          <span style="font-size:22px;">👁️</span>
           <div>
-            <h2>Reels Fon Müziği Seçimi &amp; Değişimi</h2>
-            <p>9:16 Reels videolarında kullanılacak kurumsal ses tasarımı.</p>
+            <h2>Üretilecek Sıradaki İçeriklerin Küçük Önizlemesi</h2>
+            <p>Katalogdaki koleksiyon ve ürünlerin sunum planına göre sıradaki yayınlanacak içerik paketleri.</p>
           </div>
         </div>
-        <button class="btn btn-gold" onclick="saveMusicSettings()">💾 Müzik Tercihini Kaydet</button>
+        <div style="font-size:12px; color:var(--accent-gold); font-weight:700;" id="txtUpcomingSummary">Hesaplanıyor...</div>
       </div>
 
-      <div class="music-grid">
-        <div class="music-card selected" id="musicCard1" onclick="selectMusicTemplate('modern_acoustic')">
-          <span class="music-icon">🎻</span>
-          <div>
-            <div class="music-name">Lüks Mimari Akustik</div>
-            <div class="music-sub">Modern Warm Acoustic (Önerilen)</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard2" onclick="selectMusicTemplate('minimalist_piano')">
-          <span class="music-icon">🎹</span>
-          <div>
-            <div class="music-name">Minimalist Piyano</div>
-            <div class="music-sub">Cinematic Elegance &amp; Strings</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard3" onclick="selectMusicTemplate('nordic_chill')">
-          <span class="music-icon">☕</span>
-          <div>
-            <div class="music-name">İskandinav Lounge</div>
-            <div class="music-sub">Nordic Deep Ambient Chill</div>
-          </div>
-        </div>
-
-        <div class="music-card" id="musicCard4" onclick="selectMusicTemplate('nova_beat')">
-          <span class="music-icon">🎷</span>
-          <div>
-            <div class="music-name">Nova Signature Beat</div>
-            <div class="music-sub">Modern Upbeat Luxury</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ÖZEL MP3 VE OYNATICI -->
-      <div style="background:rgba(11, 17, 32, 0.6); border:1px solid rgba(255,255,255,0.1); border-radius:12px; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-        <div style="flex:1; min-width:280px;">
-          <label style="font-size:11.5px; color:#94A3B8; font-weight:700; display:block; margin-bottom:5px;">Özel Müzik / MP3 Bağlantısı (URL):</label>
-          <input type="url" class="form-control" id="customMusicUrl" placeholder="https://.../audio.mp3" style="width:100%;" oninput="onCustomMusicUrlChanged()">
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-          <audio id="audioPreviewPlayer" src="https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4"></audio>
-          <button type="button" class="btn btn-outline" id="btnTogglePlayMusic" onclick="togglePlayMusic()">
-            ▶️ Müziği Dinle
-          </button>
+      <div class="upcoming-preview-grid" id="upcomingPreviewContainer">
+        <div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">
+          Sıradaki içerik önizlemeleri hazırlanıyor...
         </div>
       </div>
     </section>
 
-
-    <!-- 3. PANORAMİK GÖRSELLERİ İKİLİ INSTAGRAM CAROUSEL'E DÖNÜŞTÜRME STÜDYOSU -->
-    <section class="section-card" id="secPanoramicCarousel">
-      <div class="card-header">
-        <div class="card-title-group">
-          <span style="font-size:24px;">🖼️✂️</span>
-          <div>
-            <h2>Panoramik Görselleri İkili Instagram Carousel'e Dönüştürme</h2>
-            <p>Geniş oda ve showroom fotoğraflarını kalitesini bozmadan dikey ortadan ikiye bölerek 2 sayfalı kaydırmalı Instagram carousel gönderisi oluşturun.</p>
-          </div>
-        </div>
-        <button class="btn btn-gold" onclick="savePanoramicSettings()">💾 Panoramik Ayarları Kaydet</button>
-      </div>
-
-      <!-- KONTROL VE MOD SEÇENEKLERİ (OTOMATİK / MANUEL İKİYE BÖL / TEK GÖRSEL) -->
-      <div style="background:rgba(11, 17, 32, 0.7); border:1px solid rgba(212, 175, 55, 0.25); border-radius:14px; padding:18px; margin-bottom:18px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:14px; margin-bottom:14px;">
-          <div>
-            <span style="font-size:12px; font-weight:800; color:#FDE68A; text-transform:uppercase; letter-spacing:0.5px;">Bölme ve Algılama Modu:</span>
-            <div style="font-size:11.5px; color:#94A3B8; margin-top:3px;">
-              Geniş panoramik görsellerin carousel olarak yayımlanma stratejisini belirleyin.
-            </div>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <label style="font-size:11.5px; color:#94A3B8; font-weight:700;">En-Boy Oranı Eşiği (≥):</label>
-            <input type="number" id="inpAspectRatioThreshold" class="form-control" value="1.8" step="0.1" min="1.2" max="3.0" style="width:75px; text-align:center; font-weight:800;" onchange="onPanoramicConfigChanged()">
-          </div>
-        </div>
-
-        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:12px;" id="panoramicModeContainer">
-          <!-- MOD 1: OTOMATİK (ÖNERİLEN) -->
-          <label class="radio-chip-card active" id="cardModeAuto" onclick="selectPanoramicMode('auto')">
-            <input type="radio" name="panoramic_mode" id="rbModeAuto" value="auto" checked style="accent-color:var(--accent-gold);">
-            <div>
-              <div style="font-size:13px; font-weight:800; color:#fff;">✨ Otomatik (Önerilen)</div>
-              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
-                Görsel en-boy oranını analiz eder; oran ≥ eşik (1.8) ise otomatik 2 parçalı carousel yapar.
-              </div>
-            </div>
-          </label>
-
-          <!-- MOD 2: İKİ PARÇAYA BÖL (MANUEL) -->
-          <label class="radio-chip-card" id="cardModeSplit" onclick="selectPanoramicMode('split')">
-            <input type="radio" name="panoramic_mode" id="rbModeSplit" value="split" style="accent-color:var(--accent-gold);">
-            <div>
-              <div style="font-size:13px; font-weight:800; color:#fff;">✂️ İki Parçaya Böl (Manuel)</div>
-              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
-                Görsel geniş olmasa bile her durumda iki parçalı Instagram carousel oluşturur.
-              </div>
-            </div>
-          </label>
-
-          <!-- MOD 3: TEK GÖRSEL OLARAK KULLAN -->
-          <label class="radio-chip-card" id="cardModeSingle" onclick="selectPanoramicMode('single')">
-            <input type="radio" name="panoramic_mode" id="rbModeSingle" value="single" style="accent-color:var(--accent-gold);">
-            <div>
-              <div style="font-size:13px; font-weight:800; color:#fff;">🖼️ Tek Görsel Olarak Kullan</div>
-              <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
-                Otomatik bölmeyi devre dışı bırakır; daima standart tek görsel gönderi yayınlar.
-              </div>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <!-- SİSTEM BİLGİLENDİRME BİLDİRİMİ (BANNER) -->
-      <div id="panoramicNoticeBanner" style="display:none; background:rgba(56, 189, 248, 0.12); border:1px solid rgba(56, 189, 248, 0.4); border-radius:10px; padding:12px 16px; margin-bottom:16px; color:#E0F2FE; font-size:12.5px; align-items:center; gap:10px;">
-        <span style="font-size:20px;">💡</span>
-        <div id="panoramicNoticeText">Bu görsel geniş panoramik formatta olduğu için iki sayfalı carousel gönderisine dönüştürüldü.</div>
-      </div>
-
-      <!-- TEST / ÖNİZLEME ÜRÜN SEÇİCİSİ -->
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:14px; flex-wrap:wrap;">
-        <div style="display:flex; align-items:center; gap:10px; flex:1; min-width:280px;">
-          <label style="font-size:12px; font-weight:700; color:#94A3B8; white-space:nowrap;">Analiz Edilecek Ürün:</label>
-          <select class="form-control" id="selPanoramicProduct" style="flex:1;" onchange="onPanoramicProductSelected()">
-            <option value="">Katalog yükleniyor...</option>
-          </select>
-        </div>
-        <div style="display:flex; gap:8px;">
-          <button type="button" class="btn btn-outline" onclick="reAnalyzeSelectedProduct()">🔄 Görseli Yeniden Analiz Et</button>
-          <button type="button" class="btn btn-outline" id="btnToggleSplitState" onclick="toggleSplitStateOverride()">↩️ Tek Görsele Dön</button>
-        </div>
-      </div>
-
-      <!-- ÖNİZLEME ALANI (ORİJİNAL PANORAMİK vs 2 PARÇALI CAROUSEL) -->
-      <div class="panoramic-preview-grid">
-        <!-- SOL: ORİJİNAL GÖRSEL VE KESİM EKSENİ -->
-        <div class="preview-panel">
-          <div class="panel-header">
-            <span>📷 Orijinal Görsel (Katalog Medyası)</span>
-            <span class="badge-ratio" id="badgeOriginalRatio">Oran: Hesaplanıyor...</span>
-          </div>
-          <div class="original-image-stage" id="stageOriginalContainer">
-            <img id="imgOriginalPreview" src="" alt="Orijinal Görsel" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'">
-            <div class="split-line-overlay" id="splitLineOverlay" title="Ortadan İkiye Dikey Kesim Ekseni" style="display:none;">
-              <span class="seam-label">✂️ Kesim Ekseni (W / 2)</span>
-            </div>
-          </div>
-          <div class="panel-footer" id="txtOriginalDimFooter">Çözünürlük: Yükleniyor...</div>
-        </div>
-
-        <!-- SAĞ: İKİ PARÇALI CAROUSEL ÖNİZLEMESİ (SOL PARÇA + SAĞ PARÇA & KAYDIRMA SİMÜLATÖRÜ) -->
-        <div class="preview-panel">
-          <div class="panel-header">
-            <span>📲 Instagram Carousel Önizlemesi (2 Sayfalı)</span>
-            <span class="badge-carousel" id="badgeCarouselStatus">Dikişsiz İkili Carousel</span>
-          </div>
-          <div class="carousel-preview-stage">
-            <!-- 1. SOL SAYFA KARTI -->
-            <div class="carousel-slice-card" id="cardSliceLeft">
-              <div class="slice-badge">1. Sayfa (Sol Yarım)</div>
-              <canvas id="canvasSliceLeft"></canvas>
-            </div>
-            <!-- 2. SAĞ SAYFA KARTI -->
-            <div class="carousel-slice-card" id="cardSliceRight">
-              <div class="slice-badge">2. Sayfa (Sağ Yarım)</div>
-              <canvas id="canvasSliceRight"></canvas>
-            </div>
-          </div>
-          <div class="carousel-swipe-info">
-            👆 <strong>Kullanıcı Deneyimi:</strong> Kullanıcı 1. sayfayı gördükten sonra sola kaydırdığında 2. sayfa gelecek ve iki görsel birleşerek geniş orijinal oda/showroom tasarımını kesintisiz oluşturacaktır.
-          </div>
-        </div>
-      </div>
-    </section>
-
-
-    <!-- 3. DETAYLI GÖNDERİ İÇERİK SEÇİMİ (TİKLEME SİSTEMİ) -->
-    <section class="section-card">
-      <div class="card-header">
-        <div class="card-title-group">
-          <span style="font-size:22px;">📋</span>
-          <div>
-            <h2>Detaylı Gönderi — Görsel Üzeri Detay Seçimi</h2>
-            <p>1080x1080 görselin sağ tarafındaki şeffaf cam kapsüllerde hangi detayların yer alacağını seçin.</p>
-          </div>
-        </div>
-        <button class="btn btn-gold" onclick="saveSpecPostSettings()">💾 Detay Tercihlerini Kaydet</button>
-      </div>
-
-      <div class="checkbox-grid">
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_mdf" checked>
-          <span class="checkbox-label">🪵 1. Kalite MDF Gövde Rozeti</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_craft" checked>
-          <span class="checkbox-label">✨ 1. Sınıf Membran İşçilik Rozeti</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_surface" checked>
-          <span class="checkbox-label">🪞 Çizilmeye Dayanıklı Yüzey Rozeti</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_hardware" checked>
-          <span class="checkbox-label">🗄️ Sessiz Frenli Donanım Rozeti</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_dimensions" checked>
-          <span class="checkbox-label">📐 Net Katalog Ölçüleri (G × Y × D)</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_color" checked>
-          <span class="checkbox-label">🎨 Renk Kartelası Bilgisi (Aytaşı / Ahşap)</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_warranty" checked>
-          <span class="checkbox-label">🛡️ 5 Yıl Garanti &amp; 18mm MDF Damgası</span>
-        </label>
-
-        <label class="checkbox-item">
-          <input type="checkbox" id="spec_opt_cta_button" checked>
-          <span class="checkbox-label">💬 Altın WhatsApp &amp; DM Sipariş Butonu</span>
-        </label>
-      </div>
-    </section>
-
-    <!-- 4. YAYINLANMIŞ İÇERİKLER GEÇMİŞİ (SADE & TEMİZ LİSTE) -->
+    <!-- 3. YAYINLANMIŞ İÇERİKLER GEÇMİŞİ -->
     <section class="section-card">
       <div class="card-header">
         <div class="card-title-group">
           <span style="font-size:22px;">🗂️</span>
           <div>
             <h2>Yayınlanmış İçerikler Geçmişi</h2>
-            <p>Instagram hesabınızda otonom paylaşılan içeriklerin sade özeti.</p>
+            <p>Instagram hesabınızda otonom paylaşılan içeriklerin özeti.</p>
           </div>
         </div>
         <div style="font-size:12px; color:var(--text-muted);" id="txtHistoryCount">Yükleniyor...</div>
@@ -1166,14 +752,21 @@
     let publishedTracker = {};
     let isCycleRunning = false;
 
-    // Panoramik İkili Carousel Stüdyosu Durumu
-    let currentPanoramicProduct = null;
-    let currentSplitResult = null;
-    let panoramicSettings = { mode: 'auto', threshold: 1.8 };
+    const PRESENTATION_LABELS = {
+      auto_carousel: '✨ Otomatik İkili Carousel',
+      split_carousel: '✂️ 2 Sayfalı Carousel',
+      single_frame: '🖼️ Tek Görsel Sunum',
+      detail_focus: '🔍 Detay Odaklı Sunum',
+      vertical_story_reels: '📱 9:16 Dikey Akış'
+    };
 
-    // =========================================================================
-    // MENÜ GEÇİŞİ
-    // =========================================================================
+    const MUSIC_LABELS = {
+      modern_acoustic: '🎻 Lüks Mimari Akustik',
+      minimalist_piano: '🎹 Minimalist Piyano',
+      nordic_chill: '☕ İskandinav Lounge',
+      nova_beat: '🎷 Nova Signature Beat'
+    };
+
     function switchNavTab(tabId) {
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.getAttribute('data-tab') === tabId);
@@ -1183,13 +776,9 @@
       });
     }
 
-    // =========================================================================
-    // VERİLERİ SUPABASE'DEN YÜKLEME
-    // =========================================================================
     async function loadAllData() {
-      showToast('⏳ Instagram bot ayarları ve geçmişi yükleniyor...');
+      showToast('⏳ Instagram bot ayarları ve sıradaki içerikler yükleniyor...');
       try {
-        // 1. Bot State Çek
         const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
@@ -1198,7 +787,6 @@
           if (rows && rows[0]?.data) botState = rows[0].data;
         }
 
-        // 2. Yayın Takipçisi (Tracker) Çek
         const trkRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.instagram_published_tracker&select=data`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
@@ -1207,7 +795,6 @@
           if (trkRows && trkRows[0]?.data) publishedTracker = trkRows[0].data;
         }
 
-        // 3. Ürün Kataloğunu Çek (En yeni en üstte)
         const prodRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
         });
@@ -1216,6 +803,7 @@
         }
 
         populateUIFromState();
+        renderUpcomingPreviews();
         renderHistoryList();
         showToast('✅ Instagram paneli hazır!');
       } catch (err) {
@@ -1224,13 +812,8 @@
       }
     }
 
-    // =========================================================================
-    // UI DOLDURMA
-    // =========================================================================
     function populateUIFromState() {
       const cfg = botState?.config || {};
-
-      // Yayın Kuyruğu Saatleri
       const slots = cfg.posting_slots || [
         { type: 'POST', time: '10:00', enabled: true },
         { type: 'STORIES', time: '14:30', enabled: true },
@@ -1250,26 +833,6 @@
         }
       });
       updateSlotVisuals();
-
-      // Müzik Seçimi
-      const music = cfg.reels_music || 'modern_acoustic';
-      selectMusicTemplate(music, false);
-      if (cfg.custom_music_url) {
-        document.getElementById('customMusicUrl').value = cfg.custom_music_url;
-      }
-
-      // Detaylı Gönderi Tiklemeleri
-      const specOpts = cfg.spec_post_options || {
-        mdf: true, craft: true, surface: true, hardware: true,
-        dimensions: true, color: true, warranty: true, cta_button: true
-      };
-      for (const [k, v] of Object.entries(specOpts)) {
-        const el = document.getElementById(`spec_opt_${k}`);
-        if (el) el.checked = !!v;
-      }
-
-      // Panoramik Carousel Stüdyosu UI Doldur
-      populatePanoramicUI();
     }
 
     function updateSlotVisuals() {
@@ -1279,58 +842,81 @@
     }
 
     // =========================================================================
-    // MÜZİK ŞABLON SEÇİMİ
+    // ÜRETİLECEK SIRADAKİ İÇERİKLERİN KÜÇÜK ÖNİZLEMESİ
     // =========================================================================
-    const MUSIC_URLS = {
-      modern_acoustic: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      minimalist_piano: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      nordic_chill: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4',
-      nova_beat: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
-    };
+    function renderUpcomingPreviews() {
+      const container = document.getElementById('upcomingPreviewContainer');
+      const summaryEl = document.getElementById('txtUpcomingSummary');
+      if (!container) return;
 
-    let selectedMusicKey = 'modern_acoustic';
-
-    function selectMusicTemplate(key, updateAudio = true) {
-      selectedMusicKey = key;
-      const cards = {
-        modern_acoustic: document.getElementById('musicCard1'),
-        minimalist_piano: document.getElementById('musicCard2'),
-        nordic_chill: document.getElementById('musicCard3'),
-        nova_beat: document.getElementById('musicCard4')
-      };
-      Object.keys(cards).forEach(k => {
-        if (cards[k]) cards[k].classList.toggle('selected', k === key);
-      });
-
-      if (updateAudio) {
-        const player = document.getElementById('audioPreviewPlayer');
-        const customUrl = document.getElementById('customMusicUrl').value.trim();
-        player.src = customUrl || MUSIC_URLS[key] || MUSIC_URLS.modern_acoustic;
+      if (!catalogProducts || catalogProducts.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Katalogda henüz ürün bulunmuyor.</div>`;
+        if (summaryEl) summaryEl.textContent = '0 Sıradaki İçerik';
+        return;
       }
-    }
 
-    function onCustomMusicUrlChanged() {
-      const customUrl = document.getElementById('customMusicUrl').value.trim();
-      const player = document.getElementById('audioPreviewPlayer');
-      if (customUrl) {
-        player.src = customUrl;
-      } else {
-        player.src = MUSIC_URLS[selectedMusicKey] || MUSIC_URLS.modern_acoustic;
-      }
-    }
+      const postTime = document.getElementById('timeSlotPost')?.value || '10:00';
+      const storyTime = document.getElementById('timeSlotStory')?.value || '14:30';
+      const reelsTime = document.getElementById('timeSlotReels')?.value || '19:30';
 
-    function togglePlayMusic() {
-      const player = document.getElementById('audioPreviewPlayer');
-      const btn = document.getElementById('btnTogglePlayMusic');
-      if (player.paused) {
-        player.play();
-        btn.textContent = '⏸️ Müziği Durdur';
-        btn.style.borderColor = '#D4AF37';
-      } else {
-        player.pause();
-        btn.textContent = '▶️ Müziği Dinle';
-        btn.style.borderColor = 'rgba(255,255,255,0.2)';
+      const ALL_FORMATS = [
+        { fmt: 'POST', label: '📸 Gönderi / Carousel', badgeClass: 'badge-post', slotTime: postTime },
+        { fmt: 'STORIES', label: '📱 Story (9:16)', badgeClass: 'badge-story', slotTime: storyTime },
+        { fmt: 'REELS', label: '🎬 Reels Videosu', badgeClass: 'badge-reels', slotTime: reelsTime }
+      ];
+
+      const upcomingItems = [];
+      for (const prod of catalogProducts) {
+        const publishedForThis = publishedTracker[prod.slug] || [];
+        for (const fObj of ALL_FORMATS) {
+          if (!publishedForThis.includes(fObj.fmt)) {
+            upcomingItems.push({ product: prod, formatObj: fObj });
+            if (upcomingItems.length >= 4) break;
+          }
+        }
+        if (upcomingItems.length >= 4) break;
       }
+
+      if (upcomingItems.length === 0 && catalogProducts.length > 0) {
+        upcomingItems.push({
+          product: catalogProducts[0],
+          formatObj: ALL_FORMATS[1],
+          isLoop: true
+        });
+      }
+
+      if (summaryEl) {
+        summaryEl.textContent = `Sırada ${upcomingItems.length} İçerik Paketi Hazır`;
+      }
+
+      container.innerHTML = upcomingItems.map((item, idx) => {
+        const p = item.product;
+        const f = item.formatObj;
+        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const prefs = p.marketing_preferences || {};
+        const presMode = prefs.main_photo_presentation || (prefs.panoramic_mode === 'split' ? 'split_carousel' : 'auto_carousel');
+        const musicKey = prefs.music_preference || 'modern_acoustic';
+        const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
+        const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
+
+        return `
+          <div class="upcoming-card">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <div class="upcoming-body">
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span class="slot-type-badge ${f.badgeClass}">${f.label}</span>
+                <span style="font-size:11px; color:var(--accent-gold); font-weight:800;">⏰ ${f.slotTime}</span>
+              </div>
+              <div class="upcoming-title">${idx + 1}. ${p.title || p.slug}</div>
+              <div class="upcoming-plan-tags">
+                <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
+                <span class="plan-mini-pill">${PRESENTATION_LABELS[presMode] || '✨ Otomatik Sunum'}</span>
+                ${f.fmt === 'REELS' ? `<span class="plan-mini-pill">${MUSIC_LABELS[musicKey] || '🎻 Kurumsal Müzik'}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     // =========================================================================
@@ -1357,7 +943,6 @@
       showToast('⏳ Saatler Supabase veritabanına yazılıyor...');
 
       try {
-        // 1. Supabase'e kalıcı olarak kaydet
         const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
           method: 'POST',
           headers: {
@@ -1378,287 +963,11 @@
           throw new Error(`Supabase kayıt hatası (${saveRes.status}): ${errText}`);
         }
 
-        // 2. Doğrulama: Kaydedilen veriyi veritabanından tekrar oku
-        const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-
-        if (!verifyRes.ok) {
-          throw new Error('Kayıt sonrası doğrulama okuması başarısız oldu.');
-        }
-
-        const verifyRows = await verifyRes.json();
-        const verifiedSlots = verifyRows && verifyRows[0]?.data?.config?.posting_slots;
-
-        if (!Array.isArray(verifiedSlots)) {
-          throw new Error('Veritabanından okunan saat bilgisi beklenen dizi formatında değil.');
-        }
-
-        const postVerified = verifiedSlots.find(s => s.type === 'POST');
-        if (!postVerified || postVerified.time !== postTime || postVerified.enabled !== postActive) {
-          throw new Error('Veritabanı doğrulama uyuşmazlığı tespit edildi.');
-        }
-
         updateSlotVisuals();
-        showToast(`✅ Yayın saatleri Supabase'e kaydedildi ve başarıyla doğrulandı! (Gönderi: ${postTime}, Story: ${storyTime}, Reels: ${reelsTime})`);
+        renderUpcomingPreviews();
+        showToast(`✅ Yayın saatleri kaydedildi! (Gönderi: ${postTime}, Story: ${storyTime}, Reels: ${reelsTime})`);
       } catch (err) {
         console.error('Yayın saatleri kaydetme hatası:', err);
-        showToast(`❌ Hata: ${err.message}`);
-      }
-    }
-
-    async function saveMusicSettings() {
-      if (!botState) botState = { config: {} };
-      if (!botState.config) botState.config = {};
-
-      botState.config.reels_music = selectedMusicKey;
-      botState.config.custom_music_url = document.getElementById('customMusicUrl').value.trim();
-
-      await persistBotState();
-      showToast('✅ Reels fon müziği tercihi kaydedildi!');
-    }
-
-    async function saveSpecPostSettings() {
-      if (!botState) botState = { config: {} };
-      if (!botState.config) botState.config = {};
-
-      botState.config.spec_post_options = {
-        mdf: document.getElementById('spec_opt_mdf').checked,
-        craft: document.getElementById('spec_opt_craft').checked,
-        surface: document.getElementById('spec_opt_surface').checked,
-        hardware: document.getElementById('spec_opt_hardware').checked,
-        dimensions: document.getElementById('spec_opt_dimensions').checked,
-        color: document.getElementById('spec_opt_color').checked,
-        warranty: document.getElementById('spec_opt_warranty').checked,
-        cta_button: document.getElementById('spec_opt_cta_button').checked
-      };
-
-      await persistBotState();
-      showToast('✅ Detaylı gönderi kapsül tercihleri kaydedildi!');
-    }
-
-
-    // =========================================================================
-    // PANORAMİK İKİLİ CAROUSEL STÜDYOSU FONKSİYONLARI
-    // =========================================================================
-    function populatePanoramicUI() {
-      const cfg = botState?.config || {};
-      const savedPan = cfg.panoramic_settings || { mode: 'auto', threshold: 1.8 };
-      panoramicSettings.mode = savedPan.mode || 'auto';
-      panoramicSettings.threshold = typeof savedPan.threshold === 'number' ? savedPan.threshold : 1.8;
-
-      const inpTh = document.getElementById('inpAspectRatioThreshold');
-      if (inpTh) inpTh.value = panoramicSettings.threshold;
-
-      selectPanoramicMode(panoramicSettings.mode, false);
-
-      // Ürün Seçici Doldur
-      const sel = document.getElementById('selPanoramicProduct');
-      if (sel && catalogProducts.length > 0) {
-        sel.innerHTML = catalogProducts.map((p, idx) => `
-          <option value="${p.slug}" ${idx === 0 ? 'selected' : ''}>
-            ${p.title || p.slug} (${p.kategori || 'Mobilya'})
-          </option>
-        `).join('');
-        onPanoramicProductSelected();
-      }
-    }
-
-    function selectPanoramicMode(mode, triggerReAnalysis = true) {
-      panoramicSettings.mode = mode || 'auto';
-      const modes = ['auto', 'split', 'single'];
-      modes.forEach(m => {
-        const rb = document.getElementById(`rbMode${m.charAt(0).toUpperCase() + m.slice(1)}`);
-        const card = document.getElementById(`cardMode${m.charAt(0).toUpperCase() + m.slice(1)}`);
-        if (rb) rb.checked = (m === panoramicSettings.mode);
-        if (card) card.classList.toggle('active', m === panoramicSettings.mode);
-      });
-
-      if (triggerReAnalysis) {
-        evaluateAndRenderPanoramic();
-      }
-    }
-
-    function onPanoramicConfigChanged() {
-      const inpTh = document.getElementById('inpAspectRatioThreshold');
-      const val = parseFloat(inpTh?.value);
-      panoramicSettings.threshold = (!isNaN(val) && val > 0) ? val : 1.8;
-      evaluateAndRenderPanoramic();
-    }
-
-    function onPanoramicProductSelected() {
-      const sel = document.getElementById('selPanoramicProduct');
-      const slug = sel?.value;
-      if (!slug) return;
-      currentPanoramicProduct = catalogProducts.find(p => p.slug === slug) || catalogProducts[0];
-      evaluateAndRenderPanoramic();
-    }
-
-    function reAnalyzeSelectedProduct() {
-      evaluateAndRenderPanoramic();
-      showToast('🔄 Görsel boyutları ve panoramik en-boy oranı yeniden hesaplandı.');
-    }
-
-    function toggleSplitStateOverride() {
-      if (panoramicSettings.mode === 'single') {
-        selectPanoramicMode('split');
-      } else {
-        selectPanoramicMode('single');
-      }
-    }
-
-    async function evaluateAndRenderPanoramic() {
-      if (!currentPanoramicProduct) {
-        if (catalogProducts.length > 0) currentPanoramicProduct = catalogProducts[0];
-        else return;
-      }
-
-      const imgUrl = currentPanoramicProduct.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-      const imgEl = document.getElementById('imgOriginalPreview');
-      const badgeRatio = document.getElementById('badgeOriginalRatio');
-      const dimFooter = document.getElementById('txtOriginalDimFooter');
-      const splitOverlay = document.getElementById('splitLineOverlay');
-      const noticeBanner = document.getElementById('panoramicNoticeBanner');
-      const noticeText = document.getElementById('panoramicNoticeText');
-      const btnToggle = document.getElementById('btnToggleSplitState');
-      const badgeCarousel = document.getElementById('badgeCarouselStatus');
-
-      imgEl.src = imgUrl;
-
-      // Görsel yüklenmesini bekle
-      await new Promise(resolve => {
-        if (imgEl.complete && imgEl.naturalWidth) return resolve();
-        imgEl.onload = resolve;
-        imgEl.onerror = resolve;
-      });
-
-      const w = imgEl.naturalWidth || 1920;
-      const h = imgEl.naturalHeight || 1080;
-
-      // Panoramic Engine ile analiz et
-      const evaluation = window.PanoramicCarouselEngine.evaluateSplittingMode({
-        width: w,
-        height: h,
-        mode: panoramicSettings.mode,
-        threshold: panoramicSettings.threshold
-      });
-
-      // UI Güncellemeleri
-      badgeRatio.textContent = `${evaluation.analysis.ratio}:1 (${evaluation.analysis.category.toUpperCase()})`;
-      dimFooter.textContent = `Çözünürlük: ${w} × ${h} px • En-Boy Oranı: ${evaluation.analysis.ratio}:1`;
-
-      if (evaluation.shouldSplit) {
-        splitOverlay.style.display = 'block';
-        noticeBanner.style.display = 'flex';
-        noticeText.textContent = evaluation.mode === 'auto'
-          ? 'Bu görsel geniş panoramik formatta olduğu için iki sayfalı carousel gönderisine dönüştürüldü.'
-          : 'Kullanıcı tercihi: Görsel iki sayfalı Instagram carousel gönderisine dönüştürüldü.';
-        badgeCarousel.textContent = '✅ Dikişsiz İkili Carousel Aktif';
-        badgeCarousel.style.background = 'rgba(16, 185, 129, 0.18)';
-        badgeCarousel.style.color = '#34D399';
-        btnToggle.textContent = '↩️ Tek Görsele Dön';
-
-        // Canvas bölme işlemi (Kayıpsız & Deterministik)
-        try {
-          const splitData = await window.PanoramicCarouselEngine.splitImageUsingCanvas(imgEl);
-          currentSplitResult = splitData;
-
-          // Sol Canvas
-          const canvasL = document.getElementById('canvasSliceLeft');
-          canvasL.width = splitData.slices.leftSlice.sw;
-          canvasL.height = splitData.slices.leftSlice.sh;
-          const ctxL = canvasL.getContext('2d');
-          ctxL.drawImage(
-            imgEl,
-            splitData.slices.leftSlice.sx, splitData.slices.leftSlice.sy, splitData.slices.leftSlice.sw, splitData.slices.leftSlice.sh,
-            0, 0, splitData.slices.leftSlice.sw, splitData.slices.leftSlice.sh
-          );
-
-          // Sağ Canvas
-          const canvasR = document.getElementById('canvasSliceRight');
-          canvasR.width = splitData.slices.rightSlice.sw;
-          canvasR.height = splitData.slices.rightSlice.sh;
-          const ctxR = canvasR.getContext('2d');
-          ctxR.drawImage(
-            imgEl,
-            splitData.slices.rightSlice.sx, splitData.slices.rightSlice.sy, splitData.slices.rightSlice.sw, splitData.slices.rightSlice.sh,
-            0, 0, splitData.slices.rightSlice.sw, splitData.slices.rightSlice.sh
-          );
-
-          document.getElementById('cardSliceLeft').style.display = 'flex';
-          document.getElementById('cardSliceRight').style.display = 'flex';
-        } catch (splitErr) {
-          console.warn('Canvas bölme hatası:', splitErr);
-        }
-      } else {
-        splitOverlay.style.display = 'none';
-        noticeBanner.style.display = 'none';
-        badgeCarousel.textContent = 'Standart Tek Görsel (Bölme Devre Dışı)';
-        badgeCarousel.style.background = 'rgba(148, 163, 184, 0.18)';
-        badgeCarousel.style.color = '#94A3B8';
-        btnToggle.textContent = '✂️ İki Parçaya Böl';
-
-        // Tek görsel modunda sol canvas'a tam resmi koy, sağı gizle
-        const canvasL = document.getElementById('canvasSliceLeft');
-        canvasL.width = w;
-        canvasL.height = h;
-        const ctxL = canvasL.getContext('2d');
-        ctxL.drawImage(imgEl, 0, 0);
-        document.getElementById('cardSliceLeft').style.display = 'flex';
-        document.getElementById('cardSliceRight').style.display = 'none';
-        currentSplitResult = null;
-      }
-    }
-
-    async function savePanoramicSettings() {
-      if (!botState) botState = { config: {} };
-      if (!botState.config) botState.config = {};
-
-      botState.config.panoramic_settings = {
-        mode: panoramicSettings.mode,
-        threshold: panoramicSettings.threshold,
-        updated_at: new Date().toISOString()
-      };
-
-      showToast('⏳ Panoramik ayarlar Supabase veritabanına yazılıyor...');
-
-      try {
-        const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({
-            key: 'insta_bot_state',
-            data: botState,
-            updated_at: new Date().toISOString()
-          })
-        });
-
-        if (!saveRes.ok) {
-          throw new Error('Supabase kayıt yanıtı başarısız.');
-        }
-
-        // Doğrulama Okuması
-        const verifyRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.insta_bot_state&select=data`, {
-          headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
-        });
-        const rows = verifyRes.ok ? await verifyRes.json() : [];
-        const verifiedPan = rows && rows[0]?.data?.config?.panoramic_settings;
-
-        if (!verifiedPan || verifiedPan.mode !== panoramicSettings.mode) {
-          throw new Error('Veritabanı kayıt doğrulaması uyuşmadı.');
-        }
-
-        showToast(`✅ Panoramik carousel ayarları kaydedildi ve doğrulandı! (Mod: ${panoramicSettings.mode}, Eşik: ${panoramicSettings.threshold})`);
-      } catch (err) {
-        console.error('Panoramik ayar kaydetme hatası:', err);
         showToast(`❌ Hata: ${err.message}`);
       }
     }
@@ -1704,19 +1013,17 @@
         return;
       }
 
-      // En son yayınlanan en üstte
       const sorted = [...posts].reverse();
 
       container.innerHTML = sorted.map(post => {
         const type = (post.media_type || 'POST').toUpperCase();
         let badgeHtml = '';
-        if (type === 'POST') badgeHtml = '<span class="slot-type-badge badge-post">📸 Gönderi</span>';
+        if (type === 'POST' || type === 'CAROUSEL') badgeHtml = `<span class="slot-type-badge badge-post">📸 ${type === 'CAROUSEL' ? 'Carousel' : 'Gönderi'}</span>`;
         else if (type === 'STORIES') badgeHtml = '<span class="slot-type-badge badge-story">📱 Story</span>';
         else badgeHtml = '<span class="slot-type-badge badge-reels">🎬 Reels</span>';
 
         const rawTitle = (post.title || post.headline || 'Nova Furniture Özel Tasarım').replace(/^\[Otonom Tasarım\]\s*/i, '');
         const pubTime = post.published_at ? new Date(post.published_at).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Az önce';
-
         const thumbUrl = post.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
         return `
@@ -1745,10 +1052,8 @@
 
     // =========================================================================
     // DAĞITIM VE OTONOM PAYLAŞIM ALGORİTMASI
-    // (En Yeni Ürün Önceliği + 3 Format Kontrolü + Döngü Modu)
     // =========================================================================
     async function selectNextProductAndFormat() {
-      // 1. Ürün kataloğunu tazele (created_at desc)
       try {
         const pRes = await fetch(`${SUPABASE_URL}/rest/v1/products?select=*&order=created_at.desc`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
@@ -1760,7 +1065,6 @@
         return null;
       }
 
-      // 2. Tracker'ı tazele
       try {
         const tRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.instagram_published_tracker&select=data`, {
           headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
@@ -1773,7 +1077,6 @@
 
       const ALL_FORMATS = ['POST', 'STORIES', 'REELS'];
 
-      // 3. En yeni yüklenen ürünlerden başla: 3 formattan eksik olanı bul
       for (const prod of catalogProducts) {
         const publishedForThis = publishedTracker[prod.slug] || [];
         for (const fmt of ALL_FORMATS) {
@@ -1783,7 +1086,6 @@
         }
       }
 
-      // 4. Eğer tüm ürünlerin 3 formatı da tamamlandıysa: Rastgele bir ürünün Story'sini paylaş!
       const randomProd = catalogProducts[Math.floor(Math.random() * catalogProducts.length)];
       return { product: randomProd, format: 'STORIES', isCycleFallback: true };
     }
@@ -1804,9 +1106,6 @@
       }
     }
 
-    // =========================================================================
-    // OTONOM PAYLAŞIM DÖNGÜSÜNÜ ÇALIŞTIR
-    // =========================================================================
     async function triggerAutonomousCycleNow() {
       if (isCycleRunning) return;
       isCycleRunning = true;
@@ -1828,12 +1127,11 @@
         const { product, format, isCycleFallback } = target;
 
         if (isCycleFallback) {
-          showToast(`ℹ️ Tüm ürünler yayınlanmış. Döngü modu: "${product.title}" için rastgele Story üretiliyor...`);
+          showToast(`ℹ️ Tüm ürünler yayınlanmış. Döngü modu: "${product.title}" için Story üretiliyor...`);
         } else {
-          showToast(`✨ En yeni ürün seçildi: "${product.title}" (${format} formatı hazırlanıyor)...`);
+          showToast(`✨ Sıradaki içerik seçildi: "${product.title}" (${format} formatı hazırlanıyor)...`);
         }
 
-        // Açıklama Metni Üret
         const cleanTitle = (product.title || product.slug).toUpperCase();
         const caption = `✨ NOVA FURNITURE — ${cleanTitle}\n\n` +
           `Minimalist çizgiler, 1. sınıf MDF gövde ve CNC membran işçiliği ile mekanınıza zarafet katın.\n\n` +
@@ -1846,26 +1144,24 @@
           `📲 0 505 015 1035 • @thenovafurniture\n\n` +
           `#novafurniture #thenovafurniture #modernmobilya #icmimari #evdekorasyonu`;
 
-        // Medya URL'si (Varsa ürünün stüdyo fotoğrafı, yoksa fallback)
         let mediaUrl = product.ana_resim;
         if (!mediaUrl || !mediaUrl.startsWith('http')) {
           mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
         }
 
-        // Reels için MP4 video
         const isVideo = format === 'REELS';
         if (isVideo) {
           mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
         }
 
-        // ── PANORAMİK İKİLİ CAROUSEL KONTROLÜ (FORMAT: POST İSE) ────────────────
+        // Ürünün Modül 7'de belirlenen sunum tercihini oku
         let finalPublishFormat = format;
         let carouselSlideUrls = null;
 
         if (format === 'POST' && window.PanoramicCarouselEngine) {
           try {
-            const panCfg = (botState?.config?.panoramic_settings) || { mode: 'auto', threshold: 1.8 };
-            // Resim boyutlarını ölç
+            const prodPrefs = product.marketing_preferences || {};
+            const prodMode = prodPrefs.panoramic_mode || (botState?.config?.panoramic_settings?.mode) || 'auto';
             const tempImg = new Image();
             tempImg.crossOrigin = 'anonymous';
             tempImg.src = mediaUrl;
@@ -1874,31 +1170,27 @@
             const evalSplit = window.PanoramicCarouselEngine.evaluateSplittingMode({
               width: tempImg.naturalWidth || 1080,
               height: tempImg.naturalHeight || 1080,
-              mode: panCfg.mode || 'auto',
-              threshold: panCfg.threshold || 1.8
+              mode: prodMode,
+              threshold: 1.8
             });
 
             if (evalSplit.shouldSplit) {
               finalPublishFormat = 'CAROUSEL';
-              // Orijinal ürün görseli ASLA ezilmez! Türev carousel parçaları hazırlanır
               const splitRes = await window.PanoramicCarouselEngine.splitImageUsingCanvas(tempImg);
-              const payload = window.PanoramicCarouselEngine.prepareProductCarouselPayload(product, splitRes, { mode: panCfg.mode });
+              const payload = window.PanoramicCarouselEngine.prepareProductCarouselPayload(product, splitRes, { mode: prodMode });
               carouselSlideUrls = payload.carouselItems.map(item => item.url);
               mediaUrl = payload.mediaUrlJson;
-              showToast(`✂️ Geniş panoramik görsel tespit edildi: "${product.title}" 2 sayfalı Instagram Carousel olarak yayımlanıyor...`);
+              showToast(`✂️ Ürün sunum planına göre "${product.title}" 2 sayfalı Instagram Carousel olarak yayımlanıyor...`);
             }
           } catch (panErr) {
             console.warn('Panoramik carousel hazırlık uyarısı, tek görsel devam ediyor:', panErr);
           }
         }
 
-        // Meta Graph API ile Paylaş (Veya Canlı Kaydet)
         const cfg = botState?.config || {};
         const igUserId = cfg.ig_user_id || '17841435882645322';
         const accessToken = cfg.access_token || '';
 
-        // Meta Graph API Çağrısı (bot-engine veya doğrudan REST)
-        let publishedSuccess = false;
         try {
           const createUrl = `https://graph.facebook.com/v20.0/${igUserId}/media`;
           const params = new URLSearchParams({
@@ -1907,7 +1199,6 @@
           });
 
           if (finalPublishFormat === 'CAROUSEL' && Array.isArray(carouselSlideUrls)) {
-            // İkili Instagram Carousel Yayını
             const itemIds = [];
             for (const slideUrl of carouselSlideUrls) {
               const itemParams = new URLSearchParams({
@@ -1930,9 +1221,7 @@
               const cData = await cRes.json();
               if (cData?.id) {
                 const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-                const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
-                const pData = await pRes.json();
-                if (pData?.id) publishedSuccess = true;
+                await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
               }
             }
           } else if (format === 'REELS') {
@@ -1943,9 +1232,7 @@
             const cData = await cRes.json();
             if (cData?.id) {
               const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
-              const pData = await pRes.json();
-              if (pData?.id) publishedSuccess = true;
+              await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
             }
           } else if (format === 'STORIES') {
             params.set('media_type', 'STORIES');
@@ -1954,9 +1241,7 @@
             const cData = await cRes.json();
             if (cData?.id) {
               const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
-              const pData = await pRes.json();
-              if (pData?.id) publishedSuccess = true;
+              await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
             }
           } else {
             params.set('image_url', mediaUrl);
@@ -1964,16 +1249,13 @@
             const cData = await cRes.json();
             if (cData?.id) {
               const pubUrl = `https://graph.facebook.com/v20.0/${igUserId}/media_publish`;
-              const pRes = await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
-              const pData = await pRes.json();
-              if (pData?.id) publishedSuccess = true;
+              await fetch(pubUrl, { method: 'POST', body: new URLSearchParams({ creation_id: cData.id, access_token: accessToken }) });
             }
           }
         } catch (apiErr) {
           console.warn('Meta API canlı çağrı uyarısı:', apiErr);
         }
 
-        // Geçmişe ekle
         const newPostEntry = {
           id: `post-${Date.now()}`,
           title: `NOVA - ${cleanTitle}`,
@@ -1987,9 +1269,9 @@
         botState.scheduled_posts.push(newPostEntry);
         await persistBotState();
 
-        // Tracker güncelle
         await markFormatPublished(product.slug, format);
 
+        renderUpcomingPreviews();
         renderHistoryList();
         showToast(`🎉 Başarılı! "${product.title}" ${format} olarak yayınlandı!`);
       } catch (err) {
@@ -2004,14 +1286,11 @@
       }
     }
 
-    // =========================================================================
-    // DÜZENLİ SAAT KONTROLÜ (DAKİKADA BİR KONTROL)
-    // =========================================================================
     let lastTriggeredMinute = '';
 
     setInterval(async () => {
       const now = new Date();
-      const currentHHMM = now.toTimeString().slice(0, 5); // Örn: "14:30"
+      const currentHHMM = now.toTimeString().slice(0, 5);
       if (currentHHMM === lastTriggeredMinute) return;
 
       const slots = botState?.config?.posting_slots || [];
@@ -2019,29 +1298,22 @@
 
       if (matchingSlot && !isCycleRunning) {
         lastTriggeredMinute = currentHHMM;
-        console.log(`⏰ Zamanlanmış saat geldi (${currentHHMM})! Otonom döngü başlatılıyor:`, matchingSlot);
         await triggerAutonomousCycleNow();
       }
     }, 10000);
 
-    // =========================================================================
-    // DM & YORUM TEST ASİSTANI
-    // =========================================================================
     function sendTestChatMessage() {
       const input = document.getElementById('chatInputText');
       const text = input.value.trim();
       if (!text) return;
 
       const box = document.getElementById('chatMessagesBox');
-      
-      // Kullanıcı mesajı
       const userBubble = document.createElement('div');
       userBubble.className = 'chat-bubble chat-user';
       userBubble.textContent = text;
       box.appendChild(userBubble);
       input.value = '';
 
-      // Yanıt üret
       setTimeout(() => {
         const lower = text.toLowerCase();
         let reply = '';
@@ -2066,9 +1338,6 @@
       box.scrollTop = box.scrollHeight;
     }
 
-    // =========================================================================
-    // TOAST BİLDİRİMİ
-    // =========================================================================
     function showToast(msg) {
       const el = document.getElementById('toastMessage');
       if (!el) return;
@@ -2080,9 +1349,6 @@
       }, 3500);
     }
 
-    // =========================================================================
-    // SAYFA AÇILIŞI
-    // =========================================================================
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', loadAllData);
     } else {

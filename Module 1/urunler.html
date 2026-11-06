@@ -972,9 +972,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
       <div style="display:flex; gap:10px; align-items:center;">
         <span class="btn-primary btn-sm" style="display:inline-flex; align-items:center; gap:6px; cursor:default;">📋 Web Sitesi Ürün Listesi</span>
-        <a href="/Module%207/index.html" class="btn-secondary btn-sm" style="text-decoration:none; display:inline-flex; align-items:center; gap:6px; font-weight:700;">
-          🛋️ Detaylar &amp; Database Kontrolü (Modül 7) →
-        </a>
+        
       </div>
       <div style="display:flex; gap:10px;">
         <input type="text" class="form-control" id="productSearchBox" placeholder="🔍 Ürün ara..." style="width:200px; padding:6px 12px; font-size:13px;" oninput="filterProductList()">
@@ -994,7 +992,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         <strong>🌐 Web Sitesi Görünürlük Kontrol Paneli:</strong>
         Ürün ekleme, silme, fotoğraf yükleme ve detaylı teknik özellik düzenlemeleri <strong>Modül 7 (Katalog Yönetimi)</strong> üzerinden yapılmaktadır. Bu ekrandan ürünlerin kurumsal web sitenizde görünüp görünmeyeceğini ve ana sayfa vitrin durumunu tek tıkla açıp kapatabilirsiniz.
       </div>
-      <a href="/Module%207/index.html" class="btn-gold btn-sm" style="text-decoration:none; font-weight:800; padding:6px 14px; white-space:nowrap;">Modül 7'yi Aç →</a>
+      
     </div>
 
     <!-- LIST VIEW -->
@@ -1008,116 +1006,11 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         <div style="font-size:40px; margin-bottom:12px;">📦</div>
         <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Ürün Eklenmedi</h3>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Sitenizde listelenecek ilk membran kapak modelini ekleyin.</p>
-        <button class="btn-gold" onclick="startNewProduct()">➕ İlk Ürünü Ekle</button>
+        
       </div>
     </div>
 
-    <!-- FORM VIEW -->
-    <div id="subview-product-form" style="display:none;">
-      <div class="admin-card">
-        <div class="admin-card-header">
-          <div>
-            <div class="admin-card-title" id="formCardTitle">➕ Yeni Membran Kapak Ürünü Ekle</div>
-            <div class="admin-card-desc">Girdiğiniz bilgiler anında buluta kaydedilir ve sitenizde yayına girer.</div>
-          </div>
-          <button class="btn-secondary btn-sm" onclick="switchProductSubTab('list')">← Listeye Dön</button>
-        </div>
-
-        <form id="productForm" onsubmit="saveProduct(event)">
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Ürün Adı / Model Adı <span class="req">*</span></label>
-              <input type="text" class="form-control" id="f_title" placeholder="Örn: Viyana Çerçeveli Membran Kapak" required oninput="autoGenerateSlug()">
-            </div>
-            <div class="form-group">
-              <label>Kategori <span class="req">*</span></label>
-              <select class="form-control" id="f_kategori" required>
-                <option value="Düz Membran Kapak">Düz Membran Kapak</option>
-                <option value="Çerçeveli">Çerçeveli Membran Kapak</option>
-                <option value="Özel Ölçü">Özel Ölçü Mutfak & Dolap Kapağı</option>
-                <option value="Akrilik Kapak">Akrilik & High Gloss Kapak</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="form-grid">
-            <div class="form-group">
-              <label>Ürün Kodu (SKU)</label>
-              <input type="text" class="form-control" id="f_sku" placeholder="Örn: GLB-104">
-            </div>
-            <div class="form-group">
-              <label>Bağlantı Adresi (Slug)</label>
-              <input type="text" class="form-control" id="f_slug" placeholder="viyana-cerceveli-membran" required>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label>Kısa Açıklama (Katalogda Görünecek Özet)</label>
-            <input type="text" class="form-control" id="f_kisa" placeholder="Mat beyaz yüzeyli, suya ve neme dayanıklı modern membran kapak modeli.">
-          </div>
-
-          <!-- GÖRSEL YÜKLEME -->
-          <div class="form-group">
-            <label>Ana Ürün Fotoğrafı</label>
-            <div class="upload-zone" id="uploadZone" onclick="document.getElementById('fileInput').click()">
-              <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileSelect(event)">
-              <svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <h4>Fotoğrafı Buraya Sürükleyin veya Tıklayın</h4>
-              <p>JPG, PNG, WebP desteklenir (Doğrudan sunucuya yüklenir)</p>
-            </div>
-            <div id="imagePreviewBox" class="upload-preview" style="display:none;">
-              <img id="previewImg" src="/resim/logo.png" alt="Önizleme">
-              <div style="flex:1;">
-                <div id="previewFileName" style="font-weight:600; font-size:13px;">resim.jpg</div>
-                <div style="font-size:11px; color:var(--success); font-weight:600;">✓ Yüklemeye Hazır</div>
-              </div>
-              <button type="button" class="btn-danger btn-sm" onclick="removeSelectedImage()">Kaldır</button>
-            </div>
-            <input type="hidden" id="f_image_url" value="/resim/logo.png">
-          </div>
-
-          <!-- RENKLER -->
-          <div class="form-group">
-            <label>Mevcut Renk Seçenekleri</label>
-            <div class="chip-container" id="colorsContainer">
-              <input type="text" class="chip-input" id="colorInput" placeholder="Renk yazıp Enter'a basın (Örn: Mat Beyaz, Antrasit)..." onkeydown="handleChipKey(event, 'color')">
-            </div>
-          </div>
-
-          <!-- ÖZELLİKLER -->
-          <div class="form-group">
-            <label>Teknik Özellikler (Madde Madde)</label>
-            <div class="chip-container" id="featsContainer">
-              <input type="text" class="chip-input" id="featInput" placeholder="Özellik yazıp Enter'a basın (Örn: 18mm MDF, E1 Standart)..." onkeydown="handleChipKey(event, 'feat')">
-            </div>
-          </div>
-
-          <!-- DETAYLI AÇIKLAMA -->
-          <div class="form-group">
-            <label>Detaylı Açıklama (Ürün Sayfasında Gösterilecek İçerik)</label>
-            <textarea class="form-control" id="f_body" rows="4" placeholder="Ürünün üretim detayları, kullanım alanları, temizlik ve bakım önerileri..."></textarea>
-          </div>
-
-          <!-- ROZETLER & ANA SAYFA GÖSTERİMİ -->
-          <div style="display:flex; flex-wrap:wrap; gap:14px; margin-bottom:24px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0;">
-              <input type="checkbox" id="f_anasayfa" checked> 🏠 Ana Sayfa Vitrininde Göster
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 12px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border);">
-              <input type="checkbox" id="f_populer"> ⭐ Popüler Ürün
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 12px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border);">
-              <input type="checkbox" id="f_yeni"> ✨ Yeni Ürün
-            </label>
-          </div>
-
-          <div style="display:flex; gap:12px;">
-            <button type="submit" class="btn-gold" id="btnProductSave">💾 Kaydet ve Sitede Yayınla</button>
-            <button type="button" class="btn-secondary" onclick="switchProductSubTab('list')">İptal</button>
-          </div>
-        </form>
-      </div>
-    </div>
+    
 
   </div>
 
@@ -2113,13 +2006,7 @@ function renderProductGrid(products) {
           </button>
         </div>
 
-        <!-- DETAY DÜZENLEME MODÜL 7 BAĞLANTISI -->
-        <div style="text-align:center; margin-top:10px; padding-top:8px; border-top:1px dashed #E2E8F0;">
-          <a href="/Module%207/index.html" style="font-size:11px; font-weight:600; color:#64748B; text-decoration:none;" title="Model adı, resim, ölçü ve teknik detaylar Modül 7'de yönetilir">
-            ⚙️ Detay &amp; Database Kontrolü (Modül 7) →
-          </a>
         </div>
-      </div>
     </div>
     `;
   }).join('');
@@ -2168,7 +2055,7 @@ function filterProductList() {
 
 function startNewProduct() {
   showToast('Ürün ana kayıtları Modül 7 üzerinden oluşturulur. Modül 7 açılıyor...', 'info');
-  window.location.href = '/Module%207/index.html';
+  
 }
 
 function editProduct(slug) {
