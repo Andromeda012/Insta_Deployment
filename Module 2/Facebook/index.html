@@ -529,11 +529,11 @@
         </div>
       </div>
 
-      <div class="slots-grid">
-        <!-- SLOT 1: KOLEKSİYON & KATALOG GÖNDERİSİ -->
+      <div class="slots-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <!-- SLOT 1: 6'LI KOLEKSİYON CAROUSEL / ALBÜM -->
         <div class="slot-card" id="slotCardPhoto">
           <div class="slot-header">
-            <span class="slot-type-badge badge-post">🖼️ Koleksiyon &amp; Katalog Gönderisi</span>
+            <span class="slot-type-badge badge-post">📸 6'lı Koleksiyon Carousel / Albüm (1080x1080)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotPhotoActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -541,53 +541,17 @@
           </div>
           <div>
             <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
-            <input type="time" class="form-control" id="timeSlotPhoto" value="09:30" style="width:100%; font-size:14px; font-weight:700;">
+            <input type="time" class="form-control" id="timeSlotPhoto" value="10:00" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Sabah kuşağı: Koleksiyon ana tanıtım görseli ve teknik detay özetiyle yayınlanır.
+            Katalog hero görseli ikiye bölünür (1. Slayt: Koleksiyon İsmi, 2. Slayt: Tanıtım Cümlesi). Ardından 3-6. slaytlarda parçalar görsel + isim + ölçü detaylarıyla Facebook Carousel/Albüm olarak paylaşılır.
           </div>
         </div>
 
-        <!-- SLOT 2: FACEBOOK HİKAYESİ -->
-        <div class="slot-card" id="slotCardStory">
-          <div class="slot-header">
-            <span class="slot-type-badge badge-story">📱 Facebook Hikayesi (Story)</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="chkSlotStoryActive" checked onchange="updateSlotVisuals()">
-              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
-            </label>
-          </div>
-          <div>
-            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
-            <input type="time" class="form-control" id="timeSlotStory" value="13:30" style="width:100%; font-size:14px; font-weight:700;">
-          </div>
-          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Öğle kuşağı: 9:16 dikey formatta koleksiyon parçaları ve hızlı sipariş yönlendirmesiyle paylaşılır.
-          </div>
-        </div>
-
-        <!-- SLOT 3: KOLEKSİYON PARÇALARI & BAĞLANTI KARTI -->
-        <div class="slot-card" id="slotCardLink">
-          <div class="slot-header">
-            <span class="slot-type-badge badge-link">🔗 Koleksiyon Parçaları &amp; Bağlantı</span>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-              <input type="checkbox" id="chkSlotLinkActive" checked onchange="updateSlotVisuals()">
-              <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
-            </label>
-          </div>
-          <div>
-            <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
-            <input type="time" class="form-control" id="timeSlotLink" value="16:30" style="width:100%; font-size:14px; font-weight:700;">
-          </div>
-          <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            İkindi kuşağı: Koleksiyon alt parçaları ve tıklanabilir WhatsApp sipariş bağlantısıyla yayınlanır.
-          </div>
-        </div>
-
-        <!-- SLOT 4: FACEBOOK REELS -->
+        <!-- SLOT 2: FACEBOOK REELS -->
         <div class="slot-card" id="slotCardReels">
           <div class="slot-header">
-            <span class="slot-type-badge badge-reels">🎬 Facebook Reels / Video</span>
+            <span class="slot-type-badge badge-reels">🎬 40-50s Sinematik Facebook Reels (9:16)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotReelsActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -595,10 +559,10 @@
           </div>
           <div>
             <label style="font-size:11.5px; color:#94A3B8; display:block; margin-bottom:5px;">Yayın Saati:</label>
-            <input type="time" class="form-control" id="timeSlotReels" value="20:00" style="width:100%; font-size:14px; font-weight:700;">
+            <input type="time" class="form-control" id="timeSlotReels" value="19:30" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Akşam kuşağı: Ürüne tanımlanan fon müziği ve sinematik kamera hareketiyle paylaşılır.
+            Instagram Reels ile senkronize: Hero pan akışı, koleksiyon adı ve tanıtım cümlesi + parçalara yumuşak zoom efektleriyle 40-50 saniyelik dikey Reels video paylaşımı.
           </div>
         </div>
       </div>
@@ -825,8 +789,8 @@
 
     function updateSlotVisuals() {
       document.getElementById('slotCardPhoto').classList.toggle('inactive', !document.getElementById('chkSlotPhotoActive').checked);
-      document.getElementById('slotCardStory').classList.toggle('inactive', !document.getElementById('chkSlotStoryActive').checked);
-      document.getElementById('slotCardLink').classList.toggle('inactive', !document.getElementById('chkSlotLinkActive').checked);
+      if (document.getElementById('slotCardStory')) document.getElementById('slotCardStory').classList.toggle('inactive', !document.getElementById('chkSlotStoryActive')?.checked);
+      if (document.getElementById('slotCardLink')) document.getElementById('slotCardLink').classList.toggle('inactive', !document.getElementById('chkSlotLinkActive')?.checked);
       document.getElementById('slotCardReels').classList.toggle('inactive', !document.getElementById('chkSlotReelsActive').checked);
     }
 
@@ -842,10 +806,8 @@
       }
 
       const formats = [
-        { fmt: 'PHOTO_POST', label: '🖼️ Koleksiyon Gönderisi', badgeClass: 'badge-post', slotTime: document.getElementById('timeSlotPhoto')?.value || '09:30' },
-        { fmt: 'FB_STORIES', label: '📱 Facebook Story', badgeClass: 'badge-story', slotTime: document.getElementById('timeSlotStory')?.value || '13:30' },
-        { fmt: 'LINK_CARD', label: '🔗 Parça & Bağlantı Kartı', badgeClass: 'badge-link', slotTime: document.getElementById('timeSlotLink')?.value || '16:30' },
-        { fmt: 'FB_REELS', label: '🎬 Facebook Video', badgeClass: 'badge-reels', slotTime: document.getElementById('timeSlotReels')?.value || '20:00' }
+        { fmt: 'PHOTO_POST', label: "📸 6'lı Carousel / Albüm", badgeClass: 'badge-post', slotTime: document.getElementById('timeSlotPhoto')?.value || '10:00' },
+        { fmt: 'FB_REELS', label: "🎬 40-50s Sinematik Reels", badgeClass: 'badge-reels', slotTime: document.getElementById('timeSlotReels')?.value || '19:30' }
       ];
 
       const items = catalogProducts.slice(0, 4).map((prod, idx) => ({
@@ -864,18 +826,24 @@
         const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
         const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
 
+        const promoQuote = (p.promo_quote || p.design_story || '').trim();
+        const formatTitle = isCollection
+          ? (f.fmt === 'PHOTO_POST' ? "📸 6'lı Carousel / Albüm (Başlık + Hikaye + 4 Parça)" : "🎬 40-50s Sinematik Reels")
+          : f.label;
+
         return `
           <div class="upcoming-card">
-            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                <span class="slot-type-badge ${f.badgeClass}">${f.label}</span>
-                <span style="font-size:11px; color:#38BDF8; font-weight:800;">⏰ ${f.slotTime}</span>
+                <span class="slot-type-badge ${f.badgeClass}">${formatTitle}</span>
+                <span style="font-size:11px; color:var(--fb-blue); font-weight:800;">⏰ ${f.slotTime}</span>
               </div>
-              <div class="upcoming-title">${idx + 1}. ${p.title || p.slug}</div>
+              <div class="upcoming-title">${idx + 1}. ${p.title}</div>
+              ${promoQuote ? `<div style="font-size:11px; color:#cbd5e1; font-style:italic; line-height:1.35; margin:3px 0 5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">📜 &ldquo;${promoQuote}&rdquo;</div>` : ''}
               <div class="upcoming-plan-tags">
                 <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
-                <span class="plan-mini-pill">${PRESENTATION_LABELS[presMode] || '✨ Otomatik Sunum'}</span>
+                <span class="plan-mini-pill">${f.fmt === 'FB_REELS' ? '🎞️ 40-50s Pan & Zoom' : '🖼️ 6 Görselli Akış'}</span>
               </div>
             </div>
           </div>

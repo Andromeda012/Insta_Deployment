@@ -13,7 +13,7 @@ const CORE_PRODUCT_FIELDS = new Set([
 // Genişletilmiş Modül 7 alanları (koleksiyon parçası, tasarım hikayesi, malzeme, teknik bilgi vb.)
 const EXTENDED_PRODUCT_FIELDS = new Set([
   ...CORE_PRODUCT_FIELDS,
-  'product_type', 'piece_role', 'design_story', 'materials',
+  'product_type', 'piece_role', 'design_story', 'promo_quote', 'intro_story_text', 'materials',
   'dimensions_json', 'olculer', 'technical_specs', 'marketing_preferences',
   'collection_ids', 'collection_id', 'marketing_profile', 'version',
   'collection_pieces', 'photo_presentations'
@@ -105,6 +105,8 @@ async function products(req, res) {
         product_type: p.product_type || meta.product_type || (linkedCols.length ? 'collection_piece' : 'independent'),
         piece_role: p.piece_role || meta.piece_role || 'part',
         design_story: p.design_story ?? meta.design_story ?? '',
+        promo_quote: p.promo_quote ?? meta.promo_quote ?? meta.design_story ?? '',
+        intro_story_text: p.intro_story_text ?? meta.intro_story_text ?? meta.promo_quote ?? meta.design_story ?? '',
         materials: Array.isArray(p.materials) ? p.materials : (Array.isArray(meta.materials) ? meta.materials : []),
         dimensions_json: p.dimensions_json || meta.dimensions_json || {},
         technical_specs: p.technical_specs || meta.technical_specs || {},
@@ -176,6 +178,8 @@ async function products(req, res) {
         : (prevMeta.product_type || 'independent'),
       piece_role: body.piece_role ? String(body.piece_role).trim() : (prevMeta.piece_role || 'part'),
       design_story: body.design_story !== undefined ? String(body.design_story || '').trim() : (prevMeta.design_story || ''),
+      promo_quote: body.promo_quote !== undefined ? String(body.promo_quote || '').trim() : (body.design_story || prevMeta.promo_quote || ''),
+      intro_story_text: body.intro_story_text !== undefined ? String(body.intro_story_text || '').trim() : (body.promo_quote || body.design_story || prevMeta.intro_story_text || ''),
       materials: Array.isArray(body.materials) ? body.materials : (prevMeta.materials || []),
       dimensions_json: (body.dimensions_json && typeof body.dimensions_json === 'object') ? body.dimensions_json : (prevMeta.dimensions_json || {}),
       technical_specs: (body.technical_specs && typeof body.technical_specs === 'object') ? body.technical_specs : (prevMeta.technical_specs || {}),
@@ -199,6 +203,8 @@ async function products(req, res) {
         short_description: corePayload.kisa_aciklama || '',
         description: corePayload.body || '',
         design_story: extMeta.design_story || '',
+        promo_quote: extMeta.promo_quote || extMeta.design_story || '',
+        intro_story_text: extMeta.intro_story_text || extMeta.promo_quote || extMeta.design_story || '',
         hero_image: corePayload.ana_resim || '',
         color_palette: Array.isArray(corePayload.renkler) ? corePayload.renkler : [],
         features: Array.isArray(corePayload.ozellikler) ? corePayload.ozellikler : [],

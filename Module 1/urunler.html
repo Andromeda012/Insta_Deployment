@@ -1942,8 +1942,92 @@ async function loadAllProducts() {
         };
       });
     }
+    // MODÜL 7 EXTENDED CATALOG ENTEGRASYONU (KOLEKSİYON MERKEZLİ GRUPLAMA)
+    let extCatalog = { product_meta: {}, collections: [], collection_products: [] };
+    try {
+      if (isSupabaseReady()) {
+        const { data: catRows } = await supabaseClient
+          .from('site_settings')
+          .select('data')
+          .eq('key', 'module7_extended_catalog')
+          .limit(1);
+        if (catRows?.[0]?.data) extCatalog = catRows[0].data;
+      }
+    } catch (_) {}
+
+    const pieceMap = new Map();
+    (extCatalog.collection_products || []).forEach(cp => {
+      if (cp.collection_id && cp.product_slug) {
+        if (!pieceMap.has(cp.collection_id)) pieceMap.set(cp.collection_id, new Set());
+        pieceMap.get(cp.collection_id).add(cp.product_slug);
+      }
+    });
+
+    const colSlugSet = new Set((extCatalog.collections || []).map(c => c.slug));
+
+    // Ürünleri koleksiyon ve parça tipleriyle zenginleştir
+    loaded = loaded.map(product => {
+      const meta = extCatalog.product_meta?.[product.slug] || {};
+      const linkedCol = (extCatalog.collection_products || []).find(cp => cp.product_slug === product.slug);
+      const isCol = product.product_type === 'collection' || meta.product_type === 'collection' || colSlugSet.has(product.slug);
+      const isPiece = !isCol && (product.product_type === 'collection_piece' || meta.product_type === 'collection_piece' || !!linkedCol);
+
+      return {
+        ...product,
+        product_type: isCol ? 'collection' : (isPiece ? 'collection_piece' : (product.product_type || meta.product_type || 'independent')),
+        parent_collection_slug: linkedCol?.collection_id || null,
+        design_story: meta.design_story || product.design_story || '',
+        promo_quote: meta.promo_quote || product.promo_quote || meta.design_story || '',
+        collection_pieces: Array.isArray(meta.collection_pieces) ? meta.collection_pieces : []
+      };
+    });
+
+    // Koleksiyonlara parçalarını bağla
+    loaded.forEach(prod => {
+      if (prod.product_type === 'collection') {
+        const linkedPieceSlugs = pieceMap.get(prod.slug) || new Set();
+        const childProducts = loaded.filter(p => p.parent_collection_slug === prod.slug || linkedPieceSlugs.has(p.slug) || (p.slug.startsWith(prod.slug + '-') && p.slug !== prod.slug));
+
+        const combinedPieces = [];
+        const seenSlugs = new Set();
+
+        childProducts.forEach(child => {
+          seenSlugs.add(child.slug);
+          combinedPieces.push({
+            slug: child.slug,
+            title: child.title,
+            ana_resim: child.ana_resim,
+            kisa_aciklama: child.kisa_aciklama || child.body || '',
+            web_gorunur: child.web_gorunur !== false,
+            anasayfada_goster: child.anasayfada_goster !== false,
+            sku: child.sku || ''
+          });
+        });
+
+        (prod.collection_pieces || []).forEach((cp, idx) => {
+          const cSlug = cp.slug || `${prod.slug}-parca-${idx + 1}`;
+          if (!seenSlugs.has(cSlug)) {
+            seenSlugs.add(cSlug);
+            const matchingLoaded = loaded.find(x => x.slug === cSlug);
+            combinedPieces.push({
+              slug: cSlug,
+              title: cp.title || cp.name || `${prod.title} Parça ${idx + 1}`,
+              ana_resim: cp.ana_resim || cp.image_url || prod.ana_resim,
+              kisa_aciklama: cp.dimensions || cp.notes || '',
+              web_gorunur: matchingLoaded ? (matchingLoaded.web_gorunur !== false) : true,
+              anasayfada_goster: matchingLoaded ? (matchingLoaded.anasayfada_goster !== false) : false,
+              sku: cp.sku || ''
+            });
+          }
+        });
+
+        prod.pieces = combinedPieces;
+      }
+    });
+
     allProducts = loaded;
-    document.getElementById('productCountBadge').textContent = allProducts.length;
+    const mainVisibleCount = allProducts.filter(p => p.product_type !== 'collection_piece').length;
+    document.getElementById('productCountBadge').textContent = mainVisibleCount;
     renderProductGrid(allProducts);
     updateExecutiveStripInventory();
 
@@ -1959,7 +2043,10 @@ function renderProductGrid(products) {
   const grid = document.getElementById('productGrid');
   const empty = document.getElementById('productEmptyState');
 
-  if (!products || products.length === 0) {
+  // KOLEKSİYON PARÇALARI ANA GRİDDE AYRI ÜRÜN OLARAK ÇIKMAZ - TEK PARÇA KOLEKSİYON KARTINDA DURUR
+  const displayItems = (products || []).filter(p => p.product_type !== 'collection_piece');
+
+  if (!displayItems || displayItems.length === 0) {
     grid.style.display = 'none';
     empty.style.display = 'block';
     return;
@@ -1968,22 +2055,30 @@ function renderProductGrid(products) {
   empty.style.display = 'none';
   grid.style.display = 'grid';
 
-  grid.innerHTML = products.map(p => {
+  grid.innerHTML = displayItems.map(p => {
     const isShown = p.web_gorunur !== false;
     const isShowcase = p.anasayfada_goster !== false;
+    const isCol = p.product_type === 'collection' || (Array.isArray(p.pieces) && p.pieces.length > 0);
+    const pieceCount = (p.pieces || []).length;
 
     return `
-    <div class="product-card" style="border:1px solid ${isShown ? '#E2E8F0' : 'rgba(239,68,68,0.35)'}; opacity:${isShown ? '1' : '0.8'}; transition:all 0.2s ease;">
+    <div class="product-card" style="border:1px solid ${isShown ? (isCol ? '#D4AF37' : '#E2E8F0') : 'rgba(239,68,68,0.35)'}; opacity:${isShown ? '1' : '0.8'}; transition:all 0.2s ease; position:relative;">
       <div style="position:relative;">
         <img class="product-card-img" src="${resolveAssetUrl(p.ana_resim)}" alt="${p.title}" onerror="this.src='/resim/logo.png'">
+        
+        ${isCol ? `
+        <span style="position:absolute; top:10px; left:10px; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; background:linear-gradient(135deg, #1E293B, #0F172A); color:#FDE68A; border:1px solid rgba(212,175,55,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.35);">
+          🏛️ Koleksiyon (${pieceCount} Parça)
+        </span>` : ''}
+
         <span style="position:absolute; top:10px; right:10px; font-size:11px; font-weight:800; padding:4px 10px; border-radius:20px; ${isShown ? 'background:rgba(16,185,129,0.95); color:#fff;' : 'background:rgba(239,68,68,0.95); color:#fff;'} box-shadow:0 2px 8px rgba(0,0,0,0.25);">
           ${isShown ? '👁️ Sitede Yayında' : '🙈 Sitede Gizli'}
         </span>
       </div>
       <div class="product-card-body">
-        <div class="product-card-cat">${p.kategori || 'Membran Kapak'}</div>
+        <div class="product-card-cat">${p.kategori || (isCol ? 'Koleksiyon' : 'Mobilya')}</div>
         <div class="product-card-title">${p.title}</div>
-        <div class="product-card-desc" style="max-height:40px; overflow:hidden; text-overflow:ellipsis;">${p.kisa_aciklama || 'Açıklama belirtilmemiş.'}</div>
+        <div class="product-card-desc" style="max-height:40px; overflow:hidden; text-overflow:ellipsis;">${p.promo_quote || p.kisa_aciklama || 'Açıklama belirtilmemiş.'}</div>
 
         <!-- TEK TIKLA WEB SİTESİNDE GÖSTER / GİZLE -->
         <div style="margin-top:14px; margin-bottom:8px;">
@@ -2005,6 +2100,18 @@ function renderProductGrid(products) {
             ${isShowcase ? '🏠 Vitrinde Açık' : '📁 Vitrinde Kapalı'}
           </button>
         </div>
+
+        ${isCol ? `
+        <!-- KOLEKSİYON PARÇALARINI GÖR & VİTRİNİ YÖNET BUTONU -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px dashed rgba(212,175,55,0.3);">
+          <button type="button" 
+                  class="btn-sm" 
+                  style="width:100%; justify-content:center; padding:10px 12px; font-weight:800; font-size:12px; border-radius:8px; display:flex; align-items:center; gap:8px; cursor:pointer; background:linear-gradient(135deg, #1E293B, #0F172A); color:#FDE68A; border:1px solid rgba(212,175,55,0.4); box-shadow:0 2px 8px rgba(0,0,0,0.18);"
+                  onclick="openCollectionPiecesModal('${p.slug}')">
+            🧩 Parçaları Gör &amp; Vitrini Yönet (${pieceCount} Parça) ⚙️
+          </button>
+        </div>
+        ` : ''}
 
         </div>
     </div>

@@ -346,10 +346,19 @@
         <div id="collectionPiecesContainer" class="pieces-list"></div>
       </div>
 
-      <!-- AÇIKLAMA, RENK VE ÖLÇÜ BİLGİLERİ -->
+      <!-- AÇIKLAMA, TANITIM CÜMLESİ, RENK VE ÖLÇÜ BİLGİLERİ -->
       <div class="form-group">
-        <label>Kısa Açıklama & Tasarım Özeti:</label>
+        <label>Kısa Açıklama & Başlık Özeti:</label>
         <input type="text" id="prod_short_desc" class="form-control" placeholder="Koleksiyon veya ürünün öne çıkan tasarım özeti...">
+      </div>
+
+      <!-- KOLEKSİYONA ÖZEL TANITIM CÜMLESİ / HİKAYESİ (STORY, REELS VE 6'LI CAROUSEL 2. SLAYT METNİ) -->
+      <div class="form-group" style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.3); border-radius:10px; padding:10px 12px;">
+        <label style="color:#fde68a;">📜 Koleksiyona Özel Tanıtım Cümlesi &amp; Tasarım Hikayesi:</label>
+        <textarea id="prod_promo_quote" class="form-control" style="min-height:75px;" placeholder="Örn: Zarafet, sadece bir stil değil; bir duruştur. VIENNA, isminden de anlaşılacağı üzere bizi geçmişin en şık dönemlerine, Art Deco'nun ihtişamlı dairesel formlarına ve Mid-Century Modern'in fonksiyonel estetiğine kısa bir yolculuğa çıkarıyor. Göz yormayan soft tonları ve karakter sahibi detaylarıyla bu takım, yatak odanızı kişisel bir sığınağa dönüştürüyor..."></textarea>
+        <small style="color:var(--text-muted); font-size:10.5px; display:block; margin-top:4px;">
+          📌 Bu metin Instagram/Facebook <strong>6'lı Carousel'in 2. görselinde</strong> ve <strong>Story/Reels açılış sahnesinde</strong> tipografi efektiyle ekrana gelir.
+        </small>
       </div>
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
@@ -823,6 +832,9 @@
           kategori: c.category || matchingProd.kategori || 'Koleksiyon',
           ana_resim: c.hero_image || c.hero_image_url || matchingProd.ana_resim || '',
           kisa_aciklama: c.short_description || c.design_story || matchingProd.kisa_aciklama || '',
+          design_story: c.design_story || matchingProd.design_story || '',
+          promo_quote: c.promo_quote || c.design_story || matchingProd.promo_quote || matchingProd.design_story || '',
+          intro_story_text: c.intro_story_text || c.promo_quote || c.design_story || matchingProd.intro_story_text || '',
           renkler: Array.isArray(c.color_palette) && c.color_palette.length ? c.color_palette : (matchingProd.renkler || []),
           ozellikler: Array.isArray(c.features) && c.features.length ? c.features : (matchingProd.ozellikler || []),
           materials: Array.isArray(c.materials) ? c.materials : (matchingProd.materials || []),
@@ -1009,6 +1021,7 @@
       const mainCategory = document.getElementById('prod_main_category').value;
       const materialsInput = document.getElementById('prod_category').value.trim();
       const shortDesc = document.getElementById('prod_short_desc').value.trim();
+      const promoQuote = (document.getElementById('prod_promo_quote')?.value || '').trim();
       const rawColors = document.getElementById('prod_colors').value.trim();
       const rawFeatures = document.getElementById('prod_features').value.trim();
       const rawDimensions = document.getElementById('prod_dimensions').value.trim();
@@ -1109,7 +1122,9 @@
           ozellikler,
           body: rawDimensions || '',
           product_type: currentEntityCreationType,
-          design_story: shortDesc,
+          design_story: promoQuote || shortDesc,
+          promo_quote: promoQuote,
+          intro_story_text: promoQuote,
           materials,
           marketing_preferences,
           marketing_profile: marketing_preferences,
@@ -1159,6 +1174,9 @@
       document.getElementById('prod_main_category').value = item.kategori || 'Yatak Odası';
       document.getElementById('prod_category').value = Array.isArray(item.materials) ? item.materials.join(', ') : '';
       document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
+      if (document.getElementById('prod_promo_quote')) {
+        document.getElementById('prod_promo_quote').value = item.promo_quote || item.intro_story_text || item.design_story || '';
+      }
       document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
       document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';
       document.getElementById('prod_dimensions').value = item.olculer || '';
@@ -1230,6 +1248,7 @@
       document.getElementById('prod_title').value = '';
       document.getElementById('prod_sku').value = '';
       document.getElementById('prod_short_desc').value = '';
+      if (document.getElementById('prod_promo_quote')) document.getElementById('prod_promo_quote').value = '';
       document.getElementById('prod_colors').value = '';
       document.getElementById('prod_features').value = '';
       document.getElementById('prod_dimensions').value = '';
