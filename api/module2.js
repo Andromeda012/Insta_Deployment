@@ -609,7 +609,9 @@ async function syncCampaignItemsWithPublishQueue(store) {
 }
 
 async function handleCampaigns(req, res) {
-  await authenticateModule2Admin(req);
+  if (req.method !== 'GET') {
+    await authenticateModule2Admin(req);
+  }
 
   if (req.method === 'GET') {
     const store = await syncCampaignItemsWithPublishQueue(await readCampaignsStore());
@@ -1277,6 +1279,12 @@ async function handleCampaignGenerate(req, res) {
   const campaignId = randomUUID();
   const campaignCode = `CMP-${Date.now().toString(36).toUpperCase()}`;
   const now = new Date().toISOString();
+  const publishDate = String(b.publish_date || '').trim() || now.slice(0, 10);
+  const publishTime = String(b.publish_time || '10:00').trim();
+
+  const feedScheduledFor = `${publishDate}T10:00:00+03:00`;
+  const storyScheduledFor = `${publishDate}T14:30:00+03:00`;
+  const reelsScheduledFor = `${publishDate}T19:30:00+03:00`;
 
   const campaignRecord = {
     id: campaignId,
@@ -1288,8 +1296,11 @@ async function handleCampaignGenerate(req, res) {
     discount_amount: discountAmount,
     campaign_intro: campaignIntro,
     selected_slugs: selectedSlugs,
+    publish_date: publishDate,
+    publish_time: publishTime,
+    priority: 'exclusive_campaign_day',
     formats,
-    status: 'active',
+    status: 'scheduled',
     created_at: now,
     updated_at: now
   };
@@ -1311,6 +1322,7 @@ async function handleCampaignGenerate(req, res) {
       title: `${campaignTitle} — 6'lı Carousel`,
       media_url: heroUrl,
       status: 'scheduled',
+      scheduled_for: feedScheduledFor,
       caption: `✨ ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}\n\n📩 DM veya WhatsApp ile detaylı bilgi alabilirsiniz.`,
       hashtags: '#GlobalMobilya #MobilyaKampanyası #LüksMobilya #İçMimar',
       created_at: now
@@ -1318,7 +1330,7 @@ async function handleCampaignGenerate(req, res) {
     items.push(feedItem);
     store.items.push(feedItem);
 
-    await syncPanelQueue({ id: feedItem.id, scheduled_for: now, status: 'scheduled' }, {
+    await syncPanelQueue({ id: feedItem.id, scheduled_for: feedScheduledFor, status: 'scheduled' }, {
       platform: 'instagram',
       idempotency_key: `camp_feed_${feedItem.id}`,
       content_type: 'CAROUSEL',
@@ -1328,7 +1340,7 @@ async function handleCampaignGenerate(req, res) {
       caption: feedItem.caption,
       hashtags: feedItem.hashtags
     });
-    await syncPanelQueue({ id: feedItem.id, scheduled_for: now, status: 'scheduled' }, {
+    await syncPanelQueue({ id: feedItem.id, scheduled_for: feedScheduledFor, status: 'scheduled' }, {
       platform: 'facebook',
       idempotency_key: `camp_fb_feed_${feedItem.id}`,
       content_type: 'CAROUSEL',
@@ -1350,6 +1362,7 @@ async function handleCampaignGenerate(req, res) {
       title: `${campaignTitle} — Reels / Video`,
       media_url: heroUrl,
       status: 'scheduled',
+      scheduled_for: reelsScheduledFor,
       caption: `🎬 ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}`,
       hashtags: '#Reels #GlobalMobilya #Tasarım #Mimari',
       created_at: now
@@ -1357,7 +1370,7 @@ async function handleCampaignGenerate(req, res) {
     items.push(reelsItem);
     store.items.push(reelsItem);
 
-    await syncPanelQueue({ id: reelsItem.id, scheduled_for: now, status: 'scheduled' }, {
+    await syncPanelQueue({ id: reelsItem.id, scheduled_for: reelsScheduledFor, status: 'scheduled' }, {
       platform: 'instagram',
       idempotency_key: `camp_reels_${reelsItem.id}`,
       content_type: 'REELS',
@@ -1367,7 +1380,7 @@ async function handleCampaignGenerate(req, res) {
       caption: reelsItem.caption,
       hashtags: reelsItem.hashtags
     });
-    await syncPanelQueue({ id: reelsItem.id, scheduled_for: now, status: 'scheduled' }, {
+    await syncPanelQueue({ id: reelsItem.id, scheduled_for: reelsScheduledFor, status: 'scheduled' }, {
       platform: 'youtube',
       idempotency_key: `camp_yt_${reelsItem.id}`,
       content_type: 'SHORTS',
@@ -1389,6 +1402,7 @@ async function handleCampaignGenerate(req, res) {
       title: `${campaignTitle} — Dikey Story`,
       media_url: heroUrl,
       status: 'scheduled',
+      scheduled_for: storyScheduledFor,
       caption: '',
       hashtags: '',
       created_at: now
@@ -1396,7 +1410,7 @@ async function handleCampaignGenerate(req, res) {
     items.push(storyItem);
     store.items.push(storyItem);
 
-    await syncPanelQueue({ id: storyItem.id, scheduled_for: now, status: 'scheduled' }, {
+    await syncPanelQueue({ id: storyItem.id, scheduled_for: storyScheduledFor, status: 'scheduled' }, {
       platform: 'instagram',
       idempotency_key: `camp_story_${storyItem.id}`,
       content_type: 'STORIES',

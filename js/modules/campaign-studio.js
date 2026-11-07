@@ -48,6 +48,19 @@ function escapeHtml(str) {
   return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 }
 
+const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
+
+function isPieceOfCollection(p, knownColSlugs = new Set()) {
+  if (!p || !p.slug) return false;
+  if (p.is_piece === true || p.product_type === 'collection_piece') return true;
+  if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) return true;
+  for (const cSlug of knownColSlugs) {
+    if (p.slug.startsWith(cSlug + '-')) return true;
+  }
+  return false;
+}
+
 async function fetchCatalogData() {
   try {
     const [prodRes, colRes] = await Promise.all([
@@ -57,13 +70,48 @@ async function fetchCatalogData() {
     const prods = Array.isArray(prodRes.products) ? prodRes.products : [];
     const cols = Array.isArray(colRes.collections) ? colRes.collections : [];
     
-    // Bağımsız ürünler: product_type !== 'collection' ve slug'ı koleksiyon parça örüntüsüne uymayanlar
-    const colSlugs = new Set(cols.map(c => c.slug));
-    const independentProds = prods.filter(p => p.product_type !== 'collection' && !colSlugs.has(p.slug) && !p.slug.includes('-parca-') && !p.slug.includes('-part-'));
+    // Koleksiyonları belirle
+    const rawCols = cols.length ? cols : prods.filter(p => p.product_type === 'collection' || (!isPieceOfCollection(p) && p.title?.toLowerCase().includes('koleksiyon')));
+    const colSlugs = new Set(rawCols.map(c => c.slug));
+    for (const p of prods) {
+      if (PIECE_SLUG_REGEX.test(p.slug)) {
+        colSlugs.add(p.slug.replace(PIECE_SLUG_REGEX, ''));
+      }
+    }
+
+    // Koleksiyonları başlığa göre tekilleştir (mükerrer kayıtları engelle)
+    const uniqueColsMap = new Map();
+    for (const c of rawCols) {
+      const baseKey = (c.title || c.slug).toLowerCase().trim();
+      if (!uniqueColsMap.has(baseKey)) uniqueColsMap.set(baseKey, c);
+    }
+    if (uniqueColsMap.size === 0) {
+      for (const p of prods) {
+        if (!isPieceOfCollection(p, colSlugs) && (p.title?.toLowerCase().includes('viyana') || p.slug.includes('viyana'))) {
+          uniqueColsMap.set('viyana', {
+            slug: p.slug,
+            title: p.title.includes('Koleksiyon') ? p.title : `${p.title} Koleksiyonu`,
+            parts: prods.filter(x => PIECE_SLUG_REGEX.test(x.slug))
+          });
+          break;
+        }
+      }
+    }
+
+    // Bağımsız ürünler: Kesinlikle koleksiyon parçası OLMAYAN tekil ürünler
+    const uniqueProdsMap = new Map();
+    for (const p of prods) {
+      if (p.product_type === 'collection' || colSlugs.has(p.slug)) continue;
+      if (isPieceOfCollection(p, colSlugs)) continue;
+      const key = (p.title || p.slug).toLowerCase().trim();
+      if (!uniqueProdsMap.has(key)) {
+        uniqueProdsMap.set(key, p);
+      }
+    }
 
     cachedCatalog = {
-      collections: cols.length ? cols : prods.filter(p => p.product_type === 'collection'),
-      products: independentProds
+      collections: Array.from(uniqueColsMap.values()),
+      products: Array.from(uniqueProdsMap.values())
     };
   } catch (err) {
     console.error('Katalog çekme hatası:', err);
@@ -209,11 +257,37 @@ export function renderCampaignStudioModalHtml() {
             </div>
           </div>
 
-          <!-- 3. AYAR: İNDİRİM MİKTARI & GEMINI METİN ÜRETİMİ -->
+          <!-- 3. AYAR: YAYIN TARİHİ VE ÖNCELİKLİ KUŞAK SAATLERİ -->
+          <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(148,163,184,0.18); border-radius:14px; padding:16px;">
+            <div style="display:grid; grid-template-columns:1.2fr 1fr; gap:12px;">
+              <div>
+                <label style="font-size:12px; font-weight:800; color:#fde68a; display:block; margin-bottom:6px;">
+                  3. YAYIN TARİHİ:
+                </label>
+                <input type="date" id="cmpPublishDate" class="form-control" style="width:100%; padding:9px 12px; border-radius:8px; background:#090f1c; border:1px solid #334155; color:#f8fafc; font-size:13px; font-weight:700;">
+                <span style="font-size:10.5px; color:#38bdf8; display:block; margin-top:4px;">
+                  ⭐ <strong>Öncelik Kuralı:</strong> Bu tarihte normal katalog akışı durdurulur ve sadece bu kampanya yayınlanır.
+                </span>
+              </div>
+              <div>
+                <label style="font-size:12px; font-weight:800; color:#fde68a; display:block; margin-bottom:6px;">
+                  YAYIN KUŞAĞI:
+                </label>
+                <select id="cmpPublishTimeSlot" class="form-control" style="width:100%; padding:9px 12px; border-radius:8px; background:#090f1c; border:1px solid #334155; color:#f8fafc; font-size:12.5px;">
+                  <option value="all_slots" selected>🌟 Tüm Gün Kuşakları (10:00 + 14:30 + 19:30)</option>
+                  <option value="10:00">🌅 Sabah Kuşağı (10:00)</option>
+                  <option value="14:30">☀️ Öğleden Sonra Kuşağı (14:30)</option>
+                  <option value="19:30">🌙 Akşam Kuşağı (19:30)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. AYAR: İNDİRİM MİKTARI & GEMINI METİN ÜRETİMİ -->
           <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(148,163,184,0.18); border-radius:14px; padding:16px;">
             <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
               <label style="font-size:12px; font-weight:800; color:#fde68a;">
-                3. İNDİRİM MİKTARI / KAMPANYA AVANTAJI:
+                4. İNDİRİM MİKTARI / KAMPANYA AVANTAJI:
               </label>
               <div style="display:flex; gap:6px; flex-wrap:wrap;">
                 <button type="button" class="btn-chip" onclick="window.setCmpDiscount('%20 İndirim')">%20</button>
@@ -236,10 +310,10 @@ export function renderCampaignStudioModalHtml() {
             <textarea id="cmpIntroInput" class="form-control" placeholder="Carousel kapak slaytında ve Reels açılışında yer alacak çarpıcı kampanya tanıtım metni..." style="width:100%; height:60px; padding:10px; border-radius:8px; background:#090f1c; border:1px solid #334155; color:#e2e8f0; font-size:12px; resize:vertical;">Geçmişin estetiği ve modern mimari konfor, kış sezonuna özel %30 indirim avantajıyla yaşam alanlarınızda.</textarea>
           </div>
 
-          <!-- 4. AYAR: ÜRETİLECEK GÖNDERİ FORMATLARI -->
+          <!-- 5. AYAR: ÜRETİLECEK GÖNDERİ FORMATLARI -->
           <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(148,163,184,0.18); border-radius:14px; padding:16px;">
             <label style="font-size:12px; font-weight:800; color:#fde68a; display:block; margin-bottom:10px;">
-              4. ÜRETİLECEK GÖNDERİ FORMATLARI:
+              5. ÜRETİLECEK GÖNDERİ FORMATLARI:
             </label>
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
               <!-- GÖNDERİ / CAROUSEL (ZORUNLU) -->
@@ -293,7 +367,7 @@ export function renderCampaignStudioModalHtml() {
 }
 
 // Global modal açma / kapama
-export function openCampaignStudioModal() {
+export function openCampaignStudioModal(initialDate = null) {
   let modal = document.getElementById('campaignStudioModal');
   if (!modal) {
     const wrap = document.createElement('div');
@@ -303,6 +377,13 @@ export function openCampaignStudioModal() {
   }
   modal.style.display = 'flex';
   document.body.style.overflow = 'hidden';
+
+  const dateInput = document.getElementById('cmpPublishDate');
+  if (dateInput) {
+    const today = new Date().toISOString().slice(0, 10);
+    dateInput.value = initialDate || today;
+    dateInput.min = today;
+  }
 
   fetchCatalogData().then(() => {
     populateCatalogSelectors();
@@ -522,6 +603,9 @@ export async function submitCampaignGeneration() {
     return;
   }
 
+  const publishDate = document.getElementById('cmpPublishDate')?.value || new Date().toISOString().slice(0, 10);
+  const publishTime = document.getElementById('cmpPublishTimeSlot')?.value || 'all_slots';
+
   const formats = {
     feed: true,
     reels: document.getElementById('chkCmpFormatReels')?.checked ?? true,
@@ -555,11 +639,17 @@ export async function submitCampaignGeneration() {
         discount_amount: discount,
         campaign_title: title,
         campaign_intro: intro,
+        publish_date: publishDate,
+        publish_time: publishTime,
         formats
       })
     }).then(r => r.json());
 
     if (!res.ok) throw new Error(res.error || 'Kampanya oluşturulamadı.');
+
+    try {
+      window.dispatchEvent(new CustomEvent('campaignCreated', { detail: res.campaign }));
+    } catch (_) {}
 
     if (statusBox) {
       statusBox.style.background = 'rgba(16,185,129,0.14)';

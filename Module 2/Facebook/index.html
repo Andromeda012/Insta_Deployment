@@ -784,56 +784,173 @@
       document.getElementById('slotCardReels').classList.toggle('inactive', !document.getElementById('chkSlotReelsActive').checked);
     }
 
-    function renderUpcomingPreviews() {
+    // =========================================================================
+    // KOLEKSİYON VE BAĞIMSIZ ÜRÜN DERLEYİCİ (FACEBOOK)
+    // =========================================================================
+    const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+    const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
+
+    function buildCleanEntities(rawProds = []) {
+      const colMap = new Map();
+      const pieceMap = new Map();
+      const independentList = [];
+
+      for (const p of rawProds) {
+        if (!p || !p.slug) continue;
+        if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) {
+          const parent = p.slug.replace(PIECE_SLUG_REGEX, '');
+          if (!pieceMap.has(parent)) pieceMap.set(parent, []);
+          pieceMap.get(parent).push(p);
+        }
+      }
+
+      for (const p of rawProds) {
+        if (!p || !p.slug) continue;
+        if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) continue;
+
+        if (pieceMap.has(p.slug) || p.product_type === 'collection' || (p.title && p.title.toLowerCase().includes('koleksiyon'))) {
+          const pieces = pieceMap.get(p.slug) || [];
+          colMap.set(p.slug, {
+            ...p,
+            product_type: 'collection',
+            collection_pieces: pieces,
+            title: p.title.toLowerCase().includes('koleksiyon') ? p.title : `${p.title} Koleksiyonu`
+          });
+        } else {
+          independentList.push({
+            ...p,
+            product_type: 'independent'
+          });
+        }
+      }
+
+      for (const [parentSlug, pieces] of pieceMap.entries()) {
+        if (!colMap.has(parentSlug)) {
+          const first = pieces[0];
+          const rawName = first?.title ? first.title.replace(/\s+(Yatak Başlığı|Makyaj Masası|Dolap|Komodin|Şifonyer).*/i, '') : 'Viyana';
+          const title = `${rawName} Yatak Odası Koleksiyonu`;
+          colMap.set(parentSlug, {
+            slug: parentSlug,
+            title,
+            kategori: first?.kategori || 'Yatak Odası',
+            ana_resim: first?.ana_resim || '',
+            product_type: 'collection',
+            collection_pieces: pieces
+          });
+        }
+      }
+
+      return [...colMap.values(), ...independentList];
+    }
+
+    async function renderUpcomingPreviews() {
       const container = document.getElementById('upcomingPreviewContainer');
       const summaryEl = document.getElementById('txtUpcomingSummary');
       if (!container) return;
 
-      if (!catalogProducts || catalogProducts.length === 0) {
+      const cleanEntities = buildCleanEntities(catalogProducts);
+
+      if (!cleanEntities || cleanEntities.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Katalogda henüz ürün bulunmuyor.</div>`;
         if (summaryEl) summaryEl.textContent = '0 Sıradaki İçerik';
         return;
       }
 
-      const formats = [
-        { fmt: 'PHOTO_POST', label: "📸 6'lı Carousel / Albüm", badgeClass: 'badge-post', slotTime: document.getElementById('timeSlotPhoto')?.value || '10:00' },
-        { fmt: 'FB_REELS', label: "🎬 40-50s Sinematik Reels", badgeClass: 'badge-reels', slotTime: document.getElementById('timeSlotReels')?.value || '19:30' }
-      ];
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const photoTime = document.getElementById('timeSlotPhoto')?.value || '10:00';
+      const reelsTime = document.getElementById('timeSlotReels')?.value || '19:30';
 
-      const items = catalogProducts.slice(0, 4).map((prod, idx) => ({
-        product: prod,
-        formatObj: formats[idx % formats.length]
-      }));
+      const photoActive = document.getElementById('chkSlotPhotoActive')?.checked ?? true;
+      const reelsActive = document.getElementById('chkSlotReelsActive')?.checked ?? true;
 
-      if (summaryEl) summaryEl.textContent = `Sırada ${items.length} İçerik Paketi Hazır`;
+      // 1. BUGÜN İÇİN ÖNCELİKLİ KAMPANYA VAR MI?
+      let todayCampaign = null;
+      try {
+        const campRes = await fetch('/api/module2?action=campaigns', { cache: 'no-store' });
+        const campData = await campRes.json().catch(() => ({}));
+        const campaigns = Array.isArray(campData?.campaigns) ? campData.campaigns : [];
+        todayCampaign = campaigns.find(c => {
+          const cDate = c.publish_date || (c.created_at ? c.created_at.slice(0, 10) : '');
+          return cDate === todayStr;
+        });
+      } catch (_) {}
+
+      const items = [];
+
+      if (todayCampaign) {
+        const cTitle = todayCampaign.title || 'Özel Mimari Kampanya';
+        const cDiscount = todayCampaign.discount_amount ? ` (${todayCampaign.discount_amount})` : '';
+        const primarySlug = todayCampaign.selected_slugs?.[0] || '';
+        const entity = cleanEntities.find(e => e.slug === primarySlug) || cleanEntities[0];
+
+        if (todayCampaign.formats?.feed !== false && photoActive) {
+          items.push({
+            product: entity,
+            formatTitle: "🏷️ Kampanya Kapaklı Facebook Carousel / Albüm",
+            badgeClass: "badge-post",
+            slotTime: photoTime,
+            title: `[KAMPANYA] ${cTitle}${cDiscount}`,
+            planPills: ['⭐ Kampanya Kapak Slaytı', '🏷️ Öncelikli Yayın', entity.product_type === 'collection' ? `🏛️ Koleksiyon (${entity.collection_pieces?.length || 0} Parça)` : '🪑 Bağımsız Ürün']
+          });
+        }
+        if (todayCampaign.formats?.reels !== false && reelsActive) {
+          items.push({
+            product: entity,
+            formatTitle: "🎬 Kampanya Temalı Facebook Reels",
+            badgeClass: "badge-reels",
+            slotTime: reelsTime,
+            title: `[KAMPANYA] ${cTitle} — Reels`,
+            planPills: ['⭐ Kampanya Müziği', '🏷️ Özel İndirim', '🎻 Kurumsal Müzik']
+          });
+        }
+
+        if (summaryEl) summaryEl.textContent = `⭐ Bugün Özel Kampanya Günü (${items.length} İçerik)`;
+      } else {
+        const activeEntity = cleanEntities[0];
+        const isCollection = activeEntity.product_type === 'collection';
+        const pieceCount = activeEntity.collection_pieces?.length || 0;
+
+        if (photoActive) {
+          items.push({
+            product: activeEntity,
+            formatTitle: isCollection ? "📸 6'lı Carousel / Albüm (Başlık + Hikaye + 4 Parça)" : "📸 2'li Carousel / Standart Gönderi",
+            badgeClass: "badge-post",
+            slotTime: photoTime,
+            title: `1. ${activeEntity.title}`,
+            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🖼️ 6 Görselli Akış']
+          });
+        }
+        if (reelsActive) {
+          items.push({
+            product: activeEntity,
+            formatTitle: isCollection ? "🎬 40-50s Sinematik Koleksiyon Reels" : "🎬 15-30s Facebook Reels",
+            badgeClass: "badge-reels",
+            slotTime: reelsTime,
+            title: `2. ${activeEntity.title}`,
+            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎞️ 40-50s Pan & Zoom']
+          });
+        }
+
+        if (summaryEl) summaryEl.textContent = `📅 Bugünün Yayın Akışı (${items.length} İçerik Paketi)`;
+      }
 
       container.innerHTML = items.map((item, idx) => {
         const p = item.product;
-        const f = item.formatObj;
         const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-        const prefs = p.marketing_preferences || {};
-        const presMode = prefs.main_photo_presentation || 'auto_carousel';
-        const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
-        const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
-
         const promoQuote = (p.promo_quote || p.design_story || '').trim();
-        const formatTitle = isCollection
-          ? (f.fmt === 'PHOTO_POST' ? "📸 6'lı Carousel / Albüm (Başlık + Hikaye + 4 Parça)" : "🎬 40-50s Sinematik Reels")
-          : f.label;
 
         return `
           <div class="upcoming-card">
             <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                <span class="slot-type-badge ${f.badgeClass}">${formatTitle}</span>
-                <span style="font-size:11px; color:var(--fb-blue); font-weight:800;">⏰ ${f.slotTime}</span>
+                <span class="slot-type-badge ${item.badgeClass}">${item.formatTitle}</span>
+                <span style="font-size:11px; color:var(--fb-blue); font-weight:800;">⏰ ${item.slotTime}</span>
               </div>
-              <div class="upcoming-title">${idx + 1}. ${p.title}</div>
+              <div class="upcoming-title">${item.title}</div>
               ${promoQuote ? `<div style="font-size:11px; color:#cbd5e1; font-style:italic; line-height:1.35; margin:3px 0 5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">📜 &ldquo;${promoQuote}&rdquo;</div>` : ''}
               <div class="upcoming-plan-tags">
-                <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
-                <span class="plan-mini-pill">${f.fmt === 'FB_REELS' ? '🎞️ 40-50s Pan & Zoom' : '🖼️ 6 Görselli Akış'}</span>
+                ${(item.planPills || []).map(pill => `<span class="plan-mini-pill">${pill}</span>`).join('')}
               </div>
             </div>
           </div>

@@ -89,20 +89,41 @@ async function writeExtendedCatalogStore(store) {
 }
 
 // ── 1. ÜRÜN CRUD (MEVCUT SÖZLEŞME %100 KORUNDU + 3 ÜRÜN TÜRÜ DESTEĞİ) ─────────
+const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
+
 async function products(req, res) {
   if (req.method === 'GET') {
     const [rows, extStore] = await Promise.all([
       supabase('/rest/v1/products?select=*&order=created_at.desc', ANON_KEY),
       readExtendedCatalogStore()
     ]);
-    const list = (rows || []).map(p => {
+    const rawRows = rows || [];
+    const pieceSlugs = new Set();
+    const parentSlugs = new Set();
+    for (const p of rawRows) {
+      if (!p || !p.slug) continue;
+      if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) {
+        pieceSlugs.add(p.slug);
+        const parent = p.slug.replace(PIECE_SLUG_REGEX, '');
+        parentSlugs.add(parent);
+      }
+    }
+
+    const list = rawRows.map(p => {
       const meta = extStore.product_meta?.[p.slug] || {};
       const linkedCols = (extStore.collection_products || [])
         .filter(cp => cp.product_slug === p.slug)
         .map(cp => cp.collection_id);
+
+      const isPiece = pieceSlugs.has(p.slug) || meta.product_type === 'collection_piece' || linkedCols.length > 0;
+      const isCollection = !isPiece && (parentSlugs.has(p.slug) || meta.product_type === 'collection' || (extStore.collections || []).some(c => c.slug === p.slug));
+      const resolvedType = isPiece ? 'collection_piece' : (isCollection ? 'collection' : (p.product_type || meta.product_type || 'independent'));
+
       return {
         ...p,
-        product_type: p.product_type || meta.product_type || (linkedCols.length ? 'collection_piece' : 'independent'),
+        product_type: resolvedType,
+        is_piece: isPiece,
         piece_role: p.piece_role || meta.piece_role || 'part',
         design_story: p.design_story ?? meta.design_story ?? '',
         promo_quote: p.promo_quote ?? meta.promo_quote ?? meta.design_story ?? '',
@@ -544,6 +565,35 @@ async function collections(req, res) {
     for (const cp of (extStore.collection_products || [])) {
       if (!combinedParts.some(x => x.collection_id === cp.collection_id && x.product_slug === cp.product_slug)) {
         combinedParts.push(cp);
+      }
+    }
+
+    // Otomatik Koleksiyon ve Parça Keşfi (Koleksiyon parçalarının üst koleksiyonunu otomatik derle)
+    for (const p of (allProducts || [])) {
+      if (!p || !p.slug) continue;
+      if (PIECE_SLUG_REGEX.test(p.slug)) {
+        const parentSlug = p.slug.replace(PIECE_SLUG_REGEX, '');
+        if (!colMap.has(parentSlug)) {
+          const parentProd = (allProducts || []).find(x => x.slug === parentSlug);
+          const rawTitle = parentProd?.title || parentSlug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+          const colTitle = rawTitle.toLowerCase().includes('koleksiyon') ? rawTitle : `${rawTitle} Koleksiyonu`;
+          colMap.set(parentSlug, {
+            slug: parentSlug,
+            id: parentSlug,
+            title: colTitle,
+            name: colTitle,
+            kategori: parentProd?.kategori || 'Yatak Odası',
+            hero_image: parentProd?.ana_resim || '',
+            hero_image_url: parentProd?.ana_resim || '',
+            promo_quote: parentProd?.kisa_aciklama || parentProd?.body || ''
+          });
+        }
+        if (!combinedParts.some(x => x.collection_id === parentSlug && x.product_slug === p.slug)) {
+          combinedParts.push({
+            collection_id: parentSlug,
+            product_slug: p.slug
+          });
+        }
       }
     }
 
