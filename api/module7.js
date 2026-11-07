@@ -1011,6 +1011,91 @@ async function showroom(req, res) {
   }
 }
 
+// ── GEMINI AI İLE ÖZELLİK LİSTESİ OLUŞTURMA ─────────────────────────────────
+async function generateFeatures(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+  const body = req.body || {};
+  const title = String(body.title || '').trim();
+  const kategori = String(body.kategori || '').trim();
+  const promoQuote = String(body.promo_quote || '').trim();
+
+  const geminiKey = process.env.GEMINI_API_KEY || '';
+  if (geminiKey) {
+    try {
+      const prompt = `Sen Global Mobilya markasının baş mimar ve mobilya tasarımcısısın.
+Aşağıda bilgileri verilen lüks mobilya ürünü/koleksiyonu için sosyal medya açıklamalarında yer alacak 3 veya 4 adet vurucu, zarif ve üst kalite ürün özelliği maddesi yaz.
+
+Kurallar:
+- Her satırda tek bir özellik olsun (Örn: 1. Sınıf E1 Masif Ahşap ve CNC Gövde).
+- Madde işareti (*, -, •), numara veya emoji KOYMA. Sadece satır satır metin yaz.
+- Toplam tam 3 veya 4 satır olsun.
+- Asla ölçü, abartılı fiyat veya garanti uydurma. Mobilya işçiliği ve malzeme kalitesine odaklan.
+
+Ürün Adı: ${title || 'Lüks Koleksiyon'}
+Kategori: ${kategori || 'Mobilya'}
+Tanıtım Cümlesi / Hikayesi: ${promoQuote || 'Zarafet ve konforun buluştuğu modern tasarım'}`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), 12000);
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 250, temperature: 0.6 }
+        }),
+        signal: ctrl.signal
+      });
+      clearTimeout(t);
+      if (resp.ok) {
+        const data = await resp.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const lines = text.split('\n').map(s => s.replace(/^[\s*\-•\d.]+/g, '').trim()).filter(Boolean).slice(0, 4);
+        if (lines.length >= 2) {
+          return res.status(200).json({ ok: true, features: lines });
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Akıllı kategori bazlı fallback özellikleri
+  const fallbacks = {
+    'Yatak Odası': [
+      '1. Sınıf E1 Kalite Dayanıklı Gövde Yapısı',
+      'Özel Dokuma Lüks Döşemelik Başlık Kumaşı',
+      'Geniş Hacimli Fonksiyonel Depolama Alanı',
+      'Yüksek Ayaklı Kolay Temizlenebilir Modern Tasarım'
+    ],
+    'Salon & Oturma Odası': [
+      '1. Sınıf Fırınlanmış Gürgen İskelet Konstrüksiyonu',
+      '35 DNS HR Yüksek Mukavemetli Konforlu Sünger',
+      'Leke Tutmaz ve Kolay Silinebilir Dokuma Kumaş',
+      'Özel Tasarım Metal ve Ahşap Ayak Detayları'
+    ],
+    'Yemek Odası': [
+      '1. Sınıf MDF Üzeri Doğal Ahşap Kaplama',
+      'Çizilmeye Karşı Ekstra Dayanıklı Mat Yüzey',
+      'Açılabilir Fonksiyonel Masa Mekanizması',
+      'Ergonomik Sırt Destekli Sandalye Tasarımı'
+    ],
+    'Antre & Portmanto': [
+      '1. Sınıf Çevre Dostu MDF Gövde İşçiliği',
+      'Geniş ve Düzenleyici Ayakkabılık Bölmeleri',
+      'Bronz Rodajlı Ayna ve Gizli Askılık Bölümü',
+      'Modern Minimalist Kulp ve Yüzey Detayları'
+    ],
+    'Makyaj Masası & Dresuar': [
+      'Özel Formlu CNC İşlemeli Gövde ve Çekmeceler',
+      'Dekoratif Bronz Rodajlı Flotal Ayna Tasarımı',
+      'Geniş Bölmeli Takı ve Kozmetik Düzenleyici',
+      'Zarif İnce Hatlı Statik Boyalı Metal Ayaklar'
+    ]
+  };
+  const chosen = fallbacks[kategori] || fallbacks['Yatak Odası'];
+  return res.status(200).json({ ok: true, features: chosen });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -1026,6 +1111,7 @@ export default async function handler(req, res) {
     if (action === 'product-media') return await productMedia(req, res);
     if (action === 'quote' || action === 'quotes') return await quotes(req, res);
     if (action === 'showroom') return await showroom(req, res);
+    if (action === 'generate-features') return await generateFeatures(req, res);
     return res.status(400).json({ ok: false, error: 'Bilinmeyen Modül 7 işlemi: ' + action });
   } catch (err) {
     return apiError(res, err, 'Module 7');

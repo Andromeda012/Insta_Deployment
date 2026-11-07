@@ -267,9 +267,9 @@
         </div>
       </div>
 
-      <!-- BÖLÜM 1: TEMEL BİLGİLER VE ANA FOTOĞRAFIN NASIL YAYINLANACAĞI -->
+      <!-- BÖLÜM 1: TEMEL BİLGİLER VE ANA FOTOĞRAF -->
       <div class="form-section-tag tag-required">
-        <span>1. Temel Bilgiler & Ana Fotoğrafın Sunum Şekli</span>
+        <span>1. Temel Bilgiler &amp; Ana Fotoğraf</span>
         <span id="entityTypeLabelBadge">Koleksiyon + Parçaları</span>
       </div>
 
@@ -284,27 +284,21 @@
         </div>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <div class="form-group">
-          <label>Ana Kategori:</label>
-          <select id="prod_main_category" class="form-control">
-            <option value="Yatak Odası">Yatak Odası</option>
-            <option value="Salon & Oturma Odası">Salon & Oturma Odası</option>
-            <option value="Yemek Odası">Yemek Odası</option>
-            <option value="Antre & Portmanto">Antre & Portmanto</option>
-            <option value="Makyaj Masası & Dresuar">Makyaj Masası & Dresuar</option>
-            <option value="CNC & Membran Kapak">CNC & Membran Kapak</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Kullanılan Malzemeler (Virgülle):</label>
-          <input type="text" id="prod_category" class="form-control" placeholder="1. Sınıf MDF, CNC Membran, Frenli Ray">
-        </div>
+      <div class="form-group">
+        <label>Ana Kategori:</label>
+        <select id="prod_main_category" class="form-control">
+          <option value="Yatak Odası">Yatak Odası</option>
+          <option value="Salon &amp; Oturma Odası">Salon &amp; Oturma Odası</option>
+          <option value="Yemek Odası">Yemek Odası</option>
+          <option value="Antre &amp; Portmanto">Antre &amp; Portmanto</option>
+          <option value="Makyaj Masası &amp; Dresuar">Makyaj Masası &amp; Dresuar</option>
+          <option value="CNC &amp; Membran Kapak">CNC &amp; Membran Kapak</option>
+        </select>
       </div>
 
-      <!-- ANA GÖRSEL VE NASIL SUNULACAĞI -->
+      <!-- ANA GÖRSEL -->
       <div style="background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.25); border-radius:12px; padding:12px; margin-bottom:12px;">
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom:0;">
           <label id="lblMainPhoto">Koleksiyon Ana Tanıtım Fotoğrafı:</label>
           <div class="dropzone-box" onclick="document.getElementById('fileInput').click()">
             <div id="dropzoneText">
@@ -316,27 +310,12 @@
             <img id="imagePreview" class="dropzone-preview" alt="Önizleme">
           </div>
         </div>
-
-        <div class="form-group">
-          <label>Veya Ana Fotoğraf URL Adresi:</label>
-          <input type="text" id="prod_image_url" class="form-control" placeholder="https://..." oninput="handleUrlInput(this.value)">
-        </div>
-
-        <div class="form-group" style="margin-bottom:0;">
-          <label style="color:#38bdf8;">📌 Bu Ana Fotoğraf Sosyal Medyada Nasıl Yayınlansın?</label>
-          <select id="main_photo_presentation" class="form-control">
-            <option value="collection_hero_all">✨ Ana Koleksiyon Tanıtım Carousel'i + Story + Video Açılış Sahnesi (Önerilen)</option>
-            <option value="panoramic_split_carousel">✂️ Panoramik İkiye Bölünmüş Dikişsiz İkili Carousel (Sol + Sağ Kaydırmalı)</option>
-            <option value="single_post_and_catalog">🖼️ Standart Tek Görsel Gönderi + Facebook Katalog Kartı</option>
-            <option value="vertical_story_and_video">📱 Yalnızca Dikey Story (9:16) & Kısa Video Sahnesi (Reels/Shorts/TikTok)</option>
-          </select>
-        </div>
       </div>
 
       <!-- BÖLÜM 2: KOLEKSİYON PARÇALARI (KOLEKSİYON SEÇİLİYKEN AÇIK, AYNI ANDA TÜM PARÇALAR GİRİLİR) -->
       <div id="collectionPiecesSection">
         <div class="form-section-tag tag-pieces">
-          <span>2. Koleksiyon Parçaları & Parça Fotoğraflarının Sunum Planı</span>
+          <span>2. Koleksiyon Parçaları &amp; Parça Fotoğraflarının Sunum Planı</span>
           <button type="button" class="btn btn-emerald" style="padding:4px 10px; font-size:11px;" onclick="addCollectionPieceRow()">
             + Parça Ekle
           </button>
@@ -345,12 +324,6 @@
           Koleksiyona ait tüm parçaların (Karyola, Gardırop, Komodin, Şifonyer, Makyaj Masası vb.) fotoğraflarını ve her parçanın nasıl sunulacağını aşağıda aynı anda belirleyin:
         </p>
         <div id="collectionPiecesContainer" class="pieces-list"></div>
-      </div>
-
-      <!-- AÇIKLAMA, TANITIM CÜMLESİ, RENK VE ÖLÇÜ BİLGİLERİ -->
-      <div class="form-group">
-        <label>Kısa Açıklama & Başlık Özeti:</label>
-        <input type="text" id="prod_short_desc" class="form-control" placeholder="Koleksiyon veya ürünün öne çıkan tasarım özeti...">
       </div>
 
       <!-- KOLEKSİYONA ÖZEL TANITIM CÜMLESİ / HİKAYESİ (STORY, REELS VE 6'LI CAROUSEL 2. SLAYT METNİ) -->
@@ -362,65 +335,48 @@
         </small>
       </div>
 
-      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <div class="form-group">
-          <label>Renk Paleti (Virgülle):</label>
-          <input type="text" id="prod_colors" class="form-control" placeholder="Örn: Kaşmir Grej, Doğal Meşe, Antrasit">
-        </div>
-        <div class="form-group">
-          <label>Genel Ölçü / Teknik Not (Opsiyonel):</label>
-          <input type="text" id="prod_dimensions" class="form-control" placeholder="Örn: 240x210x60 cm">
-        </div>
+      <div class="form-group">
+        <label>Genel Ölçü / Teknik Not (Opsiyonel):</label>
+        <input type="text" id="prod_dimensions" class="form-control" placeholder="Örn: 240x210x60 cm">
       </div>
 
       <div class="form-group">
-        <label>Öne Çıkan Özellikler (Her satıra bir özellik):</label>
-        <textarea id="prod_features" class="form-control" placeholder="1. Sınıf 18mm MDF Gövde&#10;CNC Membran Kapak İşçiliği&#10;Sessiz Frenli Ray ve Menteşe Sistemi"></textarea>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+          <label style="margin-bottom:0;">Öne Çıkan Özellikler (Gemini AI Destekli):</label>
+          <button type="button" class="btn btn-outline" id="btnAiFeatures" style="padding:4px 10px; font-size:11px; border-color:#d4af37; color:#fde68a;" onclick="generateAiFeatures()">
+            ✨ Gemini AI ile Yazdır
+          </button>
+        </div>
+        <textarea id="prod_features" class="form-control" style="min-height:80px; font-size:12px;" placeholder="Gemini AI ile otomatik oluşturabilir veya her satıra bir özellik yazabilirsiniz...&#10;1. Sınıf 18mm MDF Gövde&#10;CNC Membran Kapak İşçiliği"></textarea>
+        <small style="color:var(--text-muted); font-size:10.5px; display:block; margin-top:4px;">
+          💡 Sosyal medya gönderisinin metin açıklamasında listelenir. Boş bırakırsanız kayıt sırasında Gemini AI otomatik oluşturur.
+        </small>
       </div>
 
       <!-- BÖLÜM 3: MERKEZİ SUNUM, ATMOSFER, FON MÜZİĞİ VE GÖRSEL ÜZERİ DETAY TERCİHLERİ -->
       <div class="form-section-tag tag-profile">
-        <span>3. Sunum Atmosferi, Video Fon Müziği & Görsel Üzeri Detaylar</span>
+        <span>3. Sunum Atmosferi, Video Fon Müziği &amp; Görsel Üzeri Detaylar</span>
         <small style="font-size:10px;">4 Bot Bu Ayarları Kullanır</small>
       </div>
 
+      <!-- HER ZAMAN GÖRÜNÜR: KAMERA VE MÜZİK AYARLARI -->
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-        <div class="form-group">
-          <label>Sahne Atmosferi:</label>
-          <select id="prof_atmosphere" class="form-control">
-            <option value="Lüks" selected>Lüks Mimari Showroom</option>
-            <option value="Modern">Modern</option>
-            <option value="Minimal">Minimal</option>
-            <option value="Sıcak">Sıcak Yaşam Alanı</option>
-            <option value="Doğal">Doğal İskandinav</option>
-            <option value="Klasik">Klasik</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Işık Karakteri:</label>
-          <select id="prof_lighting" class="form-control">
-            <option value="Golden hour" selected>Golden Hour (Sıcak Gün Batımı)</option>
-            <option value="Soft daylight">Soft Daylight (Doğal Gün Işığı)</option>
-            <option value="Studio lighting">Stüdyo Aydınlatması</option>
-            <option value="Warm ambient lighting">Sıcak Mimari Spot & Ambient</option>
-          </select>
-        </div>
         <div class="form-group">
           <label>Video Kamera Hareketi:</label>
           <select id="prof_camera" class="form-control">
-            <option value="slow_push_in">Slow Push-In (Yavaş İleri Yaklaşma)</option>
+            <option value="slow_push_in" selected>Slow Push-In (Yavaş İleri Yaklaşma)</option>
             <option value="dolly_in">Wide Dolly-In (Geniş Açı Yaklaşma)</option>
             <option value="lateral_tracking">Lateral Tracking (Yatay Kaydırma)</option>
-            <option value="macro_detail">Macro Detail (Doku & Kulp Odaklı)</option>
+            <option value="macro_detail">Macro Detail (Doku &amp; Kulp Odaklı)</option>
           </select>
         </div>
         <div class="form-group">
           <label>🎵 Video Fon Müziği (Reels / Shorts / TikTok):</label>
           <select id="prof_music" class="form-control" onchange="toggleCustomMusicBox()">
-            <option value="luxury_piano">🎹 Piyano & Lüks Mimari (Varsayılan)</option>
+            <option value="luxury_piano" selected>🎹 Piyano &amp; Lüks Mimari (Varsayılan)</option>
             <option value="modern_lofi">🎧 Modern Minimalist Lo-Fi</option>
-            <option value="cinematic_strings">🎻 Sinematik Yaylılar & Kurumsal</option>
-            <option value="warm_acoustic">🎸 Akustik Sıcak Ev & Yaşam</option>
+            <option value="cinematic_strings">🎻 Sinematik Yaylılar &amp; Kurumsal</option>
+            <option value="warm_acoustic">🎸 Akustik Sıcak Ev &amp; Yaşam</option>
             <option value="upbeat_interior">✨ Dinamik Modern Tasarım Ritmi</option>
             <option value="custom">🔗 Özel MP3 Müzik Bağlantısı</option>
           </select>
@@ -432,31 +388,57 @@
         <input type="text" id="prof_custom_music_url" class="form-control" placeholder="https://.../muzik.mp3">
       </div>
 
-      <!-- GÖRSEL ÜZERİ DETAY ROZETLERİ -->
-      <div class="form-group">
-        <label>Görsel Üzerinde Gösterilecek Detay Rozetleri:</label>
-        <div class="badge-check-grid">
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_mdf" checked> 🪵 1. Sınıf MDF Gövde</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_craft" checked> 🛠️ CNC Membran İşçilik</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_surface" checked> 🪞 Dayanıklı Yüzey</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_hardware" checked> 🗄️ Sessiz Frenli Donanım</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_dimensions" checked> 📐 Ölçü Bilgisi</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_color" checked> 🎨 Renk Paleti</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_warranty" checked> 🛡️ 5 Yıl Garanti</label>
-          <label class="badge-check-item"><input type="checkbox" id="spec_opt_cta_button" checked> 📲 İletişim Rozeti</label>
-        </div>
-      </div>
-
-      <!-- FİZİKSEL ÜRÜN SADAKATİ KORUMALI SAHNELEME -->
-      <div style="background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(15,23,42,0.8)); border:1px solid rgba(212,175,55,0.35); border-radius:12px; padding:11px 14px; margin-top:8px;">
+      <!-- FİZİKSEL ÜRÜN SADAKATİ KORUMALI SAHNELEME CHECKBOX -->
+      <div style="background:linear-gradient(135deg, rgba(212,175,55,0.12), rgba(15,23,42,0.8)); border:1px solid rgba(212,175,55,0.35); border-radius:12px; padding:11px 14px; margin-top:8px; margin-bottom:12px;">
         <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
           <div>
             <strong style="font-size:12px; color:#fde68a;">✨ Mimari Stüdyo Sahneleme (%100 Ürün Sadakati)</strong>
             <p style="font-size:10.5px; color:#cbd5e1; margin-top:2px;">
-              Ürünün gerçek kapak, çekmece, kulp ve rengi değiştirilmeden seçilen atmosferde sunulur.
+              Hazır görsel yerine yapay zeka ile yeni stüdyo sahnesi ve atmosfer üretilsin mi? (Açıldığında sahne ve ışık ayarları görünür)
             </p>
           </div>
-          <input type="checkbox" id="chk_transform_image" checked style="width:18px; height:18px; accent-color:#10b981;">
+          <input type="checkbox" id="chk_transform_image" onchange="toggleStudioTransformOptions()" style="width:18px; height:18px; accent-color:#10b981; cursor:pointer;">
+        </div>
+      </div>
+
+      <!-- ŞARTLI GÖRÜNÜR: chk_transform_image SEÇİLİYSE AÇILAN GÖRSEL ÜRETİM AYARLARI -->
+      <div id="studioTransformOptions" style="display:none; background:rgba(15,23,42,0.6); border:1px dashed rgba(56,189,248,0.35); border-radius:10px; padding:12px; margin-bottom:12px;">
+        <div style="font-size:11px; font-weight:700; color:#38bdf8; margin-bottom:8px;">
+          🎨 Yapay Zeka Stüdyo &amp; Sahneleme Tercihleri
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+          <div class="form-group">
+            <label>Sahne Atmosferi:</label>
+            <select id="prof_atmosphere" class="form-control">
+              <option value="Lüks" selected>Lüks Mimari Showroom</option>
+              <option value="Modern">Modern</option>
+              <option value="Minimal">Minimal</option>
+              <option value="Sıcak">Sıcak Yaşam Alanı</option>
+              <option value="Doğal">Doğal İskandinav</option>
+              <option value="Klasik">Klasik</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Işık Karakteri:</label>
+            <select id="prof_lighting" class="form-control">
+              <option value="Golden hour" selected>Golden Hour (Sıcak Gün Batımı)</option>
+              <option value="Soft daylight">Soft Daylight (Doğal Gün Işığı)</option>
+              <option value="Studio lighting">Stüdyo Aydınlatması</option>
+              <option value="Warm ambient lighting">Sıcak Mimari Spot &amp; Ambient</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label>Görsel Üzerinde Gösterilecek Detay Rozetleri:</label>
+          <div class="badge-check-grid">
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_mdf" checked> 🪵 1. Sınıf MDF Gövde</label>
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_craft" checked> 🛠️ CNC Membran İşçilik</label>
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_surface" checked> 🪞 Dayanıklı Yüzey</label>
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_dimensions" checked> 📐 Ölçü Bilgisi</label>
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_warranty" checked> 🛡️ 5 Yıl Garanti</label>
+            <label class="badge-check-item"><input type="checkbox" id="spec_opt_cta_button" checked> 📲 İletişim Rozeti</label>
+          </div>
         </div>
       </div>
 
@@ -559,6 +541,54 @@
     function toggleCustomMusicBox() {
       const val = document.getElementById('prof_music').value;
       document.getElementById('customMusicUrlGroup').style.display = val === 'custom' ? 'block' : 'none';
+    }
+
+    function toggleStudioTransformOptions() {
+      const chk = document.getElementById('chk_transform_image');
+      const panel = document.getElementById('studioTransformOptions');
+      if (panel && chk) {
+        panel.style.display = chk.checked ? 'block' : 'none';
+      }
+    }
+
+    async function generateAiFeatures(silent = false) {
+      const btn = document.getElementById('btnAiFeatures');
+      const title = (document.getElementById('prod_title')?.value || '').trim();
+      const kategori = document.getElementById('prod_main_category')?.value || 'Yatak Odası';
+      const promo = (document.getElementById('prod_promo_quote')?.value || '').trim();
+
+      if (!title && !silent) {
+        showCustomToast('Lütfen önce koleksiyon veya ürün adını girin.', 'warning');
+        return null;
+      }
+
+      if (btn && !silent) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ Gemini Yazıyor...';
+      }
+
+      try {
+        const res = await module7Api('/api/module7?action=generate-features', {
+          method: 'POST',
+          body: JSON.stringify({ title, kategori, promo_quote: promo })
+        });
+        if (res.ok && Array.isArray(res.features) && res.features.length) {
+          const textarea = document.getElementById('prod_features');
+          if (textarea) {
+            textarea.value = res.features.join('\n');
+          }
+          if (!silent) showCustomToast('✨ Öne çıkan özellikler Gemini AI tarafından hazırlandı!', 'success');
+          return res.features;
+        }
+      } catch (err) {
+        if (!silent) showCustomToast(`Gemini özelliği oluşturulamadı: ${err.message}`, 'warning');
+      } finally {
+        if (btn && !silent) {
+          btn.disabled = false;
+          btn.innerHTML = '✨ Gemini AI ile Yazdır';
+        }
+      }
+      return null;
     }
 
     function showModule7Login(message = '') {
@@ -982,7 +1012,8 @@
       reader.onload = function(e) {
         currentImageBase64 = e.target.result;
         showImagePreview(currentImageBase64);
-        document.getElementById('prod_image_url').value = '';
+        const urlInput = document.getElementById('prod_image_url');
+        if (urlInput) urlInput.value = '';
       };
       reader.readAsDataURL(file);
     }
@@ -1020,23 +1051,23 @@
       const title = document.getElementById('prod_title').value.trim();
       const sku = document.getElementById('prod_sku').value.trim();
       const mainCategory = document.getElementById('prod_main_category').value;
-      const materialsInput = document.getElementById('prod_category').value.trim();
-      const shortDesc = document.getElementById('prod_short_desc').value.trim();
+      const materialsInput = (document.getElementById('prod_category')?.value || '').trim();
+      const shortDesc = (document.getElementById('prod_short_desc')?.value || '').trim();
       const promoQuote = (document.getElementById('prod_promo_quote')?.value || '').trim();
-      const rawColors = document.getElementById('prod_colors').value.trim();
-      const rawFeatures = document.getElementById('prod_features').value.trim();
+      const rawColors = (document.getElementById('prod_colors')?.value || '').trim();
+      const rawFeatures = (document.getElementById('prod_features')?.value || '').trim();
       const rawDimensions = document.getElementById('prod_dimensions').value.trim();
       const editSlug = document.getElementById('edit_slug').value.trim();
-      const mainPhotoPres = document.getElementById('main_photo_presentation').value;
+      const mainPhotoPres = document.getElementById('main_photo_presentation')?.value || 'panoramic_split_carousel';
 
       if (!title) {
         showCustomToast('Lütfen koleksiyon veya ürün adını girin.', 'warning');
         return;
       }
 
-      let rawMainImg = currentImageBase64 || document.getElementById('prod_image_url').value.trim();
+      let rawMainImg = currentImageBase64 || (document.getElementById('prod_image_url')?.value || '').trim();
       if (!rawMainImg) {
-        showCustomToast('Lütfen ana tanıtım fotoğrafını yükleyin veya URL girin.', 'warning');
+        showCustomToast('Lütfen ana tanıtım fotoğrafını seçin veya yükleyin.', 'warning');
         return;
       }
 
@@ -1048,8 +1079,18 @@
         const ana_resim = await uploadImageIfNeeded(slug, rawMainImg);
 
         const renkler = rawColors ? rawColors.split(',').map(s => s.trim()).filter(Boolean) : [];
-        const ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
+        let ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
         const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(Boolean) : [];
+
+        // Kullanıcı öne çıkan özellikleri manuel yazmadıysa Gemini AI otomatik olarak tamamlasın
+        if (ozellikler.length === 0) {
+          try {
+            const aiFeatures = await generateAiFeatures(true);
+            if (Array.isArray(aiFeatures) && aiFeatures.length) {
+              ozellikler = aiFeatures;
+            }
+          } catch (_) {}
+        }
 
         // Koleksiyon parçalarını oku ve varsa base64 fotoğraflarını yükle
         let uploadedPieces = [];
@@ -1072,29 +1113,29 @@
         }
 
         const spec_post_options = {
-          mdf: document.getElementById('spec_opt_mdf').checked,
-          craft: document.getElementById('spec_opt_craft').checked,
-          surface: document.getElementById('spec_opt_surface').checked,
-          hardware: document.getElementById('spec_opt_hardware').checked,
-          dimensions: document.getElementById('spec_opt_dimensions').checked,
-          color: document.getElementById('spec_opt_color').checked,
-          warranty: document.getElementById('spec_opt_warranty').checked,
-          cta_button: document.getElementById('spec_opt_cta_button').checked
+          mdf: document.getElementById('spec_opt_mdf')?.checked ?? true,
+          craft: document.getElementById('spec_opt_craft')?.checked ?? true,
+          surface: document.getElementById('spec_opt_surface')?.checked ?? true,
+          hardware: false,
+          dimensions: document.getElementById('spec_opt_dimensions')?.checked ?? true,
+          color: false,
+          warranty: document.getElementById('spec_opt_warranty')?.checked ?? true,
+          cta_button: document.getElementById('spec_opt_cta_button')?.checked ?? true
         };
 
-        const musicPref = document.getElementById('prof_music').value;
-        const customMusicUrl = document.getElementById('prof_custom_music_url').value.trim();
+        const musicPref = document.getElementById('prof_music')?.value || 'luxury_piano';
+        const customMusicUrl = (document.getElementById('prof_custom_music_url')?.value || '').trim();
 
         const marketing_preferences = {
           main_photo_presentation: mainPhotoPres,
-          panoramic_mode: mainPhotoPres === 'panoramic_split_carousel' ? 'split' : 'auto',
-          atmosphere: document.getElementById('prof_atmosphere').value,
-          lighting: document.getElementById('prof_lighting').value,
-          camera: document.getElementById('prof_camera').value,
+          panoramic_mode: 'split',
+          atmosphere: document.getElementById('prof_atmosphere')?.value || 'Lüks',
+          lighting: document.getElementById('prof_lighting')?.value || 'Golden hour',
+          camera: document.getElementById('prof_camera')?.value || 'slow_push_in',
           music_preference: musicPref,
           custom_music_url: customMusicUrl,
           spec_post_options,
-          transform_enabled: document.getElementById('chk_transform_image').checked
+          transform_enabled: document.getElementById('chk_transform_image')?.checked || false
         };
 
         const photo_presentations = [
@@ -1174,26 +1215,34 @@
       document.getElementById('prod_title').value = item.title || '';
       document.getElementById('prod_sku').value = item.sku || '';
       document.getElementById('prod_main_category').value = item.kategori || 'Yatak Odası';
-      document.getElementById('prod_category').value = Array.isArray(item.materials) ? item.materials.join(', ') : '';
-      document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
+      if (document.getElementById('prod_category')) document.getElementById('prod_category').value = Array.isArray(item.materials) ? item.materials.join(', ') : '';
+      if (document.getElementById('prod_short_desc')) document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
       if (document.getElementById('prod_promo_quote')) {
         const candidateQuote = item.promo_quote || item.intro_story_text || item.design_story || (item.kisa_aciklama && !item.kisa_aciklama.includes(`(${item.kategori})`) ? item.kisa_aciklama : '');
         document.getElementById('prod_promo_quote').value = candidateQuote;
       }
-      document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
+      if (document.getElementById('prod_colors')) document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
       document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';
       document.getElementById('prod_dimensions').value = item.olculer || '';
 
       const prefs = item.marketing_preferences || {};
-      if (prefs.main_photo_presentation) document.getElementById('main_photo_presentation').value = prefs.main_photo_presentation;
-      if (prefs.atmosphere) document.getElementById('prof_atmosphere').value = prefs.atmosphere;
-      if (prefs.lighting) document.getElementById('prof_lighting').value = prefs.lighting;
-      if (prefs.camera) document.getElementById('prof_camera').value = prefs.camera;
-      if (prefs.music_preference) {
+      if (prefs.main_photo_presentation && document.getElementById('main_photo_presentation')) {
+        document.getElementById('main_photo_presentation').value = prefs.main_photo_presentation;
+      }
+      if (prefs.atmosphere && document.getElementById('prof_atmosphere')) document.getElementById('prof_atmosphere').value = prefs.atmosphere;
+      if (prefs.lighting && document.getElementById('prof_lighting')) document.getElementById('prof_lighting').value = prefs.lighting;
+      if (prefs.camera && document.getElementById('prof_camera')) document.getElementById('prof_camera').value = prefs.camera;
+      if (prefs.music_preference && document.getElementById('prof_music')) {
         document.getElementById('prof_music').value = prefs.music_preference;
         toggleCustomMusicBox();
       }
-      if (prefs.custom_music_url) document.getElementById('prof_custom_music_url').value = prefs.custom_music_url;
+      if (prefs.custom_music_url && document.getElementById('prof_custom_music_url')) document.getElementById('prof_custom_music_url').value = prefs.custom_music_url;
+
+      const chkTrans = document.getElementById('chk_transform_image');
+      if (chkTrans) {
+        chkTrans.checked = prefs.transform_enabled === true;
+        toggleStudioTransformOptions();
+      }
 
       if (prefs.spec_post_options) {
         ['mdf', 'craft', 'surface', 'hardware', 'dimensions', 'color', 'warranty', 'cta_button'].forEach(k => {
@@ -1204,7 +1253,8 @@
 
       if (item.ana_resim) {
         currentImageBase64 = item.ana_resim;
-        document.getElementById('prod_image_url').value = item.ana_resim;
+        const urlInput = document.getElementById('prod_image_url');
+        if (urlInput) urlInput.value = item.ana_resim;
         showImagePreview(item.ana_resim);
       }
 
@@ -1258,16 +1308,22 @@
       document.getElementById('edit_slug').value = '';
       document.getElementById('prod_title').value = '';
       document.getElementById('prod_sku').value = '';
-      document.getElementById('prod_short_desc').value = '';
+      if (document.getElementById('prod_short_desc')) document.getElementById('prod_short_desc').value = '';
       if (document.getElementById('prod_promo_quote')) document.getElementById('prod_promo_quote').value = '';
-      document.getElementById('prod_colors').value = '';
+      if (document.getElementById('prod_colors')) document.getElementById('prod_colors').value = '';
       document.getElementById('prod_features').value = '';
       document.getElementById('prod_dimensions').value = '';
-      document.getElementById('prod_image_url').value = '';
+      const urlInput = document.getElementById('prod_image_url');
+      if (urlInput) urlInput.value = '';
       document.getElementById('fileInput').value = '';
       currentImageBase64 = '';
       document.getElementById('imagePreview').style.display = 'none';
       document.getElementById('dropzoneText').style.display = 'block';
+      const chkTrans = document.getElementById('chk_transform_image');
+      if (chkTrans) {
+        chkTrans.checked = false;
+        toggleStudioTransformOptions();
+      }
       document.getElementById('formModeTitle').textContent = '➕ Yeni Koleksiyon veya Ürün Girişi';
       document.getElementById('btnCancelEdit').style.display = 'none';
       initDefaultCollectionPieceRows();
@@ -1282,6 +1338,7 @@
     document.addEventListener('DOMContentLoaded', async () => {
       initDefaultCollectionPieceRows();
       setEntityCreationType('collection');
+      toggleStudioTransformOptions();
       try {
         if (!sb) throw new Error('Kimlik doğrulama başlatılamadı.');
         const { data } = await sb.auth.getSession();
