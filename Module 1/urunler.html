@@ -699,7 +699,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 
 /* Module 1 CMS */
-.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(6,19,47,.94);backdrop-filter:blur(8px)}
+.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(6,19,47,.94);backdrop-filter:blur(8px)}
 .cms-auth-card,.cms-revision-card{width:min(520px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
 .cms-auth-card h2,.cms-revision-card h2{font-family:Montserrat,sans-serif;color:var(--navy);margin-bottom:8px}
 .cms-auth-card p,.cms-revision-card p{font-size:13px;color:var(--text-muted);margin-bottom:18px}
@@ -1673,7 +1673,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 </div>
 
 <!-- MODULE 1 CMS AUTH GATE -->
-<div class="cms-auth-gate" id="cmsAuthGate">
+<div class="cms-auth-gate" id="cmsAuthGate" style="display:none;">
   <div class="cms-auth-card">
     <h2>Güvenli Yönetici Girişi</h2>
     <p>İçerik yönetimi için yetkili Supabase hesabınızla giriş yapın. Yalnızca <b>admin</b> ve <b>content_manager</b> rolleri kabul edilir.</p>
@@ -1731,7 +1731,15 @@ function initSupabaseClient() {
   SUPABASE_KEY = (localStorage.getItem('gkm_supabase_key') || DEFAULT_SUPABASE_ANON_KEY || '').trim();
   if (SUPABASE_URL && SUPABASE_KEY && window.supabase) {
     try {
-      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: localStorage.getItem('gm_auth_remember_device') === '1' ? localStorage : sessionStorage,
+          storageKey: 'sb-vrfujrpsjzqjthaqdalx-auth-token'
+        }
+      });
     } catch (e) {
       console.error('Supabase başlatma hatası:', e);
       supabaseClient = null;
