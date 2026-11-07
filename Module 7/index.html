@@ -356,9 +356,9 @@
       <!-- KOLEKSİYONA ÖZEL TANITIM CÜMLESİ / HİKAYESİ (STORY, REELS VE 6'LI CAROUSEL 2. SLAYT METNİ) -->
       <div class="form-group" style="background:rgba(212,175,55,0.06); border:1px solid rgba(212,175,55,0.3); border-radius:10px; padding:10px 12px;">
         <label style="color:#fde68a;">📜 Koleksiyona Özel Tanıtım Cümlesi &amp; Tasarım Hikayesi:</label>
-        <textarea id="prod_promo_quote" class="form-control" style="min-height:75px;" placeholder="Örn: Zarafet, sadece bir stil değil; bir duruştur. VIENNA, isminden de anlaşılacağı üzere bizi geçmişin en şık dönemlerine, Art Deco'nun ihtişamlı dairesel formlarına ve Mid-Century Modern'in fonksiyonel estetiğine kısa bir yolculuğa çıkarıyor. Göz yormayan soft tonları ve karakter sahibi detaylarıyla bu takım, yatak odanızı kişisel bir sığınağa dönüştürüyor..."></textarea>
+        <textarea id="prod_promo_quote" class="form-control" style="min-height:75px; resize:vertical;" placeholder="Koleksiyonunuzu en iyi özetleyen vurucu tanıtım cümlesini yazın veya yapıştırın (Örn: Zarafet, geçmişin en şık detaylarıyla yatak odanızda)..."></textarea>
         <small style="color:var(--text-muted); font-size:10.5px; display:block; margin-top:4px;">
-          📌 Bu metin Instagram/Facebook <strong>6'lı Carousel'in 2. görselinde</strong> ve <strong>Story/Reels açılış sahnesinde</strong> tipografi efektiyle ekrana gelir.
+          📌 Bu metin Instagram/Facebook <strong>6'lı Carousel'in 2. görselinde</strong> ve <strong>Story/Reels açılış sahnesinde</strong> tipografi efektiyle ekrana gelir. İstediğiniz uzunlukta metin yazabilir veya yapıştırabilirsiniz.
         </small>
       </div>
 
@@ -1112,16 +1112,17 @@
           }))
         ];
 
+        const finalDescription = promoQuote || shortDesc || `${title} (${mainCategory})`;
         const payload = {
           slug,
           title,
           sku: sku || slug.toUpperCase(),
           kategori: mainCategory,
-          kisa_aciklama: shortDesc || `${title} (${mainCategory})`,
+          kisa_aciklama: finalDescription,
           ana_resim,
           renkler,
           ozellikler,
-          body: rawDimensions || '',
+          body: rawDimensions ? `${rawDimensions}${promoQuote ? '\n\n' + promoQuote : ''}` : (promoQuote || ''),
           product_type: currentEntityCreationType,
           design_story: promoQuote || shortDesc,
           promo_quote: promoQuote,
@@ -1176,7 +1177,8 @@
       document.getElementById('prod_category').value = Array.isArray(item.materials) ? item.materials.join(', ') : '';
       document.getElementById('prod_short_desc').value = item.kisa_aciklama || '';
       if (document.getElementById('prod_promo_quote')) {
-        document.getElementById('prod_promo_quote').value = item.promo_quote || item.intro_story_text || item.design_story || '';
+        const candidateQuote = item.promo_quote || item.intro_story_text || item.design_story || (item.kisa_aciklama && !item.kisa_aciklama.includes(`(${item.kategori})`) ? item.kisa_aciklama : '');
+        document.getElementById('prod_promo_quote').value = candidateQuote;
       }
       document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
       document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';

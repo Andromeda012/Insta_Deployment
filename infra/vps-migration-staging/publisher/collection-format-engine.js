@@ -212,8 +212,11 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
 
     const prefs = { ...(col?.marketing_preferences || {}), ...(m.marketing_preferences || {}), ...(p.marketing_preferences || {}) };
     let promo = clean(m.promo_quote || m.intro_story_text || col?.promo_quote || m.design_story || col?.design_story || p.design_story || '');
+    if (!promo && p.kisa_aciklama && !p.kisa_aciklama.includes(`(${p.kategori})`) && !p.kisa_aciklama.toLowerCase().startsWith(String(p.title || '').toLowerCase())) {
+      promo = clean(p.kisa_aciklama);
+    }
     if (!promo && isCollection && slug.startsWith('viyana')) {
-      promo = 'Zarafet, sadece bir stil değil; bir duruştur. VIENNA, Art Deco ve Mid-Century Modern estetiğiyle yatak odanızı kişisel bir sığınağa dönüştürüyor.';
+      promo = 'Zarafet, geçmişin en şık detaylarıyla yatak odanızda.';
     }
     const base = {
       slug,
@@ -345,30 +348,38 @@ function gradientRect(w, h, y0, stops) {
 // ── 1) CAROUSEL (1080x1350 JPEG) ────────────────────────────────────────────
 async function heroHalves(heroBuf) {
   const sharp = await getSharp();
-  // Dikişsiz iki yarı: 2160x1350 (oran 1.6) merkezden kırpılır ve tam ortadan bölünür
-  const wide = await sharp(heroBuf).rotate().resize(CAROUSEL_W * 2, CAROUSEL_H, { fit: 'cover', position: 'centre' }).toBuffer();
-  const left = await sharp(wide).extract({ left: 0, top: 0, width: CAROUSEL_W, height: CAROUSEL_H }).toBuffer();
-  const right = await sharp(wide).extract({ left: CAROUSEL_W, top: 0, width: CAROUSEL_W, height: CAROUSEL_H }).toBuffer();
+  const W2 = CAROUSEL_W * 2;
+  const H = CAROUSEL_H;
+  // 1. Dikişsiz iki yarı: 2160x1350 (oran 1.6) merkezden kırpılır
+  const wide = await sharp(heroBuf).rotate().resize(W2, H, { fit: 'cover', position: 'centre' }).toBuffer();
+
+  // 2. TÜM 2160x1350 GENİŞLİĞE TEK SEFERDE KESİNTİSİZ KARARTMA UYGULA
+  // Slayt 1 ve Slayt 2 arasındaki geçişte (x=1080) hiçbir ton/karartma/renk farkı kalmaz.
+  const topGrad = gradientRect(W2, 260, 0, [[0, '#000', 0.45], [1, '#000', 0]]);
+  const bottomGrad = gradientRect(W2, H, 600, [[0, '#000', 0], [0.55, '#000', 0.45], [1, '#000', 0.84]]);
+  const scrim = svgDoc(W2, H, topGrad.body + bottomGrad.body, topGrad.defs + bottomGrad.defs);
+  const gradedWide = await sharp(wide).composite([{ input: scrim }]).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toBuffer();
+
+  const left = await sharp(gradedWide).extract({ left: 0, top: 0, width: CAROUSEL_W, height: H }).toBuffer();
+  const right = await sharp(gradedWide).extract({ left: CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H }).toBuffer();
   return { left, right };
 }
 
 async function titleSlide(entity, imgBuf) {
   const sharp = await getSharp();
   const W = CAROUSEL_W, H = CAROUSEL_H;
-  const g = gradientRect(W, H, 640, [[0, '#000', 0], [0.55, '#000', 0.45], [1, '#000', 0.82]]);
-  const top = gradientRect(W, 260, 0, [[0, '#000', 0.45], [1, '#000', 0]]);
   const name = trUpper(entity.title);
   const nameSize = name.length > 14 ? 92 : name.length > 9 ? 116 : 140;
   const nameLines = wrapText(name, Math.floor(980 / (nameSize * 0.68)), 2);
   let y = H - 120 - (nameLines.length - 1) * nameSize * 1.05;
   const cat = trUpper(entity.category || (entity.kind === 'collection' ? 'KOLEKSİYON' : ''));
-  let body = g.body + top.body;
+  let body = '';
   body += textEl({ x: 70, y: 96, text: BRAND.name, size: 26, weight: 600, spacing: 8, opacity: 0.92, shadow: true });
   if (cat) body += textEl({ x: 74, y: y - nameSize * 0.95, text: cat, size: 30, weight: 600, fill: BRAND.gold, spacing: 9, shadow: true });
   for (const line of nameLines) { body += textEl({ x: 66, y, text: line, size: nameSize, font: TITLE_FONT, weight: 700, spacing: 4, shadow: true }); y += nameSize * 1.05; }
   body += `<rect x="72" y="${H - 84}" width="120" height="4" fill="${BRAND.gold}"/>`;
   body += textEl({ x: W - 70, y: H - 70, text: 'KAYDIR  →', size: 24, weight: 600, anchor: 'end', spacing: 4, opacity: 0.8 });
-  const overlay = svgDoc(W, H, body, g.defs + top.defs + SHADOW_DEF);
+  const overlay = svgDoc(W, H, body, SHADOW_DEF);
   return sharp(imgBuf).composite([{ input: overlay }]).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toBuffer();
 }
 
@@ -376,8 +387,7 @@ async function quoteSlide(entity, imgBuf) {
   const sharp = await getSharp();
   const W = CAROUSEL_W, H = CAROUSEL_H;
   const quote = excerptQuote(entity.promoQuote || entity.shortDescription, 230) || entity.shortDescription || '';
-  const g = gradientRect(W, H, 420, [[0, '#000', 0], [0.4, '#000', 0.5], [1, '#000', 0.86]]);
-  let body = g.body;
+  let body = '';
   if (quote) {
     const size = quote.length > 170 ? 44 : quote.length > 110 ? 50 : 58;
     const lines = wrapText(quote, Math.floor(920 / (size * 0.5)), 8);
@@ -387,7 +397,7 @@ async function quoteSlide(entity, imgBuf) {
   }
   body += `<rect x="74" y="${H - 104}" width="80" height="3" fill="${BRAND.gold}"/>`;
   body += textEl({ x: 172, y: H - 94, text: trUpper(entity.title), size: 26, weight: 600, spacing: 6, opacity: 0.9 });
-  const overlay = svgDoc(W, H, body, g.defs + SHADOW_DEF);
+  const overlay = svgDoc(W, H, body, SHADOW_DEF);
   return sharp(imgBuf).composite([{ input: overlay }]).jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toBuffer();
 }
 
@@ -557,8 +567,29 @@ function cameraMotion(camera, i) {
 }
 
 async function resolveMusic(dir, prefs, log) {
-  const base = env('MUSIC_LIBRARY_BASE_URL', `${env('SUPABASE_URL', '').replace(/\/$/, '')}/storage/v1/object/public/${MEDIA_BUCKET}/music`);
   const key = MUSIC_KEYS.includes(prefs?.music_preference) ? prefs.music_preference : 'luxury_piano';
+  
+  // 1. Önce yerel bundled müzik kütüphanesini kontrol et (en hızlı ve güvenilir)
+  const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  const localCandidates = [
+    path.join(currentDir, 'assets/music', `${key}.mp3`),
+    path.join(currentDir, 'assets/music', 'luxury_piano.mp3'),
+    path.join(currentDir, '../assets/music', `${key}.mp3`),
+    'C:/Users/User/Desktop/Müzikler/Blue Hour Stereo.mp3'
+  ];
+  for (const lp of localCandidates) {
+    if (fs.existsSync(lp)) {
+      try {
+        const dest = path.join(dir, 'music.mp3');
+        fs.copyFileSync(lp, dest);
+        log(`[Müzik] Yerel kütüphaneden yüklendi: ${path.basename(lp)} (${key})`);
+        return { path: dest, url: lp, key };
+      } catch (_) {}
+    }
+  }
+
+  // 2. Supabase Storage üzerinden kontrol et
+  const base = env('MUSIC_LIBRARY_BASE_URL', `${env('SUPABASE_URL', 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/$/, '')}/storage/v1/object/public/${MEDIA_BUCKET}/music`);
   const candidates = [];
   if (prefs?.music_preference === 'custom' && /^https:\/\//i.test(prefs?.custom_music_url || '')) candidates.push(prefs.custom_music_url);
   if (base && !base.startsWith('/')) {
@@ -570,12 +601,13 @@ async function resolveMusic(dir, prefs, log) {
       const buf = await fetchBuffer(url, 30000);
       const p = path.join(dir, 'music' + (path.extname(new URL(url).pathname) || '.mp3'));
       fs.writeFileSync(p, buf);
+      log(`[Müzik] Supabase Storage üzerinden yüklendi: ${url}`);
       return { path: p, url, key };
     } catch (err) {
       log(`[Müzik] ${url} alınamadı: ${err.message}`);
     }
   }
-  log('[Müzik UYARI] Müzik dosyası bulunamadı; video sessiz fon ile üretildi. Supabase Storage > media/music/<anahtar>.mp3 yükleyin.');
+  log('[Müzik UYARI] Müzik dosyası bulunamadı; video sessiz fon ile üretildi.');
   return null;
 }
 
