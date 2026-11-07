@@ -4,6 +4,10 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/admin", "destination": "/index.html" },
+    { "source": "/_data/:match*", "destination": "/Module%201/_data/:match*" },
+    { "source": "/nova-studio-engine.js", "destination": "/Module%202/nova-studio-engine.js" },
+    { "source": "/panoramic-carousel-engine.js", "destination": "/Module%202/panoramic-carousel-engine.js" },
+    { "source": "/panoramic-carousel-engine.cjs", "destination": "/Module%202/panoramic-carousel-engine.cjs" },
     { "source": "/api/module2-state", "destination": "/api/module2?action=state" },
     { "source": "/api/module2-enqueue", "destination": "/api/module2?action=enqueue" },
     { "source": "/api/module2-cancel", "destination": "/api/module2?action=cancel" },

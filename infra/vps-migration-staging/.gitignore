@@ -1,4 +1,0 @@
-# Asla sunucu ortam değişkenlerini ve logları versiyon kontrolüne ekleme
-.env
-.env.local
-*.log

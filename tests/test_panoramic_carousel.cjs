@@ -18,7 +18,7 @@
 'use strict';
 
 const assert = require('assert');
-const PanoramicCarouselEngine = require('./panoramic-carousel-engine.cjs');
+const PanoramicCarouselEngine = require('../Module 2/panoramic-carousel-engine.cjs');
 
 async function runPanoramicTestSuite() {
   console.log('================================================================');

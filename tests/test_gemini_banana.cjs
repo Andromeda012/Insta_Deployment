@@ -244,7 +244,8 @@ async function runTests() {
   try {
     const fs = require('fs');
     const gitTrackedEnv = fs.existsSync('.env') ? fs.readFileSync('.env', 'utf8') : '';
-    const exampleEnv = fs.readFileSync('./vps_migration_staging/.env.example', 'utf8');
+    const exampleEnvPath = fs.existsSync('./Sunucu/.env.example') ? './Sunucu/.env.example' : './vps_migration_staging/.env.example';
+    const exampleEnv = fs.readFileSync(exampleEnvPath, 'utf8');
     const hasDoc = exampleEnv.includes('GEMINI_API_KEY=YOUR_GEMINI_API_KEY');
     report('12. GEMINI_API_KEY sunucu ortamına izole edildi (.env.example şablonunda belgelendi, git reposuna sızdırılmadı)', hasDoc);
   } catch (err) {

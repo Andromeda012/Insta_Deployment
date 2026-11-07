@@ -22,7 +22,7 @@ collections:
   - name: "urunler"
     label: "🛒 Ürünler"
     label_singular: "Ürün"
-    folder: "_data/urunler"
+    folder: "Module 1/_data/urunler"
     create: true
     delete: true
     slug: "{{slug}}"
@@ -89,7 +89,7 @@ collections:
   - name: "blog"
     label: "📝 Blog Yazıları"
     label_singular: "Blog Yazısı"
-    folder: "_data/blog"
+    folder: "Module 1/_data/blog"
     create: true
     delete: true
     slug: "{{slug}}"
@@ -112,7 +112,7 @@ collections:
   - name: "galeri"
     label: "🎨 Galeri"
     label_singular: "Galeri Öğesi"
-    folder: "_data/galeri"
+    folder: "Module 1/_data/galeri"
     create: true
     delete: true
     slug: "{{slug}}"
@@ -131,7 +131,7 @@ collections:
   - name: "tedarikciler"
     label: "🤝 Tedarikçiler"
     label_singular: "Tedarikçi"
-    folder: "_data/tedarikciler"
+    folder: "Module 1/_data/tedarikciler"
     create: true
     delete: true
     slug: "{{slug}}"
@@ -152,7 +152,7 @@ collections:
     label: "⚙️ Site Ayarları"
     files:
       
-      - file: "_data/ayarlar/anasayfa.json"
+      - file: "Module 1/_data/ayarlar/anasayfa.json"
         label: "🏠 Anasayfa İçeriği"
         name: "anasayfa"
         format: "json"
@@ -200,7 +200,7 @@ collections:
           - { label: "🎨 Galeri Bölümü Başlığı", name: "galeri_baslik", widget: "string" }
           - { label: "🎨 Galeri Alt Başlığı", name: "galeri_alt_baslik", widget: "string" }
 
-      - file: "_data/ayarlar/genel.json"
+      - file: "Module 1/_data/ayarlar/genel.json"
         label: "📞 Genel Ayarlar (Logo, Telefon, Footer)"
         name: "genel"
         format: "json"
@@ -286,7 +286,7 @@ collections:
                   - { label: "✂️ Kırpılmış (cover)", value: "cover" }
                   - { label: "↔️ Uzatılmış (fill)", value: "fill" }
 
-      - file: "_data/ayarlar/hakkimizda.json"
+      - file: "Module 1/_data/ayarlar/hakkimizda.json"
         label: "👤 Hakkımızda Sayfası"
         name: "hakkimizda"
         format: "json"
@@ -337,7 +337,7 @@ collections:
               - { label: "Buton Yazısı", name: "buton_yazi", widget: "string" }
               - { label: "Buton Link", name: "buton_link", widget: "string" }
 
-      - file: "_data/ayarlar/iletisim.json"
+      - file: "Module 1/_data/ayarlar/iletisim.json"
         label: "📞 İletişim Sayfası"
         name: "iletisim_sayfa"
         format: "json"
@@ -369,7 +369,7 @@ collections:
               - { label: "Soru", name: "soru", widget: "string" }
               - { label: "Cevap", name: "cevap", widget: "text" }
 
-      - file: "_data/ayarlar/kvkk.json"
+      - file: "Module 1/_data/ayarlar/kvkk.json"
         label: "🔒 KVKK Metni"
         name: "kvkk"
         format: "json"
@@ -389,7 +389,7 @@ collections:
               - { label: "Bölüm Başlığı", name: "baslik", widget: "string" }
               - { label: "Bölüm Metni", name: "metin", widget: "markdown" }
 
-      - file: "_data/ayarlar/tema.json"
+      - file: "Module 1/_data/ayarlar/tema.json"
         label: "🎨 Tema & Görsel Ayarlar"
         name: "tema"
         format: "json"

@@ -391,7 +391,8 @@ async function runTestSuite() {
     const setsPendingOnQueue = igCronSource.includes("status: 'pending'") && !igCronSource.includes("post.status = 'published'");
 
     // 9.B: Worker tamamlandığında panel sync fonksiyonu çalışmalı ve hatalı görevleri published yapmamalı
-    const pubSource = fs.readFileSync('./vps_migration_staging/publisher/index.js', 'utf8');
+    const pubPath = fs.existsSync('./Sunucu/publisher/index.js') ? './Sunucu/publisher/index.js' : './vps_migration_staging/publisher/index.js';
+    const pubSource = fs.readFileSync(pubPath, 'utf8');
     const hasSyncFunction = pubSource.includes('syncAdminPanelStatus');
     const syncPreservesStatus = (pubSource.includes('p.status = finalStatus') || pubSource.includes('item.status = finalStatus')) && !pubSource.includes("p.status = 'published'; // force");
 
@@ -429,7 +430,7 @@ async function runTestSuite() {
     }
 
     scanDir('./api');
-    scanDir('./vps_migration_staging');
+    scanDir(fs.existsSync('./Sunucu') ? './Sunucu' : './vps_migration_staging');
     scanDir('./Module 2');
 
     const pass10 = foundHardcodedTokens.length === 0;
