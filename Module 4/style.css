@@ -1,10 +1,10 @@
 ﻿/* Modern Design System for Sipariş Takip Sistemi */
 :root {
-  --bg-main: #f8fafc;
-  --bg-card: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
-  --border-color: #e2e8f0;
+  --bg-main: #0A0F1D;
+  --bg-card: #111B2E;
+  --text-main: #F8FAFC;
+  --text-muted: #94A3B8;
+  --border-color: rgba(148, 163, 184, 0.16);
   --primary: #2563eb;
   --primary-hover: #1d4ed8;
   --primary-light: #dbeafe;

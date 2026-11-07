@@ -669,11 +669,10 @@ export async function submitCampaignGeneration() {
       statusBox.style.border = '1px solid rgba(16,185,129,0.4)';
       statusBox.style.color = '#34d399';
       statusBox.innerHTML = `
-        <div style="font-size:13px; font-weight:800;">✅ Kampanya Başarıyla Üretildi!</div>
+        <div style="font-size:13px; font-weight:800;">🚀 Kampanya Üretildi ve 4 Bot Yayın Kuyruğuna Eklendi!</div>
         <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px;">
-          • Durum: <strong>İnsan İncelemesi ve Onayı Bekleniyor</strong><br>
-          • 4 Platform: <strong>Instagram, Facebook, YouTube, TikTok paketleri hazırlandı.</strong><br>
-          • İnceleme &amp; Onay ekranına yönlendiriliyorsunuz...
+          • Durum: <strong>Tam Otonom Yayın Akışında (Onay Gerektirmez)</strong><br>
+          • 4 Platform: <strong>Instagram, Facebook, YouTube, TikTok paketleri doğrudan yayın sırasına alındı.</strong>
         </div>
       `;
     }
@@ -686,11 +685,8 @@ export async function submitCampaignGeneration() {
 
     setTimeout(() => {
       closeCampaignStudioModal();
-      if (res.campaign && res.campaign.id) {
-        openCampaignReviewModal(res.campaign.id);
-      }
       if (typeof window.showToast === 'function') {
-        window.showToast(`🎯 "${title}" kampanyası inceleme ekranında açıldı!`);
+        window.showToast(`🚀 "${title}" otonom yayın kuyruğuna eklendi!`);
       }
     }, 1200);
 

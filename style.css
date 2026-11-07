@@ -489,9 +489,15 @@ body {
 .page-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 28px;
+    align-items: center;
+    padding: 18px 24px;
+    background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
+    border: 1px solid rgba(212, 175, 55, 0.32);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    margin-bottom: 24px;
     gap: 20px;
+    flex-wrap: wrap;
 }
 
 .page-title-group h1 {
@@ -563,12 +569,15 @@ body {
 }
 
 .btn-primary {
-    background-color: var(--accent);
-    color: #ffffff;
+    background: linear-gradient(135deg, #d4af37, #b8860b);
+    color: #0b1120;
+    font-weight: 700;
+    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.25);
 }
 
 .btn-primary:hover {
-    background-color: var(--accent-light);
+    filter: brightness(1.15);
+    transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -1516,14 +1525,14 @@ body {
 }
 
 .modal-container {
-    background-color: var(--bg-surface);
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-xl);
+    background-color: #111B2E;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 18px;
     width: 600px;
     max-width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
 }
 
 .modal-header {

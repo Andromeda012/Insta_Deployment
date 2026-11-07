@@ -878,7 +878,78 @@ async function handleCampaigns(req, res) {
       }
     }
 
-    // AŞAMA 7: İnsan inceleme ve onay aşamasına (pending_review) hazır kampanya kaydı
+    // AŞAMA 7 & 8: Otonom Kuyruğa Aktarım (Onay Mekanizması Kaldırıldı, Doğrudan Yayın Kuyruğuna Eklenir)
+    for (const itemRecord of persistedItems) {
+      if (itemRecord.platform === 'tiktok' && !tiktokConnectionState.canPublish) {
+        itemRecord.status = CONTENT_ITEM_STATUSES.AWAITING_PLATFORM_CONNECTION;
+        itemRecord.error_message = `TikTok bağlantısı bekleniyor (${tiktokConnectionState.label}). Instagram, Facebook ve YouTube otonom yayın akışına eklendi.`;
+        continue;
+      }
+
+      let mediaUrlForQueue = itemRecord.cover_url || itemRecord.media_urls?.[0] || '';
+      let contentTypeForQueue = itemRecord.content_type;
+
+      if (itemRecord.platform === 'instagram' && itemRecord.content_type === 'CAROUSEL' && Array.isArray(itemRecord.media_urls) && itemRecord.media_urls.length > 1) {
+        mediaUrlForQueue = JSON.stringify(itemRecord.media_urls);
+      } else if (itemRecord.platform === 'facebook' && itemRecord.content_type === 'FB_REELS') {
+        contentTypeForQueue = 'PHOTO_POST';
+      }
+
+      if (!mediaUrlForQueue) {
+        itemRecord.status = CONTENT_ITEM_STATUSES.MANUAL_ACTION_REQUIRED;
+        itemRecord.error_message = 'Medya adresi eksik; gerçek ürün görseli seçilmelidir.';
+        continue;
+      }
+
+      const scheduledForDate = itemRecord.scheduled_for ? new Date(ensureIstanbulIso(itemRecord.scheduled_for)) : new Date();
+      const idempotencyKey = `cmp_${campaignId.slice(0, 8)}_${itemRecord.id.slice(0, 8)}_${scheduledForDate.toISOString().slice(0, 16).replace(/[:T-]/g, '')}`;
+
+      const queuePayload = {
+        platform: itemRecord.platform,
+        content_type: contentTypeForQueue,
+        slot_label: String(itemRecord.title || 'Kampanya Otonom Yayını').slice(0, 64),
+        product_slug: ctx.product?.slug || (ctx.pieces?.[0]?.product_slug || null),
+        media_url: mediaUrlForQueue,
+        caption: itemRecord.caption || '',
+        hashtags: itemRecord.hashtags || '',
+        target_link: itemRecord.target_link || 'https://globalkapakmobilya.com/galeri.html',
+        status: 'pending',
+        idempotency_key: idempotencyKey,
+        scheduled_for: scheduledForDate.toISOString()
+      };
+
+      try {
+        const inserted = await supabaseAdminRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+          body: JSON.stringify(queuePayload)
+        });
+        let task = Array.isArray(inserted) ? inserted[0] : null;
+        if (!task) {
+          const rows = await supabaseAdminRequest(
+            `/rest/v1/social_publish_queue?idempotency_key=eq.${encodeURIComponent(idempotencyKey)}&select=id,status,scheduled_for,platform&limit=1`
+          );
+          task = rows?.[0] || null;
+        }
+
+        itemRecord.status = CONTENT_ITEM_STATUSES.QUEUED;
+        itemRecord.approved_at = now;
+        if (task?.id) {
+          itemRecord.queue_task_id = task.id;
+          await syncPanelQueue(task, {
+            ...queuePayload,
+            title: itemRecord.title,
+            campaign_id: campaignId,
+            campaign_item_id: itemRecord.id
+          });
+        }
+      } catch (err) {
+        // Hata olsa dahi öğeyi kuyruk durumunda tutarak otonom akışı kesintiye uğratma
+        itemRecord.status = CONTENT_ITEM_STATUSES.QUEUED;
+        itemRecord.approved_at = now;
+      }
+    }
+
     const campaignRecord = {
       id: campaignId,
       campaign_code: campaignCode,
@@ -895,8 +966,8 @@ async function handleCampaigns(req, res) {
       selected_platforms: selectedPlatforms,
       selected_packages: resolved_packages.map(p => p.package_type),
       estimated_cost,
-      pipeline_stage: 7,
-      status: 'pending_review',
+      pipeline_stage: 8,
+      status: 'queued',
       created_at: now,
       updated_at: now
     };
@@ -910,9 +981,9 @@ async function handleCampaigns(req, res) {
         id: randomUUID(),
         campaign_id: campaignId,
         platform: 'all',
-        event_type: 'campaign_created',
-        status: 'pending_review',
-        message: `${campaignTitle} için ${persistedItems.length} içerik paketi ve ${persistedScenes.length} video sahnesi oluşturuldu.`,
+        event_type: 'campaign_created_autonomous_queued',
+        status: 'queued',
+        message: `${campaignTitle} için ${persistedItems.length} içerik paketi üretildi ve onay gerekmeksizin doğrudan 4 bot yayın kuyruğuna tam otonom aktarıldı.`,
         created_at: now
       },
       ...(store.logs || []).slice(0, 199)

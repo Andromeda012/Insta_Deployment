@@ -6,39 +6,42 @@
 <title>Global Kapak Mobilya — Yönetim Merkezi</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;700" rel="stylesheet">
 <link rel="icon" href="/resim/logo.png" type="image/png">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
-  --navy: #0B1F4B;
-  --navy-dark: #06132F;
-  --navy-light: #153476;
-  --gold: #C8A96E;
+  --navy: #111B2E;
+  --navy-dark: #0A0F1D;
+  --navy-light: #1A2640;
+  --gold: #D4AF37;
   --gold-hover: #b89858;
-  --gold-light: #F4E8D1;
-  --bg-main: #F8FAFC;
-  --bg-card: #FFFFFF;
-  --text-dark: #1E293B;
-  --text-muted: #64748B;
-  --border: #E2E8F0;
-  --border-focus: #C8A96E;
+  --gold-light: rgba(212, 175, 55, 0.2);
+  --bg-main: #0A0F1D;
+  --bg-card: #111B2E;
+  --card-border: rgba(148, 163, 184, 0.16);
+  --text-dark: #F8FAFC;
+  --text-muted: #94A3B8;
+  --border: rgba(148, 163, 184, 0.16);
+  --border-focus: #D4AF37;
   --danger: #EF4444;
-  --danger-light: #FEE2E2;
+  --danger-light: rgba(239, 68, 68, 0.15);
   --success: #10B981;
-  --success-light: #D1FAE5;
-  --radius-sm: 6px;
-  --radius-md: 10px;
+  --success-light: rgba(16, 185, 129, 0.15);
+  --radius-sm: 8px;
+  --radius-md: 12px;
   --radius-lg: 16px;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 14px rgba(0,0,0,0.08);
-  --shadow-lg: 0 10px 30px rgba(0,0,0,0.12);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 14px rgba(0,0,0,0.4);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.5);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Inter', sans-serif;
-  background: var(--bg-main);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.07), transparent 30%),
+              radial-gradient(circle at 90% 90%, rgba(16, 185, 129, 0.05), transparent 35%),
+              var(--bg-main);
   color: var(--text-dark);
   line-height: 1.5;
   min-height: 100vh;
@@ -46,44 +49,45 @@ body {
 
 /* HEADER */
 header {
-  background: var(--navy);
+  background: linear-gradient(135deg, rgba(17, 27, 46, 0.95), rgba(15, 23, 42, 0.95));
   color: #fff;
-  padding: 14px 28px;
+  padding: 16px 24px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: var(--shadow-md);
-  border-bottom: 2px solid var(--gold);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.32);
 }
 .header-left { display: flex; align-items: center; gap: 16px; }
-.header-logo { height: 40px; border-radius: 4px; background: #fff; padding: 3px; }
-.header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 700; letter-spacing: 0.5px; color:#fff; }
-.header-title span { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; }
+.header-logo { height: 40px; border-radius: 8px; background: rgba(255,255,255,0.06); padding: 4px; border: 1px solid rgba(212,175,55,0.3); }
+.header-title h1 { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 17px; font-weight: 800; letter-spacing: -0.3px; color:#fff; }
+.header-title span { font-size: 11px; color: var(--gold); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; }
 
 .header-right { display: flex; align-items: center; gap: 12px; }
 .status-pill {
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(17, 27, 46, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  color: #cbd5e1;
   padding: 6px 14px;
   border-radius: 50px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
 }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #F59E0B; }
 .status-dot.connected { background: var(--success); box-shadow: 0 0 10px rgba(16, 185, 129, 0.8); }
 
 .btn-header {
-  background: var(--gold);
-  color: var(--navy-dark);
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #0b1120;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
   font-size: 12px;
   padding: 8px 16px;
   border-radius: var(--radius-sm);
@@ -94,14 +98,16 @@ header {
   gap: 6px;
   text-decoration: none;
   transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(212, 175, 55, 0.25);
 }
-.btn-header:hover { background: #fff; color: var(--navy); transform: translateY(-1px); }
+.btn-header:hover { filter: brightness(1.15); transform: translateY(-1px); }
 .btn-header-outline {
-  background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(30, 41, 59, 0.7);
+  color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  box-shadow: none;
 }
-.btn-header-outline:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.btn-header-outline:hover { background: rgba(51, 65, 85, 0.8); color: #fff; border-color: rgba(56, 189, 248, 0.5); }
 
 /* MAIN LAYOUT */
 .main-wrapper {
@@ -112,8 +118,8 @@ header {
 
 /* BANNER */
 .token-banner {
-  background: #EFF6FF;
-  border: 1.5px solid #BFDBFE;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
   border-radius: var(--radius-md);
   padding: 14px 20px;
   margin-bottom: 20px;
@@ -121,7 +127,7 @@ header {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  color: #1E40AF;
+  color: #38BDF8;
   font-size: 13.5px;
 }
 
@@ -129,10 +135,10 @@ header {
 .nav-tabs-bar {
   display: flex;
   gap: 6px;
-  background: #fff;
+  background: rgba(17, 27, 46, 0.85);
   padding: 8px;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
   border: 1px solid var(--border);
   margin-bottom: 24px;
   overflow-x: auto;
@@ -142,7 +148,7 @@ header {
   border: none;
   padding: 10px 18px;
   border-radius: var(--radius-sm);
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 13px;
   font-weight: 600;
   color: var(--text-muted);
@@ -153,18 +159,19 @@ header {
   white-space: nowrap;
   transition: all 0.2s;
 }
-.nav-tab-btn:hover { color: var(--navy); background: #F1F5F9; }
+.nav-tab-btn:hover { color: #fff; background: rgba(255,255,255,0.06); }
 .nav-tab-btn.active {
-  background: var(--navy);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.25), rgba(56, 189, 248, 0.2));
   color: #fff;
+  border: 1px solid rgba(212, 175, 55, 0.45);
 }
 .nav-tab-btn.active span.badge {
   background: var(--gold);
-  color: var(--navy);
+  color: #0b1120;
 }
 .badge {
-  background: #E2E8F0;
-  color: var(--text-dark);
+  background: rgba(30, 41, 59, 0.8);
+  color: #cbd5e1;
   font-size: 11px;
   padding: 2px 7px;
   border-radius: 20px;
@@ -179,9 +186,9 @@ header {
 /* CARDS & PANELS */
 .admin-card {
   background: var(--bg-card);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
   padding: 24px;
   margin-bottom: 24px;
 }
@@ -194,10 +201,10 @@ header {
   border-bottom: 1px solid var(--border);
 }
 .admin-card-title {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 16px;
-  font-weight: 700;
-  color: var(--navy);
+  font-weight: 800;
+  color: #fff;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -223,7 +230,7 @@ header {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--navy);
+  color: #cbd5e1;
   margin-bottom: 6px;
 }
 .form-group label span.req { color: var(--danger); }
@@ -234,23 +241,23 @@ header {
   font-family: inherit;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #fff;
-  color: var(--text-dark);
+  background: #090e1a;
+  color: #f8fafc;
   transition: all 0.2s;
 }
 .form-control:focus {
   outline: none;
   border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(200, 169, 110, 0.2);
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.2);
 }
 textarea.form-control { resize: vertical; min-height: 80px; }
 .form-hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
 
 /* BUTTONS */
 .btn-primary {
-  background: var(--navy);
+  background: linear-gradient(135deg, #0284c7, #0369a1);
   color: #fff;
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 700;
   font-size: 13px;
   padding: 10px 20px;
@@ -262,12 +269,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 8px;
   transition: all 0.2s;
 }
-.btn-primary:hover { background: var(--navy-light); transform: translateY(-1px); }
+.btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); }
 .btn-gold {
-  background: var(--gold);
-  color: var(--navy-dark);
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 700;
+  background: linear-gradient(135deg, #d4af37, #b8860b);
+  color: #0b1120;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
   font-size: 13px;
   padding: 10px 20px;
   border-radius: var(--radius-sm);
@@ -278,11 +285,11 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 8px;
   transition: all 0.2s;
 }
-.btn-gold:hover { background: var(--gold-hover); transform: translateY(-1px); }
+.btn-gold:hover { filter: brightness(1.15); transform: translateY(-1px); }
 .btn-secondary {
-  background: #F1F5F9;
-  color: var(--text-dark);
-  font-family: 'Montserrat', sans-serif;
+  background: rgba(30, 41, 59, 0.8);
+  color: #cbd5e1;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 600;
   font-size: 13px;
   padding: 10px 18px;
@@ -291,38 +298,38 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-secondary:hover { background: #E2E8F0; }
+.btn-secondary:hover { background: rgba(51, 65, 85, 0.8); color: #fff; }
 .btn-danger {
-  background: var(--danger);
-  color: #fff;
-  font-family: 'Montserrat', sans-serif;
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-weight: 700;
   font-size: 12px;
   padding: 8px 14px;
   border-radius: var(--radius-sm);
-  border: none;
   cursor: pointer;
   transition: all 0.2s;
 }
-.btn-danger:hover { background: #DC2626; }
+.btn-danger:hover { background: rgba(239, 68, 68, 0.3); color: #fff; }
 .btn-sm { padding: 7px 14px; font-size: 12px; }
 
 /* DRAG & DROP UPLOAD */
 .upload-zone {
-  border: 2px dashed #CBD5E1;
+  border: 2px dashed rgba(148, 163, 184, 0.3);
   border-radius: var(--radius-md);
   padding: 24px;
   text-align: center;
-  background: #F8FAFC;
+  background: #090e1a;
   cursor: pointer;
   transition: all 0.2s;
 }
 .upload-zone:hover, .upload-zone.dragover {
   border-color: var(--gold);
-  background: #FFFDF8;
+  background: rgba(212, 175, 55, 0.05);
 }
 .upload-zone svg { width: 36px; height: 36px; stroke: var(--gold); margin-bottom: 8px; }
-.upload-zone h4 { font-size: 14px; font-weight: 600; color: var(--navy); margin-bottom: 4px; }
+.upload-zone h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 4px; }
 .upload-zone p { font-size: 12px; color: var(--text-muted); }
 .upload-preview {
   display: flex;
@@ -330,7 +337,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 14px;
   margin-top: 12px;
   padding: 10px;
-  background: #fff;
+  background: var(--bg-card);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
@@ -338,7 +345,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   width: 50px;
   height: 50px;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
 }
 
 /* CARDS GRID */
@@ -348,25 +355,25 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 20px;
 }
 .product-card {
-  background: #fff;
+  background: var(--bg-card);
   border-radius: var(--radius-md);
   border: 1px solid var(--border);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   transition: all 0.2s;
 }
 .product-card:hover {
   transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.4);
   border-color: var(--gold);
 }
 .product-card-img {
   width: 100%;
   height: 180px;
   object-fit: cover;
-  background: #F1F5F9;
+  background: #090e1a;
 }
 .product-card-body {
   padding: 16px;
@@ -382,10 +389,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   letter-spacing: 0.5px;
 }
 .product-card-title {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 15px;
   font-weight: 700;
-  color: var(--navy);
+  color: #fff;
   margin: 4px 0 8px 0;
 }
 .product-card-desc {
@@ -410,12 +417,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   padding: 6px;
   border: 1.5px solid var(--border);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: #090e1a;
   min-height: 42px;
 }
 .chip {
-  background: var(--navy);
-  color: #fff;
+  background: rgba(30, 41, 59, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #e2e8f0;
   font-size: 12px;
   font-weight: 600;
   padding: 4px 10px;
@@ -436,14 +444,16 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   flex: 1;
   min-width: 120px;
   padding: 4px 6px;
+  background: transparent;
+  color: #f8fafc;
 }
 
 /* MODAL */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(11, 31, 75, 0.7);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 15, 29, 0.8);
+  backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -454,28 +464,30 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .modal-overlay.open { opacity: 1; pointer-events: auto; }
 .modal-box {
-  background: #fff;
+  background: var(--bg-card);
+  border: 1px solid rgba(212, 175, 55, 0.35);
   border-radius: var(--radius-lg);
   padding: 28px;
   width: 90%;
   max-width: 580px;
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
   position: relative;
   max-height: 90vh;
   overflow-y: auto;
+  color: #f8fafc;
 }
 .modal-close {
   position: absolute;
   top: 18px;
   right: 18px;
-  background: #F1F5F9;
-  border: none;
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid var(--border);
   width: 32px;
   height: 32px;
   border-radius: 50%;
   cursor: pointer;
   font-weight: bold;
-  color: var(--text-dark);
+  color: #cbd5e1;
 }
 
 /* TOAST */
@@ -483,11 +495,12 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background: var(--navy);
+  background: #111B2E;
+  border: 1px solid rgba(212, 175, 55, 0.35);
   color: #fff;
   padding: 14px 20px;
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
   font-size: 13px;
   font-weight: 600;
   display: flex;
@@ -499,9 +512,9 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   transition: all 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
 }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast.success { background: #065F46; border-left: 4px solid var(--success); }
-.toast.error { background: #991B1B; border-left: 4px solid var(--danger); }
-.toast.info { background: var(--navy); border-left: 4px solid var(--gold); }
+.toast.success { background: #064E3B; border-left: 4px solid var(--success); }
+.toast.error { background: #7F1D1D; border-left: 4px solid var(--danger); }
+.toast.info { background: #111B2E; border-left: 4px solid var(--gold); }
 
 /* SPINNER */
 .spinner {
@@ -523,11 +536,11 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   margin-bottom: 20px;
 }
 .exec-kpi-card {
-  background: #fff;
+  background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 14px 16px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.25);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -538,7 +551,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .exec-kpi-card:hover {
   transform: translateY(-2px);
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.35);
   border-color: var(--gold);
 }
 .exec-kpi-top {
@@ -552,10 +565,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   color: var(--text-muted);
 }
 .exec-kpi-val {
-  font-family: 'Montserrat', sans-serif;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   font-size: 22px;
   font-weight: 800;
-  color: var(--navy);
+  color: #fff;
   display: flex;
   align-items: baseline;
   gap: 8px;
@@ -596,7 +609,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   gap: 10px;
   height: 210px;
   padding: 20px 12px 8px 12px;
-  background: #F8FAFC;
+  background: #090e1a;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
 }
@@ -612,7 +625,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .traffic-bar-fill {
   width: 100%;
   max-width: 38px;
-  background: linear-gradient(180deg, #1E3F66 0%, #0B1F4B 100%);
+  background: linear-gradient(180deg, #0284c7 0%, #1e3a8a 100%);
   border-radius: 6px 6px 0 0;
   transition: height 0.4s ease, background 0.2s;
   position: relative;
@@ -624,7 +637,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .traffic-bar-num {
   font-size: 10px;
   font-weight: 700;
-  color: var(--navy);
+  color: #38bdf8;
 }
 .traffic-bar-lbl {
   font-size: 10.5px;
@@ -641,11 +654,11 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   font-size: 12.5px;
   font-weight: 600;
   margin-bottom: 5px;
-  color: var(--text-dark);
+  color: #f8fafc;
 }
 .health-meter-track {
   height: 8px;
-  background: #E2E8F0;
+  background: #1e293b;
   border-radius: 10px;
   overflow: hidden;
 }
@@ -685,7 +698,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
-  background: #1E293B;
+  background: #111B2E;
 }
 
 @media(max-width:900px) {
@@ -699,21 +712,20 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 
 /* Module 1 CMS */
-.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(6,19,47,.94);backdrop-filter:blur(8px)}
-.cms-auth-card,.cms-revision-card{width:min(520px,100%);background:#fff;border-radius:16px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.28)}
-.cms-auth-card h2,.cms-revision-card h2{font-family:Montserrat,sans-serif;color:var(--navy);margin-bottom:8px}
+.cms-auth-gate{position:fixed;inset:0;z-index:5000;display:none;align-items:center;justify-content:center;padding:20px;background:rgba(10,15,29,.88);backdrop-filter:blur(8px)}
+.cms-auth-card,.cms-revision-card{width:min(520px,100%);background:#111B2E;border:1px solid rgba(212,175,55,0.35);border-radius:18px;padding:28px;box-shadow:0 24px 70px rgba(0,0,0,.6);color:#F8FAFC}
+.cms-auth-card h2,.cms-revision-card h2{font-family:'Plus Jakarta Sans',sans-serif;font-weight:800;color:#F8FAFC;margin-bottom:8px}
 .cms-auth-card p,.cms-revision-card p{font-size:13px;color:var(--text-muted);margin-bottom:18px}
-.cms-auth-card input{width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;margin:7px 0 14px;font:inherit}
-.cms-auth-error{min-height:20px;color:#b91c1c;font-size:12px;margin:8px 0}
-.cms-revision-overlay{position:fixed;inset:0;z-index:4500;background:rgba(6,19,47,.65);display:none;align-items:center;justify-content:center;padding:18px}
+.cms-auth-card input{width:100%;padding:12px;border:1px solid var(--border);border-radius:10px;margin:7px 0 14px;background:#090e1a;color:#F8FAFC;font:inherit}
+.cms-auth-error{min-height:20px;color:#f87171;font-size:12px;margin:8px 0}
+.cms-revision-overlay{position:fixed;inset:0;z-index:4500;background:rgba(10,15,29,.8);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center;padding:18px}
 .cms-revision-card{width:min(900px,100%);max-height:90vh;overflow:auto}
 .cms-revision-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px 0;border-bottom:1px solid var(--border);font-size:13px}
 .cms-revision-row small{display:block;color:var(--text-muted);margin-top:3px}
 .cms-revision-actions{display:flex;gap:6px;flex-wrap:wrap}
-.cms-revision-preview{white-space:pre-wrap;overflow:auto;max-height:280px;background:#0b1220;color:#dbeafe;padding:14px;border-radius:8px;font:12px/1.5 monospace}
+.cms-revision-preview{white-space:pre-wrap;overflow:auto;max-height:280px;background:#090e1a;color:#dbeafe;padding:14px;border-radius:10px;border:1px solid var(--border);font:12px/1.5 monospace}
 .cms-user-pill{font-size:11px;color:#fff;opacity:.85}
 @media(max-width:700px){.cms-revision-row{grid-template-columns:1fr}.cms-revision-actions{justify-content:flex-start}}
-
 </style>
 </head>
 <body>
@@ -774,7 +786,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <div class="exec-kpi-card" onclick="switchMainTab(null, 'tab-home')" title="Ana Sayfa Vitrin, Tasarım ve Video Durumu">
       <div class="exec-kpi-top">
         <span>🎬 Vitrin & Kurumsal Video</span>
-        <span id="kpiVideoStatusPill" style="color:var(--navy);">Kontrol Et</span>
+        <span id="kpiVideoStatusPill" style="color:#fff;">Kontrol Et</span>
       </div>
       <div class="exec-kpi-val" style="font-size:17px;" id="kpiThemeAndVideoText">Nordic Mavi & Gri Tema</div>
       <div class="exec-kpi-sub" id="kpiContentSummaryText">İçerik envanteri yükleniyor...</div>
@@ -834,24 +846,24 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 
       <!-- DETAYLI METRİK KARTLARI -->
       <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:14px; margin-bottom:24px;">
-        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:16px;">
+        <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:16px;">
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Tekil Ziyaretçi</div>
-          <div style="font-family:'Montserrat',sans-serif; font-size:26px; font-weight:800; color:var(--navy); margin:4px 0;" id="an_visitors">14.820</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:26px; font-weight:800; color:#fff; margin:4px 0;" id="an_visitors">14.820</div>
           <div style="font-size:12px; color:var(--success); font-weight:600;" id="an_visitors_delta">↑ %22.4 önceki döneme göre</div>
         </div>
-        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:16px;">
+        <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:16px;">
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Sayfa Görüntüleme</div>
-          <div style="font-family:'Montserrat',sans-serif; font-size:26px; font-weight:800; color:var(--navy); margin:4px 0;" id="an_pageviews">48.390</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:26px; font-weight:800; color:#fff; margin:4px 0;" id="an_pageviews">48.390</div>
           <div style="font-size:12px; color:var(--text-muted); font-weight:600;" id="an_pages_per_visit">Ort. 3.26 sayfa / ziyaret</div>
         </div>
-        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:16px;">
+        <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:16px;">
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">WhatsApp & Teklif Tıklaması</div>
-          <div style="font-family:'Montserrat',sans-serif; font-size:26px; font-weight:800; color:#059669; margin:4px 0;" id="an_leads">342</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:26px; font-weight:800; color:#059669; margin:4px 0;" id="an_leads">342</div>
           <div style="font-size:12px; color:#059669; font-weight:600;" id="an_conv_rate">Dönüşüm Oranı: %2.31</div>
         </div>
-        <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:16px;">
+        <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:16px;">
           <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;">Sipariş Takip Sorgusu</div>
-          <div style="font-family:'Montserrat',sans-serif; font-size:26px; font-weight:800; color:var(--navy); margin:4px 0;" id="an_track_queries">1.190</div>
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; font-size:26px; font-weight:800; color:#fff; margin:4px 0;" id="an_track_queries">1.190</div>
           <div style="font-size:12px; color:var(--text-muted); font-weight:600;">Müşteri Takip Ekranı (/takip.html)</div>
         </div>
       </div>
@@ -859,13 +871,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <!-- GRAFİK VE SİSTEM SAĞLIĞI İKİLİ GÖRÜNÜM -->
       <div class="analytics-grid-2">
         <!-- SOL: ZİYARETÇİ TRAFİK GRAFİĞİ & KAYNAKLAR -->
-        <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px;">
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
             <div>
-              <h4 style="font-family:'Montserrat',sans-serif; font-size:14px; color:var(--navy);">📈 Ziyaretçi Trafik Dağılımı</h4>
+              <h4 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; color:#fff;">📈 Ziyaretçi Trafik Dağılımı</h4>
               <span style="font-size:11.5px; color:var(--text-muted);" id="an_chart_subtitle">Son 30 günlük ziyaretçi yoğunluğu</span>
             </div>
-            <span class="badge" style="background:#EFF6FF; color:#1D4ED8;">🟢 Anlık: 18 Aktif Ziyaretçi</span>
+            <span class="badge" style="background:rgba(56,189,248,0.15); color:#1D4ED8;">🟢 Anlık: 18 Aktif Ziyaretçi</span>
           </div>
 
           <div class="traffic-chart-box" id="analyticsTrafficChart">
@@ -875,14 +887,14 @@ textarea.form-control { resize: vertical; min-height: 80px; }
           <!-- TRAFİK KAYNAKLARI & CİHAZ DAĞILIMI -->
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:18px; padding-top:16px; border-top:1px solid var(--border);">
             <div>
-              <div style="font-size:11.5px; font-weight:700; color:var(--navy); margin-bottom:8px; text-transform:uppercase;">🌐 Trafik Kaynakları</div>
+              <div style="font-size:11.5px; font-weight:700; color:#fff; margin-bottom:8px; text-transform:uppercase;">🌐 Trafik Kaynakları</div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Google Organik Arama</span><strong>%54</strong></div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Doğrudan Giriş (Direct)</span><strong>%22</strong></div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Instagram & Sosyal Medya</span><strong>%16</strong></div>
               <div style="font-size:12px; display:flex; justify-content:space-between;"><span>Google Haritalar / Konum</span><strong>%8</strong></div>
             </div>
             <div>
-              <div style="font-size:11.5px; font-weight:700; color:var(--navy); margin-bottom:8px; text-transform:uppercase;">📱 Cihaz Dağılımı</div>
+              <div style="font-size:11.5px; font-weight:700; color:#fff; margin-bottom:8px; text-transform:uppercase;">📱 Cihaz Dağılımı</div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Mobil (Telefon)</span><strong>%68</strong></div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Masaüstü Bilgisayar</span><strong>%28</strong></div>
               <div style="font-size:12px; display:flex; justify-content:space-between; margin-bottom:5px;"><span>Tablet</span><strong>%4</strong></div>
@@ -892,8 +904,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         </div>
 
         <!-- SAĞ: SİTENİN GENEL DURUMU & PERFORMANS SKORLARI -->
-        <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px;">
-          <h4 style="font-family:'Montserrat',sans-serif; font-size:14px; color:var(--navy); margin-bottom:4px;">🛡️ Sitenin Genel Durumu & Teknik Sağlık</h4>
+        <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px;">
+          <h4 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; color:#fff; margin-bottom:4px;">🛡️ Sitenin Genel Durumu & Teknik Sağlık</h4>
           <p style="font-size:11.5px; color:var(--text-muted); margin-bottom:16px;">Core Web Vitals, SEO, güvenlik ve içerik senkronizasyonu</p>
 
           <div class="health-meter-row">
@@ -916,37 +928,37 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             <div class="health-meter-track"><div class="health-meter-fill" style="width:100%; background:var(--success);"></div></div>
           </div>
 
-          <div style="background:#F8FAFC; border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:16px; font-size:12px; display:flex; flex-direction:column; gap:7px;">
+          <div style="background:rgba(15,23,42,0.6); border:1px solid var(--border); border-radius:8px; padding:12px; margin-top:16px; font-size:12px; display:flex; flex-direction:column; gap:7px;">
             <div style="display:flex; justify-content:space-between;">
               <span style="color:var(--text-muted);">Sunucu Yanıt Süresi (Ping):</span>
               <strong id="healthPingVal" style="color:var(--success);">42 ms (Çok Hızlı)</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
               <span style="color:var(--text-muted);">Supabase DB & Storage Durumu:</span>
-              <strong id="healthSyncVal" style="color:var(--navy);">🟢 Supabase Cloud Aktif</strong>
+              <strong id="healthSyncVal" style="color:#fff;">🟢 Supabase Cloud Aktif</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
               <span style="color:var(--text-muted);">Kurumsal Video Durumu:</span>
-              <strong id="healthVideoVal" style="color:var(--navy);">Kontrol Ediliyor...</strong>
+              <strong id="healthVideoVal" style="color:#fff;">Kontrol Ediliyor...</strong>
             </div>
             <div style="display:flex; justify-content:space-between;">
               <span style="color:var(--text-muted);">Canlı İçerik Envanteri:</span>
-              <strong id="healthInventoryVal" style="color:var(--navy);">Yükleniyor...</strong>
+              <strong id="healthInventoryVal" style="color:#fff;">Yükleniyor...</strong>
             </div>
           </div>
         </div>
       </div>
 
       <!-- EN ÇOK ZİYARET EDİLEN SAYFALAR VE ÜRÜNLER TABLOSU -->
-      <div style="background:#fff; border:1px solid var(--border); border-radius:10px; padding:18px;">
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:10px; padding:18px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-          <h4 style="font-family:'Montserrat',sans-serif; font-size:14px; color:var(--navy);">🔥 En Çok Ziyaret Edilen Sayfalar & Vitrin Modelleri</h4>
+          <h4 style="font-family:'Plus Jakarta Sans',sans-serif; font-size:14px; color:#fff;">🔥 En Çok Ziyaret Edilen Sayfalar & Vitrin Modelleri</h4>
           <span style="font-size:12px; color:var(--text-muted);">Canlı sayfa durumu ve ziyaretçi etkileşim oranları</span>
         </div>
         <div style="overflow-x:auto;">
           <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
             <thead>
-              <tr style="background:#F8FAFC; border-bottom:2px solid var(--border); color:var(--navy); font-family:'Montserrat',sans-serif; font-size:11.5px; text-transform:uppercase;">
+              <tr style="background:rgba(15,23,42,0.6); border-bottom:2px solid var(--border); color:#fff; font-family:'Plus Jakarta Sans',sans-serif; font-size:11.5px; text-transform:uppercase;">
                 <th style="padding:10px 12px;">Sayfa / İçerik Başlığı</th>
                 <th style="padding:10px 12px;">URL Yolu</th>
                 <th style="padding:10px 12px;">Görüntüleme</th>
@@ -998,13 +1010,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <!-- LIST VIEW -->
     <div id="subview-product-list">
       <div id="productLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
-        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <div class="spinner" style="width:28px; height:28px; border-color:#fff; border-top-color:transparent; margin-bottom:12px;"></div>
         <p style="font-weight:600;">Ürünler yükleniyor...</p>
       </div>
       <div class="product-grid" id="productGrid" style="display:none;"></div>
-      <div id="productEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+      <div id="productEmptyState" style="display:none; text-align:center; padding:60px 20px; background:var(--bg-card); border-radius:var(--radius-md); border:1px dashed var(--border);">
         <div style="font-size:40px; margin-bottom:12px;">📦</div>
-        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Ürün Eklenmedi</h3>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif; color:#fff; margin-bottom:6px;">Henüz Ürün Eklenmedi</h3>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Sitenizde listelenecek ilk membran kapak modelini ekleyin.</p>
         
       </div>
@@ -1218,7 +1230,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             <div class="admin-card-title" style="font-size:15px;">🎬 Ana Sayfa Kurumsal Tanıtım & Vitrin Videosu</div>
             <div class="admin-card-desc">Fabrika üretim parkuru, CNC işleme veya showroom tanıtım videonuzu sürükleyip bırakarak veya bağlantı girerek vitrine ekleyin.</div>
           </div>
-          <span class="badge" id="homeVideoStateBadge" style="background:#EFF6FF; color:#1D4ED8; padding:6px 12px; font-size:12px;">📹 Video Alanı Hazır</span>
+          <span class="badge" id="homeVideoStateBadge" style="background:rgba(56,189,248,0.15); color:#1D4ED8; padding:6px 12px; font-size:12px;">📹 Video Alanı Hazır</span>
         </div>
 
         <!-- VİDEO SÜRÜKLE & BIRAK YÜKLEME ALANI (GÖRSEL YÜKLEME İLE AYNI MİMARİ) -->
@@ -1277,10 +1289,10 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         </div>
 
         <div style="display:flex; flex-wrap:wrap; gap:14px; margin-top:10px;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#fff; background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0;">
             <input type="checkbox" id="h_video_active" checked> 🎬 Ana Sayfa Vitrininde Kurumsal Videoyu Göster
           </label>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 14px; background:#F8FAFC; border-radius:6px; border:1px solid var(--border);">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600; padding:8px 14px; background:rgba(15,23,42,0.6); border-radius:6px; border:1px solid var(--border);">
             <input type="checkbox" id="h_video_autoplay"> 🔇 Sessiz Otomatik Oynat (Loop / Arka Plan Modu)
           </label>
         </div>
@@ -1290,21 +1302,21 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <div style="border-top: 1px solid var(--border); margin: 24px 0 20px 0; padding-top: 20px;">
         <div class="admin-card-title" style="font-size:14px; margin-bottom:10px;">🎨 Aktif Kurumsal Tasarım & Renk Paleti Durumu</div>
         <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:10px;">
-          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:#F8FAFC;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(15,23,42,0.6);">
             <span style="width:28px; height:28px; border-radius:6px; background:#0F253E; flex-shrink:0; border:1px solid rgba(0,0,0,0.1);"></span>
-            <div><div style="font-size:12px; font-weight:700; color:var(--navy);">Derin Fjord Mavi</div><div style="font-size:11px; color:var(--text-muted);">#0F253E • Ana Kurumsal</div></div>
+            <div><div style="font-size:12px; font-weight:700; color:#fff;">Derin Fjord Mavi</div><div style="font-size:11px; color:var(--text-muted);">#0F253E • Ana Kurumsal</div></div>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:#F8FAFC;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(15,23,42,0.6);">
             <span style="width:28px; height:28px; border-radius:6px; background:#3B82A6; flex-shrink:0; border:1px solid rgba(0,0,0,0.1);"></span>
-            <div><div style="font-size:12px; font-weight:700; color:var(--navy);">Buzul & Gök Mavisi</div><div style="font-size:11px; color:var(--text-muted);">#3B82A6 • Vurgu Rengi</div></div>
+            <div><div style="font-size:12px; font-weight:700; color:#fff;">Buzul & Gök Mavisi</div><div style="font-size:11px; color:var(--text-muted);">#3B82A6 • Vurgu Rengi</div></div>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:#F8FAFC;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(15,23,42,0.6);">
             <span style="width:28px; height:28px; border-radius:6px; background:#4A7862; flex-shrink:0; border:1px solid rgba(0,0,0,0.1);"></span>
-            <div><div style="font-size:12px; font-weight:700; color:var(--navy);">Okaliptüs & Adaçayı</div><div style="font-size:11px; color:var(--text-muted);">#4A7862 • Doğal Yeşil</div></div>
+            <div><div style="font-size:12px; font-weight:700; color:#fff;">Okaliptüs & Adaçayı</div><div style="font-size:11px; color:var(--text-muted);">#4A7862 • Doğal Yeşil</div></div>
           </div>
-          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:#F8FAFC;">
+          <div style="display:flex; align-items:center; gap:10px; padding:10px; border:1px solid var(--border); border-radius:8px; background:rgba(15,23,42,0.6);">
             <span style="width:28px; height:28px; border-radius:6px; background:#F4F7F9; flex-shrink:0; border:1px solid #CBD5E1;"></span>
-            <div><div style="font-size:12px; font-weight:700; color:var(--navy);">Mimari Bulut Gri</div><div style="font-size:11px; color:var(--text-muted);">#F4F7F9 • Yüzey & Arka Plan</div></div>
+            <div><div style="font-size:12px; font-weight:700; color:#fff;">Mimari Bulut Gri</div><div style="font-size:11px; color:var(--text-muted);">#F4F7F9 • Yüzey & Arka Plan</div></div>
           </div>
         </div>
       </div>
@@ -1341,13 +1353,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <!-- LIST VIEW -->
     <div id="subview-gal-list">
       <div id="galLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
-        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <div class="spinner" style="width:28px; height:28px; border-color:#fff; border-top-color:transparent; margin-bottom:12px;"></div>
         <p style="font-weight:600;">Galeri fotoğrafları yükleniyor...</p>
       </div>
       <div class="product-grid" id="galGrid" style="display:none;"></div>
-      <div id="galEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+      <div id="galEmptyState" style="display:none; text-align:center; padding:60px 20px; background:var(--bg-card); border-radius:var(--radius-md); border:1px dashed var(--border);">
         <div style="font-size:40px; margin-bottom:12px;">🖼️</div>
-        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Fotoğraf Eklenmedi</h3>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif; color:#fff; margin-bottom:6px;">Henüz Fotoğraf Eklenmedi</h3>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Tamamlanan imalat ve montaj fotoğraflarınızı buraya ekleyin.</p>
         <button class="btn-gold" onclick="startNewGallery()">➕ İlk Fotoğrafı Ekle</button>
       </div>
@@ -1401,7 +1413,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
           </div>
 
           <div style="margin-bottom:24px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#fff; background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
               <input type="checkbox" id="gal_anasayfa" checked> 🏠 Ana Sayfa Galeri Vitrininde Göster
             </label>
           </div>
@@ -1432,13 +1444,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <!-- LIST VIEW -->
     <div id="subview-blog-list">
       <div id="blogLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
-        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <div class="spinner" style="width:28px; height:28px; border-color:#fff; border-top-color:transparent; margin-bottom:12px;"></div>
         <p style="font-weight:600;">Makaleler yükleniyor...</p>
       </div>
       <div class="product-grid" id="blogGrid" style="display:none;"></div>
-      <div id="blogEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+      <div id="blogEmptyState" style="display:none; text-align:center; padding:60px 20px; background:var(--bg-card); border-radius:var(--radius-md); border:1px dashed var(--border);">
         <div style="font-size:40px; margin-bottom:12px;">📝</div>
-        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Makale Eklenmedi</h3>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif; color:#fff; margin-bottom:6px;">Henüz Makale Eklenmedi</h3>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">Membran kapak bakımı ve rehber yazıları ekleyerek ziyaretçilerinizi bilgilendirin.</p>
         <button class="btn-gold" onclick="startNewBlog()">➕ İlk Makaleyi Yaz</button>
       </div>
@@ -1508,7 +1520,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
           </div>
 
           <div style="margin-bottom:24px;">
-            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:var(--navy); background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:700; color:#fff; background:#F0FDF4; padding:8px 14px; border-radius:6px; border:1px solid #BBF7D0; width:fit-content;">
               <input type="checkbox" id="b_anasayfa" checked> 🏠 Ana Sayfa Blog Vitrininde Göster
             </label>
           </div>
@@ -1553,13 +1565,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
     <!-- LIST VIEW -->
     <div id="subview-sup-list">
       <div id="supLoadingIndicator" style="text-align:center; padding:60px 20px; color:var(--text-muted); display:none;">
-        <div class="spinner" style="width:28px; height:28px; border-color:var(--navy); border-top-color:transparent; margin-bottom:12px;"></div>
+        <div class="spinner" style="width:28px; height:28px; border-color:#fff; border-top-color:transparent; margin-bottom:12px;"></div>
         <p style="font-weight:600;">Tedarikçiler yükleniyor...</p>
       </div>
       <div class="product-grid" id="supGrid" style="display:none;"></div>
-      <div id="supEmptyState" style="display:none; text-align:center; padding:60px 20px; background:#fff; border-radius:var(--radius-md); border:1px dashed var(--border);">
+      <div id="supEmptyState" style="display:none; text-align:center; padding:60px 20px; background:var(--bg-card); border-radius:var(--radius-md); border:1px dashed var(--border);">
         <div style="font-size:40px; margin-bottom:12px;">🤝</div>
-        <h3 style="font-family:'Montserrat',sans-serif; color:var(--navy); margin-bottom:6px;">Henüz Tedarikçi Eklenmedi</h3>
+        <h3 style="font-family:'Plus Jakarta Sans',sans-serif; color:#fff; margin-bottom:6px;">Henüz Tedarikçi Eklenmedi</h3>
         <p style="color:var(--text-muted); font-size:13px; margin-bottom:18px;">İş ortaklarınızı ve hammadde tedarikçilerinizi buraya ekleyin.</p>
         <button class="btn-gold" onclick="startNewSupplier()">➕ İlk Tedarikçiyi Ekle</button>
       </div>
@@ -1658,13 +1670,13 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <div style="font-size:14px; line-height:1.8; color:var(--text-dark);">
         <p>Bu panel, sitenizdeki tüm içerikleri doğrudan <strong>Supabase PostgreSQL Veritabanı</strong> ve <strong>Supabase Storage (Medya Depolama)</strong> bulut altyapısına bağlayarak anlık olarak yönetmenizi sağlar.</p>
         <br>
-        <h4 style="color:var(--navy);">🚀 Nasıl Çalışır?</h4>
+        <h4 style="color:#fff;">🚀 Nasıl Çalışır?</h4>
         <ol style="margin-left:20px; margin-bottom:16px;">
           <li>Panelden ürün, tedarikçi, galeri fotoğrafı, blog makalesi veya firma bilgisi ekleyip <strong>"Kaydet"</strong> dediğinizde, verileriniz doğrudan <strong>Supabase Database</strong> tablolarına (<code>products</code>, <code>suppliers</code>, <code>gallery</code>, <code>blogs</code>, <code>site_settings</code>) kaydedilir.</li>
           <li>Seçtiğiniz veya sürükleyip bıraktığınız ürün fotoğrafları, logolar ve kurumsal tanıtım videoları doğrudan <strong>Supabase Storage (<code>media</code> bucket)</strong> içerisine yüklenir ve yüksek hızlı CDN bağlantısı oluşturulur.</li>
           <li>Canlı kurumsal web siteniz (<code>Global-Mobilya-Web</code>) verileri doğrudan Supabase'den okuduğu için, yaptığınız her değişiklik <strong>bekleme süresi olmadan anında</strong> web sayfasına yansır.</li>
         </ol>
-        <h4 style="color:var(--navy);">⚡ Supabase Kurulumu & Bağlantı</h4>
+        <h4 style="color:#fff;">⚡ Supabase Kurulumu & Bağlantı</h4>
         <p>Sağ üstteki <strong>"⚡ Supabase Bulut Ayarları"</strong> butonundan Supabase Project URL ve Anon Key bilgilerinizi girebilir, tek tıkla SQL kurulum kodunu kopyalayabilir ve mevcut verilerinizi Supabase'e aktarabilirsiniz.</p>
       </div>
     </div>
@@ -1693,7 +1705,7 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <button class="btn-secondary btn-sm" onclick="closeCmsRevisions()">Kapat</button>
     </div>
     <div id="cmsRevisionList">Taslaklar yükleniyor...</div>
-    <h3 style="font-size:13px;margin:18px 0 8px;color:var(--navy);">Revizyon önizlemesi</h3>
+    <h3 style="font-size:13px;margin:18px 0 8px;color:#fff;">Revizyon önizlemesi</h3>
     <pre class="cms-revision-preview" id="cmsRevisionPreview">Önizlemek için bir revizyon seçin.</pre>
   </div>
 </div>
@@ -2252,7 +2264,7 @@ function renderCollectionPiecesModalContent(slug) {
           ${pieces.length} Parça Kayıtlı
         </span>
       </div>
-      <h2 style="font-size:20px; font-weight:800; color:var(--navy); margin:0 0 6px 0; font-family:'Montserrat',sans-serif;">
+      <h2 style="font-size:20px; font-weight:800; color:#fff; margin:0 0 6px 0; font-family:'Plus Jakarta Sans',sans-serif;">
         ${escapeHtml(col.title)} — Parça &amp; Vitrin Yönetimi
       </h2>
       <p style="font-size:13px; color:var(--text-muted); margin:0; line-height:1.5;">
@@ -2261,9 +2273,9 @@ function renderCollectionPiecesModalContent(slug) {
     </div>
 
     ${pieces.length === 0 ? `
-      <div style="text-align:center; padding:40px 20px; background:#F8FAFC; border-radius:12px; border:1px dashed #CBD5E1;">
+      <div style="text-align:center; padding:40px 20px; background:rgba(15,23,42,0.6); border-radius:12px; border:1px dashed #CBD5E1;">
         <div style="font-size:32px; margin-bottom:8px;">🧩</div>
-        <p style="font-weight:600; color:var(--navy); margin-bottom:4px;">Bu koleksiyona henüz bağlı parça bulunmuyor.</p>
+        <p style="font-weight:600; color:#fff; margin-bottom:4px;">Bu koleksiyona henüz bağlı parça bulunmuyor.</p>
         <p style="font-size:12px; color:var(--text-muted);">Modül 7 (Ürün Yönetimi) üzerinden koleksiyon parçalarını ekleyebilirsiniz.</p>
       </div>
     ` : `
@@ -2274,18 +2286,18 @@ function renderCollectionPiecesModalContent(slug) {
           const imgSrc = resolveAssetUrl(piece.ana_resim);
 
           return `
-          <div style="border:1px solid ${isShown ? '#E2E8F0' : 'rgba(239,68,68,0.35)'}; border-radius:12px; padding:14px; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:10px;">
+          <div style="border:1px solid ${isShown ? '#E2E8F0' : 'rgba(239,68,68,0.35)'}; border-radius:12px; padding:14px; background:var(--bg-card); box-shadow:0 1px 4px rgba(0,0,0,0.04); display:flex; flex-direction:column; gap:10px;">
             <div style="display:flex; gap:12px; align-items:center;">
               <img src="${imgSrc}" alt="${escapeHtml(piece.title)}" onerror="this.src='/resim/logo.png'" style="width:68px; height:68px; object-fit:cover; border-radius:8px; border:1px solid #E2E8F0; flex-shrink:0; background:#f8fafc;">
               <div style="flex:1; min-width:0;">
                 <div style="font-size:11px; font-weight:700; color:#D4AF37; text-transform:uppercase; letter-spacing:0.5px;">Parça #${idx + 1}</div>
-                <div style="font-size:14px; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(piece.title)}">${escapeHtml(piece.title)}</div>
+                <div style="font-size:14px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(piece.title)}">${escapeHtml(piece.title)}</div>
                 <div style="font-size:11.5px; color:var(--text-muted);">${escapeHtml(piece.sku || piece.slug)}</div>
               </div>
             </div>
 
             ${piece.kisa_aciklama ? `
-            <div style="font-size:11.5px; color:#64748B; background:#F8FAFC; padding:6px 10px; border-radius:6px; line-height:1.4;">
+            <div style="font-size:11.5px; color:#64748B; background:rgba(15,23,42,0.6); padding:6px 10px; border-radius:6px; line-height:1.4;">
               ${escapeHtml(piece.kisa_aciklama)}
             </div>
             ` : ''}
@@ -2301,7 +2313,7 @@ function renderCollectionPiecesModalContent(slug) {
 
               <button type="button" 
                       class="btn-sm" 
-                      style="width:100%; justify-content:center; padding:8px 10px; font-weight:700; font-size:11.5px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; ${isShowcase ? 'background:#EFF6FF; border:1px solid #3B82F6; color:#1D4ED8;' : 'background:#F8FAFC; border:1px solid #CBD5E1; color:#64748B;'}"
+                      style="width:100%; justify-content:center; padding:8px 10px; font-weight:700; font-size:11.5px; border-radius:6px; display:flex; align-items:center; gap:6px; cursor:pointer; transition:all 0.2s; ${isShowcase ? 'background:rgba(56,189,248,0.15); border:1px solid #3B82F6; color:#1D4ED8;' : 'background:rgba(15,23,42,0.6); border:1px solid #CBD5E1; color:#64748B;'}"
                       onclick="togglePieceShowcase('${col.slug}', '${piece.slug}', ${!isShowcase})">
                 ${isShowcase ? '🏠 Vitrinde Açık (Tıkla: Kapat)' : '📁 Vitrinde Kapalı (Tıkla: Aç)'}
               </button>
@@ -3611,7 +3623,7 @@ function renderAdminSupplierGrid(items) {
 
   grid.innerHTML = items.map(s => `
     <div class="product-card">
-      <div style="height:140px; background:#F8FAFC; display:flex; align-items:center; justify-content:center; padding:16px; border-bottom:1px solid var(--border);">
+      <div style="height:140px; background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:center; padding:16px; border-bottom:1px solid var(--border);">
         <img src="${resolveAssetUrl(s.logo)}" alt="${s.ad}" style="max-height:100%; max-width:100%; object-fit:contain;" onerror="this.src='/resim/logo.png'">
       </div>
       <div class="product-card-body">
@@ -4013,7 +4025,7 @@ function renderWebsiteAnalytics() {
     const allRows = [...basePages, ...prodRows];
     tbody.innerHTML = allRows.map(r => `
       <tr style="border-bottom:1px solid var(--border);">
-        <td style="padding:10px 12px; font-weight:700; color:var(--navy);">${r.title}</td>
+        <td style="padding:10px 12px; font-weight:700; color:#fff;">${r.title}</td>
         <td style="padding:10px 12px;"><code style="background:#F1F5F9; padding:2px 6px; border-radius:4px; font-size:12px;">${r.path}</code></td>
         <td style="padding:10px 12px; font-weight:700;">${r.views}</td>
         <td style="padding:10px 12px; color:var(--text-muted);">${r.avgTime}</td>

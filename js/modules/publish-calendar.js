@@ -301,9 +301,9 @@ function updateDayDetailsPanel() {
           <div style="font-size:10.5px; color:#38bdf8; font-weight:600;">
             ℹ️ Bu tarihte normal katalog akışı durdurulacak, yalnızca bu kampanya yayınlanacaktır.
           </div>
-          <button type="button" onclick="window.openCampaignReviewModal('${escapeHtml(c.id)}')" style="padding:5px 12px; border-radius:6px; border:1px solid #d4af37; background:rgba(212,175,55,0.18); color:#fde68a; font-size:11px; font-weight:700; cursor:pointer;">
-            🔍 İncele &amp; Onayla
-          </button>
+          <div style="display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:6px; border:1px solid rgba(16,185,129,0.4); background:rgba(16,185,129,0.15); color:#34d399; font-size:11px; font-weight:700;">
+            🚀 Otonom Yayın Kuyruğunda
+          </div>
         </div>
       </div>
     `).join('');
