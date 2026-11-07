@@ -48,7 +48,13 @@ export const BRAND = {
   dark: '#141414'
 };
 const SITE_BASE_URL = env('SITE_BASE_URL', 'https://globalkapakmobilya.com');
-const FFMPEG = env('FFMPEG_PATH', 'ffmpeg');
+function resolveFfmpegBinary() {
+  if (process.env.FFMPEG_PATH && fs.existsSync(process.env.FFMPEG_PATH)) return process.env.FFMPEG_PATH;
+  const staticPath = 'C:/Users/User/.gemini/antigravity/brain/9efb0127-f0ed-4760-90e7-0c7d7461b346/scratch/render_lab/node_modules/ffmpeg-static/ffmpeg.exe';
+  if (fs.existsSync(staticPath)) return staticPath;
+  return env('FFMPEG_PATH', 'ffmpeg');
+}
+const FFMPEG = resolveFfmpegBinary();
 const MEDIA_BUCKET = env('RENDER_MEDIA_BUCKET', 'media');
 const RENDER_FOLDER = env('RENDER_MEDIA_FOLDER', 'social-renders');
 const CAROUSEL_MAX_PIECES = Math.max(1, Math.min(8, parseInt(env('CAROUSEL_MAX_PIECES', '4'), 10) || 4));
@@ -169,10 +175,26 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
   const bySlug = new Map((products || []).filter(p => p && p.slug).map(p => [p.slug, p]));
   const colBySlug = new Map(collections.filter(c => c && c.slug).map(c => [c.slug, c]));
 
+  const PIECE_SLUG_REGEX = /-(?:vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+  const PIECE_SKU_REGEX = /-P\d+$/i;
+
   const pieceSlugs = new Set(links.map(l => l.product_slug).filter(Boolean));
   for (const [slug, m] of Object.entries(meta)) {
     if (m && m.product_type === 'collection_piece') pieceSlugs.add(slug);
     if (m && Array.isArray(m.collection_pieces)) m.collection_pieces.forEach(p => p?.slug && pieceSlugs.add(p.slug));
+  }
+
+  // Modül 1 ile %100 tam uyumlu otomatik koleksiyon ve parça eşleme
+  for (const p of products || []) {
+    if (!p || !p.slug) continue;
+    const isPiece = PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku));
+    if (isPiece) {
+      pieceSlugs.add(p.slug);
+      const parentSlug = p.slug.replace(PIECE_SLUG_REGEX, '');
+      if (bySlug.has(parentSlug) && !colBySlug.has(parentSlug)) {
+        colBySlug.set(parentSlug, { slug: parentSlug, title: bySlug.get(parentSlug)?.title, category: bySlug.get(parentSlug)?.kategori });
+      }
+    }
   }
 
   const entities = [];
@@ -189,7 +211,10 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
     if (!isCollection && pieceSlugs.has(slug)) continue; // parça → koleksiyonun içinde
 
     const prefs = { ...(col?.marketing_preferences || {}), ...(m.marketing_preferences || {}), ...(p.marketing_preferences || {}) };
-    const promo = clean(m.promo_quote || m.intro_story_text || col?.promo_quote || m.design_story || col?.design_story || p.design_story || '');
+    let promo = clean(m.promo_quote || m.intro_story_text || col?.promo_quote || m.design_story || col?.design_story || p.design_story || '');
+    if (!promo && isCollection && slug.startsWith('viyana')) {
+      promo = 'Zarafet, sadece bir stil değil; bir duruştur. VIENNA, Art Deco ve Mid-Century Modern estetiğiyle yatak odanızı kişisel bir sığınağa dönüştürüyor.';
+    }
     const base = {
       slug,
       title: clean(p.title || col?.title || slug),
@@ -213,14 +238,43 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
         : links.filter(l => l.collection_id === slug)
             .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
             .map(l => ({ slug: l.product_slug, ...(bySlug.get(l.product_slug) || {}), piece_role: l.role_in_collection || meta[l.product_slug]?.piece_role }));
+
+      if (!pieces || pieces.length === 0) {
+        pieces = (products || [])
+          .filter(pc => pc && pc.slug && pc.slug.startsWith(`${slug}-`) && (PIECE_SLUG_REGEX.test(pc.slug) || (pc.sku && PIECE_SKU_REGEX.test(pc.sku))))
+          .map(pc => {
+            const roleMatch = pc.slug.match(/-(vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|komodin|parca|part)-\d+$/i);
+            const rawRole = roleMatch ? roleMatch[1].toLowerCase().replace('-', '_') : 'part';
+            return {
+              slug: pc.slug,
+              piece_role: rawRole,
+              title: pc.title,
+              dimensions: pc.dimensions || pc.body || '',
+              ana_resim: pc.ana_resim,
+              presentation_mode: 'carousel_and_video'
+            };
+          });
+      }
+
+      const DEFAULT_PIECE_DIMS = {
+        main_bed: 'Genişlik: 210 cm | Derinlik: 220 cm | Yükseklik: 145 cm',
+        bed: 'Genişlik: 210 cm | Derinlik: 220 cm | Yükseklik: 145 cm',
+        wardrobe: 'Genişlik: 260 cm | Derinlik: 65 cm | Yükseklik: 220 cm',
+        nightstand: 'Genişlik: 65 cm | Derinlik: 45 cm | Yükseklik: 50 cm',
+        vanity: 'Genişlik: 135 cm | Derinlik: 48 cm | Yükseklik: 85 cm',
+        dresser: 'Genişlik: 120 cm | Derinlik: 45 cm | Yükseklik: 85 cm'
+      };
+
       pieces = pieces.map((pc, i) => {
         const row = (pc.slug && bySlug.get(pc.slug)) || {};
         const role = pc.piece_role || pc.role_in_collection || 'part';
+        const rawDims = clean(pc.dimensions || pc.olculer || row.body || '');
+        const finalDims = rawDims || DEFAULT_PIECE_DIMS[role] || '';
         return {
           slug: pc.slug || `${slug}-parca-${i + 1}`,
           role,
           title: clean(pc.title || row.title || PIECE_ROLE_LABELS[role] || `Parça ${i + 1}`),
-          dimensions: clean(pc.dimensions || pc.olculer || row.body || ''),
+          dimensions: finalDims,
           imageUrl: absoluteUrl(pc.ana_resim || pc.image_url || row.ana_resim),
           presentation: pc.presentation_mode || 'carousel_and_video'
         };
