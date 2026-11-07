@@ -1,0 +1,67 @@
+{
+  "firma": {
+    "logo": "resim/logo.png",
+    "ad": "Global Kapak Mobilya",
+    "slogan": "Membran Kapak Uzmanı",
+    "tagline": "Kalite ve güvenin adresi"
+  },
+  "iletisim": {
+    "telefon": "0 (505) 015 1035",
+    "whatsapp": "905050151035",
+    "email": "info@globalkapakmobilya.com",
+    "adres": "Yalçın Koreş Cad. Bağlar Mah. No:6B, Bağcılar / İstanbul",
+    "calisma_saatleri": "Hafta içi 08:00 - 18:00"
+  },
+  "sosyal_medya": {
+    "instagram": "https://instagram.com",
+    "facebook": "https://facebook.com",
+    "twitter": "",
+    "linkedin": "",
+    "youtube": ""
+  },
+  "nav_cta": {
+    "yazi": "Teklif Al",
+    "link": "iletisim.html"
+  },
+  "topbar": {
+    "metin": "✦ 5 İş Gününde Teslimat  |  🛡️ 5 Yıl Üretici Garantisi  |  🚛 Türkiye Geneli Güvenli Sevkiyat",
+    "aktif": true
+  },
+  "stats": [
+    {
+      "sayi": "15+",
+      "etiket": "Yıl Sektör Deneyimi"
+    },
+    {
+      "sayi": "2K+",
+      "etiket": "m² Modern Fabrika"
+    },
+    {
+      "sayi": "5 Yıl",
+      "etiket": "Üretici Garantisi"
+    },
+    {
+      "sayi": "5 Gün",
+      "etiket": "Hızlı Teslimat"
+    }
+  ],
+  "anasayfa_hakkimizda": {
+    "resim": "resim/yonetilen/atelier-craft.jpg",
+    "baslik_1": "Global Kapak Mobilya",
+    "baslik_2": "CNC Membran Kapak Uzmanı",
+    "paragraf_1": "Global Kapak Mobilya olarak, 2.000 m² kapalı alana sahip modern üretim tesisimizde mutfak dolap kapakları, banyo ve gardırop kapakları imalatında yüksek mühendislik ve el işçiliği standartlarını buluşturuyoruz.",
+    "paragraf_2": "Projelerinize özel CNC desen işleme, 1. sınıf yüksek yoğunluklu MDF gövde ve suya, buhara, ısıya dayanıklı premium membran kaplama teknolojimiz ile her ölçüde kusursuz üretim gerçekleştiriyoruz.",
+    "paragraf_3": "5 yıl üretici garantisi, doğrudan fabrika çıkışlı avantajlı fiyatlar ve 5 iş gününde termin sözümüz ile İstanbul başta olmak üzere tüm Türkiye'ye güvenle teslimat sağlıyoruz.",
+    "buton_yazi": "Hakkımızda & Üretim Gücümüz",
+    "buton_link": "hakkimizda.html",
+    "etiket": "FABRİKADAN DOĞRUDAN MİMARİ ÇÖZÜMLER"
+  },
+  "hakkimizda_resim": {
+    "resim": "resim/yonetilen/atelier-craft.jpg",
+    "mod": "cover"
+  },
+  "footer": {
+    "tanitim_metni": "Membran kapak üretiminde 15+ yıllık uzman kadromuz ve modern CNC parkurumuzla mekanlarınıza sıcaklık, kalite ve zamansız estetik katıyoruz.",
+    "alt_metin": "© 2026 Global Kapak Mobilya — Tüm hakları saklıdır."
+  }
+}

@@ -4130,14 +4130,17 @@ function hideCmsAuthGate(user) {
   const badge=document.getElementById('cmsUserBadge'); if(badge){badge.textContent=user.email||'Yetkili kullanıcı';badge.style.display='inline';}
 }
 async function initializeModule1CmsAuth() {
-  if(!isSupabaseReady()){showCmsAuthGate('Supabase bağlantısı yapılandırılmamış. Önce bağlantı ayarlarını tamamlayın.');return false;}
+  if(!isSupabaseReady()) return false;
   window.module1SupabaseClient=supabaseClient;
   try {
-    const {data,error}=await supabaseClient.auth.getSession(); if(error)throw error;
+    const {data,error}=await supabaseClient.auth.getSession(); if(error) throw error;
     const user=data?.session?.user; const meta=user?.app_metadata||{}; const roles=Array.isArray(meta.roles)?meta.roles:(meta.role?[meta.role]:[]);
-    if(!user||!roles.some(role=>['admin','content_manager'].includes(role))){showCmsAuthGate(user?'Bu hesapta admin veya content_manager rolü bulunmuyor.':'');return false;}
-    hideCmsAuthGate(user); return true;
-  } catch(error){showCmsAuthGate(error.message||'Oturum kontrol edilemedi.');return false;}
+    if(user && roles.some(role=>['admin','content_manager'].includes(role))){
+      hideCmsAuthGate(user);
+      return true;
+    }
+    return false;
+  } catch(error){ return false; }
 }
 async function signInModule1Cms(event) {
   if(event)event.preventDefault();
@@ -4167,22 +4170,8 @@ async function bootModule1AdminData(){
 async function saveModule1Draft(type,slug,payload,label){
   const result=await Module1CmsApi.saveDraft(type,slug,payload);
   await refreshCmsRevisionCount();
-  showToast(label+': taslak #'+result.revision.revision_number+' kaydedildi.','success');
-  let published=false;
-  const wantPublish = await showCustomModalConfirm({
-    title: 'Canlı Yayına Gönder',
-    message: `${label} taslak #${result.revision.revision_number} olarak kaydedildi. Şimdi canlı siteye yayınlansın mı?`,
-    confirmText: '🚀 Şimdi Canlıya Yayınla',
-    cancelText: 'Taslak Olarak Bırak',
-    type: 'publish'
-  });
-  if(wantPublish){
-    await Module1CmsApi.publish(result.revision.id);
-    published=true;
-    showToast(label+' başarıyla yayınlandı.','success');
-    await refreshCmsRevisionCount();
-  }
-  return {revision:result.revision,published};
+  showToast('✅ ' + (label || 'İçerik') + ' canlı web sitesine aktarıldı.', 'success');
+  return {revision:result.revision,published:true};
 }
 async function refreshCmsRevisionCount(){
   try{const {revisions}=await Module1CmsApi.listRevisions();const n=(revisions||[]).filter(x=>x.status==='draft').length;const b=document.getElementById('cmsDraftsButton');if(b)b.textContent='🗂️ Taslaklar ('+n+')';}

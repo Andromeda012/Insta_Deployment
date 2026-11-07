@@ -1,0 +1,61 @@
+{
+  "hero": {
+    "tag": "Premium Membran Kapak",
+    "baslik_1": "Kalite ve Estetiğin",
+    "baslik_2": "Buluştuğu Yer",
+    "alt_yazi": "Sektörde 15+ yıllık tecrübemiz ve uzman kadromuzla, mobilyalarınız için yüksek kalite membran kapak üretim çözümleri sunuyoruz.",
+    "buton_1_yazi": "Ürünleri Keşfet",
+    "buton_1_link": "urunler.html",
+    "buton_2_yazi": "Teklif Al",
+    "buton_2_link": "iletisim.html"
+  },
+  "slider": [
+    {
+      "resim": "/resim/anasayfa-resimleri/anasayfa1.png",
+      "baslik": "Modern Mutfak",
+      "alt_yazi": "Yeni nesil membran kapaklarla hayalinizdeki mutfak"
+    },
+    {
+      "resim": "/resim/anasayfa-resimleri/anasayfa2.png",
+      "baslik": "Şık Tasarım",
+      "alt_yazi": "Estetik ve dayanıklılığı bir arada"
+    },
+    {
+      "resim": "/resim/anasayfa-resimleri/anasayfa3.png",
+      "baslik": "Özel Ölçü",
+      "alt_yazi": "İhtiyacınıza özel boyutlarda üretim"
+    }
+  ],
+  "neden_biz": {
+    "baslik": "Neden Bizi Seçmelisiniz?",
+    "kartlar": [
+      {
+        "ikon": "🏆",
+        "baslik": "15+ Yıl Deneyim",
+        "aciklama": "Sektörde 15 yılı aşkın uzman kadromuz"
+      },
+      {
+        "ikon": "🏭",
+        "baslik": "Modern Fabrika",
+        "aciklama": "2.000 m² modern üretim tesisi"
+      },
+      {
+        "ikon": "🛡️",
+        "baslik": "5 Yıl Garanti",
+        "aciklama": "Tüm ürünlerimizde 5 yıl garanti"
+      },
+      {
+        "ikon": "🚚",
+        "baslik": "Hızlı Teslimat",
+        "aciklama": "5 iş gününde teslim"
+      }
+    ]
+  },
+  "yesil_bant": {
+    "baslik": "DOĞAYI SEVİYORUZ",
+    "alt_baslik": "Sürdürülebilir Üretim",
+    "metin": "Çevre dostu üretim süreçlerimiz, geri dönüştürülebilir ambalajlarımız ve enerji verimli fabrikamızla yeşil bir gelecek için çalışıyoruz."
+  },
+  "galeri_baslik": "Çalışmalarımızdan",
+  "galeri_alt_baslik": "Üretim ve montaj örneklerimiz"
+}

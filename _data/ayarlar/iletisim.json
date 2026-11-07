@@ -1,0 +1,35 @@
+{
+  "hero": {
+    "tag": "BİZE ULAŞIN",
+    "baslik": "İletişim",
+    "alt_yazi": "Size en kısa sürede dönüş yapacağız"
+  },
+  "form": {
+    "baslik": "Bize Mesaj Gönderin",
+    "alt_yazi": "Formu doldurarak bize ulaşabilirsiniz, sizinle WhatsApp üzerinden hızlıca iletişime geçeriz.",
+    "buton_yazi": "📱 WhatsApp ile Gönder",
+    "kvkk_metni": "Kişisel verilerimin işlenmesine ilişkin"
+  },
+  "harita": {
+    "embed_url": "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12044.46714!2d28.9784!3d41.0082!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14cab9c4b6a5a8f7%3A0x0!2zNDHCsDAwJzI5LjUiTiAyOMKwNTgnNDIuMyJF!5e0!3m2!1str!2str!4v1234567890",
+    "baslik": "Bizi Ziyaret Edin"
+  },
+  "sss": [
+    {
+      "soru": "Ürünleriniz garantili mi?",
+      "cevap": "Evet, tüm ürünlerimiz 5 yıl üretim garantisi altındadır."
+    },
+    {
+      "soru": "Teslimat süresi ne kadar?",
+      "cevap": "Standart ürünlerde 5 iş günü, özel ölçü ürünlerde 7-10 iş günü."
+    },
+    {
+      "soru": "Türkiye'nin her yerine gönderim yapıyor musunuz?",
+      "cevap": "Evet, anlaşmalı kargo firmalarımızla 81 ile gönderim yapıyoruz."
+    },
+    {
+      "soru": "Ödeme seçenekleriniz neler?",
+      "cevap": "Banka havalesi, EFT ve kapıda ödeme seçeneklerimiz mevcuttur."
+    }
+  ]
+}

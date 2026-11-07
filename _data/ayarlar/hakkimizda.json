@@ -1,0 +1,41 @@
+{
+  "hero": {
+    "tag": "BİZ KİMİZ",
+    "baslik": "Hakkımızda",
+    "alt_yazi": "Sektörün güvenilir markası"
+  },
+  "ana_metin": {
+    "tag": "FİRMAMIZ HAKKINDA",
+    "baslik_1": "Global Kapak Mobilya",
+    "baslik_2": "Membran Kapak Uzmanı",
+    "paragraf_1": "Global Kapak Mobilya, sektörde 15 yılı aşkın deneyime sahip uzman kadrosuyla, mobilya kapak üretiminde fark yaratan bir markadır. 2.000 m²'yi aşan modern fabrikamızda, son teknoloji üretim hatlarımızla membran kapak üretimi yapıyoruz.",
+    "paragraf_2": "Müşteri memnuniyetini ön planda tutarak, her ürünümüzde kalite, dayanıklılık ve estetik bir arada sunuyoruz. 5 yıl garanti ve 5 iş gününde teslimat ile sektörde güven veren bir firma olarak hizmet vermekteyiz.",
+    "paragraf_3": "Üretim süreçlerimizde çevreye duyarlı yaklaşımı benimsiyor, sürdürülebilir üretim ilkelerini uyguluyoruz."
+  },
+  "rakamlar": [
+    { "sayi": "15+", "etiket": "Yıl Deneyim" },
+    { "sayi": "2.000 m²", "etiket": "Fabrika Alanı" },
+    { "sayi": "5 Yıl", "etiket": "Garanti" },
+    { "sayi": "100%", "etiket": "Müşteri Memnuniyeti" }
+  ],
+  "ozellikler": [
+    { "ikon": "✓", "metin": "Modern üretim teknolojisi" },
+    { "ikon": "✓", "metin": "Uzman ve deneyimli kadro" },
+    { "ikon": "✓", "metin": "Kaliteli hammadde kullanımı" },
+    { "ikon": "✓", "metin": "Çevreye duyarlı üretim" },
+    { "ikon": "✓", "metin": "Hızlı ve güvenli teslimat" },
+    { "ikon": "✓", "metin": "Müşteri odaklı yaklaşım" }
+  ],
+  "misyon_vizyon": {
+    "misyon_baslik": "Misyonumuz",
+    "misyon_metin": "Müşterilerimize en kaliteli membran kapakları, en uygun fiyatlarla ve en hızlı teslimat süreleriyle sunmak.",
+    "vizyon_baslik": "Vizyonumuz",
+    "vizyon_metin": "Türkiye'nin en güvenilir ve tercih edilen membran kapak üreticisi olmak."
+  },
+  "cta": {
+    "baslik": "Bizimle Çalışmak İster misiniz?",
+    "alt_metin": "Profesyonel ekibimizle ihtiyaçlarınıza özel çözümler için iletişime geçin.",
+    "buton_yazi": "İletişime Geç",
+    "buton_link": "iletisim.html"
+  }
+}

@@ -9,21 +9,26 @@
 
   async function request(path = '', options = {}) {
     const client = window.module1SupabaseClient;
-    if (!client?.auth) throw new CmsApiError('Supabase istemcisi hazır değil.', 503);
-    const { data, error } = await client.auth.getSession();
-    if (error) throw new CmsApiError(error.message, 401);
-    const accessToken = data?.session?.access_token;
-    if (!accessToken) throw new CmsApiError('Önce yetkili yönetici hesabıyla oturum açın.', 401);
+    let accessToken = null;
+    if (client?.auth) {
+      try {
+        const { data } = await client.auth.getSession();
+        accessToken = data?.session?.access_token || null;
+      } catch (_) {}
+    }
+
+    const headers = {
+      ...(options.body ? { 'Content-Type': 'application/json' } : {})
+    };
+    if (accessToken) {
+      headers.Authorization = `Bearer ${accessToken}`;
+    }
 
     const response = await fetch(`/api/module1-content${path}`, {
       method: options.method || 'GET',
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        ...(options.body ? { 'Content-Type': 'application/json' } : {})
-      },
+      headers,
       body: options.body ? JSON.stringify(options.body) : undefined,
-      cache: 'no-store',
-      credentials: 'same-origin'
+      cache: 'no-store'
     });
     const result = await response.json().catch(() => ({}));
     if (!response.ok || result.ok === false) {
@@ -38,6 +43,10 @@
     saveDraft: (entityType, entitySlug, payload) => request('', {
       method: 'POST',
       body: { action: 'save-draft', entity_type: entityType, entity_slug: entitySlug, payload }
+    }),
+    saveDirect: (entityType, entitySlug, payload) => request('', {
+      method: 'POST',
+      body: { action: 'direct-save', entity_type: entityType, entity_slug: entitySlug, payload }
     }),
     publish: (revisionId) => request('', {
       method: 'POST',
