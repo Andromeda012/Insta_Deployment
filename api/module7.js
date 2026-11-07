@@ -154,9 +154,16 @@ async function products(req, res) {
     if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz ürün kodu.' });
     await supabase(`/rest/v1/products?slug=eq.${encodeURIComponent(slug)}`, SERVICE_KEY, { method: 'DELETE' });
     try {
+      await supabase(`/rest/v1/products?slug=like.${encodeURIComponent(slug)}-%`, SERVICE_KEY, { method: 'DELETE' });
+    } catch (_) {}
+    try {
       const extStore = await readExtendedCatalogStore();
       delete extStore.product_meta[slug];
-      extStore.collection_products = extStore.collection_products.filter(cp => cp.product_slug !== slug);
+      for (const k of Object.keys(extStore.product_meta || {})) {
+        if (k.startsWith(slug + '-')) delete extStore.product_meta[k];
+      }
+      extStore.collections = (extStore.collections || []).filter(c => c.slug !== slug);
+      extStore.collection_products = (extStore.collection_products || []).filter(cp => cp.product_slug !== slug && cp.collection_id !== slug && !cp.product_slug.startsWith(slug + '-'));
       await writeExtendedCatalogStore(extStore);
     } catch (_) {}
     return res.status(200).json({ ok: true, deleted: true, slug });
@@ -575,18 +582,26 @@ async function collections(req, res) {
         const parentSlug = p.slug.replace(PIECE_SLUG_REGEX, '');
         if (!colMap.has(parentSlug)) {
           const parentProd = (allProducts || []).find(x => x.slug === parentSlug);
-          const rawTitle = parentProd?.title || parentSlug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
-          const colTitle = rawTitle.toLowerCase().includes('koleksiyon') ? rawTitle : `${rawTitle} Koleksiyonu`;
-          colMap.set(parentSlug, {
-            slug: parentSlug,
-            id: parentSlug,
-            title: colTitle,
-            name: colTitle,
-            kategori: parentProd?.kategori || 'Yatak Odası',
-            hero_image: parentProd?.ana_resim || '',
-            hero_image_url: parentProd?.ana_resim || '',
-            promo_quote: parentProd?.kisa_aciklama || parentProd?.body || ''
-          });
+          if (parentProd) {
+            const rawTitle = parentProd.title || parentSlug.split('-').map(s => s.charAt(0).toUpperCase() + s.slice(1)).join(' ');
+            const colTitle = rawTitle.toLowerCase().includes('koleksiyon') ? rawTitle : `${rawTitle} Koleksiyonu`;
+            colMap.set(parentSlug, {
+              slug: parentSlug,
+              id: parentSlug,
+              title: colTitle,
+              name: colTitle,
+              kategori: parentProd?.kategori || 'Yatak Odası',
+              hero_image: parentProd?.ana_resim || '',
+              hero_image_url: parentProd?.ana_resim || '',
+              promo_quote: parentProd?.kisa_aciklama || parentProd?.body || ''
+            });
+          } else {
+            // Ana koleksiyonu silinmiş öksüz parça: Hayalet koleksiyon üretilmesini engelle.
+            if (SERVICE_KEY) {
+              supabase(`/rest/v1/products?slug=eq.${encodeURIComponent(p.slug)}`, SERVICE_KEY, { method: 'DELETE' }).catch(() => {});
+            }
+            continue;
+          }
         }
         if (!combinedParts.some(x => x.collection_id === parentSlug && x.product_slug === p.slug)) {
           combinedParts.push({
@@ -648,9 +663,17 @@ async function collections(req, res) {
     try {
       await supabase(`/rest/v1/collections?slug=eq.${encodeURIComponent(slug)}`, SERVICE_KEY, { method: 'DELETE' });
     } catch (_) {}
+    try {
+      await supabase(`/rest/v1/products?slug=eq.${encodeURIComponent(slug)}`, SERVICE_KEY, { method: 'DELETE' });
+      await supabase(`/rest/v1/products?slug=like.${encodeURIComponent(slug)}-%`, SERVICE_KEY, { method: 'DELETE' });
+    } catch (_) {}
     const extStore = await readExtendedCatalogStore();
     extStore.collections = (extStore.collections || []).filter(c => c.slug !== slug);
-    extStore.collection_products = (extStore.collection_products || []).filter(cp => cp.collection_id !== slug);
+    extStore.collection_products = (extStore.collection_products || []).filter(cp => cp.collection_id !== slug && !cp.product_slug.startsWith(slug + '-'));
+    delete extStore.product_meta[slug];
+    for (const k of Object.keys(extStore.product_meta || {})) {
+      if (k.startsWith(slug + '-')) delete extStore.product_meta[k];
+    }
     await writeExtendedCatalogStore(extStore);
     return res.status(200).json({ ok: true, deleted: true, slug });
   }

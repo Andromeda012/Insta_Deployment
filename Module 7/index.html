@@ -848,6 +848,12 @@
         const parts = Array.isArray(c.parts) && c.parts.length
           ? c.parts
           : (Array.isArray(matchingProd.collection_pieces) ? matchingProd.collection_pieces : []);
+
+        // Hayalet koleksiyon koruması: Katalogda üst ürünü olmayan ve görseli bulunmayan öksüz kayıtları gösterme
+        if (!matchingProd.slug && !c.hero_image && !c.hero_image_url) {
+          return;
+        }
+
         unified.push({
           isCollection: true,
           slug: c.slug,
@@ -1281,6 +1287,17 @@
       if (!ok) return;
       try {
         if (isCollection) {
+          const matchingCol = cachedCollections.find(c => c.slug === slug || c.id === slug);
+          const parts = matchingCol?.parts || [];
+          for (const p of parts) {
+            const pSlug = p.product_slug || p.slug;
+            if (pSlug && pSlug !== slug) {
+              await module7Api('/api/module7?action=products', {
+                method: 'DELETE',
+                body: JSON.stringify({ slug: pSlug })
+              }).catch(() => {});
+            }
+          }
           await module7Api('/api/module7?action=collections', {
             method: 'DELETE',
             body: JSON.stringify({ slug })

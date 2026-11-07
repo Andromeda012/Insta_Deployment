@@ -1,5 +1,4 @@
-const thumb = item.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-     const promoQuote = (item.promo_quote || item.design_story || '').trim();<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
@@ -805,53 +804,193 @@ const thumb = item.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storag
       document.getElementById('slotCardEvening').classList.toggle('inactive', !document.getElementById('chkSlotEveningActive').checked);
     }
 
-    function renderUpcomingPreviews() {
+    // =========================================================================
+    // KOLEKSİYON VE BAĞIMSIZ ÜRÜN DERLEYİCİ (YOUTUBE SHORTS)
+    // =========================================================================
+    const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+    const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
+
+    function buildCleanEntities(rawProds = []) {
+      const colMap = new Map();
+      const pieceMap = new Map();
+      const independentList = [];
+
+      for (const p of rawProds) {
+        if (!p || !p.slug) continue;
+        if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) {
+          const parent = p.slug.replace(PIECE_SLUG_REGEX, '');
+          if (!pieceMap.has(parent)) pieceMap.set(parent, []);
+          pieceMap.get(parent).push(p);
+        }
+      }
+
+      for (const p of rawProds) {
+        if (!p || !p.slug) continue;
+        if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) continue;
+
+        if (pieceMap.has(p.slug) || p.product_type === 'collection' || (p.title && p.title.toLowerCase().includes('koleksiyon'))) {
+          const pieces = pieceMap.get(p.slug) || [];
+          colMap.set(p.slug, {
+            ...p,
+            product_type: 'collection',
+            collection_pieces: pieces,
+            title: p.title.toLowerCase().includes('koleksiyon') ? p.title : `${p.title} Koleksiyonu`
+          });
+        } else {
+          independentList.push({
+            ...p,
+            product_type: 'independent'
+          });
+        }
+      }
+
+      for (const [parentSlug, pieces] of pieceMap.entries()) {
+        if (!colMap.has(parentSlug)) {
+          const first = pieces[0];
+          const rawName = first?.title ? first.title.replace(/\s+(Yatak Başlığı|Makyaj Masası|Dolap|Komodin|Şifonyer).*/i, '') : 'Viyana';
+          const title = `${rawName} Yatak Odası Koleksiyonu`;
+          colMap.set(parentSlug, {
+            slug: parentSlug,
+            title,
+            kategori: first?.kategori || 'Yatak Odası',
+            ana_resim: first?.ana_resim || '',
+            product_type: 'collection',
+            collection_pieces: pieces
+          });
+        }
+      }
+
+      return [...colMap.values(), ...independentList];
+    }
+
+    async function renderUpcomingPreviews() {
       const container = document.getElementById('upcomingPreviewContainer');
       const summaryEl = document.getElementById('txtUpcomingSummary');
       if (!container) return;
 
-      if (!catalogProducts || catalogProducts.length === 0) {
+      const cleanEntities = buildCleanEntities(catalogProducts);
+
+      if (!cleanEntities || cleanEntities.length === 0) {
         container.innerHTML = `<div style="text-align:center; padding:24px; color:var(--text-muted); font-size:13px;">Katalogda henüz ürün bulunmuyor.</div>`;
         if (summaryEl) summaryEl.textContent = '0 Sıradaki Shorts';
         return;
       }
 
-      const formats = [
-        { fmt: 'SHORTS_COLLECTION', label: '🎬 Koleksiyon Shorts', badgeClass: 'badge-shorts', slotTime: document.getElementById('timeSlotMorning')?.value || '11:00' },
-        { fmt: 'SHORTS_CNC', label: '🪵 Parça Detay Shorts', badgeClass: 'badge-cnc', slotTime: document.getElementById('timeSlotAfternoon')?.value || '16:00' },
-        { fmt: 'SHORTS_SHOWROOM', label: '✨ Showroom Shorts', badgeClass: 'badge-showroom', slotTime: document.getElementById('timeSlotEvening')?.value || '20:30' }
-      ];
+      const todayStr = new Date().toISOString().slice(0, 10);
+      const morningTime = document.getElementById('timeSlotMorning')?.value || '11:00';
+      const afternoonTime = document.getElementById('timeSlotAfternoon')?.value || '16:00';
+      const eveningTime = document.getElementById('timeSlotEvening')?.value || '20:30';
 
-      const items = catalogProducts.slice(0, 4).map((prod, idx) => ({
-        product: prod,
-        formatObj: formats[idx % formats.length]
-      }));
+      const morningActive = document.getElementById('chkSlotMorningActive')?.checked ?? true;
+      const afternoonActive = document.getElementById('chkSlotAfternoonActive')?.checked ?? true;
+      const eveningActive = document.getElementById('chkSlotEveningActive')?.checked ?? true;
 
-      if (summaryEl) summaryEl.textContent = `Sırada ${items.length} Shorts Paketi Hazır`;
+      // 1. BUGÜN İÇİN ÖNCELİKLİ KAMPANYA VAR MI?
+      let todayCampaign = null;
+      try {
+        const campRes = await fetch('/api/module2?action=campaigns', { cache: 'no-store' });
+        const campData = await campRes.json().catch(() => ({}));
+        const campaigns = Array.isArray(campData?.campaigns) ? campData.campaigns : [];
+        todayCampaign = campaigns.find(c => {
+          const cDate = c.publish_date || (c.created_at ? c.created_at.slice(0, 10) : '');
+          return cDate === todayStr;
+        });
+      } catch (_) {}
+
+      const items = [];
+
+      if (todayCampaign) {
+        const cTitle = todayCampaign.title || 'Özel Mimari Kampanya';
+        const cDiscount = todayCampaign.discount_amount ? ` (${todayCampaign.discount_amount})` : '';
+        const primarySlug = todayCampaign.selected_slugs?.[0] || '';
+        const entity = cleanEntities.find(e => e.slug === primarySlug) || cleanEntities[0];
+
+        if (morningActive) {
+          items.push({
+            product: entity,
+            formatTitle: "🏷️ Kampanya Açılış Shorts",
+            badgeClass: "badge-shorts",
+            slotTime: morningTime,
+            title: `[KAMPANYA] ${cTitle}${cDiscount} #Shorts`,
+            planPills: ['⭐ Kampanya Rozeti', '🏷️ Öncelikli Yayın', entity.product_type === 'collection' ? `🏛️ Koleksiyon (${entity.collection_pieces?.length || 0} Parça)` : '🪑 Bağımsız Ürün']
+          });
+        }
+        if (afternoonActive) {
+          items.push({
+            product: entity,
+            formatTitle: "🪵 Kampanya Detay Shorts",
+            badgeClass: "badge-cnc",
+            slotTime: afternoonTime,
+            title: `[KAMPANYA] ${cTitle} — Detay #Shorts`,
+            planPills: ['⭐ Kampanya Fon Müziği', '🏷️ Özel İndirim', '🎻 Kurumsal Müzik']
+          });
+        }
+        if (eveningActive) {
+          items.push({
+            product: entity,
+            formatTitle: "✨ Kampanya Showroom Shorts",
+            badgeClass: "badge-showroom",
+            slotTime: eveningTime,
+            title: `[KAMPANYA] ${cTitle} — Showroom #Shorts`,
+            planPills: ['⭐ Akşam Kuşağı', '🏷️ Özel İndirim', '🎥 Slow Dolly-In']
+          });
+        }
+
+        if (summaryEl) summaryEl.textContent = `⭐ Bugün Özel Kampanya Günü (${items.length} Shorts Paketi)`;
+      } else {
+        const activeEntity = cleanEntities[0];
+        const isCollection = activeEntity.product_type === 'collection';
+        const pieceCount = activeEntity.collection_pieces?.length || 0;
+
+        if (morningActive) {
+          items.push({
+            product: activeEntity,
+            formatTitle: isCollection ? "🎬 Koleksiyon Tanıtım Shorts (9:16)" : "🎬 Bağımsız Ürün Shorts",
+            badgeClass: "badge-shorts",
+            slotTime: morningTime,
+            title: `1. ${activeEntity.title} #Shorts`,
+            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎥 Slow Dolly-In', '🎻 Lüks Akustik']
+          });
+        }
+        if (afternoonActive) {
+          items.push({
+            product: activeEntity,
+            formatTitle: isCollection ? "🪵 Malzeme & Parça Detay Shorts" : "🪵 Detay & Doku Shorts",
+            badgeClass: "badge-cnc",
+            slotTime: afternoonTime,
+            title: `2. ${activeEntity.title} #Shorts`,
+            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎥 Macro Detail', '🎧 Minimalist Lo-Fi']
+          });
+        }
+        if (eveningActive) {
+          items.push({
+            product: activeEntity,
+            formatTitle: "✨ Akşam Showroom & Atmosfer Shorts",
+            badgeClass: "badge-showroom",
+            slotTime: eveningTime,
+            title: `3. ${activeEntity.title} #Shorts`,
+            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎥 Slow Push-In', '🎻 Sinematik Müzik']
+          });
+        }
+
+        if (summaryEl) summaryEl.textContent = `📅 Bugünün Yayın Akışı (${items.length} Shorts Paketi)`;
+      }
 
       container.innerHTML = items.map((item, idx) => {
         const p = item.product;
-        const f = item.formatObj;
         const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
-        const prefs = p.marketing_preferences || {};
-        const musicKey = prefs.music_preference || 'modern_acoustic';
-        const camKey = prefs.camera || 'slow_dolly_in';
-        const isCollection = p.product_type === 'collection' || (Array.isArray(p.collection_pieces) && p.collection_pieces.length > 0);
-        const pieceCount = Array.isArray(p.collection_pieces) ? p.collection_pieces.length : 0;
 
         return `
           <div class="upcoming-card">
             <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
-                <span class="slot-type-badge ${f.badgeClass}">${f.label}</span>
-                <span style="font-size:11px; color:#FB7185; font-weight:800;">⏰ ${f.slotTime}</span>
+                <span class="slot-type-badge ${item.badgeClass}">${item.formatTitle}</span>
+                <span style="font-size:11px; color:#FB7185; font-weight:800;">⏰ ${item.slotTime}</span>
               </div>
-              <div class="upcoming-title">${idx + 1}. ${p.title || p.slug} #Shorts</div>
+              <div class="upcoming-title">${item.title}</div>
               <div class="upcoming-plan-tags">
-                <span class="plan-mini-pill">${isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün'}</span>
-                <span class="plan-mini-pill">${CAMERA_LABELS[camKey] || '🎥 Slow Dolly-In'}</span>
-                <span class="plan-mini-pill">${MUSIC_LABELS[musicKey] || '🎻 Lüks Akustik'}</span>
+                ${(item.planPills || []).map(pill => `<span class="plan-mini-pill">${pill}</span>`).join('')}
               </div>
             </div>
           </div>
