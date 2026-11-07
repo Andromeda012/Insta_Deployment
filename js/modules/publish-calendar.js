@@ -297,8 +297,13 @@ function updateDayDetailsPanel() {
           <span style="font-size:10px; background:rgba(30,41,59,0.7); color:#94a3b8; padding:3px 7px; border-radius:5px;">📱 14:30 Story</span>
           <span style="font-size:10px; background:rgba(30,41,59,0.7); color:#94a3b8; padding:3px 7px; border-radius:5px;">🎬 19:30 Reels</span>
         </div>
-        <div style="font-size:10.5px; color:#38bdf8; margin-top:10px; font-weight:600;">
-          ℹ️ Bu tarihte normal katalog akışı durdurulacak, yalnızca bu kampanya yayınlanacaktır.
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:10.5px; color:#38bdf8; font-weight:600;">
+            ℹ️ Bu tarihte normal katalog akışı durdurulacak, yalnızca bu kampanya yayınlanacaktır.
+          </div>
+          <button type="button" onclick="window.openCampaignReviewModal('${escapeHtml(c.id)}')" style="padding:5px 12px; border-radius:6px; border:1px solid #d4af37; background:rgba(212,175,55,0.18); color:#fde68a; font-size:11px; font-weight:700; cursor:pointer;">
+            🔍 İncele &amp; Onayla
+          </button>
         </div>
       </div>
     `).join('');

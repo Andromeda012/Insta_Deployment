@@ -1,5 +1,5 @@
 // Module 2: Social Media & Cloud Bot Control Panel (4 Autonomous Bots)
-import { renderCampaignStudioModalHtml, openCampaignStudioModal } from './campaign-studio.js';
+import { renderCampaignStudioModalHtml, openCampaignStudioModal, renderCampaignReviewModalHtml, openCampaignReviewModal } from './campaign-studio.js';
 import { renderPublishCalendarModalHtml, openPublishCalendarModal } from './publish-calendar.js';
 
 if (typeof window !== 'undefined') {
@@ -30,6 +30,7 @@ if (typeof window !== 'undefined') {
     };
     window.openCampaignStudioModal = openCampaignStudioModal;
     window.openPublishCalendarModal = openPublishCalendarModal;
+    window.openCampaignReviewModal = openCampaignReviewModal;
 }
 
 export function renderSocialModule() {
@@ -72,14 +73,24 @@ export function renderSocialModule() {
                         🎵 TikTok Bot <span style="background:#f59e0b; color:#451a03; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:800;">BAĞLANTI BEKLENİYOR</span>
                     </button>
                 </div>
-                <!-- SAĞ TARAF: YAYIN TAKVİMİ & YENİ KAMPANYA ÜRET BUTONLARI -->
+                <!-- SAĞ TARAF: İNCELEME, YAYIN TAKVİMİ & YENİ KAMPANYA ÜRET BUTONLARI -->
                 <div style="display:flex; align-items:center; gap:8px;">
+                    <button
+                        id="btnOpenCampaignReview"
+                        type="button"
+                        onclick="window.openCampaignReviewModal()"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:9px; border:1px solid rgba(56,189,248,0.5); background:rgba(15,23,42,0.8); color:#38bdf8; font-size:12.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(56,189,248,0.2); transition:all .2s ease;"
+                        onmouseover="this.style.background='rgba(56,189,248,0.15)'"
+                        onmouseout="this.style.background='rgba(15,23,42,0.8)'"
+                    >
+                        📋 İnceleme &amp; Onay Masası
+                    </button>
                     <button
                         id="btnOpenPublishCalendar"
                         type="button"
                         onclick="window.openPublishCalendarModal()"
-                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:9px; border:1px solid rgba(56,189,248,0.6); background:rgba(15,23,42,0.8); color:#38bdf8; font-size:12.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(56,189,248,0.2); transition:all .2s ease;"
-                        onmouseover="this.style.background='rgba(56,189,248,0.15)'"
+                        style="display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:9px; border:1px solid rgba(148,163,184,0.4); background:rgba(15,23,42,0.8); color:#cbd5e1; font-size:12.5px; font-weight:700; cursor:pointer; box-shadow:0 4px 14px rgba(0,0,0,0.3); transition:all .2s ease;"
+                        onmouseover="this.style.background='rgba(148,163,184,0.15)'"
                         onmouseout="this.style.background='rgba(15,23,42,0.8)'"
                     >
                         📅 Yayın Takvimi
@@ -109,6 +120,9 @@ export function renderSocialModule() {
 
             <!-- Kampanya Üretme Modal Bileşeni -->
             ${renderCampaignStudioModalHtml()}
+
+            <!-- Kampanya İnceleme & Onay Masası Modalı -->
+            ${renderCampaignReviewModalHtml()}
 
             <!-- Büyük Yayın Takvimi Modalı -->
             ${renderPublishCalendarModalHtml()}

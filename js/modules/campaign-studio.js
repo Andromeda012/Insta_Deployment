@@ -54,6 +54,7 @@ const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
 function isPieceOfCollection(p, knownColSlugs = new Set()) {
   if (!p || !p.slug) return false;
   if (p.is_piece === true || p.product_type === 'collection_piece') return true;
+  if (Boolean(p.collection_id) || Boolean(p.parent_collection_slug)) return true;
   if (PIECE_SLUG_REGEX.test(p.slug) || (p.sku && PIECE_SKU_REGEX.test(p.sku))) return true;
   for (const cSlug of knownColSlugs) {
     if (p.slug.startsWith(cSlug + '-')) return true;
@@ -576,7 +577,7 @@ export async function generateCampaignAiCopy() {
   }
 }
 
-// Kampanyayı Üret ve Kaydet
+// Kampanyayı Üret ve Kaydet (Yeni Kapsamlı Kampanya Motoruna Bağlandı)
 export async function submitCampaignGeneration() {
   const btn = document.getElementById('btnSubmitCampaign');
   const statusBox = document.getElementById('cmpStatusBox');
@@ -603,14 +604,13 @@ export async function submitCampaignGeneration() {
     return;
   }
 
+  if (!title) {
+    alert('Lütfen bir kampanya başlığı belirleyin.');
+    return;
+  }
+
   const publishDate = document.getElementById('cmpPublishDate')?.value || new Date().toISOString().slice(0, 10);
   const publishTime = document.getElementById('cmpPublishTimeSlot')?.value || 'all_slots';
-
-  const formats = {
-    feed: true,
-    reels: document.getElementById('chkCmpFormatReels')?.checked ?? true,
-    stories: document.getElementById('chkCmpFormatStories')?.checked ?? true
-  };
 
   if (btn) {
     btn.disabled = true;
@@ -622,27 +622,40 @@ export async function submitCampaignGeneration() {
     statusBox.style.border = '1px solid rgba(56,189,248,0.35)';
     statusBox.style.color = '#38bdf8';
     statusBox.innerHTML = `
-      <div>⏳ <strong>Kampanya Kapak Slaytı ve Format Motoru Hazırlanıyor...</strong></div>
-      <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">1. Kapak slaytı, seçilen tema paleti ve 4 bot kuyrukları senkronize ediliyor.</div>
+      <div>⏳ <strong>Modül 7 Gerçek Verileriyle Kampanya ve Paketler Üretiliyor...</strong></div>
+      <div style="font-size:11px; color:#cbd5e1; margin-top:4px;">Strateji, 4 platform içerik paketleri ve video sahne planları hazırlanıyor.</div>
     `;
   }
 
   try {
-    const res = await fetch('/api/module2?action=campaign-generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        composition_kind: kind,
-        selected_slugs: selectedSlugs,
+    const payload = {
+      target_type: kind,
+      composition_kind: kind,
+      selected_slugs: selectedSlugs,
+      collection_slug: (kind === 'collection') ? selectedSlugs[0] : null,
+      product_slug: (kind === 'independent') ? selectedSlugs[0] : null,
+      campaign_type: type,
+      sub_type: sub,
+      discount_amount: discount,
+      title: title,
+      campaign_title: title,
+      intro: intro,
+      campaign_intro: intro,
+      publish_date: publishDate,
+      publish_time: publishTime,
+      selected_platforms: ['instagram', 'facebook', 'youtube', 'tiktok'],
+      creative_controls: {
         campaign_type: type,
         sub_type: sub,
         discount_amount: discount,
-        campaign_title: title,
-        campaign_intro: intro,
-        publish_date: publishDate,
-        publish_time: publishTime,
-        formats
-      })
+        notes: intro
+      }
+    };
+
+    const res = await fetch('/api/module2?action=campaigns', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     }).then(r => r.json());
 
     if (!res.ok) throw new Error(res.error || 'Kampanya oluşturulamadı.');
@@ -656,11 +669,11 @@ export async function submitCampaignGeneration() {
       statusBox.style.border = '1px solid rgba(16,185,129,0.4)';
       statusBox.style.color = '#34d399';
       statusBox.innerHTML = `
-        <div style="font-size:13px; font-weight:800;">✅ ${escapeHtml(res.message || 'Kampanya başarıyla üretildi!')}</div>
+        <div style="font-size:13px; font-weight:800;">✅ Kampanya Başarıyla Üretildi!</div>
         <div style="font-size:11.5px; color:#cbd5e1; margin-top:4px;">
-          • Carousel Gönderi: <strong>Hazırlandı</strong><br>
-          • Reels &amp; Story: <strong>Kuyruğa Eklendi</strong><br>
-          • 4 Bot Durumu: <strong>Instagram, Facebook, YouTube, TikTok planlandı.</strong>
+          • Durum: <strong>İnsan İncelemesi ve Onayı Bekleniyor</strong><br>
+          • 4 Platform: <strong>Instagram, Facebook, YouTube, TikTok paketleri hazırlandı.</strong><br>
+          • İnceleme &amp; Onay ekranına yönlendiriliyorsunuz...
         </div>
       `;
     }
@@ -673,10 +686,13 @@ export async function submitCampaignGeneration() {
 
     setTimeout(() => {
       closeCampaignStudioModal();
-      if (typeof window.showToast === 'function') {
-        window.showToast(`🎯 "${title}" kampanyası 4 bot kuyruğuna başarıyla eklendi!`);
+      if (res.campaign && res.campaign.id) {
+        openCampaignReviewModal(res.campaign.id);
       }
-    }, 2400);
+      if (typeof window.showToast === 'function') {
+        window.showToast(`🎯 "${title}" kampanyası inceleme ekranında açıldı!`);
+      }
+    }, 1200);
 
   } catch (err) {
     if (statusBox) {
@@ -688,7 +704,605 @@ export async function submitCampaignGeneration() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.innerHTML = '🚀 Kampanyayı Üret ve 4 Bot Kuyruğuna Ekle';
+      btn.innerHTML = '🚀 Kampanyayı Üret ve İncelemeye Al';
+    }
+  }
+}
+
+// ── KAMPANYA İNCELEME & ONAY MODALI (BÖLÜM 3) ────────────────────────────────
+let activeReviewCampaign = null;
+let currentReviewPlatformFilter = 'all';
+
+export function renderCampaignReviewModalHtml() {
+  return `
+    <div id="campaignReviewModal" class="campaign-modal-backdrop" style="display:none; position:fixed; inset:0; z-index:100020; background:rgba(3,7,18,0.88); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+      <div class="campaign-modal-window" style="background:#0f172a; border:1px solid rgba(212,175,55,0.45); border-radius:18px; width:1140px; max-width:98vw; max-height:94vh; overflow-y:auto; box-shadow:0 25px 70px rgba(0,0,0,0.75); color:#f8fafc; display:flex; flex-direction:column;">
+        
+        <!-- HEADER -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(148,163,184,0.18); background:linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.85)); position:sticky; top:0; z-index:20;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px; height:42px; border-radius:10px; background:linear-gradient(135deg,#38bdf8,#0284c7); color:#030712; font-size:22px; font-weight:900; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 14px rgba(56,189,248,0.35);">
+              📋
+            </div>
+            <div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <h2 id="cmpReviewTitle" style="font-size:17px; font-weight:800; color:#fff; letter-spacing:-0.2px; margin:0;">Kampanya İnceleme &amp; Onay Masası</h2>
+                <span id="cmpReviewCodeBadge" style="font-size:11px; font-weight:700; background:rgba(212,175,55,0.2); color:#fde68a; padding:2px 8px; border-radius:6px; border:1px solid rgba(212,175,55,0.4);">CMP-000</span>
+                <span id="cmpReviewStatusBadge" style="font-size:11px; font-weight:700; background:rgba(56,189,248,0.2); color:#38bdf8; padding:2px 8px; border-radius:6px;">İnceleme Bekliyor</span>
+              </div>
+              <p id="cmpReviewSubtitle" style="font-size:11.5px; color:#94a3b8; margin:2px 0 0;">Kullanıcı onayı olmadan hiçbir içerik yayın kuyruğuna aktarılmaz. İçerikleri inceleyin, düzenleyin ve onaylayın.</p>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" onclick="window.refreshActiveCampaignReview()" style="background:rgba(30,41,59,0.7); border:1px solid #475569; color:#cbd5e1; font-size:12px; font-weight:700; padding:6px 12px; border-radius:8px; cursor:pointer;" title="Yenile">🔄 Yenile</button>
+            <button type="button" onclick="window.closeCampaignReviewModal()" style="background:none; border:none; color:#94a3b8; font-size:26px; line-height:1; cursor:pointer; padding:4px 8px; border-radius:6px; transition:color .15s;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#94a3b8'">&times;</button>
+          </div>
+        </div>
+
+        <!-- PLATFORM TABS & SUMMARY -->
+        <div style="padding:14px 24px; border-bottom:1px solid rgba(148,163,184,0.12); background:rgba(15,23,42,0.6); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+          <div style="display:flex; gap:6px; flex-wrap:wrap;" id="cmpReviewPlatformTabs">
+            <button type="button" class="cmp-rev-tab active" data-platform="all" onclick="window.filterReviewPlatform('all')" style="padding:6px 12px; border-radius:8px; border:1px solid #d4af37; background:rgba(212,175,55,0.18); color:#fde68a; font-size:12px; font-weight:700; cursor:pointer;">
+              🌟 Tüm Paketler (<span id="countTabAll">0</span>)
+            </button>
+            <button type="button" class="cmp-rev-tab" data-platform="instagram" onclick="window.filterReviewPlatform('instagram')" style="padding:6px 12px; border-radius:8px; border:1px solid #334155; background:rgba(30,41,59,0.5); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer;">
+              📸 Instagram (<span id="countTabIg">0</span>)
+            </button>
+            <button type="button" class="cmp-rev-tab" data-platform="facebook" onclick="window.filterReviewPlatform('facebook')" style="padding:6px 12px; border-radius:8px; border:1px solid #334155; background:rgba(30,41,59,0.5); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer;">
+              📘 Facebook (<span id="countTabFb">0</span>)
+            </button>
+            <button type="button" class="cmp-rev-tab" data-platform="youtube" onclick="window.filterReviewPlatform('youtube')" style="padding:6px 12px; border-radius:8px; border:1px solid #334155; background:rgba(30,41,59,0.5); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer;">
+              ▶️ YouTube (<span id="countTabYt">0</span>)
+            </button>
+            <button type="button" class="cmp-rev-tab" data-platform="tiktok" onclick="window.filterReviewPlatform('tiktok')" style="padding:6px 12px; border-radius:8px; border:1px solid #334155; background:rgba(30,41,59,0.5); color:#cbd5e1; font-size:12px; font-weight:700; cursor:pointer;">
+              🎵 TikTok (<span id="countTabTt">0</span>)
+            </button>
+          </div>
+          <div id="cmpReviewNoticeBox" style="font-size:11.5px; color:#cbd5e1; background:rgba(30,41,59,0.6); padding:6px 12px; border-radius:6px; border:1px solid rgba(148,163,184,0.15);">
+            🔒 <strong>Güvenlik İlkesi:</strong> Yalnızca <span style="color:#34d399; font-weight:700;">Onaylandı</span> durumundaki içerikler yayın kuyruğuna alınır.
+          </div>
+        </div>
+
+        <!-- ITEMS CONTAINER -->
+        <div id="cmpReviewItemsContainer" style="padding:20px 24px; display:flex; flex-direction:column; gap:16px;">
+          <div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">
+            ⏳ Kampanya içerik paketleri yükleniyor...
+          </div>
+        </div>
+
+        <!-- BULK ACTIONS FOOTER -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:16px 24px; border-top:1px solid rgba(148,163,184,0.18); background:rgba(15,23,42,0.96); position:sticky; bottom:0; z-index:20;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <label style="display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:#cbd5e1; cursor:pointer;">
+              <input type="checkbox" id="chkSelectAllReviewItems" onchange="window.toggleSelectAllReviewItems(this)" style="width:16px; height:16px; accent-color:#d4af37;">
+              <span>Tümünü Seç</span>
+            </label>
+            <span id="cmpReviewSelectedCount" style="font-size:11.5px; color:#94a3b8;">0 öğe seçildi</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button type="button" onclick="window.bulkApproveSelectedReviewItems()" style="padding:9px 18px; border-radius:8px; border:1px solid #10b981; background:rgba(16,185,129,0.15); color:#34d399; font-weight:800; cursor:pointer; font-size:12.5px;">
+              ✅ Seçilenleri Onayla
+            </button>
+            <button type="button" id="btnBulkQueueApproved" onclick="window.bulkQueueSelectedApprovedItems()" style="display:inline-flex; align-items:center; gap:8px; padding:10px 22px; border-radius:8px; border:1px solid #d4af37; background:linear-gradient(135deg,#d4af37,#9b7220); color:#0b1120; font-weight:800; cursor:pointer; font-size:13px; box-shadow:0 4px 18px rgba(212,175,55,0.35);">
+              🚀 Seçilen Onaylıları Yayın Kuyruğuna Gönder
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
+export async function openCampaignReviewModal(campaignId = null) {
+  let modal = document.getElementById('campaignReviewModal');
+  if (!modal) {
+    const wrap = document.createElement('div');
+    wrap.innerHTML = renderCampaignReviewModalHtml();
+    document.body.appendChild(wrap.firstElementChild);
+    modal = document.getElementById('campaignReviewModal');
+  }
+  modal.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+
+  await loadCampaignReviewData(campaignId);
+}
+
+export function closeCampaignReviewModal() {
+  const modal = document.getElementById('campaignReviewModal');
+  if (modal) modal.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+export async function refreshActiveCampaignReview() {
+  if (activeReviewCampaign && activeReviewCampaign.id) {
+    await loadCampaignReviewData(activeReviewCampaign.id);
+  } else {
+    await loadCampaignReviewData();
+  }
+}
+
+async function loadCampaignReviewData(targetId = null) {
+  const container = document.getElementById('cmpReviewItemsContainer');
+  if (container) {
+    container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">⏳ Kampanya içerik paketleri yükleniyor...</div>';
+  }
+
+  try {
+    const url = targetId ? `/api/module2?action=campaigns&id=${encodeURIComponent(targetId)}` : '/api/module2?action=campaigns';
+    const res = await fetch(url, { cache: 'no-store' }).then(r => r.json());
+    if (!res.ok) throw new Error(res.error || 'Kampanya verisi yüklenemedi.');
+
+    if (targetId && res.campaign) {
+      activeReviewCampaign = res.campaign;
+    } else if (Array.isArray(res.campaigns) && res.campaigns.length > 0) {
+      activeReviewCampaign = res.campaigns[0];
+    } else {
+      activeReviewCampaign = null;
+    }
+
+    if (!activeReviewCampaign) {
+      if (container) {
+        container.innerHTML = '<div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px;">Henüz kayıtlı kampanya bulunamadı. "Yeni Kampanya Üret" butonuna tıklayarak ilk kampanyanızı oluşturabilirsiniz.</div>';
+      }
+      return;
+    }
+
+    // Header bilgilerini güncelle
+    const titleEl = document.getElementById('cmpReviewTitle');
+    const codeEl = document.getElementById('cmpReviewCodeBadge');
+    const statusEl = document.getElementById('cmpReviewStatusBadge');
+    if (titleEl) titleEl.textContent = activeReviewCampaign.title || 'Kampanya İnceleme Masası';
+    if (codeEl) codeEl.textContent = activeReviewCampaign.campaign_code || activeReviewCampaign.id.slice(0, 8);
+    if (statusEl) {
+      statusEl.textContent = activeReviewCampaign.status || 'pending_review';
+    }
+
+    renderReviewCards();
+  } catch (err) {
+    if (container) {
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:#fca5a5; font-size:13px;">❌ Veri Yükleme Hatası: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+export function filterReviewPlatform(platform) {
+  currentReviewPlatformFilter = platform;
+  document.querySelectorAll('.cmp-rev-tab').forEach(tab => {
+    const isCur = tab.getAttribute('data-platform') === platform;
+    tab.classList.toggle('active', isCur);
+    tab.style.borderColor = isCur ? '#d4af37' : '#334155';
+    tab.style.background = isCur ? 'rgba(212,175,55,0.18)' : 'rgba(30,41,59,0.5)';
+    tab.style.color = isCur ? '#fde68a' : '#cbd5e1';
+  });
+  renderReviewCards();
+}
+
+function renderReviewCards() {
+  const container = document.getElementById('cmpReviewItemsContainer');
+  if (!container || !activeReviewCampaign) return;
+
+  const items = activeReviewCampaign.items || [];
+
+  // Tab sayılarını güncelle
+  const countAll = items.length;
+  const countIg = items.filter(i => i.platform === 'instagram').length;
+  const countFb = items.filter(i => i.platform === 'facebook').length;
+  const countYt = items.filter(i => i.platform === 'youtube').length;
+  const countTt = items.filter(i => i.platform === 'tiktok').length;
+
+  const elAll = document.getElementById('countTabAll');
+  const elIg = document.getElementById('countTabIg');
+  const elFb = document.getElementById('countTabFb');
+  const elYt = document.getElementById('countTabYt');
+  const elTt = document.getElementById('countTabTt');
+  if (elAll) elAll.textContent = countAll;
+  if (elIg) elIg.textContent = countIg;
+  if (elFb) elFb.textContent = countFb;
+  if (elYt) elYt.textContent = countYt;
+  if (elTt) elTt.textContent = countTt;
+
+  const filteredItems = currentReviewPlatformFilter === 'all'
+    ? items
+    : items.filter(i => i.platform === currentReviewPlatformFilter);
+
+  if (!filteredItems.length) {
+    container.innerHTML = `<div style="text-align:center; padding:30px; color:#94a3b8; font-size:12.5px;">Bu platform filtresine (${currentReviewPlatformFilter}) ait içerik paketi bulunamadı.</div>`;
+    return;
+  }
+
+  const statusColors = {
+    pending_review: { bg: 'rgba(56,189,248,0.18)', color: '#38bdf8', border: 'rgba(56,189,248,0.4)', label: 'İnceleme Bekliyor' },
+    approved: { bg: 'rgba(16,185,129,0.18)', color: '#34d399', border: 'rgba(16,185,129,0.4)', label: 'Onaylandı' },
+    queued: { bg: 'rgba(147,51,234,0.18)', color: '#c084fc', border: 'rgba(147,51,234,0.4)', label: 'Yayın Kuyruğunda' },
+    awaiting_platform_connection: { bg: 'rgba(245,158,11,0.18)', color: '#fbbf24', border: 'rgba(245,158,11,0.4)', label: 'Platform Bağlantısı Bekleniyor' },
+    revision_required: { bg: 'rgba(239,68,68,0.18)', color: '#fca5a5', border: 'rgba(239,68,68,0.4)', label: 'Revizyon Gerekli' },
+    manual_action_required: { bg: 'rgba(244,63,94,0.18)', color: '#fb7185', border: 'rgba(244,63,94,0.4)', label: 'Manuel İşlem Gerekli' },
+    published: { bg: 'rgba(16,185,129,0.25)', color: '#10b981', border: '#10b981', label: 'Yayınlandı' }
+  };
+
+  const platformIcons = {
+    instagram: '📸 Instagram',
+    facebook: '📘 Facebook',
+    youtube: '▶️ YouTube Shorts',
+    tiktok: '🎵 TikTok'
+  };
+
+  container.innerHTML = filteredItems.map(item => {
+    const st = statusColors[item.status] || { bg: 'rgba(148,163,184,0.15)', color: '#cbd5e1', border: '#475569', label: item.status };
+    const isVideo = ['REELS', 'FB_REELS', 'SHORTS', 'TIKTOK_VIDEO'].includes(item.content_type);
+    const mediaPreview = item.cover_url || item.media_urls?.[0] || '';
+    const scenes = Array.isArray(item.scenes) ? item.scenes : [];
+
+    return `
+      <div class="cmp-review-card" data-item-id="${escapeHtml(item.id)}" style="background:rgba(15,23,42,0.7); border:1px solid rgba(148,163,184,0.2); border-radius:12px; padding:16px; display:flex; flex-direction:column; gap:14px; position:relative;">
+        
+        <!-- CARD HEADER -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" class="cmp-item-select-chk" value="${escapeHtml(item.id)}" data-status="${escapeHtml(item.status)}" onchange="window.onReviewItemCheckboxChange()" style="width:17px; height:17px; accent-color:#d4af37;">
+            <span style="font-size:12.5px; font-weight:800; color:#fff;">${platformIcons[item.platform] || item.platform}</span>
+            <span style="font-size:11px; color:#94a3b8; font-weight:700;">• ${escapeHtml(item.package_type || item.content_type)}</span>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; font-weight:700; padding:3px 9px; border-radius:6px; background:${st.bg}; color:${st.color}; border:1px solid ${st.border};">
+              ${escapeHtml(st.label)}
+            </span>
+          </div>
+        </div>
+
+        <!-- CARD BODY (2-COLUMN) -->
+        <div style="display:grid; grid-template-columns:240px 1fr; gap:16px;">
+          
+          <!-- LEFT: VISUAL PREVIEW & SPEC PILLS -->
+          <div style="display:flex; flex-direction:column; gap:8px;">
+            <div style="position:relative; width:100%; height:200px; border-radius:8px; overflow:hidden; background:#000; border:1px solid #334155; display:flex; align-items:center; justify-content:center;">
+              ${mediaPreview ? `
+                <img src="${escapeHtml(mediaPreview)}" alt="Önizleme" style="width:100%; height:100%; object-fit:cover;" onerror="this.src=''; this.alt='Görsel Yüklenemedi';">
+              ` : `
+                <div style="color:#64748b; font-size:11px; text-align:center; padding:12px;">🖼️ Görsel Henüz Eklenmedi</div>
+              `}
+              ${isVideo ? `
+                <div style="position:absolute; inset:0; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; color:#fff; font-size:26px;">
+                  ▶
+                </div>
+                <span style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.75); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
+                  ${item.duration_seconds || 22} sn
+                </span>
+              ` : `
+                <span style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.75); color:#fff; font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
+                  ${escapeHtml(item.aspect_ratio || '1:1')}
+                </span>
+              `}
+            </div>
+
+            <!-- TEKNİK ETİKETLER -->
+            <div style="display:flex; flex-wrap:wrap; gap:4px;">
+              <span style="font-size:10px; background:#1e293b; color:#94a3b8; padding:2px 6px; border-radius:4px;">📐 ${escapeHtml(item.resolution || '1080x1080')}</span>
+              ${item.slides && item.slides.length ? `<span style="font-size:10px; background:#1e293b; color:#38bdf8; padding:2px 6px; border-radius:4px;">📚 ${item.slides.length} Slayt</span>` : ''}
+              ${item.music_track ? `<span style="font-size:10px; background:#1e293b; color:#a7f3d0; padding:2px 6px; border-radius:4px;">🎵 ${escapeHtml(item.music_track.id || 'Müzik')}</span>` : ''}
+            </div>
+          </div>
+
+          <!-- RIGHT: EDITABLE FIELDS -->
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:3px;">BAŞLIK:</label>
+              <input type="text" class="rev-inp-title" value="${escapeHtml(item.title || '')}" style="width:100%; padding:7px 10px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#fff; font-size:12px; font-weight:600;">
+            </div>
+
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:3px;">AÇIKLAMA METNİ / CAPTION:</label>
+              <textarea class="rev-inp-caption" style="width:100%; height:75px; padding:7px 10px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#e2e8f0; font-size:11.5px; resize:vertical; line-height:1.4;">${escapeHtml(item.caption || '')}</textarea>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+              <div>
+                <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:3px;">HASHTAGLER:</label>
+                <input type="text" class="rev-inp-hashtags" value="${escapeHtml(item.hashtags || '')}" style="width:100%; padding:7px 10px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#38bdf8; font-size:11.5px;">
+              </div>
+              <div>
+                <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:3px;">PLANLANAN YAYIN ZAMANI (UTC+3):</label>
+                <input type="datetime-local" class="rev-inp-time" value="${item.scheduled_for ? item.scheduled_for.slice(0, 16) : ''}" style="width:100%; padding:6px 10px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#fde68a; font-size:11.5px; font-weight:700;">
+              </div>
+            </div>
+
+            <div>
+              <label style="font-size:11px; font-weight:700; color:#94a3b8; display:block; margin-bottom:3px;">HEDEF WEB BAĞLANTISI:</label>
+              <input type="text" class="rev-inp-link" value="${escapeHtml(item.target_link || 'https://globalkapakmobilya.com/galeri.html')}" style="width:100%; padding:6px 10px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#cbd5e1; font-size:11.5px;">
+            </div>
+
+            <!-- VİDEO SAHNELERİ AKORDİYONU (REELS / SHORTS / TIKTOK İÇİN) -->
+            ${isVideo && scenes.length ? `
+              <details style="background:#090f1c; border:1px solid rgba(148,163,184,0.18); border-radius:8px; padding:8px 12px; margin-top:4px;">
+                <summary style="font-size:11.5px; font-weight:800; color:#38bdf8; cursor:pointer;">
+                  🎬 Video Sahneleri (${scenes.length} Sahne • Tekil Olarak Düzenlenebilir)
+                </summary>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">
+                  ${scenes.map(sc => `
+                    <div style="background:#0f172a; border:1px solid #1e293b; border-radius:6px; padding:8px 10px; display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                      <div style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <strong style="font-size:11.5px; color:#fde68a;">Sahne ${sc.scene_index}: ${escapeHtml(sc.title)}</strong>
+                          <span style="font-size:10px; color:#94a3b8;">(${sc.duration_seconds} sn)</span>
+                        </div>
+                        <div style="font-size:11px; color:#cbd5e1; margin-top:2px;">
+                          💬 <em>"${escapeHtml(sc.subtitle_text || '')}"</em>
+                        </div>
+                        <div style="font-size:10px; color:#64748b; margin-top:2px;">
+                          🎥 ${escapeHtml(sc.camera_movement || 'Slow Push-In')} • 💡 ${escapeHtml(sc.lighting || 'Golden hour')}
+                        </div>
+                      </div>
+                      <button type="button" onclick="window.regenerateReviewScene('${escapeHtml(sc.id)}', '${escapeHtml(item.id)}', ${sc.scene_index})" style="padding:4px 8px; border-radius:6px; border:1px solid #38bdf8; background:rgba(56,189,248,0.12); color:#38bdf8; font-size:10.5px; font-weight:700; cursor:pointer;">
+                        🔄 Sahneyi Düzenle
+                      </button>
+                    </div>
+                  `).join('')}
+                </div>
+              </details>
+            ` : ''}
+
+          </div>
+        </div>
+
+        <!-- ITEM ACTION BUTTONS -->
+        <div style="display:flex; align-items:center; justify-content:space-between; border-top:1px solid rgba(148,163,184,0.12); padding-top:10px; margin-top:4px;">
+          <div style="display:flex; gap:6px;">
+            <button type="button" onclick="window.saveReviewItemChanges('${escapeHtml(item.id)}')" style="padding:6px 12px; border-radius:6px; border:1px solid #475569; background:rgba(30,41,59,0.7); color:#e2e8f0; font-size:11.5px; font-weight:700; cursor:pointer;">
+              💾 Kaydet
+            </button>
+            <button type="button" onclick="window.requestItemRevision('${escapeHtml(item.id)}')" style="padding:6px 12px; border-radius:6px; border:1px solid #f87171; background:rgba(239,68,68,0.12); color:#fca5a5; font-size:11.5px; font-weight:700; cursor:pointer;">
+              ✍️ Revizyon İste
+            </button>
+            <button type="button" onclick="window.holdReviewItem('${escapeHtml(item.id)}')" style="padding:6px 12px; border-radius:6px; border:1px solid #38bdf8; background:rgba(56,189,248,0.1); color:#38bdf8; font-size:11.5px; font-weight:700; cursor:pointer;">
+              ⏸️ Beklet
+            </button>
+          </div>
+
+          <div style="display:flex; gap:8px;">
+            <button type="button" onclick="window.approveReviewItem('${escapeHtml(item.id)}')" style="padding:6px 14px; border-radius:6px; border:1px solid #10b981; background:rgba(16,185,129,0.18); color:#34d399; font-size:12px; font-weight:800; cursor:pointer;">
+              ✅ Onayla
+            </button>
+            <button type="button" onclick="window.approveAndQueueReviewItem('${escapeHtml(item.id)}')" style="padding:6px 14px; border-radius:6px; border:1px solid #d4af37; background:linear-gradient(135deg,#d4af37,#9b7220); color:#0b1120; font-size:12px; font-weight:800; cursor:pointer;">
+              🚀 Onayla ve Kuyruğa Gönder
+            </button>
+          </div>
+        </div>
+
+      </div>
+    `;
+  }).join('');
+}
+
+export function onReviewItemCheckboxChange() {
+  const checked = document.querySelectorAll('.cmp-item-select-chk:checked');
+  const countEl = document.getElementById('cmpReviewSelectedCount');
+  if (countEl) countEl.textContent = `${checked.length} öğe seçildi`;
+}
+
+export function toggleSelectAllReviewItems(masterCheckbox) {
+  const boxes = document.querySelectorAll('.cmp-item-select-chk');
+  boxes.forEach(b => { b.checked = masterCheckbox.checked; });
+  onReviewItemCheckboxChange();
+}
+
+// Tekil İçerik Alanlarını Kaydet
+export async function saveReviewItemChanges(itemId) {
+  const card = document.querySelector(`.cmp-review-card[data-item-id="${itemId}"]`);
+  if (!card) return;
+
+  const title = card.querySelector('.rev-inp-title')?.value.trim();
+  const caption = card.querySelector('.rev-inp-caption')?.value;
+  const hashtags = card.querySelector('.rev-inp-hashtags')?.value;
+  const scheduledFor = card.querySelector('.rev-inp-time')?.value;
+  const targetLink = card.querySelector('.rev-inp-link')?.value.trim();
+
+  try {
+    const res = await fetch('/api/module2?action=campaign-item-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: itemId,
+        title,
+        caption,
+        hashtags,
+        scheduled_for: scheduledFor,
+        target_link: targetLink
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'Kaydedilemedi');
+    if (typeof window.showToast === 'function') window.showToast('✅ Değişiklikler başarıyla kaydedildi.');
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Hata: ' + err.message);
+  }
+}
+
+// Revizyon İste
+export async function requestItemRevision(itemId) {
+  const notes = prompt('Revizyon gerekçesini veya istenen düzeltmeyi girin:');
+  if (notes === null) return;
+
+  try {
+    const res = await fetch('/api/module2?action=campaign-item-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: itemId,
+        status: 'revision_required',
+        review_notes: notes
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'İşlem başarısız');
+    if (typeof window.showToast === 'function') window.showToast('✍️ İçerik revizyon durumuna alındı.');
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Hata: ' + err.message);
+  }
+}
+
+// İçeriği Beklet
+export async function holdReviewItem(itemId) {
+  try {
+    const res = await fetch('/api/module2?action=campaign-item-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: itemId,
+        status: 'pending_review'
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'İşlem başarısız');
+    if (typeof window.showToast === 'function') window.showToast('⏸️ İçerik inceleme durumunda bekletiliyor.');
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Hata: ' + err.message);
+  }
+}
+
+// Tekil İçerik Onayla
+export async function approveReviewItem(itemId) {
+  try {
+    const res = await fetch('/api/module2?action=campaign-item-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: itemId,
+        status: 'approved'
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'Onaylanamadı');
+    if (typeof window.showToast === 'function') window.showToast('✅ İçerik onaylandı!');
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Hata: ' + err.message);
+  }
+}
+
+// Tekil İçeriği Onayla ve Kuyruğa Gönder
+export async function approveAndQueueReviewItem(itemId) {
+  if (!confirm('Bu içeriği onaylayıp sosyal medya yayın kuyruğuna göndermek istiyor musunuz?')) return;
+
+  try {
+    const res = await fetch('/api/module2?action=campaign-approve-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaign_id: activeReviewCampaign?.id,
+        item_id: itemId,
+        approve: true
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'Yayın kuyruğuna eklenemedi');
+    if (typeof window.showToast === 'function') window.showToast('🚀 İçerik başarıyla yayın kuyruğuna aktarıldı!');
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Kuyruk Hatası: ' + err.message);
+  }
+}
+
+// Tekil Video Sahnesini Yeniden Düzenle
+export async function regenerateReviewScene(sceneId, itemId, sceneIndex) {
+  const newSub = prompt(`Sahne ${sceneIndex} için yeni altyazı metni girin:`);
+  if (newSub === null) return;
+
+  try {
+    const res = await fetch('/api/module2?action=campaign-scene-regenerate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        scene_id: sceneId,
+        item_id: itemId,
+        scene_index: sceneIndex,
+        subtitle_text: newSub
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'Sahne güncellenemedi');
+    if (typeof window.showToast === 'function') window.showToast(`🎬 Sahne ${sceneIndex} başarıyla güncellendi.`);
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Sahne Düzenleme Hatası: ' + err.message);
+  }
+}
+
+// Toplu Onayla
+export async function bulkApproveSelectedReviewItems() {
+  const selectedBoxes = Array.from(document.querySelectorAll('.cmp-item-select-chk:checked'));
+  if (!selectedBoxes.length) {
+    alert('Lütfen onaylamak istediğiniz içerikleri seçin.');
+    return;
+  }
+
+  try {
+    for (const chk of selectedBoxes) {
+      await fetch('/api/module2?action=campaign-item-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ item_id: chk.value, status: 'approved' })
+      });
+    }
+    if (typeof window.showToast === 'function') window.showToast(`✅ ${selectedBoxes.length} içerik onaylandı.`);
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Toplu Onay Hatası: ' + err.message);
+  }
+}
+
+// Toplu Onaylıları Kuyruğa Gönder
+export async function bulkQueueSelectedApprovedItems() {
+  const selectedBoxes = Array.from(document.querySelectorAll('.cmp-item-select-chk:checked'));
+  if (!selectedBoxes.length) {
+    alert('Lütfen yayın kuyruğuna göndermek istediğiniz içerikleri seçin.');
+    return;
+  }
+
+  const itemIds = selectedBoxes.map(b => b.value);
+
+  if (!confirm(`Seçili ${itemIds.length} içerik paketini yayın kuyruğuna aktarmak istiyor musunuz?`)) return;
+
+  const btn = document.getElementById('btnBulkQueueApproved');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Kuyruğa Aktarılıyor...';
+  }
+
+  try {
+    const res = await fetch('/api/module2?action=campaign-approve-publish', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaign_id: activeReviewCampaign?.id,
+        item_ids: itemIds,
+        approve: true
+      })
+    }).then(r => r.json());
+
+    if (!res.ok) throw new Error(res.error || 'Kuyruğa aktarılamadı.');
+
+    const queuedCount = (res.results || []).filter(r => r.queued).length;
+    const ttWaitCount = (res.results || []).filter(r => r.status === 'awaiting_platform_connection').length;
+
+    let msg = `🚀 ${queuedCount} içerik yayın kuyruğuna başarıyla eklendi!`;
+    if (ttWaitCount > 0) {
+      msg += ` (${ttWaitCount} TikTok içeriği API bağlantı doğrulaması bekliyor).`;
+    }
+
+    if (typeof window.showToast === 'function') window.showToast(msg);
+    await refreshActiveCampaignReview();
+  } catch (err) {
+    alert('Kuyruk Gönderim Hatası: ' + err.message);
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🚀 Seçilen Onaylıları Yayın Kuyruğuna Gönder';
     }
   }
 }
@@ -697,6 +1311,20 @@ export async function submitCampaignGeneration() {
 if (typeof window !== 'undefined') {
   window.openCampaignStudioModal = openCampaignStudioModal;
   window.closeCampaignStudioModal = closeCampaignStudioModal;
+  window.openCampaignReviewModal = openCampaignReviewModal;
+  window.closeCampaignReviewModal = closeCampaignReviewModal;
+  window.refreshActiveCampaignReview = refreshActiveCampaignReview;
+  window.filterReviewPlatform = filterReviewPlatform;
+  window.onReviewItemCheckboxChange = onReviewItemCheckboxChange;
+  window.toggleSelectAllReviewItems = toggleSelectAllReviewItems;
+  window.saveReviewItemChanges = saveReviewItemChanges;
+  window.requestItemRevision = requestItemRevision;
+  window.holdReviewItem = holdReviewItem;
+  window.approveReviewItem = approveReviewItem;
+  window.approveAndQueueReviewItem = approveAndQueueReviewItem;
+  window.regenerateReviewScene = regenerateReviewScene;
+  window.bulkApproveSelectedReviewItems = bulkApproveSelectedReviewItems;
+  window.bulkQueueSelectedApprovedItems = bulkQueueSelectedApprovedItems;
   window.onCampaignKindChange = onCampaignKindChange;
   window.onCampaignTypeSelectChange = onCampaignTypeSelectChange;
   window.updateCampaignThemeInfo = updateCampaignThemeInfo;

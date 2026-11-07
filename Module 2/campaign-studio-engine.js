@@ -140,109 +140,176 @@ export const MARKETING_PROFILE_OPTIONS = Object.freeze({
   ]
 });
 
-// ── PLATFORMA ÖZEL PAKET ŞABLONLARI (BÖLÜM 7, 8, 9, 10) ──────────────────────
+// ── PLATFORMA ÖZEL PAKET ŞABLONLARI VE MERKEZİ YETENEK MATRİSİ ───────────────
 export const PLATFORM_PACKAGE_DEFINITIONS = Object.freeze({
   instagram: [
     {
       package_type: 'IG_COLLECTION_CAROUSEL',
+      platform: 'instagram',
       content_type: 'CAROUSEL',
+      media_type: 'image_carousel',
       title: 'Koleksiyon Ana Tanıtım Carousel\'i (2 Tamamlayıcı Görsel)',
       aspect_ratio: '4:5',
       resolution: '1080x1350',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Instagram Business Account & Page Access Token)',
+      manual_action_required: false,
       description: 'Koleksiyonu bir bütün olarak gösteren birbirini tamamlayan iki yüksek çözünürlüklü showroom görseli.'
     },
     {
       package_type: 'IG_PIECES_CAROUSEL',
+      platform: 'instagram',
       content_type: 'CAROUSEL',
+      media_type: 'image_carousel',
       title: 'Koleksiyon Parçaları Detay Carousel\'i',
       aspect_ratio: '1:1',
       resolution: '1080x1080',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Instagram Business Account & Page Access Token)',
+      manual_action_required: false,
       description: 'Karyola, komodin, şifonyer, gardırop, makyaj masası ve diğer parçaların her biri için ayrı kart.'
     },
     {
       package_type: 'IG_STORY_SERIES',
+      platform: 'instagram',
       content_type: 'STORIES',
+      media_type: 'story_series',
       title: 'Instagram Story Serisi (6 Parçalı 9:16 Akış)',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Instagram Content Publishing Stories)',
+      manual_action_required: false,
       description: '1. Genel Tanıtım, 2. Oda Atmosferi, 3. Öne Çıkan Ürün, 4. Malzeme/Doku, 5. Renk Seçenekleri, 6. İletişim/Teklif.'
     },
     {
       package_type: 'IG_REELS',
+      platform: 'instagram',
       content_type: 'REELS',
+      media_type: 'video_reels',
       title: 'Instagram Reels Reklam Videosu (15-30 sn 5 Sahneli)',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
       duration_seconds: 22,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Instagram Reels Container API)',
+      manual_action_required: false,
       description: '5 sahneli profesyonel reklam akışı ve ürün karakterine uygun telifsiz müzik.'
     }
   ],
   facebook: [
     {
       package_type: 'FB_COLLECTION_POST',
+      platform: 'facebook',
       content_type: 'PHOTO_POST',
+      media_type: 'image_single',
       title: 'Facebook Koleksiyon Tanıtım Gönderisi',
       aspect_ratio: '1.91:1',
       resolution: '1200x630',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Page Feed / Photos endpoint)',
+      manual_action_required: false,
       description: 'Geniş koleksiyon görseli, koleksiyon hikâyesi, öne çıkan özellikler, teklif çağrısı ve web bağlantısı.'
     },
     {
       package_type: 'FB_PHOTO_ALBUM',
+      platform: 'facebook',
       content_type: 'PHOTO_POST',
+      media_type: 'image_album',
       title: 'Facebook Koleksiyon Parçaları Fotoğraf Albümü',
       aspect_ratio: '1:1',
       resolution: '1080x1080',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Page Albums & Multi-Photo Feed)',
+      manual_action_required: false,
       description: 'Koleksiyon parçalarının ayrı fotoğraflarla incelenebildiği çoklu fotoğraf albümü.'
     },
     {
       package_type: 'FB_VIDEO_POST',
+      platform: 'facebook',
       content_type: 'FB_REELS',
+      media_type: 'video_reels',
       title: 'Facebook Video Gönderisi',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
       duration_seconds: 22,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Page Videos / Reels API)',
+      manual_action_required: false,
       description: 'Facebook\'a özel başlık, kapak görseli, detaylı açıklama ve çağrı metniyle paketlenmiş video.'
     },
     {
       package_type: 'FB_LINK_OFFER_POST',
+      platform: 'facebook',
       content_type: 'LINK_CARD',
+      media_type: 'link_card',
       title: 'Facebook Bağlantı ve Teklif Gönderisi',
       aspect_ratio: '1.91:1',
       resolution: '1200x630',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Page Feed with Target Link Card)',
+      manual_action_required: false,
       description: 'Web sitesindeki ürün/koleksiyon sayfasına ve teklif formuna doğrudan trafik yönlendiren gönderi.'
     },
     {
       package_type: 'FB_STORY',
+      platform: 'facebook',
       content_type: 'FB_STORIES',
+      media_type: 'story_single',
       title: 'Facebook Story (9:16 Dikey)',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
+      duration_seconds: null,
+      real_publish_supported: true,
+      auth_requirement: 'Meta Graph API (Page Stories endpoint)',
+      manual_action_required: false,
       description: 'Dikey formatta hızlı koleksiyon ve iletişim hikayesi.'
     }
   ],
   youtube: [
     {
       package_type: 'YT_SHORTS',
+      platform: 'youtube',
       content_type: 'SHORTS',
+      media_type: 'video_shorts',
       title: 'YouTube Shorts Koleksiyon Tanıtımı (9:16 • 30 sn)',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
       duration_seconds: 30,
+      real_publish_supported: true,
+      auth_requirement: 'Google OAuth2 (YouTube Data API v3 upload & partner scopes)',
+      manual_action_required: false,
       description: '0-30 sn 5 aşamalı ritmik kurgu, okunabilir altyazılar, SEO başlık/açıklama ve gerçek YouTube API yüklemesi.'
     }
   ],
   tiktok: [
     {
       package_type: 'TT_COLLECTION_VIDEO',
+      platform: 'tiktok',
       content_type: 'TIKTOK_VIDEO',
+      media_type: 'video_tiktok',
       title: 'TikTok Koleksiyon Tanıtım Videosu (9:16 • 25 sn)',
       aspect_ratio: '9:16',
       resolution: '1080x1920',
       duration_seconds: 25,
+      real_publish_supported: false,
+      auth_requirement: 'TikTok Content Posting API v2 (Developer App Review & Creator OAuth)',
+      manual_action_required: true,
       description: '0-25 sn yüksek tempolu profesyonel mobilya vitrin kurgusu (TikTok bağlantısı tamamlandığında yayına açılır).'
     }
   ]
 });
+
+// Merkezi Platform Yetenek Matrisi
+export const PLATFORM_CAPABILITY_MATRIX = Object.freeze(
+  Object.values(PLATFORM_PACKAGE_DEFINITIONS).flat()
+);
 
 // ── 1. ÜRÜN KARAKTERİNDEN VARSAYILAN KREATİF PROFİL ÇIKARIMI (BÖLÜM 11.4) ────
 export function deriveCreativePresetFromCharacter(entity = {}, rawProfile = {}) {
@@ -867,7 +934,7 @@ export function generateCampaignDeliverables({
     const isTikTok = pkg.platform === 'tiktok';
     const initialStatus = isTikTok && !tiktokConnectionState.canPublish
       ? CONTENT_ITEM_STATUSES.AWAITING_PLATFORM_CONNECTION
-      : (heroUrl ? CONTENT_ITEM_STATUSES.PENDING_REVIEW : CONTENT_ITEM_STATUSES.PENDING_GENERATION);
+      : (heroUrl ? CONTENT_ITEM_STATUSES.PENDING_REVIEW : CONTENT_ITEM_STATUSES.MANUAL_ACTION_REQUIRED);
 
     // 7.1 Instagram Koleksiyon Ana Tanıtım Carousel'i (2 Tamamlayıcı Görsel)
     if (pkg.package_type === 'IG_COLLECTION_CAROUSEL') {
@@ -1382,6 +1449,7 @@ export default {
   MEDIA_CATEGORIES,
   MARKETING_PROFILE_OPTIONS,
   PLATFORM_PACKAGE_DEFINITIONS,
+  PLATFORM_CAPABILITY_MATRIX,
   deriveCreativePresetFromCharacter,
   buildLayeredCampaignPrompt,
   createProductVersionSnapshot,

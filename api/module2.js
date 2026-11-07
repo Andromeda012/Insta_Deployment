@@ -6,6 +6,7 @@ import CampaignStudioEngine, {
   MEDIA_CATEGORIES,
   MARKETING_PROFILE_OPTIONS,
   PLATFORM_PACKAGE_DEFINITIONS,
+  PLATFORM_CAPABILITY_MATRIX,
   buildLayeredCampaignPrompt,
   createProductVersionSnapshot,
   buildMarketingStrategyAndPlan,
@@ -491,7 +492,7 @@ async function handlePromptPreview(req, res) {
 }
 
 // ── 5. KOLEKSİYON MERKEZLİ KAMPANYA YÖNETİMİ VE 8 AŞAMALI ÜRETİM (BÖLÜM 6) ───
-async function fetchModule7SourceContext({ targetType, collectionSlug, productSlug }) {
+async function fetchModule7SourceContext({ targetType, collectionSlug, productSlug, selectedSlugs = [] }) {
   const [productsRes, colsRes, colProdsRes, mediaRes, aiProfRes, extStoreRes] = await Promise.all([
     supabaseAdminRequest('/rest/v1/products?select=*').catch(() => []),
     supabaseAdminRequest('/rest/v1/collections?select=*').catch(() => []),
@@ -528,8 +529,56 @@ async function fetchModule7SourceContext({ targetType, collectionSlug, productSl
   let product = null;
   let pieces = [];
 
-  if (targetType === 'collection' || collectionSlug) {
-    collection = allCollections.find(c => c.slug === collectionSlug || c.id === collectionSlug) || null;
+  const rawSlugs = Array.isArray(selectedSlugs) && selectedSlugs.length
+    ? selectedSlugs.filter(Boolean)
+    : [collectionSlug || productSlug].filter(Boolean);
+
+  if (targetType === 'mixed_multi' || rawSlugs.length > 1) {
+    const matchedCols = allCollections.filter(c => rawSlugs.includes(c.slug) || rawSlugs.includes(c.id));
+    const matchedProds = allProducts.filter(p => rawSlugs.includes(p.slug));
+
+    if (!matchedCols.length && !matchedProds.length) {
+      throw Object.assign(new Error('Seçilen koleksiyon veya ürünler Modül 7 kataloğunda bulunamadı.'), { status: 404 });
+    }
+
+    collection = matchedCols[0] || null;
+    product = matchedProds[0] || null;
+
+    for (const c of matchedCols) {
+      const rawLinks = allColProds.filter(cp => cp.collection_id === c.id || cp.collection_id === c.slug);
+      for (const cp of rawLinks) {
+        const p = allProducts.find(prod => prod.slug === cp.product_slug) || {};
+        if (!pieces.some(x => x.product_slug === cp.product_slug)) {
+          pieces.push({
+            ...cp,
+            title: p.title || cp.product_slug,
+            sku: p.sku || null,
+            ana_resim: p.ana_resim || c.hero_image || '',
+            ozellikler: p.ozellikler || [],
+            renkler: p.renkler || c.color_palette || [],
+            olculer: p.body || null
+          });
+        }
+      }
+    }
+
+    for (const p of matchedProds) {
+      if (product && p.slug === product.slug && !collection) continue;
+      if (!pieces.some(x => x.product_slug === p.slug)) {
+        pieces.push({
+          product_slug: p.slug,
+          title: p.title || p.slug,
+          sku: p.sku || null,
+          ana_resim: p.ana_resim || '',
+          ozellikler: p.ozellikler || [],
+          renkler: p.renkler || [],
+          olculer: p.olculer || p.body || null
+        });
+      }
+    }
+  } else if (targetType === 'collection' || collectionSlug) {
+    const cSlug = collectionSlug || rawSlugs[0];
+    collection = allCollections.find(c => c.slug === cSlug || c.id === cSlug) || null;
     if (!collection) throw Object.assign(new Error('Seçilen koleksiyon Modül 7 kataloğunda bulunamadı.'), { status: 404 });
     const rawLinks = allColProds.filter(cp => cp.collection_id === collection.id || cp.collection_id === collection.slug);
     pieces = rawLinks.map(cp => {
@@ -545,16 +594,16 @@ async function fetchModule7SourceContext({ targetType, collectionSlug, productSl
       };
     });
   } else {
-    product = allProducts.find(p => p.slug === productSlug) || null;
+    const pSlug = productSlug || rawSlugs[0];
+    product = allProducts.find(p => p.slug === pSlug) || null;
     if (!product) throw Object.assign(new Error('Seçilen ürün Modül 7 kataloğunda bulunamadı.'), { status: 404 });
-    // Koleksiyon parçasıysa bağlı olduğu koleksiyonu da bağlama ekle
     const parentLink = allColProds.find(cp => cp.product_slug === product.slug);
     if (parentLink) {
       collection = allCollections.find(c => c.id === parentLink.collection_id || c.slug === parentLink.collection_id) || null;
     }
   }
 
-  const targetKey = collection ? collection.slug : product.slug;
+  const targetKey = collection ? collection.slug : (product ? product.slug : 'global');
   const marketingProfile = {
     ...(aiProfiles.categories?.[(collection?.category || product?.kategori || 'Genel')] || {}),
     ...(collection ? (aiProfiles.collections?.[collection.slug] || {}) : {}),
@@ -608,6 +657,17 @@ async function syncCampaignItemsWithPublishQueue(store) {
   return store;
 }
 
+function ensureIstanbulIso(dateOrString, defaultTime = '10:00') {
+  if (!dateOrString) return new Date().toISOString();
+  let str = String(dateOrString).trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    str = `${str}T${defaultTime}:00+03:00`;
+  } else if (!str.includes('+') && !str.endsWith('Z')) {
+    str += '+03:00';
+  }
+  return new Date(str).toISOString();
+}
+
 async function handleCampaigns(req, res) {
   if (req.method !== 'GET') {
     await authenticateModule2Admin(req);
@@ -646,6 +706,7 @@ async function handleCampaigns(req, res) {
         media_categories: MEDIA_CATEGORIES,
         marketing_profile_options: MARKETING_PROFILE_OPTIONS,
         platform_packages: PLATFORM_PACKAGE_DEFINITIONS,
+        platform_capability_matrix: PLATFORM_CAPABILITY_MATRIX,
         status_labels: CONTENT_STATUS_LABELS_TR
       }
     });
@@ -664,19 +725,37 @@ async function handleCampaigns(req, res) {
 
   if (req.method === 'POST') {
     const b = req.body || {};
-    const targetType = ['collection', 'collection_piece', 'independent'].includes(b.target_type)
-      ? b.target_type
+    const targetType = ['collection', 'collection_piece', 'independent', 'mixed_multi'].includes(b.target_type || b.composition_kind)
+      ? (b.target_type || b.composition_kind)
       : (b.collection_slug ? 'collection' : 'independent');
-    const collectionSlug = b.collection_slug ? String(b.collection_slug).trim() : '';
-    const productSlug = b.product_slug ? String(b.product_slug).trim() : '';
+    const selectedSlugs = Array.isArray(b.selected_slugs) ? b.selected_slugs.filter(Boolean) : [];
+    const collectionSlug = b.collection_slug ? String(b.collection_slug).trim() : (targetType === 'collection' && selectedSlugs[0] ? selectedSlugs[0] : '');
+    const productSlug = b.product_slug ? String(b.product_slug).trim() : (targetType === 'independent' && selectedSlugs[0] ? selectedSlugs[0] : '');
     const selectedPlatforms = Array.isArray(b.selected_platforms) && b.selected_platforms.length
       ? b.selected_platforms.map(p => String(p).toLowerCase())
       : ['instagram', 'facebook', 'youtube', 'tiktok'];
     const selectedPackages = Array.isArray(b.selected_packages) ? b.selected_packages : [];
     const creativeControls = (b.creative_controls && typeof b.creative_controls === 'object') ? b.creative_controls : {};
+    const publishDate = String(b.publish_date || '').trim() || new Date().toISOString().slice(0, 10);
+    const publishTime = String(b.publish_time || '10:00').trim();
 
     // AŞAMA 1: Modül 7'den gerçek ürün/koleksiyon verisini, parçaları, medyaları ve profili al
-    const ctx = await fetchModule7SourceContext({ targetType, collectionSlug, productSlug });
+    const ctx = await fetchModule7SourceContext({ targetType, collectionSlug, productSlug, selectedSlugs });
+    
+    // Eksik gerçek ürün medyası doğrulaması (Asla demo/fallback görsel kullanılmaz!)
+    const hasRealMedia = Boolean(
+      ctx.collection?.hero_image ||
+      ctx.product?.ana_resim ||
+      ctx.pieces.some(p => p.ana_resim) ||
+      ctx.mediaList.some(m => m.media_url)
+    );
+    if (!hasRealMedia) {
+      return res.status(400).json({
+        ok: false,
+        error: 'Seçilen koleksiyon veya ürün için Modül 7 kataloğunda gerçek ürün görseli bulunamadı. Lütfen önce gerçek görsel yükleyin.'
+      });
+    }
+
     const snapshot = createProductVersionSnapshot({
       targetType,
       collection: ctx.collection,
@@ -687,14 +766,36 @@ async function handleCampaigns(req, res) {
     });
 
     const primaryTitle = ctx.collection?.title || ctx.product?.title || 'Koleksiyon';
-    const campaignTitle = String(b.title || `${primaryTitle} — Çoklu Platform Pazarlama Kampanyası`).trim().slice(0, 200);
+    const campaignTitle = String(b.title || b.campaign_title || `${primaryTitle} — Çoklu Platform Pazarlama Kampanyası`).trim().slice(0, 200);
+
+    // Mükerrer kampanya koruması (Son 30 saniye içinde aynı başlıkla oluşturulmuş bekleyen kampanya varsa)
+    const existingStore = await readCampaignsStore();
+    const recentDuplicate = (existingStore.campaigns || []).find(c =>
+      c.title === campaignTitle &&
+      c.status === 'pending_review' &&
+      (Date.now() - new Date(c.created_at).getTime() < 30000)
+    );
+    if (recentDuplicate && !b.force_duplicate) {
+      return res.status(200).json({
+        ok: true,
+        campaign: recentDuplicate,
+        duplicate_prevented: true,
+        message: 'Bu kampanya kısa süre önce oluşturuldu ve inceleme aşamasında mevcut.'
+      });
+    }
 
     // AŞAMA 2 & 3: AI Pazarlama Stratejisi, 4 Platform İçerik Planı ve Maliyet Tahmini
     const { strategy, resolved_packages, estimated_cost } = buildMarketingStrategyAndPlan({
       snapshot,
       selectedPlatforms,
       selectedPackages,
-      creativeOverrides: creativeControls
+      creativeOverrides: {
+        ...creativeControls,
+        campaign_type: b.campaign_type,
+        sub_type: b.sub_type,
+        discount_amount: b.discount_amount,
+        campaign_intro: b.intro || b.campaign_intro
+      }
     });
 
     // Sadece maliyet/kapsam önizlemesi istendiyse (dry_estimate=true) kaydetmeden döndür
@@ -716,13 +817,24 @@ async function handleCampaigns(req, res) {
     const campaignCode = `CMP-${Date.now().toString(36).toUpperCase()}`;
     const now = new Date().toISOString();
 
+    // Kuşak saatlerine göre Türkiye saati (UTC+3) planlama
+    const scheduledFeedTime = ensureIstanbulIso(publishDate, '10:00');
+    const scheduledStoryTime = ensureIstanbulIso(publishDate, '14:30');
+    const scheduledReelsTime = ensureIstanbulIso(publishDate, '19:30');
+
     // AŞAMA 4, 5, 6: Görsel Paketleme ve Sahne Bazlı Video Senaryosu Üretimi
     const { items: rawItems, scenesByItemTempId } = generateCampaignDeliverables({
       campaignId,
       campaignTitle,
       snapshot,
       resolvedPackages: resolved_packages,
-      creativeControls,
+      creativeControls: {
+        ...creativeControls,
+        campaign_type: b.campaign_type,
+        sub_type: b.sub_type,
+        discount_amount: b.discount_amount,
+        campaign_intro: b.intro || b.campaign_intro
+      },
       tiktokConnectionState
     });
 
@@ -732,9 +844,19 @@ async function handleCampaigns(req, res) {
     for (const rawItem of rawItems) {
       const itemId = randomUUID();
       const tempId = rawItem.temp_id;
+
+      // Platform ve içerik türüne göre Türkiye saatine uygun yayın zamanı ata
+      let scheduledFor = scheduledFeedTime;
+      if (rawItem.content_type === 'STORIES' || rawItem.content_type === 'FB_STORIES') {
+        scheduledFor = scheduledStoryTime;
+      } else if (['REELS', 'FB_REELS', 'SHORTS', 'TIKTOK_VIDEO'].includes(rawItem.content_type)) {
+        scheduledFor = scheduledReelsTime;
+      }
+
       const itemRecord = {
         ...rawItem,
         id: itemId,
+        scheduled_for: scheduledFor,
         created_at: now,
         updated_at: now
       };
@@ -962,6 +1084,7 @@ async function handleCampaignApprovePublish(req, res) {
   const itemIds = Array.isArray(b.item_ids)
     ? b.item_ids.map(String)
     : (b.item_id ? [String(b.item_id)] : []);
+  const forceApprove = b.approve === true || b.force_approve === true;
 
   const store = await readCampaignsStore();
   const campaign = (store.campaigns || []).find(c => c.id === campaignId);
@@ -969,12 +1092,31 @@ async function handleCampaignApprovePublish(req, res) {
     return res.status(400).json({ ok: false, error: 'campaign_id veya item_ids gerekli.' });
   }
 
-  const targetItems = (store.items || []).filter(i =>
-    itemIds.length ? itemIds.includes(i.id) : (i.campaign_id === campaignId && i.status === CONTENT_ITEM_STATUSES.APPROVED)
-  );
+  // Yalnızca gerçekten onaylanmış içerikler (veya bu istekte açıkça onaylanan pending_review öğeler) seçilebilir
+  // Revision_required, failed, draft gibi durumlar KESİNLİKLE kuyruğa eklenemez!
+  const targetItems = (store.items || []).filter(i => {
+    if (itemIds.length && !itemIds.includes(i.id)) return false;
+    if (campaignId && i.campaign_id !== campaignId) return false;
+
+    if ([CONTENT_ITEM_STATUSES.REVISION_REQUIRED, CONTENT_ITEM_STATUSES.FAILED, CONTENT_ITEM_STATUSES.MANUAL_ACTION_REQUIRED].includes(i.status)) {
+      return false;
+    }
+
+    if (i.status === CONTENT_ITEM_STATUSES.APPROVED) return true;
+    if (forceApprove && i.status === CONTENT_ITEM_STATUSES.PENDING_REVIEW) {
+      i.status = CONTENT_ITEM_STATUSES.APPROVED;
+      i.approved_at = new Date().toISOString();
+      return true;
+    }
+
+    return false;
+  });
 
   if (!targetItems.length) {
-    return res.status(400).json({ ok: false, error: 'Yayın kuyruğuna eklenecek onaylı içerik öğesi bulunamadı.' });
+    return res.status(400).json({
+      ok: false,
+      error: 'Yayın kuyruğuna eklenecek geçerli ve onaylı içerik öğesi bulunamadı. Lütfen önce içeriği onaylayın veya revizyon durumunu giderin.'
+    });
   }
 
   const ttRows = await supabaseAdminRequest('/rest/v1/site_settings?key=eq.tt_bot_state&select=data&limit=1').catch(() => []);
@@ -984,6 +1126,21 @@ async function handleCampaignApprovePublish(req, res) {
   const now = new Date();
 
   for (const item of targetItems) {
+    // İdempotency koruması: Öğe zaten kuyrukta ise mükerrer görev oluşturma
+    if (item.status === CONTENT_ITEM_STATUSES.QUEUED && item.queue_task_id) {
+      results.push({
+        item_id: item.id,
+        platform: item.platform,
+        package_type: item.package_type,
+        queued: false,
+        already_queued: true,
+        queue_task_id: item.queue_task_id,
+        status: item.status,
+        reason: 'Bu içerik zaten daha önce yayın kuyruğuna eklenmiş (idempotent koruma).'
+      });
+      continue;
+    }
+
     // TikTok öğesi ise ve TikTok bağlantısı henüz hazır değilse diğer 3 platformu engellemeden TikTok'u beklet
     if (item.platform === 'tiktok' && !ttState.canPublish) {
       item.status = CONTENT_ITEM_STATUSES.AWAITING_PLATFORM_CONNECTION;
@@ -1023,7 +1180,7 @@ async function handleCampaignApprovePublish(req, res) {
       continue;
     }
 
-    const scheduledFor = item.scheduled_for ? new Date(item.scheduled_for) : now;
+    const scheduledFor = item.scheduled_for ? new Date(ensureIstanbulIso(item.scheduled_for)) : now;
     const idempotencyKey = `cmp_${item.campaign_id.slice(0, 8)}_${item.id.slice(0, 8)}_${scheduledFor.toISOString().slice(0, 16).replace(/[:T-]/g, '')}`;
 
     const queuePayload = {
@@ -1248,7 +1405,7 @@ JSON formatında döndür:
   return res.status(200).json({ ok: true, title, intro });
 }
 
-// ── KAMPANYA OLUŞTURMA & BOT KUYRUKLARINA AKTARMA ───────────────────────────
+// ── KAMPANYA OLUŞTURMA (GERİYE DÖNÜK UYUMLULUK — ONAYSIZ KUYRUĞA ALMA KALDIRILDI) ───
 async function handleCampaignGenerate(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
   await authenticateModule2Admin(req);
@@ -1276,16 +1433,31 @@ async function handleCampaignGenerate(req, res) {
   const selectedCols = allCols.filter(c => selectedSlugs.includes(c.slug));
   const selectedProds = allProds.filter(p => selectedSlugs.includes(p.slug));
 
+  const primaryItem = selectedCols[0] || selectedProds[0] || allCols[0] || allProds[0] || null;
+  if (!primaryItem) {
+    return res.status(400).json({ ok: false, error: 'Katalogda eşleşen ürün veya koleksiyon bulunamadı.' });
+  }
+
+  // Sabit demo görseli fallback'i kaldırıldı: Gerçek ürün medyası yoksa kullanıcıya açık hata bildirilir
+  const heroUrl = primaryItem.hero_image || primaryItem.hero_image_url || primaryItem.ana_resim || '';
+  if (!heroUrl) {
+    return res.status(400).json({
+      ok: false,
+      error: `Seçilen ${primaryItem.title || primaryItem.slug} için gerçek ürün görseli bulunamadı. Lütfen Modül 7 üzerinden görsel yükleyin.`
+    });
+  }
+
   const campaignId = randomUUID();
   const campaignCode = `CMP-${Date.now().toString(36).toUpperCase()}`;
   const now = new Date().toISOString();
   const publishDate = String(b.publish_date || '').trim() || now.slice(0, 10);
   const publishTime = String(b.publish_time || '10:00').trim();
 
-  const feedScheduledFor = `${publishDate}T10:00:00+03:00`;
-  const storyScheduledFor = `${publishDate}T14:30:00+03:00`;
-  const reelsScheduledFor = `${publishDate}T19:30:00+03:00`;
+  const feedScheduledFor = ensureIstanbulIso(publishDate, '10:00');
+  const storyScheduledFor = ensureIstanbulIso(publishDate, '14:30');
+  const reelsScheduledFor = ensureIstanbulIso(publishDate, '19:30');
 
+  // GÜVENLİK: Durum 'scheduled' yerine 'pending_review' olarak kaydedilir; kullanıcı onayı olmadan ASLA yayın kuyruğuna alınmaz
   const campaignRecord = {
     id: campaignId,
     campaign_code: campaignCode,
@@ -1300,7 +1472,7 @@ async function handleCampaignGenerate(req, res) {
     publish_time: publishTime,
     priority: 'exclusive_campaign_day',
     formats,
-    status: 'scheduled',
+    status: 'pending_review',
     created_at: now,
     updated_at: now
   };
@@ -1309,8 +1481,6 @@ async function handleCampaignGenerate(req, res) {
   store.campaigns.unshift(campaignRecord);
 
   const items = [];
-  const primaryItem = selectedCols[0] || selectedProds[0] || allCols[0] || allProds[0] || { title: 'Global Mobilya', slug: 'global' };
-  const heroUrl = primaryItem.hero_image || primaryItem.hero_image_url || primaryItem.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
   // 1. Feed / Carousel (Zorunlu)
   if (formats.feed !== false) {
@@ -1321,7 +1491,7 @@ async function handleCampaignGenerate(req, res) {
       content_type: 'CAROUSEL',
       title: `${campaignTitle} — 6'lı Carousel`,
       media_url: heroUrl,
-      status: 'scheduled',
+      status: 'pending_review',
       scheduled_for: feedScheduledFor,
       caption: `✨ ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}\n\n📩 DM veya WhatsApp ile detaylı bilgi alabilirsiniz.`,
       hashtags: '#GlobalMobilya #MobilyaKampanyası #LüksMobilya #İçMimar',
@@ -1329,27 +1499,6 @@ async function handleCampaignGenerate(req, res) {
     };
     items.push(feedItem);
     store.items.push(feedItem);
-
-    await syncPanelQueue({ id: feedItem.id, scheduled_for: feedScheduledFor, status: 'scheduled' }, {
-      platform: 'instagram',
-      idempotency_key: `camp_feed_${feedItem.id}`,
-      content_type: 'CAROUSEL',
-      media_url: heroUrl,
-      product_slug: primaryItem.slug,
-      campaign_id: campaignId,
-      caption: feedItem.caption,
-      hashtags: feedItem.hashtags
-    });
-    await syncPanelQueue({ id: feedItem.id, scheduled_for: feedScheduledFor, status: 'scheduled' }, {
-      platform: 'facebook',
-      idempotency_key: `camp_fb_feed_${feedItem.id}`,
-      content_type: 'CAROUSEL',
-      media_url: heroUrl,
-      product_slug: primaryItem.slug,
-      campaign_id: campaignId,
-      caption: feedItem.caption,
-      hashtags: feedItem.hashtags
-    });
   }
 
   // 2. Reels (Seçildiyse)
@@ -1361,7 +1510,7 @@ async function handleCampaignGenerate(req, res) {
       content_type: 'REELS',
       title: `${campaignTitle} — Reels / Video`,
       media_url: heroUrl,
-      status: 'scheduled',
+      status: 'pending_review',
       scheduled_for: reelsScheduledFor,
       caption: `🎬 ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}`,
       hashtags: '#Reels #GlobalMobilya #Tasarım #Mimari',
@@ -1369,27 +1518,6 @@ async function handleCampaignGenerate(req, res) {
     };
     items.push(reelsItem);
     store.items.push(reelsItem);
-
-    await syncPanelQueue({ id: reelsItem.id, scheduled_for: reelsScheduledFor, status: 'scheduled' }, {
-      platform: 'instagram',
-      idempotency_key: `camp_reels_${reelsItem.id}`,
-      content_type: 'REELS',
-      media_url: heroUrl,
-      product_slug: primaryItem.slug,
-      campaign_id: campaignId,
-      caption: reelsItem.caption,
-      hashtags: reelsItem.hashtags
-    });
-    await syncPanelQueue({ id: reelsItem.id, scheduled_for: reelsScheduledFor, status: 'scheduled' }, {
-      platform: 'youtube',
-      idempotency_key: `camp_yt_${reelsItem.id}`,
-      content_type: 'SHORTS',
-      media_url: heroUrl,
-      product_slug: primaryItem.slug,
-      campaign_id: campaignId,
-      caption: reelsItem.caption,
-      hashtags: reelsItem.hashtags
-    });
   }
 
   // 3. Story (Seçildiyse)
@@ -1401,7 +1529,7 @@ async function handleCampaignGenerate(req, res) {
       content_type: 'STORIES',
       title: `${campaignTitle} — Dikey Story`,
       media_url: heroUrl,
-      status: 'scheduled',
+      status: 'pending_review',
       scheduled_for: storyScheduledFor,
       caption: '',
       hashtags: '',
@@ -1409,28 +1537,17 @@ async function handleCampaignGenerate(req, res) {
     };
     items.push(storyItem);
     store.items.push(storyItem);
-
-    await syncPanelQueue({ id: storyItem.id, scheduled_for: storyScheduledFor, status: 'scheduled' }, {
-      platform: 'instagram',
-      idempotency_key: `camp_story_${storyItem.id}`,
-      content_type: 'STORIES',
-      media_url: heroUrl,
-      product_slug: primaryItem.slug,
-      campaign_id: campaignId,
-      caption: '',
-      hashtags: ''
-    });
   }
 
   await writeCampaignsStore(store);
 
-  return res.status(200).json({
+  return res.status(201).json({
     ok: true,
     campaign: {
       ...campaignRecord,
       items
     },
-    message: `"${campaignTitle}" kampanyası başarıyla oluşturuldu ve 4 botun yayın kuyruğuna aktarıldı!`
+    message: `"${campaignTitle}" kampanyası başarıyla oluşturuldu ve insan incelemesi/onay aşamasına alındı.`
   });
 }
 
