@@ -788,25 +788,18 @@
                 <input type="text" class="form-control p-dims" style="padding:7px 9px; font-size:11.5px;" placeholder="240x215x60 cm" value="${escapeHtml(p.dimensions)}">
               </div>
             </div>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+            <div style="display:flex; align-items:center; gap:12px; margin-top:6px;">
               <img src="${escapeHtml(thumbSrc)}" class="piece-thumb-mini" onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'" alt="">
               <div style="flex:1;">
-                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Parça Fotoğrafı (Dosya Yükle veya URL Gir)</label>
-                <div style="display:flex; gap:6px;">
-                  <button type="button" class="btn btn-outline" style="padding:6px 10px; font-size:11px; white-space:nowrap;" onclick="document.getElementById('pieceFile_${idx}').click()">📷 Fotoğraf Seç</button>
+                <label style="font-size:10px; color:var(--text-muted); display:block; margin-bottom:3px;">Parça Fotoğrafı</label>
+                <div style="display:flex; align-items:center; gap:8px;">
+                  <button type="button" class="btn btn-outline" style="padding:6px 12px; font-size:11px; white-space:nowrap;" onclick="document.getElementById('pieceFile_${idx}').click()">📷 Fotoğraf Seç</button>
                   <input type="file" id="pieceFile_${idx}" accept="image/*" style="display:none;" onchange="handlePieceFileSelect(${idx}, event)">
-                  <input type="text" class="form-control p-img-url" style="padding:6px 9px; font-size:11.5px;" placeholder="veya https://... görsel URL" value="${escapeHtml(p.ana_resim && !p.ana_resim.startsWith('data:') ? p.ana_resim : '')}" oninput="pieceRowsState[${idx}].ana_resim = this.value">
+                  <span style="font-size:10.5px; color:var(--text-muted);">${p.ana_resim ? '✅ Fotoğraf yüklendi' : 'Fotoğraf seçilmedi'}</span>
+                  <input type="hidden" class="p-img-url" value="${escapeHtml(p.ana_resim || '')}">
+                  <input type="hidden" class="p-pres" value="${escapeHtml(p.presentation_mode || 'carousel_and_video')}">
                 </div>
               </div>
-            </div>
-            <div>
-              <label style="font-size:10px; color:#fde68a; font-weight:700; display:block; margin-bottom:3px;">📌 Bu Parça Fotoğrafı Nasıl Sunulsun?</label>
-              <select class="form-control p-pres" style="padding:6px 9px; font-size:11.5px;">
-                <option value="carousel_and_video" ${p.presentation_mode === 'carousel_and_video' ? 'selected' : ''}>✨ Parça Detay Carousel Kartı + Facebook Albüm + Video Parça Sahnesi (Önerilen)</option>
-                <option value="piece_panoramic_split" ${p.presentation_mode === 'piece_panoramic_split' ? 'selected' : ''}>✂️ Panoramik İkiye Bölünmüş Parça Carousel'i (Sol + Sağ)</option>
-                <option value="piece_carousel_only" ${p.presentation_mode === 'piece_carousel_only' ? 'selected' : ''}>📸 Yalnızca Parça Detay Carousel & Facebook Albüm Kartı</option>
-                <option value="piece_story_video" ${p.presentation_mode === 'piece_story_video' ? 'selected' : ''}>📱 Story & Kısa Video Odak Parçası (9:16)</option>
-              </select>
             </div>
           </div>
         `;

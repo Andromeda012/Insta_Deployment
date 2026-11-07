@@ -1177,6 +1177,249 @@ async function handleYoutubeCron(req, res) {
   });
 }
 
+// ── KAMPANYA GEMINI AI METİN ÜRETİCİ ─────────────────────────────────────────
+async function handleCampaignAiCopy(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+  const b = req.body || {};
+  const campaignType = String(b.campaign_type || 'seasonal').trim();
+  const subType = String(b.sub_type || '').trim();
+  const discount = String(b.discount_amount || '').trim();
+  const titles = Array.isArray(b.selected_titles) ? b.selected_titles.join(', ') : String(b.selected_titles || '');
+
+  const geminiKey = process.env.GEMINI_API_KEY || '';
+  if (geminiKey) {
+    try {
+      const prompt = `Sen Türkiye'nin en seçkin lüks mobilya markası Global Mobilya'nın kreatif direktörüsün.
+Aşağıdaki kampanya bilgileri için sosyal medya gönderisinde kullanılacak:
+1) Vurucu ve zarif bir KAMPANYA BAŞLIĞI (maksimum 45 karakter, büyük harf).
+2) Çarpıcı, zarif ve lüks bir TANITIM CÜMLESİ / METNİ (2-3 cümle, maksimum 220 karakter).
+
+Kampanya Türü: ${campaignType} (${subType || 'Genel'})
+İndirim / Fırsat: ${discount || 'Özel Fiyat Avantajı'}
+Dahil Olan Ürünler: ${titles || 'Özel Koleksiyon Seçkisi'}
+
+JSON formatında döndür:
+{
+  "title": "...",
+  "intro": "..."
+}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 12000);
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { maxOutputTokens: 250, temperature: 0.7, responseMimeType: 'application/json' }
+        }),
+        signal: ctrl.signal
+      });
+      clearTimeout(timer);
+      if (resp.ok) {
+        const data = await resp.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          const parsed = JSON.parse(rawText);
+          if (parsed.title && parsed.intro) {
+            return res.status(200).json({ ok: true, title: parsed.title, intro: parsed.intro });
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
+  // Akıllı fallback
+  const fallbackTitles = {
+    winter: 'KIŞ SEZONU ÖZEL MİMARİ AYRICALIK',
+    summer: 'YAZ SEZONU FERAH YAŞAM SEÇKİSİ',
+    autumn: 'SONBAHAR SICAK DOKUNUŞLARI',
+    spring: 'İLKBAHAR YENİLENME SEZONU',
+    new_year: 'YILBAŞINA ÖZEL MİMARİ FIRSAT',
+    wedding_season: 'YENİ EVLİLER & ÇEYİZ KAMPANYASI',
+    ramadan: 'RAMAZAN BEREKETİ & ZARAFET',
+    eid: 'BAYRAMA ÖZEL LÜKS DOKUNUŞLAR',
+    mothers_day: 'ANNELER GÜNÜNE ÖZEL MİMARİ HEDİYE'
+  };
+  const title = fallbackTitles[subType] || (discount ? `${discount} SEZON FIRSATI` : 'ÖZEL MİMARİ KAMPANYA SEÇKİSİ');
+  const intro = `${titles || 'Seçkin tasarımlarımız'}, ${discount ? discount + ' fırsatıyla' : 'özel mimari ayrıcalıklarla'} yaşam alanınıza zarafet katmak için hazırlandı.`;
+  return res.status(200).json({ ok: true, title, intro });
+}
+
+// ── KAMPANYA OLUŞTURMA & BOT KUYRUKLARINA AKTARMA ───────────────────────────
+async function handleCampaignGenerate(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+  await authenticateModule2Admin(req);
+  const b = req.body || {};
+  const compositionKind = ['collection', 'independent', 'mixed_multi'].includes(b.composition_kind)
+    ? b.composition_kind
+    : 'collection';
+  const selectedSlugs = Array.isArray(b.selected_slugs) ? b.selected_slugs.filter(Boolean) : [];
+  const campaignType = String(b.campaign_type || 'seasonal').trim();
+  const subType = String(b.sub_type || '').trim();
+  const discountAmount = String(b.discount_amount || '').trim();
+  const campaignTitle = String(b.campaign_title || 'Özel Mimari Kampanya').trim();
+  const campaignIntro = String(b.campaign_intro || '').trim();
+  const formats = b.formats || { feed: true, reels: true, stories: true };
+
+  // Ürün ve koleksiyonları veritabanından çek
+  const [prodsRes, colsRes] = await Promise.all([
+    supabaseAdminRequest('/rest/v1/products?select=*'),
+    supabaseAdminRequest('/rest/v1/collections?select=*').catch(() => [])
+  ]);
+
+  const allProds = Array.isArray(prodsRes) ? prodsRes : [];
+  const allCols = Array.isArray(colsRes) ? colsRes : [];
+
+  const selectedCols = allCols.filter(c => selectedSlugs.includes(c.slug));
+  const selectedProds = allProds.filter(p => selectedSlugs.includes(p.slug));
+
+  const campaignId = randomUUID();
+  const campaignCode = `CMP-${Date.now().toString(36).toUpperCase()}`;
+  const now = new Date().toISOString();
+
+  const campaignRecord = {
+    id: campaignId,
+    campaign_code: campaignCode,
+    title: campaignTitle,
+    composition_kind: compositionKind,
+    campaign_type: campaignType,
+    sub_type: subType,
+    discount_amount: discountAmount,
+    campaign_intro: campaignIntro,
+    selected_slugs: selectedSlugs,
+    formats,
+    status: 'active',
+    created_at: now,
+    updated_at: now
+  };
+
+  const store = await readCampaignsStore();
+  store.campaigns.unshift(campaignRecord);
+
+  const items = [];
+  const primaryItem = selectedCols[0] || selectedProds[0] || allCols[0] || allProds[0] || { title: 'Global Mobilya', slug: 'global' };
+  const heroUrl = primaryItem.hero_image || primaryItem.hero_image_url || primaryItem.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+
+  // 1. Feed / Carousel (Zorunlu)
+  if (formats.feed !== false) {
+    const feedItem = {
+      id: randomUUID(),
+      campaign_id: campaignId,
+      platform: 'instagram',
+      content_type: 'CAROUSEL',
+      title: `${campaignTitle} — 6'lı Carousel`,
+      media_url: heroUrl,
+      status: 'scheduled',
+      caption: `✨ ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}\n\n📩 DM veya WhatsApp ile detaylı bilgi alabilirsiniz.`,
+      hashtags: '#GlobalMobilya #MobilyaKampanyası #LüksMobilya #İçMimar',
+      created_at: now
+    };
+    items.push(feedItem);
+    store.items.push(feedItem);
+
+    await syncPanelQueue({ id: feedItem.id, scheduled_for: now, status: 'scheduled' }, {
+      platform: 'instagram',
+      idempotency_key: `camp_feed_${feedItem.id}`,
+      content_type: 'CAROUSEL',
+      media_url: heroUrl,
+      product_slug: primaryItem.slug,
+      campaign_id: campaignId,
+      caption: feedItem.caption,
+      hashtags: feedItem.hashtags
+    });
+    await syncPanelQueue({ id: feedItem.id, scheduled_for: now, status: 'scheduled' }, {
+      platform: 'facebook',
+      idempotency_key: `camp_fb_feed_${feedItem.id}`,
+      content_type: 'CAROUSEL',
+      media_url: heroUrl,
+      product_slug: primaryItem.slug,
+      campaign_id: campaignId,
+      caption: feedItem.caption,
+      hashtags: feedItem.hashtags
+    });
+  }
+
+  // 2. Reels (Seçildiyse)
+  if (formats.reels === true) {
+    const reelsItem = {
+      id: randomUUID(),
+      campaign_id: campaignId,
+      platform: 'instagram',
+      content_type: 'REELS',
+      title: `${campaignTitle} — Reels / Video`,
+      media_url: heroUrl,
+      status: 'scheduled',
+      caption: `🎬 ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}`,
+      hashtags: '#Reels #GlobalMobilya #Tasarım #Mimari',
+      created_at: now
+    };
+    items.push(reelsItem);
+    store.items.push(reelsItem);
+
+    await syncPanelQueue({ id: reelsItem.id, scheduled_for: now, status: 'scheduled' }, {
+      platform: 'instagram',
+      idempotency_key: `camp_reels_${reelsItem.id}`,
+      content_type: 'REELS',
+      media_url: heroUrl,
+      product_slug: primaryItem.slug,
+      campaign_id: campaignId,
+      caption: reelsItem.caption,
+      hashtags: reelsItem.hashtags
+    });
+    await syncPanelQueue({ id: reelsItem.id, scheduled_for: now, status: 'scheduled' }, {
+      platform: 'youtube',
+      idempotency_key: `camp_yt_${reelsItem.id}`,
+      content_type: 'SHORTS',
+      media_url: heroUrl,
+      product_slug: primaryItem.slug,
+      campaign_id: campaignId,
+      caption: reelsItem.caption,
+      hashtags: reelsItem.hashtags
+    });
+  }
+
+  // 3. Story (Seçildiyse)
+  if (formats.stories === true) {
+    const storyItem = {
+      id: randomUUID(),
+      campaign_id: campaignId,
+      platform: 'instagram',
+      content_type: 'STORIES',
+      title: `${campaignTitle} — Dikey Story`,
+      media_url: heroUrl,
+      status: 'scheduled',
+      caption: '',
+      hashtags: '',
+      created_at: now
+    };
+    items.push(storyItem);
+    store.items.push(storyItem);
+
+    await syncPanelQueue({ id: storyItem.id, scheduled_for: now, status: 'scheduled' }, {
+      platform: 'instagram',
+      idempotency_key: `camp_story_${storyItem.id}`,
+      content_type: 'STORIES',
+      media_url: heroUrl,
+      product_slug: primaryItem.slug,
+      campaign_id: campaignId,
+      caption: '',
+      hashtags: ''
+    });
+  }
+
+  await writeCampaignsStore(store);
+
+  return res.status(200).json({
+    ok: true,
+    campaign: {
+      ...campaignRecord,
+      items
+    },
+    message: `"${campaignTitle}" kampanyası başarıyla oluşturuldu ve 4 botun yayın kuyruğuna aktarıldı!`
+  });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -1190,6 +1433,8 @@ export default async function handler(req, res) {
     if (action === 'youtube-cron') return await handleYoutubeCron(req, res);
     if (action === 'platform-health') return await handlePlatformHealth(req, res);
     if (action === 'campaigns') return await handleCampaigns(req, res);
+    if (action === 'campaign-generate') return await handleCampaignGenerate(req, res);
+    if (action === 'campaign-ai-copy') return await handleCampaignAiCopy(req, res);
     if (action === 'campaign-item-update') return await handleCampaignItemUpdate(req, res);
     if (action === 'campaign-scene-regenerate') return await handleCampaignSceneRegenerate(req, res);
     if (action === 'campaign-approve-publish') return await handleCampaignApprovePublish(req, res);

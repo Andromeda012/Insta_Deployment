@@ -448,6 +448,383 @@ export async function renderCarousel(entity) {
   return [await pieceSlide(entity, { title: entity.title, dimensions: entity.dimensions, imageUrl: src }, 1, 1, extra)];
 }
 
+// ── KAMPANYA TEMA TANIMLARI & ÖZEL RENK PALETLERİ ───────────────────────────
+export const CAMPAIGN_THEMES = {
+  seasonal: {
+    winter: {
+      key: 'winter',
+      label: 'Kış Sezonu Kampanyası',
+      icon: '❄️',
+      badgeText: '❄️ KIŞ SEZONU ÖZEL MİMARİ SEÇKİ',
+      accentColor: '#38bdf8',
+      goldColor: '#fde68a',
+      darkColor: '#0a192f',
+      musicKey: 'modern_lofi',
+      gradient: [[0, '#020617', 0.92], [0.5, '#0f172a', 0.8], [1, '#1e293b', 0.9]]
+    },
+    summer: {
+      key: 'summer',
+      label: 'Yaz Sezonu Kampanyası',
+      icon: '☀️',
+      badgeText: '☀️ YAZ SEZONU MİMARİ SEÇKİ',
+      accentColor: '#f59e0b',
+      goldColor: '#fbbf24',
+      darkColor: '#1c1917',
+      musicKey: 'warm_acoustic',
+      gradient: [[0, '#1c1917', 0.9], [0.5, '#292524', 0.8], [1, '#451a03', 0.9]]
+    },
+    autumn: {
+      key: 'autumn',
+      label: 'Sonbahar Fırsatları',
+      icon: '🍂',
+      badgeText: '🍂 SONBAHAR SICAK DOKUNUŞLARI',
+      accentColor: '#fb923c',
+      goldColor: '#fde047',
+      darkColor: '#18181b',
+      musicKey: 'modern_lofi',
+      gradient: [[0, '#18181b', 0.92], [0.5, '#27272a', 0.82], [1, '#3b1d11', 0.9]]
+    },
+    spring: {
+      key: 'spring',
+      label: 'İlkbahar Yenilenme Kampanyası',
+      icon: '🌸',
+      badgeText: '🌸 BAHAR TAZELİĞİ & YENİLENME SEZONU',
+      accentColor: '#34d399',
+      goldColor: '#fde68a',
+      darkColor: '#062016',
+      musicKey: 'warm_acoustic',
+      gradient: [[0, '#062016', 0.92], [0.5, '#064e3b', 0.8], [1, '#022c22', 0.9]]
+    }
+  },
+  special_occasions: {
+    new_year: {
+      key: 'new_year',
+      label: 'Yılbaşı Özel Kampanyası',
+      icon: '🎄',
+      badgeText: '✨ YILBAŞINA ÖZEL MİMARİ AYRICALIK',
+      accentColor: '#ef4444',
+      goldColor: '#ffd700',
+      darkColor: '#110508',
+      musicKey: 'cinematic_strings',
+      gradient: [[0, '#0f0508', 0.94], [0.5, '#1e050f', 0.82], [1, '#3b0718', 0.9]]
+    },
+    wedding_season: {
+      key: 'wedding_season',
+      label: 'Evlilik & Düğün Sezonu',
+      icon: '💍',
+      badgeText: '💍 YENİ EVLİLER & ÇEYİZ SEZONU',
+      accentColor: '#f472b6',
+      goldColor: '#fde68a',
+      darkColor: '#1e1122',
+      musicKey: 'luxury_piano',
+      gradient: [[0, '#130919', 0.92], [0.5, '#2e1039', 0.8], [1, '#4a044e', 0.88]]
+    },
+    ramadan: {
+      key: 'ramadan',
+      label: 'Ramazan Bayramı Kampanyası',
+      icon: '🌙',
+      badgeText: '🌙 RAMAZAN BEREKETİ & ZARAFET',
+      accentColor: '#10b981',
+      goldColor: '#fbbf24',
+      darkColor: '#041f16',
+      musicKey: 'cinematic_strings',
+      gradient: [[0, '#041f16', 0.94], [0.5, '#064e3b', 0.82], [1, '#022c22', 0.9]]
+    },
+    eid: {
+      key: 'eid',
+      label: 'Kurban Bayramı Kampanyası',
+      icon: '🕌',
+      badgeText: '🕌 BAYRAMA ÖZEL LÜKS DOKUNUŞLAR',
+      accentColor: '#059669',
+      goldColor: '#fde68a',
+      darkColor: '#041e17',
+      musicKey: 'cinematic_strings',
+      gradient: [[0, '#041e17', 0.94], [0.5, '#064e3b', 0.82], [1, '#065f46', 0.9]]
+    },
+    mothers_day: {
+      key: 'mothers_day',
+      label: 'Anneler Günü Kampanyası',
+      icon: '💐',
+      badgeText: '💐 ANNELER GÜNÜNE ÖZEL SEÇKİ',
+      accentColor: '#f43f5e',
+      goldColor: '#fde68a',
+      darkColor: '#200812',
+      musicKey: 'warm_acoustic',
+      gradient: [[0, '#200812', 0.92], [0.5, '#4c0519', 0.8], [1, '#881337', 0.88]]
+    }
+  },
+  discounts_deals: {
+    default: {
+      key: 'discounts_deals',
+      label: 'İndirimler & Büyük Fırsatlar',
+      icon: '🏷️',
+      badgeText: '🏷️ SEZONUN EN BÜYÜK MİMARİ İNDİRİMİ',
+      accentColor: '#ef4444',
+      goldColor: '#fde68a',
+      darkColor: '#111827',
+      musicKey: 'upbeat_interior',
+      gradient: [[0, '#0f172a', 0.94], [0.5, '#1e293b', 0.82], [1, '#334155', 0.9]]
+    }
+  },
+  new_launch: {
+    default: {
+      key: 'new_launch',
+      label: 'Yeni Ürün / Sezon Lansmanı',
+      icon: '🚀',
+      badgeText: '✨ YENİ SEZON LANSMAN SEÇKİSİ',
+      accentColor: '#818cf8',
+      goldColor: '#d4af37',
+      darkColor: '#0b0f19',
+      musicKey: 'luxury_piano',
+      gradient: [[0, '#0b0f19', 0.95], [0.5, '#111827', 0.84], [1, '#1e1b4b', 0.9]]
+    }
+  },
+  brand_corporate: {
+    default: {
+      key: 'brand_corporate',
+      label: 'Marka & Kurumsal Tanıtım',
+      icon: '👑',
+      badgeText: '👑 GLOBAL MOBİLYA ARCHITECTURAL ATELIER',
+      accentColor: '#d4af37',
+      goldColor: '#fde68a',
+      darkColor: '#090d16',
+      musicKey: 'luxury_piano',
+      gradient: [[0, '#090d16', 0.95], [0.5, '#0f172a', 0.85], [1, '#1e293b', 0.92]]
+    }
+  }
+};
+
+export function resolveCampaignTheme(type, subType) {
+  const tGroup = CAMPAIGN_THEMES[type] || CAMPAIGN_THEMES.seasonal;
+  if (subType && tGroup[subType]) return tGroup[subType];
+  if (tGroup.default) return tGroup.default;
+  const first = Object.values(tGroup)[0];
+  return first || CAMPAIGN_THEMES.seasonal.winter;
+}
+
+/**
+ * Kampanya Kapak Slaytı (1080x1350 JPEG)
+ * Carousel'in en başında kampanya türü, indirim oranı, kampanya başlığı ve ürünleri sunar.
+ */
+export async function campaignCoverSlide({ campaign, heroBuf, entity, includedTitles = [] }) {
+  const sharp = await getSharp();
+  const W = CAROUSEL_W, H = CAROUSEL_H;
+  const theme = resolveCampaignTheme(campaign?.campaign_type, campaign?.sub_type);
+
+  const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
+  const grad = gradientRect(W, H, 0, theme.gradient);
+  const scrim = svgDoc(W, H, grad.body, grad.defs);
+  const darkHero = await sharp(baseImg).composite([{ input: scrim }]).toBuffer();
+
+  const discount = (campaign?.discount_amount || '').trim();
+  const title = (campaign?.campaign_title || entity?.title || 'ÖZEL MİMARİ KAMPANYA').trim();
+  const intro = (campaign?.campaign_intro || entity?.promoQuote || 'Lüks yaşam alanları için seçkin koleksiyonumuzda özel fırsatlar.').trim();
+
+  let body = '';
+  // 1. Üst Marka & Kampanya Rozeti
+  body += textEl({ x: 70, y: 96, text: BRAND.name, size: 24, weight: 600, spacing: 8, opacity: 0.92, shadow: true });
+  body += textEl({ x: 72, y: 140, text: theme.badgeText, size: 28, weight: 700, fill: theme.accentColor, spacing: 5, shadow: true });
+
+  // 2. İndirim Miktarı Rozeti
+  let curY = 310;
+  if (discount) {
+    const badgeW = Math.min(W - 140, Math.max(340, discount.length * 44 + 60));
+    body += `<rect x="68" y="${curY - 60}" width="${badgeW}" height="90" rx="14" fill="${theme.accentColor}" fill-opacity="0.22" stroke="${theme.accentColor}" stroke-width="2"/>`;
+    body += textEl({ x: 96, y: curY + 6, text: trUpper(discount), size: 64, font: TITLE_FONT, weight: 800, fill: theme.goldColor, spacing: 3, shadow: true });
+    curY += 120;
+  }
+
+  // 3. Kampanya Başlığı
+  const tUpper = trUpper(title);
+  const tSize = tUpper.length > 28 ? 64 : tUpper.length > 18 ? 76 : 88;
+  const tLines = wrapText(tUpper, Math.floor(920 / (tSize * 0.62)), 3);
+  for (const line of tLines) {
+    body += textEl({ x: 70, y: curY + tSize, text: line, size: tSize, font: TITLE_FONT, weight: 700, fill: '#ffffff', spacing: 2, shadow: true });
+    curY += tSize * 1.08;
+  }
+
+  // 4. Kampanyaya Dahil Ürün / Koleksiyon İsimleri
+  curY += 24;
+  const productsLabel = includedTitles.length > 1
+    ? includedTitles.slice(0, 4).join(' • ') + (includedTitles.length > 4 ? ` (+${includedTitles.length - 4})` : '')
+    : (entity?.title || '');
+  if (productsLabel) {
+    body += `<rect x="70" y="${curY}" width="90" height="3" fill="${theme.goldColor}"/>`;
+    curY += 28;
+    const pLines = wrapText(`Dahil Olanlar: ${productsLabel}`, 50, 2);
+    for (const pl of pLines) {
+      body += textEl({ x: 72, y: curY, text: pl, size: 26, weight: 600, fill: theme.goldColor, spacing: 3, shadow: true });
+      curY += 34;
+    }
+  }
+
+  // 5. Tanıtım Cümlesi
+  curY += 18;
+  const introLines = wrapText(excerptQuote(intro, 220), 46, 4);
+  for (const il of introLines) {
+    body += textEl({ x: 72, y: curY, text: il, size: 30, font: TITLE_FONT, italic: true, fill: '#e2e8f0', spacing: 1, shadow: true });
+    curY += 40;
+  }
+
+  // 6. Alt Yönlendirme (KAYDIR →)
+  body += `<rect x="70" y="${H - 96}" width="${W - 140}" height="1.5" fill="${theme.goldColor}" fill-opacity="0.4"/>`;
+  body += textEl({ x: 72, y: H - 56, text: `${theme.icon} KAMPANYA SEÇKİSİ`, size: 22, weight: 700, fill: theme.accentColor, spacing: 4 });
+  body += textEl({ x: W - 70, y: H - 56, text: 'KAYDIR  →', size: 24, weight: 700, fill: '#ffffff', anchor: 'end', spacing: 5 });
+
+  const overlay = svgDoc(W, H, body, SHADOW_DEF);
+  return sharp(darkHero).composite([{ input: overlay }]).jpeg({ quality: 94, chromaSubsampling: '4:4:4' }).toBuffer();
+}
+
+/**
+ * Kampanya Geçiş Slaytı (Bridge Slide) (1080x1350 JPEG)
+ * Karışık/çoklu gönderilerde koleksiyon sunumu bittikten sonra bağımsız ürünlere geçmeden araya eklenir.
+ */
+export async function campaignBridgeSlide({ campaign, heroBuf, collectionCount = 1, independentCount = 1 }) {
+  const sharp = await getSharp();
+  const W = CAROUSEL_W, H = CAROUSEL_H;
+  const theme = resolveCampaignTheme(campaign?.campaign_type, campaign?.sub_type);
+
+  const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
+  const grad = gradientRect(W, H, 0, [[0, '#020617', 0.95], [0.5, '#0b1329', 0.88], [1, '#020617', 0.96]]);
+  const scrim = svgDoc(W, H, grad.body, grad.defs);
+  const darkHero = await sharp(baseImg).composite([{ input: scrim }]).toBuffer();
+
+  let body = '';
+  body += textEl({ x: 70, y: 96, text: BRAND.name, size: 24, weight: 600, spacing: 8, opacity: 0.92, shadow: true });
+  body += textEl({ x: 72, y: 140, text: `${theme.icon} KAMPANYA DEVAM EDİYOR`, size: 28, weight: 700, fill: theme.accentColor, spacing: 5, shadow: true });
+
+  // Merkez Kart: Kampanyaya dahil diğer ürünlerimiz için kaydırınız
+  body += `<rect x="68" y="440" width="${W - 136}" height="420" rx="20" fill="rgba(15,23,42,0.85)" stroke="${theme.goldColor}" stroke-width="2" stroke-opacity="0.6"/>`;
+
+  body += textEl({ x: W / 2, y: 530, text: 'TAMAMLAYICI MİMARİ PARÇALAR', size: 26, weight: 700, fill: theme.goldColor, anchor: 'middle', spacing: 6 });
+  body += `<rect x="${W / 2 - 80}" y="555" width="160" height="2" fill="${theme.goldColor}"/>`;
+
+  const bridgeTitleLines = wrapText('Kampanyaya dahil diğer bağımsız ürünlerimiz için kaydırınız', 32, 3);
+  let by = 620;
+  for (const bl of bridgeTitleLines) {
+    body += textEl({ x: W / 2, y: by, text: bl, size: 44, font: TITLE_FONT, weight: 700, fill: '#ffffff', anchor: 'middle', spacing: 2 });
+    by += 54;
+  }
+
+  body += textEl({ x: W / 2, y: by + 26, text: '➡️', size: 54, anchor: 'middle' });
+  body += textEl({ x: W / 2, y: by + 86, text: 'Koleksiyon konseptini tamamlayan bağımsız parçaları keşfedin.', size: 24, font: TITLE_FONT, italic: true, fill: '#94a3b8', anchor: 'middle' });
+
+  // Alt bilgi
+  body += textEl({ x: 72, y: H - 60, text: `🏛️ Koleksiyonlar tamamlandı • 🪑 Bağımsız Parçalar`, size: 22, weight: 600, fill: theme.accentColor, spacing: 3 });
+  body += textEl({ x: W - 70, y: H - 60, text: 'KAYDIR  →', size: 24, weight: 700, fill: '#ffffff', anchor: 'end', spacing: 5 });
+
+  const overlay = svgDoc(W, H, body, SHADOW_DEF);
+  return sharp(darkHero).composite([{ input: overlay }]).jpeg({ quality: 94, chromaSubsampling: '4:4:4' }).toBuffer();
+}
+
+/**
+ * Kampanya Carousel Görsellerini Üretir (En fazla 10 görsel).
+ * Kullanıcı Kuralları:
+ * - 1. Slayt her zaman Kampanya Kapak Slaytıdır.
+ * - Koleksiyon seçildiyse: Kapak + Panoramik İki Yarı + Parça Slaytları.
+ * - Bağımsız ürün seçildiyse: Kapak + Bağımsız Ürün Slaytı (Toplam 2 slayt).
+ * - Çoklu/Karışık seçildiyse:
+ *     - Koleksiyonlar sırayla listelenir.
+ *     - Hem koleksiyon hem bağımsız ürün varsa araya 'Geçiş Slaytı' (Bridge Slide) eklenir!
+ *     - Ardından bağımsız ürünler listelenir.
+ */
+export async function renderCampaignCarousel({ campaign, primaryEntity, entities = [] }) {
+  const slides = [];
+  const heroUrl = primaryEntity?.heroUrl || primaryEntity?.sourceImageUrl || (entities[0]?.heroUrl || entities[0]?.sourceImageUrl);
+  if (!heroUrl) throw new Error('Kampanya için geçerli bir ana görsel bulunamadı.');
+  const heroBuf = await loadImage(heroUrl);
+
+  const allEntities = entities.length ? entities : [primaryEntity];
+  const includedTitles = allEntities.map(e => e.title);
+
+  // 1. Her zaman en başta Kampanya Kapak Slaytı:
+  const cover = await campaignCoverSlide({ campaign, heroBuf, entity: primaryEntity, includedTitles });
+  slides.push(cover);
+
+  const kind = campaign?.composition_kind || (primaryEntity.kind === 'collection' ? 'collection' : 'independent');
+
+  if (kind === 'collection') {
+    // Koleksiyon: Kapak + Panoramik Sol & Sağ + Parçalar
+    const { left, right } = await heroHalves(heroBuf);
+    slides.push(await titleSlide(primaryEntity, left));
+    slides.push(await quoteSlide(primaryEntity, right));
+    const pieces = (primaryEntity.pieces || [])
+      .filter(p => p.imageUrl && p.presentation !== 'video_only' && p.presentation !== 'hidden')
+      .slice(0, 6);
+    for (let i = 0; i < pieces.length; i++) {
+      slides.push(await pieceSlide(primaryEntity, pieces[i], i + 1, pieces.length));
+    }
+  } else if (kind === 'independent') {
+    // Bağımsız ürün: Kapak + Bağımsız Ürün Slaytı (Toplam 2 sayfa)
+    const extra = (primaryEntity.features || []).slice(0, primaryEntity.dimensions ? 2 : 3);
+    slides.push(await pieceSlide(primaryEntity, { title: primaryEntity.title, dimensions: primaryEntity.dimensions, imageUrl: heroUrl }, 1, 1, extra));
+  } else if (kind === 'mixed_multi') {
+    // Karışık / Çoklu Gönderi
+    const collections = allEntities.filter(e => e.kind === 'collection');
+    const independents = allEntities.filter(e => e.kind === 'independent');
+
+    // Önce koleksiyonlar
+    for (const col of collections) {
+      if (slides.length >= 8) break;
+      const cHero = await loadImage(col.heroUrl);
+      const { left, right } = await heroHalves(cHero);
+      slides.push(await titleSlide(col, left));
+      slides.push(await quoteSlide(col, right));
+      const colPieces = (col.pieces || []).slice(0, 2);
+      for (let i = 0; i < colPieces.length; i++) {
+        if (slides.length >= 8) break;
+        slides.push(await pieceSlide(col, colPieces[i], i + 1, colPieces.length));
+      }
+    }
+
+    // EĞER HEM KOLEKSİYON HEM BAĞIMSIZ ÜRÜN BİR ARADA SEÇİLMİŞSE: ARAYA GEÇİŞ SLAYTI ATILIR!
+    if (collections.length > 0 && independents.length > 0 && slides.length < 9) {
+      const bridge = await campaignBridgeSlide({ campaign, heroBuf, collectionCount: collections.length, independentCount: independents.length });
+      slides.push(bridge);
+    }
+
+    // Ardından bağımsız ürünler
+    for (let i = 0; i < independents.length; i++) {
+      if (slides.length >= 10) break;
+      const ind = independents[i];
+      const indSrc = ind.sourceImageUrl || ind.heroUrl;
+      const extra = (ind.features || []).slice(0, ind.dimensions ? 2 : 3);
+      slides.push(await pieceSlide(ind, { title: ind.title, dimensions: ind.dimensions, imageUrl: indSrc }, i + 1, independents.length, extra));
+    }
+  }
+
+  // Instagram en fazla 10 görsel kabul ettiği için maksimum 10 slaytla sınırla
+  return slides.slice(0, 10);
+}
+
+/**
+ * Kampanya Açıklama Metni Oluşturucu
+ */
+export function buildCampaignCaption({ campaign, entities = [], platform = 'instagram', intro = '' }) {
+  const theme = resolveCampaignTheme(campaign?.campaign_type, campaign?.sub_type);
+  const discount = (campaign?.discount_amount || '').trim();
+  const title = (campaign?.campaign_title || 'Özel Mimari Kampanya').trim();
+  const cIntro = intro || (campaign?.campaign_intro || '').trim();
+
+  const lines = [];
+  lines.push(`${theme.badgeText}`);
+  if (discount) lines.push(`🔥 ${trUpper(discount)} FIRSATI`);
+  lines.push(`✨ ${trUpper(title)}`);
+  if (cIntro) lines.push('', cIntro);
+
+  if (entities.length > 0) {
+    lines.push('', '🏛️ Kampanyaya Dahil Olan Seçkin Tasarımlar:');
+    entities.slice(0, 8).forEach(e => {
+      const typeLabel = e.kind === 'collection' ? 'Koleksiyon' : 'Bağımsız Ürün';
+      lines.push(`▫️ ${e.title} (${typeLabel}${e.dimensions ? ' — ' + e.dimensions : ''})`);
+    });
+  }
+
+  lines.push('', `📩 Fiyat, özel indirim ve sipariş detayları için DM veya WhatsApp: ${BRAND.whatsapp}`);
+  if (platform === 'facebook' || platform === 'youtube') lines.push(`🌐 ${BRAND.website}`);
+  return lines.join('\n');
+}
+
 // ── 2) DİKEY VİDEO (FFMPEG) ──────────────────────────────────────────────────
 function runFfmpeg(args, { timeoutMs = 240000, label = 'ffmpeg' } = {}) {
   return new Promise((resolve, reject) => {
@@ -986,5 +1363,6 @@ export async function prepareFormatPayload({ supabase, platform, slotFormat, ent
 export default {
   ENGINE_VERSION, BRAND, buildCatalogEntities, entitySignature, renderCarousel, renderVerticalVideo,
   buildCaption, buildHashtags, polishIntroWithGemini, produceMedia, prepareFormatPayload,
-  wrapText, excerptQuote, detailLines, splitSentences
+  wrapText, excerptQuote, detailLines, splitSentences,
+  CAMPAIGN_THEMES, resolveCampaignTheme, campaignCoverSlide, campaignBridgeSlide, renderCampaignCarousel, buildCampaignCaption
 };

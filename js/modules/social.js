@@ -1,4 +1,6 @@
 // Module 2: Social Media & Cloud Bot Control Panel (4 Autonomous Bots)
+import { renderCampaignStudioModalHtml, openCampaignStudioModal } from './campaign-studio.js';
+
 if (typeof window !== 'undefined') {
     window.switchSocialBotChannel = function(btnEl, channel) {
         const frame = document.getElementById('module2-frame');
@@ -25,6 +27,7 @@ if (typeof window !== 'undefined') {
             }
         }
     };
+    window.openCampaignStudioModal = openCampaignStudioModal;
 }
 
 export function renderSocialModule() {
@@ -67,11 +70,18 @@ export function renderSocialModule() {
                         🎵 TikTok Bot <span style="background:#f59e0b; color:#451a03; font-size:10px; padding:1px 6px; border-radius:99px; font-weight:800;">BAĞLANTI BEKLENİYOR</span>
                     </button>
                 </div>
-                <div style="display:flex; align-items:center; gap:8px; font-size:11px; color:#94a3b8;">
-                    <span style="display:inline-flex; align-items:center; gap:5px; color:#34d399; font-weight:600;">
-                        <span style="width:7px; height:7px; border-radius:50%; background:#10b981; display:inline-block;"></span>
-                        Üretim Kontrolü • Yayın Akış Saatleri • Sıradaki İçerik Önizlemesi
-                    </span>
+                <!-- SAĞ TARAF: YENİ KAMPANYA ÜRET BUTONU -->
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <button
+                        id="btnOpenCampaignStudio"
+                        type="button"
+                        onclick="window.openCampaignStudioModal()"
+                        style="display:inline-flex; align-items:center; gap:7px; padding:7px 16px; border-radius:9px; border:1px solid rgba(212,175,55,0.7); background:linear-gradient(135deg, #d4af37, #9b7220); color:#0b1120; font-size:12.5px; font-weight:800; cursor:pointer; box-shadow:0 4px 16px rgba(212,175,55,0.3); transition:all .2s ease;"
+                        onmouseover="this.style.filter='brightness(1.15)'; this.style.transform='translateY(-1px)'"
+                        onmouseout="this.style.filter='none'; this.style.transform='none'"
+                    >
+                        ✨ Yeni Kampanya Üret
+                    </button>
                 </div>
             </div>
 
@@ -84,6 +94,9 @@ export function renderSocialModule() {
                 title="Modül 2 — Instagram Bot Kontrol Merkezi"
                 allow="clipboard-read; clipboard-write; fullscreen"
             ></iframe>
+
+            <!-- Kampanya Üretme Modal Bileşeni -->
+            ${renderCampaignStudioModalHtml()}
         </div>
     `;
 }
