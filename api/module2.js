@@ -1045,6 +1045,8 @@ async function handleCampaignItemUpdate(req, res) {
   }
   if (b.review_notes !== undefined) current.review_notes = String(b.review_notes).slice(0, 2000);
   if (b.scheduled_for !== undefined) current.scheduled_for = b.scheduled_for;
+  if (b.source_asset_id !== undefined) current.source_asset_id = b.source_asset_id ? String(b.source_asset_id).trim() : null;
+  if (b.asset_ref && typeof b.asset_ref === 'object') current.asset_ref = b.asset_ref;
 
   if (b.status && Object.values(CONTENT_ITEM_STATUSES).includes(b.status)) {
     // TikTok bağlantısı hazır değilken TikTok öğesi 'queued' veya 'publishing' yapılamaz

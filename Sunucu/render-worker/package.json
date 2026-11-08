@@ -1,0 +1,12 @@
+{
+  "name": "nova-render-worker",
+  "version": "1.0.0",
+  "description": "Module 8 Headless Blender & AI Video Render Worker",
+  "main": "worker-daemon.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node worker-daemon.js",
+    "test": "node test_worker_flow.cjs"
+  },
+  "dependencies": {}
+}

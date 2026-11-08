@@ -3,50 +3,52 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modül 8 — Creative Production Studio | Global Mobilya</title>
+  <title>Global Mobilya — Modül 8: Creative Production Studio</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/site-modal-feedback.js"></script>
-
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Three.js + GLTFLoader + OrbitControls for 3D WebGL Model Viewer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <style>
     :root {
-      /* Studio Creative Dark Palette */
-      --studio-bg: #0C1017;
-      --studio-surface: #121824;
-      --studio-surface-card: #182030;
+      --bg-dark: #090D14;
+      --bg-surface: #0E1420;
+      --studio-surface-card: #141C2C;
+      --studio-surface-raised: #1A2438;
       --studio-border: rgba(148, 163, 184, 0.14);
-      --studio-border-focus: rgba(197, 160, 89, 0.4);
-
-      /* Forest, Olive & Gold Creative Accents */
-      --accent-forest: #1E3827;
-      --accent-forest-glow: rgba(30, 56, 39, 0.6);
-      --accent-olive: #475841;
-      --accent-sage: #8A9A86;
+      --studio-border-focus: rgba(212, 175, 55, 0.45);
+      
       --accent-gold: #D4AF37;
-      --accent-gold-muted: #C5A059;
+      --accent-gold-muted: #B89628;
+      --accent-gold-subtle: rgba(212, 175, 55, 0.12);
+      --accent-forest: #10B981;
+      --accent-emerald: #059669;
+      --accent-sage: #94A3B8;
       --accent-cyan: #38BDF8;
-      --accent-emerald: #10B981;
+      --accent-purple: #A855F7;
       --accent-amber: #F59E0B;
-      --accent-rose: #FB7185;
+      --accent-red: #EF4444;
 
-      --text-main: #F8FAFC;
+      --text-main: #F1F5F9;
       --text-muted: #94A3B8;
       --text-dim: #64748B;
-
-      --font-main: 'Plus Jakarta Sans', sans-serif;
+      
+      --font-main: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
-      --font-editorial: 'Cormorant Garamond', Georgia, serif;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
     body {
-      font-family: var(--font-main);
-      background: radial-gradient(circle at 10% 10%, rgba(30, 56, 39, 0.25), transparent 40%),
-                  radial-gradient(circle at 90% 90%, rgba(197, 160, 89, 0.08), transparent 45%),
-                  var(--studio-bg);
+      background-color: var(--bg-dark);
       color: var(--text-main);
+      font-family: var(--font-main);
       min-height: 100vh;
       padding: 18px 24px 60px;
       line-height: 1.5;
@@ -88,9 +90,6 @@
       font-size: 19px;
       font-weight: 800;
       letter-spacing: -0.3px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
     }
     .header-titles p {
       font-size: 12px;
@@ -99,16 +98,16 @@
     }
 
     .header-status-pill {
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
-      background: rgba(30, 56, 39, 0.4);
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      padding: 8px 14px;
+      padding: 6px 14px;
       border-radius: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
       font-size: 11.5px;
-      font-weight: 700;
-      color: #6EE7B7;
+      font-weight: 600;
+      color: #34D399;
     }
     .status-dot {
       width: 8px;
@@ -171,7 +170,7 @@
     /* ── STATS ROW (OVERVIEW) ── */
     .stats-row {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
@@ -195,19 +194,19 @@
       justify-content: space-between;
     }
     .stat-card-value {
-      font-size: 30px;
-      font-weight: 900;
+      font-size: 26px;
+      font-weight: 800;
       color: #fff;
       font-family: var(--font-mono);
     }
     .stat-card-meta {
-      font-size: 11.5px;
+      font-size: 11px;
       color: var(--text-dim);
     }
 
-    /* ── CARDS & SECTIONS ── */
+    /* ── CONTENT BOXES & CARDS ── */
     .content-box {
-      background: var(--studio-surface);
+      background: var(--bg-surface);
       border: 1px solid var(--studio-border);
       border-radius: 16px;
       padding: 24px;
@@ -218,58 +217,51 @@
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 18px;
-      padding-bottom: 14px;
-      border-bottom: 1px solid var(--studio-border);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
     }
     .box-title {
       font-size: 16px;
       font-weight: 800;
+      color: #fff;
       display: flex;
       align-items: center;
       gap: 10px;
     }
     .box-desc {
-      font-size: 12.5px;
+      font-size: 12px;
       color: var(--text-muted);
-    }
-
-    /* ── EMPTY STATE ── */
-    .empty-state {
-      text-align: center;
-      padding: 48px 20px;
-      border: 2px dashed rgba(148, 163, 184, 0.15);
-      border-radius: 14px;
-      color: var(--text-muted);
-    }
-    .empty-state-icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-      opacity: 0.8;
-    }
-    .empty-state-title {
-      font-size: 15px;
-      font-weight: 700;
-      color: #fff;
-      margin-bottom: 6px;
-    }
-    .empty-state-desc {
-      font-size: 12.5px;
-      max-width: 460px;
-      margin: 0 auto 18px;
-      color: var(--text-muted);
-      line-height: 1.5;
+      margin-top: 3px;
     }
 
     /* ── BUTTONS ── */
     .btn-gold {
       background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-muted));
-      color: #0C1017;
+      color: #090D14;
       font-family: var(--font-main);
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 800;
-      letter-spacing: 0.5px;
       padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.4);
+    }
+    .btn-emerald {
+      background: linear-gradient(135deg, var(--accent-forest), var(--accent-emerald));
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 9px 16px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
@@ -278,17 +270,17 @@
       gap: 6px;
       transition: all 0.2s;
     }
-    .btn-gold:hover {
+    .btn-emerald:hover {
+      opacity: 0.92;
       transform: translateY(-1px);
-      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
     }
     .btn-ghost {
-      background: rgba(255, 255, 255, 0.05);
-      color: #fff;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-main);
       font-family: var(--font-main);
       font-size: 12px;
       font-weight: 700;
-      padding: 9px 16px;
+      padding: 8px 14px;
       border-radius: 8px;
       border: 1px solid var(--studio-border);
       cursor: pointer;
@@ -298,8 +290,22 @@
       transition: all 0.2s;
     }
     .btn-ghost:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.09);
       border-color: rgba(255, 255, 255, 0.25);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: #F87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
     }
 
     /* ── TABLES & LISTS ── */
@@ -340,20 +346,66 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
-    .status-queued { background: rgba(148, 163, 184, 0.15); color: #94A3B8; }
-    .status-processing { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); }
-    .status-rendering { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
-    .status-completed { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
-    .status-failed { background: rgba(251, 113, 133, 0.15); color: var(--accent-rose); }
-    .status-cancelled { background: rgba(100, 116, 139, 0.2); color: #64748B; }
+    .status-queued { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
+    .status-processing { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
+    .status-rendering { background: rgba(212, 175, 55, 0.18); color: #FBBF24; border: 1px solid rgba(212, 175, 55, 0.4); }
+    .status-encoding { background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .status-quality_check { background: rgba(45, 212, 191, 0.15); color: #2DD4BF; border: 1px solid rgba(45, 212, 191, 0.3); }
+    .status-completed { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
+    .status-failed { background: rgba(239, 68, 68, 0.15); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    .status-cancelled { background: rgba(148, 163, 184, 0.15); color: #94A3B8; border: 1px solid rgba(148, 163, 184, 0.3); }
 
-    /* Grid for Media & Templates */
-    .studio-grid {
+    /* Progress bar */
+    .progress-bar-wrap {
+      width: 100px;
+      height: 6px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 4px;
+      overflow: hidden;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-forest), var(--accent-gold));
+      transition: width 0.3s ease;
+    }
+
+    /* ── MEDIA GALLERY (GRID & LIST) ── */
+    .media-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .media-filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .media-select, .media-input {
+      background: var(--studio-surface-card);
+      color: #fff;
+      border: 1px solid var(--studio-border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: var(--font-main);
+      outline: none;
+    }
+    .media-select:focus, .media-input:focus {
+      border-color: var(--accent-gold);
+    }
+    .media-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 18px;
     }
-    .template-card {
+    .asset-card {
       background: var(--studio-surface-card);
       border: 1px solid var(--studio-border);
       border-radius: 12px;
@@ -361,35 +413,244 @@
       display: flex;
       flex-direction: column;
       transition: all 0.2s ease;
+      position: relative;
+    }
+    .asset-card:hover {
+      border-color: var(--accent-gold-muted);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .asset-thumb-wrap {
+      width: 100%;
+      height: 160px;
+      background: #090D14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+      cursor: pointer;
+    }
+    .asset-thumb-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.3s ease;
+    }
+    .asset-card:hover .asset-thumb-wrap img {
+      transform: scale(1.05);
+    }
+    .asset-type-badge {
+      position: absolute;
+      top: 8px;
+      left: 8px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      color: var(--accent-gold);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+      text-transform: uppercase;
+    }
+    .asset-meta-body {
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1;
+    }
+    .asset-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .asset-specs {
+      font-size: 11px;
+      color: var(--text-dim);
+      display: flex;
+      justify-content: space-between;
+    }
+    .asset-card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(148, 163, 184, 0.1);
+    }
+
+    /* ── CATALOG EXPLORER SECTION ── */
+    .catalog-browser-card {
+      background: var(--studio-surface-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 24px;
+    }
+    .catalog-item-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 14px;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid rgba(148,163,184,0.08);
+      border-radius: 10px;
+      margin-bottom: 10px;
+      transition: all 0.2s;
+    }
+    .catalog-item-row:hover {
+      background: rgba(255,255,255,0.02);
+      border-color: rgba(212, 175, 55, 0.3);
+    }
+    .catalog-thumb {
+      width: 52px;
+      height: 52px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #090D14;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* ── MODALS & DRAWERS ── */
+    .studio-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .studio-modal-backdrop.active {
+      display: flex;
+    }
+    .studio-modal-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--studio-border-focus);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.8);
+      animation: modalSlide 0.25s ease;
+    }
+    @keyframes modalSlide {
+      from { opacity: 0; transform: scale(0.96) translateY(12px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--studio-border);
+    }
+    .modal-head h3 {
+      font-size: 16px;
+      font-weight: 800;
+      color: #fff;
+    }
+    .modal-close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 20px;
+      cursor: pointer;
+      line-height: 1;
+    }
+    .modal-body {
+      padding: 24px;
+    }
+    .form-group {
+      margin-bottom: 18px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-control {
+      width: 100%;
+      background: var(--studio-surface-card);
+      color: #fff;
+      border: 1px solid var(--studio-border);
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: var(--font-main);
+      outline: none;
+    }
+    .form-control:focus {
+      border-color: var(--accent-gold);
+    }
+    .upload-dropzone {
+      border: 2px dashed rgba(212, 175, 55, 0.4);
+      background: rgba(212, 175, 55, 0.03);
+      border-radius: 12px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-dropzone:hover {
+      background: rgba(212, 175, 55, 0.08);
+      border-color: var(--accent-gold);
+    }
+
+    /* ── SCENE TEMPLATE CARDS ── */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .template-card {
+      background: var(--studio-surface-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 14px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
     }
     .template-card:hover {
       border-color: var(--accent-gold-muted);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
     }
     .template-img-frame {
-      height: 160px;
-      background: #0A0D14;
+      height: 140px;
+      background: linear-gradient(135deg, rgba(30, 56, 39, 0.6), rgba(18, 24, 36, 0.9));
       display: flex;
       align-items: center;
       justify-content: center;
       position: relative;
-      overflow: hidden;
     }
     .template-body {
       padding: 16px;
       display: flex;
       flex-direction: column;
-      flex-grow: 1;
+      flex: 1;
     }
     .template-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 6px;
+      font-size: 14px;
+      font-weight: 800;
       color: #fff;
+      margin-bottom: 4px;
     }
     .template-sub {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
       margin-bottom: 12px;
     }
@@ -408,6 +669,57 @@
       color: var(--accent-sage);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 42px 20px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      font-size: 42px;
+      margin-bottom: 12px;
+      opacity: 0.65;
+    }
+    .empty-state-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .empty-state-desc {
+      font-size: 12px;
+      max-width: 440px;
+      margin: 0 auto 16px;
+      line-height: 1.6;
+    }
+
+    /* Timeline in Job Details */
+    .event-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 14px;
+    }
+    .event-item {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      border-left: 2px solid var(--accent-gold-muted);
+      padding-left: 12px;
+    }
+    .event-time {
+      font-family: var(--font-mono);
+      color: var(--text-dim);
+      min-width: 80px;
+    }
+    .event-label {
+      font-weight: 700;
+      color: #fff;
+    }
+    .event-desc {
+      color: var(--text-muted);
+    }
   </style>
 </head>
 <body>
@@ -417,18 +729,18 @@
     <div class="brand-wrap">
       <div class="brand-logo-badge">🎬</div>
       <div class="header-titles">
-        <h1>CREATIVE PRODUCTION STUDIO <span style="font-size:12px; color:var(--accent-gold); font-weight:700; border:1px solid rgba(212,175,55,0.4); padding:2px 8px; border-radius:20px;">MODÜL 8</span></h1>
-        <p>3D Blender Sahneleme, AI Görsel İyileştirme, Sinematik Video ve Çoklu Format Çıktı Merkezi</p>
+        <h1>CREATIVE PRODUCTION STUDIO <span style="font-size:12px; color:var(--accent-gold); font-weight:700; border:1px solid rgba(212,175,55,0.4); padding:2px 8px; border-radius:20px;">MODÜL 8 (FAZ 2)</span></h1>
+        <p>Modül 7 Katalog Tabanlı Medya Yönetimi, Güvenli Depolama &amp; Render İş Emri Altyapısı</p>
       </div>
     </div>
 
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="header-status-pill">
         <span class="status-dot"></span>
-        <span>Studio Motorları Hazır (4 Motor)</span>
+        <span>Studio Motorları &amp; Depolama Aktif (media)</span>
       </div>
-      <button type="button" class="btn-gold" onclick="switchStudioTab('cinematic')">
-        ✦ Yeni Prodüksiyon Başlat
+      <button type="button" class="btn-gold" onclick="openCreateJobModal()">
+        ✦ Yeni Prodüksiyon Görevi Oluştur
       </button>
     </div>
   </header>
@@ -440,6 +752,9 @@
     </button>
     <button type="button" class="nav-tab-btn" data-tab="media" onclick="switchStudioTab('media')">
       <span>🖼️</span> Medya Kütüphanesi
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="catalog" onclick="switchStudioTab('catalog')">
+      <span>🛋️</span> Modül 7 Katalog &amp; Parçalar
     </button>
     <button type="button" class="nav-tab-btn" data-tab="ai-image" onclick="switchStudioTab('ai-image')">
       <span>✨</span> AI Görsel Stüdyosu
@@ -458,7 +773,7 @@
     </button>
   </nav>
 
-  <!-- TAB A: OVERVIEW -->
+  <!-- TAB 1: OVERVIEW -->
   <section class="studio-panel active" id="panel-overview">
     <div class="stats-row">
       <div class="stat-card">
@@ -488,7 +803,6 @@
       </div>
     </div>
 
-    <!-- Overview Grid -->
     <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:20px;">
       
       <!-- Recent Jobs Box -->
@@ -506,7 +820,7 @@
             <div class="empty-state-icon">📋</div>
             <h3 class="empty-state-title">Henüz İşlem Kaydı Bulunmuyor</h3>
             <p class="empty-state-desc">Yeni bir Blender render, AI görsel iyileştirme veya video oluşturma görevi başlattığınızda burada listelenecektir.</p>
-            <button type="button" class="btn-gold" onclick="switchStudioTab('cinematic')">✦ İlk Görevi Başlat</button>
+            <button type="button" class="btn-gold" onclick="openCreateJobModal()">✦ İlk Görevi Başlat</button>
           </div>
         </div>
       </div>
@@ -528,7 +842,7 @@
     </div>
   </section>
 
-  <!-- TAB B: MEDIA LIBRARY -->
+  <!-- TAB 2: MEDIA LIBRARY -->
   <section class="studio-panel" id="panel-media">
     <div class="content-box">
       <div class="box-header">
@@ -536,29 +850,69 @@
           <h2 class="box-title"><span>🖼️</span> Merkezi Medya Kütüphanesi</h2>
           <p class="box-desc">Modül 7 katalog ürünleriyle ilişkili ham, işlenmiş, AI türevli ve 3D varlık kayıtları.</p>
         </div>
-        <div style="display:flex; gap:10px;">
-          <select id="mediaFilterType" onchange="filterMediaLibrary()" style="background:#182030; color:#fff; border:1px solid var(--studio-border); padding:8px 12px; border-radius:8px; font-size:12px;">
-            <option value="">Tüm Varlık Türleri</option>
-            <option value="raw_photo">Ham Fotoğraf</option>
-            <option value="processed_photo">İşlenmiş Fotoğraf</option>
-            <option value="render_frame">3D Render Karesi</option>
-            <option value="video_render">Sinematik Video</option>
-            <option value="3d_model">3D Model Dosyası</option>
-          </select>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+          <button type="button" class="btn-emerald" onclick="openUploadModal()">
+            ⬆️ Güvenli Medya Yükle
+          </button>
         </div>
       </div>
 
-      <div id="mediaLibraryContainer">
-        <div class="empty-state">
-          <div class="empty-state-icon">🗂️</div>
-          <h3 class="empty-state-title">Medya Kütüphanesi Boş</h3>
-          <p class="empty-state-desc">Modül 8 üzerinden üretilen veya tescillenen medya dosyaları doğrudan burada katalogla senkronize olarak yönetilecektir.</p>
+      <!-- Toolbar -->
+      <div class="media-toolbar">
+        <div class="media-filters">
+          <input type="text" id="mediaSearchInput" class="media-input" placeholder="🔍 Dosya adı, ürün slug veya etiket ara..." oninput="handleMediaSearch()">
+          <select id="mediaFilterType" class="media-select" onchange="filterMediaLibrary()">
+            <option value="ALL">Tüm Varlık Türleri</option>
+            <option value="raw_photo">Ham Fotoğraf</option>
+            <option value="processed_photo">İşlenmiş Fotoğraf</option>
+            <option value="ai_enhanced">AI İyileştirilmiş Görsel</option>
+            <option value="ai_generated">AI Üretilmiş Görsel</option>
+            <option value="render_frame">3D Render Karesi</option>
+            <option value="video_render">Sinematik Video</option>
+            <option value="3d_model">3D Model Dosyası</option>
+            <option value="blender_project">Blender Projesi</option>
+            <option value="variant_export">Platform Varyantı</option>
+          </select>
+          <select id="mediaFilterProduct" class="media-select" onchange="filterMediaLibrary()">
+            <option value="">Tüm Ürünler / Koleksiyonlar</option>
+          </select>
         </div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" id="btnMediaGrid" class="btn-ghost active" onclick="setMediaViewMode('grid')">⊞ Tablo</button>
+          <button type="button" id="btnMediaList" class="btn-ghost" onclick="setMediaViewMode('list')">≡ Liste</button>
+        </div>
+      </div>
+
+      <!-- Media Container -->
+      <div id="mediaLibraryContainer">
+        <!-- Injected via JS -->
       </div>
     </div>
   </section>
 
-  <!-- TAB C: AI IMAGE STUDIO -->
+  <!-- TAB 3: REAL MODULE 7 CATALOG & PIECES (READ-ONLY) -->
+  <section class="studio-panel" id="panel-catalog">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>🛋️</span> Modül 7 Katalog &amp; Koleksiyon Seçici (Salt-Okunur)</h2>
+          <p class="box-desc">Gerçek katalog verileri, koleksiyon parçaları, fotoğraflar ve mimari tasarım hikayeleri.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <input type="text" id="catalogSearchInput" class="media-input" placeholder="Ürün veya koleksiyon ara..." oninput="filterCatalogDisplay()">
+          <select id="catalogCategoryFilter" class="media-select" onchange="filterCatalogDisplay()">
+            <option value="ALL">Tüm Kategoriler</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="catalogExplorerContainer">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 4: AI IMAGE STUDIO -->
   <section class="studio-panel" id="panel-ai-image">
     <div class="content-box">
       <div class="box-header">
@@ -570,12 +924,12 @@
 
       <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
         <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:14px; padding:20px;">
-          <h3 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:12px;">1. Kaynak Ürün Seçimi (Modül 7 Read-Only)</h3>
-          <select id="aiSelectProduct" style="width:100%; background:#0C1017; color:#fff; border:1px solid var(--studio-border); padding:10px; border-radius:8px; font-size:13px; margin-bottom:16px;">
+          <h3 style="font-size:14px; font-weight:700; color:#fff; margin-bottom:12px;">1. Kaynak Ürün Seçimi (Modül 7 Read-Only)</h3>
+          <select id="aiSelectProduct" class="form-control" style="margin-bottom:16px;" onchange="handleAiProductSelect(this.value)">
             <option value="">Katalogdan Ürün Seçin...</option>
           </select>
           
-          <h3 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:12px;">2. İşleme Modu</h3>
+          <h3 style="font-size:14px; font-weight:700; color:#fff; margin-bottom:12px;">2. İşleme Modu</h3>
           <div style="display:flex; flex-direction:column; gap:10px;">
             <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
               <input type="radio" name="ai_mode" value="pbr_texture" checked>
@@ -596,7 +950,7 @@
           </button>
         </div>
 
-        <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+        <div id="aiPreviewBox" style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
           <div style="font-size:48px; margin-bottom:12px; opacity:0.6;">👁️</div>
           <h4 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:6px;">Canlı Önizleme Alanı</h4>
           <p style="font-size:12px; color:var(--text-muted); max-width:320px;">Bir ürün seçildiğinde orijinal fotoğrafı ve işleme parametreleri bu alanda görüntülenecektir.</p>
@@ -605,7 +959,7 @@
     </div>
   </section>
 
-  <!-- TAB D: 3D ASSET STUDIO -->
+  <!-- TAB 5: 3D ASSET STUDIO -->
   <section class="studio-panel" id="panel-three-d">
     <div class="content-box">
       <div class="box-header">
@@ -613,9 +967,10 @@
           <h2 class="box-title"><span>📐</span> 3D Model &amp; Varlık Stüdyosu</h2>
           <p class="box-desc">CAD model dosyaları (BLEND, GLB, FBX, OBJ) ve geometri doğrulama durumu.</p>
         </div>
+        <button type="button" class="btn-gold" onclick="openUploadModal('3d_model')">⬆️ 3D Model Yükle</button>
       </div>
 
-      <div class="empty-state">
+      <div class="empty-state" id="threeDModelsWrap">
         <div class="empty-state-icon">🧊</div>
         <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
         <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve fotogrametri çıktıları burada listelenir. Henüz harici model yüklenmemiştir.</p>
@@ -624,7 +979,7 @@
     </div>
   </section>
 
-  <!-- TAB E: CINEMATIC STUDIO -->
+  <!-- TAB 6: CINEMATIC STUDIO -->
   <section class="studio-panel" id="panel-cinematic">
     <div class="content-box">
       <div class="box-header">
@@ -640,7 +995,7 @@
     </div>
   </section>
 
-  <!-- TAB F: VIDEO PRODUCTION -->
+  <!-- TAB 7: VIDEO PRODUCTION -->
   <section class="studio-panel" id="panel-video">
     <div class="content-box">
       <div class="box-header">
@@ -648,9 +1003,10 @@
           <h2 class="box-title"><span>🎥</span> Video Prodüksiyon &amp; Format Dağıtımı</h2>
           <p class="box-desc">Instagram Reels (9:16), YouTube (16:9), Web Showroom ve Kare (1:1) video çıktıları.</p>
         </div>
+        <button type="button" class="btn-gold" onclick="openCreateJobModal('multi_format_transcode')">✦ Yeni Video Görevi Kur</button>
       </div>
 
-      <div class="empty-state">
+      <div class="empty-state" id="videoOutputsWrap">
         <div class="empty-state-icon">🎬</div>
         <h3 class="empty-state-title">Henüz İşlenmiş Video Yok</h3>
         <p class="empty-state-desc">Blender render worker veya video dönüştürücü görevleri tamamlandığında, video önizlemeleri ve platform çıktıları burada sunulacaktır.</p>
@@ -664,7 +1020,7 @@
     </div>
   </section>
 
-  <!-- TAB G: PRODUCTION MANAGER -->
+  <!-- TAB 8: PRODUCTION MANAGER -->
   <section class="studio-panel" id="panel-manager">
     <div class="content-box">
       <div class="box-header">
@@ -672,7 +1028,20 @@
           <h2 class="box-title"><span>⚙️</span> Prodüksiyon İş &amp; Kuyruk Yöneticisi</h2>
           <p class="box-desc">Tüm render, dönüştürme ve AI görevlerinin yaşam döngüsü durumu.</p>
         </div>
-        <button type="button" class="btn-ghost" onclick="refreshStudioJobs()">Yenile ↻</button>
+        <div style="display:flex; gap:10px;">
+          <select id="jobsStatusFilter" class="media-select" onchange="filterJobsTable()">
+            <option value="ALL">Tüm Durumlar</option>
+            <option value="queued">Kuyrukta (Queued)</option>
+            <option value="processing">İşleniyor (Processing)</option>
+            <option value="rendering">Render Aşaması (Rendering)</option>
+            <option value="encoding">Kodlanıyor (Encoding)</option>
+            <option value="completed">Tamamlandı (Completed)</option>
+            <option value="failed">Hatalı (Failed)</option>
+            <option value="cancelled">İptal Edildi (Cancelled)</option>
+          </select>
+          <button type="button" class="btn-ghost" onclick="refreshStudioJobs()">Yenile ↻</button>
+          <button type="button" class="btn-gold" onclick="openCreateJobModal()">✦ Yeni Görev</button>
+        </div>
       </div>
 
       <div style="overflow-x:auto;">
@@ -680,18 +1049,19 @@
           <thead>
             <tr>
               <th>Görev ID</th>
-              <th>Ürün / Koleksiyon</th>
-              <th>İşlem Türü</th>
+              <th>Hedef Ürün / Koleksiyon</th>
+              <th>Üretim Türü</th>
               <th>Motor</th>
               <th>Durum</th>
               <th>İlerleme</th>
+              <th>Yeniden Deneme</th>
               <th>Tarih</th>
               <th>İşlemler</th>
             </tr>
           </thead>
           <tbody id="jobsTableBody">
             <tr>
-              <td colspan="8" style="text-align:center; padding:36px; color:var(--text-muted);">
+              <td colspan="9" style="text-align:center; padding:36px; color:var(--text-muted);">
                 Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
               </td>
             </tr>
@@ -701,12 +1071,218 @@
     </div>
   </section>
 
+  <!-- ── MODAL A: CREATE PRODUCTION JOB ── -->
+  <div class="studio-modal-backdrop" id="modalCreateJob">
+    <div class="studio-modal-box">
+      <div class="modal-head">
+        <h3>✦ Yeni Prodüksiyon Görevi Oluştur</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modalCreateJob')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createJobForm" onsubmit="handleCreateJobSubmit(event)">
+          
+          <div class="form-group">
+            <label>1. Hedef Ürün / Koleksiyon (Modül 7)</label>
+            <select id="jobTargetSelect" class="form-control" required onchange="handleJobTargetChange(this.value)">
+              <option value="">Hedef Seçiniz...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>2. Üretim Türü</label>
+            <select id="jobTypeSelect" class="form-control" required onchange="handleJobTypeChange(this.value)">
+              <option value="image_enhance">Görsel İyileştirme (AI Image Enhancement)</option>
+              <option value="background_removal">Arka Plan Ayrıştırma (Background Processing)</option>
+              <option value="blender_render">Blender 3D Sahne Render (Headless Cycles)</option>
+              <option value="cinematic_video">Sinematik Video (Cinematic Camera Track)</option>
+              <option value="3d_reconstruction">Fotoğraftan 3D Rekonstrüksiyon (Multi-View)</option>
+              <option value="multi_format_transcode">Çoklu Format Dağıtımı (9:16 / 16:9 / 1:1)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>3. Üretim Motoru</label>
+            <select id="jobEngineSelect" class="form-control" required>
+              <option value="ai_enhancer">AI Image &amp; Lighting Studio (ai_enhancer)</option>
+              <option value="blender_headless">Blender 4.x Headless Worker (blender_headless)</option>
+              <option value="ai_3d_recon">Multi-View 3D Reconstructor (ai_3d_recon)</option>
+              <option value="ffmpeg_transcoder">FFmpeg Multi-Format Transcoder (ffmpeg_transcoder)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>4. Kaynak Medya Varlığı (Opsiyonel)</label>
+            <select id="jobSourceAssetSelect" class="form-control">
+              <option value="">-- Kaynak Medya Yok (Yeni Başlat) --</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="jobParamsGroup">
+            <label>5. Sahne &amp; Render Parametreleri</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+              <select id="jobSceneTemplateSelect" class="form-control">
+                <option value="vienna_luxury_salon">Vienna Luxury Salon</option>
+                <option value="verona_sunlit_villa">Verona Sunlit Villa</option>
+                <option value="siena_modern_atelier">Siena Modern Atelier</option>
+                <option value="kopenhag_nordic_sanctuary">Kopenhag Nordic Sanctuary</option>
+              </select>
+              <select id="jobResolutionSelect" class="form-control">
+                <option value="1920x1080">1920x1080 (16:9 Full HD)</option>
+                <option value="1080x1920">1080x1920 (9:16 Reels/Shorts)</option>
+                <option value="1080x1080">1080x1080 (1:1 Kare)</option>
+                <option value="3840x2160">3840x2160 (16:9 4K Master)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
+            <button type="button" class="btn-ghost" onclick="closeModal('modalCreateJob')">Vazgeç</button>
+            <button type="submit" class="btn-gold" id="btnSubmitJob">✦ Görevi Kuyruğa Ekle</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL B: SAFE FILE UPLOAD ── -->
+  <div class="studio-modal-backdrop" id="modalUpload">
+    <div class="studio-modal-box">
+      <div class="modal-head">
+        <h3>⬆️ Güvenli Medya Yükleme (Supabase Storage 'media')</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modalUpload')">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadForm" onsubmit="handleUploadSubmit(event)">
+          
+          <div class="form-group">
+            <label>Hedef Ürün / Koleksiyon</label>
+            <select id="uploadProductSelect" class="form-control" required>
+              <option value="">Seçiniz...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Varlık Kategorisi (Asset Type)</label>
+            <select id="uploadAssetTypeSelect" class="form-control" required>
+              <option value="raw_photo">Ham Fotoğraf (raw_photo)</option>
+              <option value="processed_photo">İşlenmiş Fotoğraf (processed_photo)</option>
+              <option value="ai_enhanced">AI İyileştirilmiş Görsel (ai_enhanced)</option>
+              <option value="3d_model">3D Model (GLB/OBJ/BLEND)</option>
+              <option value="video_render">Render Edilmiş Video (video_render)</option>
+              <option value="variant_export">Platform Varyantı (variant_export)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Köken Varlık (Provenance Source - Opsiyonel)</label>
+            <select id="uploadSourceAssetSelect" class="form-control">
+              <option value="">-- Bağımsız Orijinal Dosya --</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Dosya Seçimi</label>
+            <div class="upload-dropzone" onclick="document.getElementById('fileInput').click()">
+              <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelected(event)">
+              <div style="font-size:32px; margin-bottom:8px;">📁</div>
+              <strong id="uploadFileNameLabel" style="font-size:13px; color:#fff; display:block;">Dosya seçmek için tıklayın veya sürükleyin</strong>
+              <small id="uploadFileInfoLabel" style="color:var(--text-muted); font-size:11px;">Maksimum: Resim 15MB, Video 100MB, 3D 150MB</small>
+            </div>
+          </div>
+
+          <div id="uploadProgressBox" style="display:none; margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+              <span id="uploadProgressText">Yükleniyor...</span>
+              <span id="uploadProgressPercent">0%</span>
+            </div>
+            <div class="progress-bar-wrap" style="width:100%; height:8px;">
+              <div class="progress-bar-fill" id="uploadProgressBar" style="width:0%;"></div>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:24px;">
+            <button type="button" class="btn-ghost" onclick="closeModal('modalUpload')">Vazgeç</button>
+            <button type="submit" class="btn-emerald" id="btnUploadSubmit">Yükle ve Kaydet</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL C: ASSET DETAIL & PROVENANCE DRAWER ── -->
+  <div class="studio-modal-backdrop" id="modalAssetDetail">
+    <div class="studio-modal-box" style="max-width:760px;">
+      <div class="modal-head">
+        <h3 id="dtAssetTitle">Medya Varlık Detayı</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modalAssetDetail')">✕</button>
+      </div>
+      <div class="modal-body" id="dtAssetBody">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MODAL D: JOB DETAIL & EVENT TIMELINE ── -->
+  <div class="studio-modal-backdrop" id="modalJobDetail">
+    <div class="studio-modal-box" style="max-width:760px;">
+      <div class="modal-head">
+        <h3 id="dtJobTitle">Prodüksiyon Görev Detayı</h3>
+        <button type="button" class="modal-close-btn" onclick="closeModal('modalJobDetail')">✕</button>
+      </div>
+      <div class="modal-body" id="dtJobBody">
+        <!-- Injected via JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ MODAL E: 3D WEBGL MODEL VIEWER ════════ -->
+  <div class="studio-modal-backdrop" id="modal3DViewer">
+    <div class="studio-modal-box" style="max-width:960px; width:95vw; height:85vh; display:flex; flex-direction:column; padding:0; overflow:hidden; background:#0B0F17; border:1px solid rgba(212,175,55,0.35); box-shadow:0 25px 60px rgba(0,0,0,0.85);">
+      <div class="modal-head" style="padding:14px 20px; border-bottom:1px solid rgba(255,255,255,0.08); background:#121824; display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:22px;">🧊</span>
+          <div>
+            <h3 id="m3dViewerTitle" style="margin:0; font-size:15px; font-weight:700; color:#fff;">3D Model İnceleme</h3>
+            <span id="m3dViewerSubtitle" style="font-size:11px; color:#94A3B8;">Three.js WebGL &bull; 360° Etkileşimli İnceleme</span>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <button type="button" class="btn-ghost" id="btnToggleAutoRotate" style="padding:5px 10px; font-size:11.5px;" onclick="window.toggleViewerAutoRotate()">🔄 Otomatik Döndür</button>
+          <button type="button" class="btn-ghost" id="btnToggleWireframe" style="padding:5px 10px; font-size:11.5px;" onclick="window.toggleViewerWireframe()">🕸️ Tel Kafes</button>
+          <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11.5px;" onclick="window.resetViewerCamera()">🎯 Kamerayı Sıfırla</button>
+          <button type="button" class="modal-close-btn" onclick="window.close3DViewer()">✕</button>
+        </div>
+      </div>
+      
+      <div style="position:relative; flex:1; width:100%; height:100%; min-height:420px; background:#0C1017; overflow:hidden;">
+        <div id="viewerCanvasContainer" style="width:100%; height:100%; position:absolute; top:0; left:0;"></div>
+        
+        <!-- Loading Overlay -->
+        <div id="viewerLoadingOverlay" style="position:absolute; inset:0; background:rgba(12,16,23,0.88); display:none; flex-direction:column; align-items:center; justify-content:center; gap:14px; z-index:10;">
+          <div style="width:44px; height:44px; border:3px solid rgba(212,175,55,0.2); border-top-color:#D4AF37; border-radius:50%; animation:spin 1s linear infinite;"></div>
+          <div id="viewerLoadingText" style="color:#F1F5F9; font-size:13px; font-weight:600;">3D Model Yükleniyor...</div>
+        </div>
+
+        <!-- Controls Overlay Hint -->
+        <div style="position:absolute; bottom:14px; left:16px; background:rgba(15,23,42,0.8); backdrop-filter:blur(6px); border:1px solid rgba(255,255,255,0.08); padding:7px 12px; border-radius:6px; font-size:11px; color:#94A3B8; pointer-events:none; z-index:5;">
+          🖱️ <strong>Sol Tık:</strong> 360° Döndür &bull; <strong>Sağ Tık:</strong> Kaydır &bull; <strong>Tekerlek:</strong> Yakınlaştır / Uzaklaştır
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- SCRIPTS -->
   <script type="module">
     import {
       fetchStudioOverview,
       fetchStudioMedia,
+      fetchMediaDetail,
+      uploadStudioMedia,
       fetchStudioJobs,
+      fetchJobDetail,
+      submitStudioJob,
+      cancelStudioJob,
+      retryStudioJob,
       fetchSceneTemplates,
       fetchStudioEngines,
       fetchCatalogProducts
@@ -716,11 +1292,24 @@
       studioRegistry,
       BlenderHeadlessEngine,
       AIImageEnhanceEngine,
-      VideoTranscodeEngine
+      VideoTranscodeEngine,
+      AI3DReconEngine
     } from './js/studio-engine.js';
 
-    let currentCatalog = { products: [], registered_templates: [] };
+    import { ModelViewerEngine } from './js/model-viewer.js';
 
+    // State
+    let activeModelViewer = null;
+    let currentCatalog = { products: [], collections: [], categories: [], registered_templates: [] };
+    let currentMediaList = [];
+    let currentJobsList = [];
+    let currentViewMode = 'grid';
+    let selectedUploadFileBase64 = null;
+    let selectedUploadFileName = null;
+    let selectedUploadFileMime = null;
+    let selectedUploadFileSize = 0;
+
+    // Window Navigation Switcher
     window.switchStudioTab = function(tabKey) {
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabKey);
@@ -730,16 +1319,155 @@
       });
     };
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    window.closeModal = function(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.remove('active');
+    };
+
+    window.openModal = function(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.add('active');
+    };
+
+    // ── 3D MODEL VIEWER CONTROLLER ──
+    window.open3DViewer = async function(modelUrl, title = '3D Model') {
+      const modal = document.getElementById('modal3DViewer');
+      const titleEl = document.getElementById('m3dViewerTitle');
+      const overlay = document.getElementById('viewerLoadingOverlay');
+      const loadText = document.getElementById('viewerLoadingText');
+      const container = document.getElementById('viewerCanvasContainer');
+
+      if (titleEl) titleEl.textContent = title;
+      if (modal) modal.classList.add('active');
+
+      if (activeModelViewer) {
+        activeModelViewer.dispose();
+        activeModelViewer = null;
+      }
+
+      if (overlay) overlay.style.display = 'flex';
+      if (loadText) loadText.textContent = '3D Sahne Hazırlanıyor...';
+
+      try {
+        activeModelViewer = new ModelViewerEngine(container, {
+          background: 0x0C1017,
+          showGrid: true,
+          autoRotateSpeed: 1.5
+        });
+        activeModelViewer.init();
+
+        if (modelUrl) {
+          await activeModelViewer.loadModel(modelUrl, (pct) => {
+            if (loadText) loadText.textContent = `3D Geometri İndiriliyor... %${Math.round(pct)}`;
+          });
+        }
+        if (overlay) overlay.style.display = 'none';
+      } catch (err) {
+        console.warn('3D Viewer hatası (fallback devrede):', err);
+        if (loadText) loadText.textContent = 'Model yüklenemedi: ' + err.message;
+        setTimeout(() => { if (overlay) overlay.style.display = 'none'; }, 2000);
+      }
+    };
+
+    window.close3DViewer = function() {
+      const modal = document.getElementById('modal3DViewer');
+      if (modal) modal.classList.remove('active');
+      if (activeModelViewer) {
+        activeModelViewer.dispose();
+        activeModelViewer = null;
+      }
+    };
+
+    window.toggleViewerAutoRotate = function() {
+      if (!activeModelViewer) return;
+      const isRotating = activeModelViewer.toggleAutoRotate();
+      const btn = document.getElementById('btnToggleAutoRotate');
+      if (btn) {
+        btn.style.borderColor = isRotating ? '#D4AF37' : '';
+        btn.style.color = isRotating ? '#D4AF37' : '';
+      }
+    };
+
+    window.toggleViewerWireframe = function() {
+      if (!activeModelViewer) return;
+      const isWire = activeModelViewer.toggleWireframe();
+      const btn = document.getElementById('btnToggleWireframe');
+      if (btn) {
+        btn.style.borderColor = isWire ? '#10B981' : '';
+        btn.style.color = isWire ? '#10B981' : '';
+      }
+    };
+
+    window.resetViewerCamera = function() {
+      if (activeModelViewer) activeModelViewer.resetCamera();
+    };
+
+    function render3DStudioModels(assets) {
+      const wrap = document.getElementById('threeDModelsWrap');
+      if (!wrap) return;
+
+      const models = (assets || []).filter(a =>
+        a.asset_type === '3d_model' ||
+        (a.file_name && (a.file_name.endsWith('.glb') || a.file_name.endsWith('.gltf') || a.file_name.endsWith('.blend') || a.file_name.endsWith('.obj') || a.file_name.endsWith('.fbx')))
+      );
+
+      if (!models.length) {
+        wrap.innerHTML = `
+          <div class="empty-state-icon">🧊</div>
+          <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
+          <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve fotogrametri çıktıları burada listelenir.</p>
+          <div style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
+            <button type="button" class="btn-gold" onclick="openUploadModal('3d_model')">⬆️ 3D Model Yükle</button>
+            <button type="button" class="btn-ghost" onclick="open3DViewer('', 'Örnek Studio Sahnesi')">👁️ Boş 3D Sahneyi Başlat</button>
+          </div>
+          <span class="mini-chip" style="font-size:11px; padding:6px 12px; margin-top:16px;">Desteklenen Formatlar: GLB • GLTF • BLEND • FBX • OBJ</span>
+        `;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <div class="media-grid" style="width:100%; text-align:left;">
+          ${models.map(m => `
+            <div class="asset-card">
+              <div class="asset-thumb-wrap" style="background:#090d16; display:flex; align-items:center; justify-content:center;">
+                <div style="font-size:48px;">🧊</div>
+                <span class="asset-type-badge">${m.asset_type}</span>
+              </div>
+              <div class="asset-meta-body">
+                <div class="asset-title" title="${escapeHtml(m.file_name)}">${escapeHtml(m.file_name)}</div>
+                <div class="asset-specs">
+                  <span>${escapeHtml(m.product_slug || m.collection_id || 'Genel')}</span>
+                  <span>${(m.file_size_bytes / (1024 * 1024)).toFixed(2)} MB</span>
+                </div>
+                <div class="asset-card-actions" style="margin-top:10px;">
+                  <button type="button" class="btn-gold" style="padding:5px 10px; font-size:11px; flex:1;" onclick="open3DViewer('${m.public_url || m.storage_path}', '${escapeHtml(m.file_name)}')">✦ 360° Görüntüle</button>
+                  <a href="${m.public_url || m.storage_path}" target="_blank" class="btn-ghost" style="padding:5px 8px; font-size:11px;" download>İndir</a>
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }
+
+    // Load Real Module 7 Catalog Reference
     window.loadCatalogReference = async function loadCatalogReference() {
       try {
         const catalogRes = await fetchCatalogProducts().catch(() => null);
         if (catalogRes?.products) {
           currentCatalog = catalogRes;
-          const prodSelect = document.getElementById('aiSelectProduct');
-          if (prodSelect) {
-            prodSelect.innerHTML = '<option value="">Katalogdan Ürün Seçin...</option>' +
-              catalogRes.products.map(p => `<option value="${p.slug}">${p.title} (${p.category || 'Mobilya'})</option>`).join('');
-          }
+          populateCatalogSelectors();
+          renderCatalogExplorer();
         }
         return currentCatalog;
       } catch (e) {
@@ -748,17 +1476,167 @@
       }
     };
 
+    function populateCatalogSelectors() {
+      const selects = [
+        document.getElementById('aiSelectProduct'),
+        document.getElementById('jobTargetSelect'),
+        document.getElementById('uploadProductSelect'),
+        document.getElementById('mediaFilterProduct')
+      ];
+
+      const options = [];
+      options.push('<option value="">-- Ürün veya Koleksiyon Seçin --</option>');
+
+      if (currentCatalog.collections?.length) {
+        options.push('<optgroup label="Mimari Koleksiyonlar">');
+        currentCatalog.collections.forEach(c => {
+          options.push(`<option value="${c.slug}">🏛️ ${c.title} (Koleksiyon)</option>`);
+        });
+        options.push('</optgroup>');
+      }
+
+      if (currentCatalog.products?.length) {
+        options.push('<optgroup label="Tekil / Bağımsız Ürünler">');
+        currentCatalog.products.forEach(p => {
+          options.push(`<option value="${p.slug}">🛋️ ${p.title} (${p.category || 'Mobilya'})</option>`);
+        });
+        options.push('</optgroup>');
+      }
+
+      selects.forEach(sel => {
+        if (sel) sel.innerHTML = options.join('');
+      });
+
+      // Categories filter
+      const catFilter = document.getElementById('catalogCategoryFilter');
+      if (catFilter && currentCatalog.categories) {
+        catFilter.innerHTML = '<option value="ALL">Tüm Kategoriler</option>' +
+          currentCatalog.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+      }
+    }
+
+    // Render Module 7 Catalog & Pieces
+    function renderCatalogExplorer() {
+      const container = document.getElementById('catalogExplorerContainer');
+      if (!container) return;
+
+      const collections = currentCatalog.collections || [];
+      const products = currentCatalog.products || [];
+
+      if (!collections.length && !products.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🛋️</div>
+            <h3 class="empty-state-title">Katalog Verisi Alınamadı</h3>
+            <p class="empty-state-desc">Modül 7 katalog ürünleri veya koleksiyonları henüz yüklenmedi.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+
+      // 1. Collections
+      if (collections.length) {
+        html += `<h3 style="font-size:14px; font-weight:800; color:var(--accent-gold); margin-bottom:12px; letter-spacing:0.5px;">MİMARİ KOLEKSİYONLAR (${collections.length})</h3>`;
+        html += '<div style="margin-bottom:28px;">';
+        collections.forEach(col => {
+          html += `
+            <div class="catalog-browser-card">
+              <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; margin-bottom:14px; flex-wrap:wrap;">
+                <div style="display:flex; gap:14px; align-items:center;">
+                  ${col.hero_image ? `<img src="${col.hero_image}" class="catalog-thumb" alt="${col.title}">` : '<div class="catalog-thumb" style="display:flex;align-items:center;justify-content:center;font-size:24px;">🏛️</div>'}
+                  <div>
+                    <strong style="font-size:15px; color:#fff; display:block;">${col.title}</strong>
+                    <span style="font-size:11.5px; color:var(--text-muted);">${col.category} • ${col.parts?.length || 0} Parça</span>
+                  </div>
+                </div>
+                <button type="button" class="btn-gold" style="font-size:11px; padding:6px 12px;" onclick="selectTargetForProduction('${col.slug}', 'collection')">
+                  ✦ Bu Koleksiyon İçin Prodüksiyon Başlat
+                </button>
+              </div>
+
+              ${col.design_story ? `<p style="font-size:12px; color:var(--text-muted); margin-bottom:12px; font-style:italic;">"${col.design_story}"</p>` : ''}
+
+              <!-- Parts list -->
+              ${col.parts && col.parts.length ? `
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">
+                  ${col.parts.map(pt => `
+                    <div style="background:rgba(0,0,0,0.3); border:1px solid rgba(148,163,184,0.1); border-radius:8px; padding:8px 10px; display:flex; gap:10px; align-items:center;">
+                      ${pt.ana_resim ? `<img src="${pt.ana_resim}" style="width:36px; height:36px; border-radius:6px; object-fit:cover;">` : '<span style="font-size:18px;">🧩</span>'}
+                      <div>
+                        <strong style="font-size:11.5px; color:#fff; display:block;">${pt.title || 'Koleksiyon Parçası'}</strong>
+                        <small style="font-size:10px; color:var(--text-dim);">${pt.dimensions || pt.piece_role || 'Standart'}</small>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+              ` : ''}
+            </div>
+          `;
+        });
+        html += '</div>';
+      }
+
+      // 2. Individual Products
+      if (products.length) {
+        html += `<h3 style="font-size:14px; font-weight:800; color:var(--accent-forest); margin-bottom:12px; letter-spacing:0.5px;">KATALOG ÜRÜNLERİ (${products.length})</h3>`;
+        products.forEach(p => {
+          html += `
+            <div class="catalog-item-row">
+              <div style="display:flex; align-items:center; gap:14px;">
+                ${p.thumbnail ? `<img src="${p.thumbnail}" class="catalog-thumb" alt="${p.title}">` : '<div class="catalog-thumb" style="display:flex;align-items:center;justify-content:center;font-size:20px;">🛋️</div>'}
+                <div>
+                  <strong style="font-size:13.5px; color:#fff; display:block;">${p.title}</strong>
+                  <span style="font-size:11px; color:var(--text-muted);">${p.category} • SKU: <code style="font-family:var(--font-mono); color:var(--accent-gold);">${p.sku}</code></span>
+                </div>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px;">
+                <span class="mini-chip">${p.photos?.length || 1} Fotoğraf</span>
+                <button type="button" class="btn-ghost" style="padding:6px 12px; font-size:11px;" onclick="selectTargetForProduction('${p.slug}', 'product')">
+                  ✦ Üretime Al
+                </button>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      container.innerHTML = html;
+    }
+
+    window.filterCatalogDisplay = function() {
+      const q = (document.getElementById('catalogSearchInput')?.value || '').toLowerCase();
+      const cat = document.getElementById('catalogCategoryFilter')?.value || 'ALL';
+
+      document.querySelectorAll('.catalog-browser-card, .catalog-item-row').forEach(row => {
+        const text = row.innerText.toLowerCase();
+        const matchesQuery = !q || text.includes(q);
+        const matchesCategory = cat === 'ALL' || text.includes(cat.toLowerCase());
+        row.style.display = matchesQuery && matchesCategory ? '' : 'none';
+      });
+    };
+
+    window.selectTargetForProduction = function(slug, type) {
+      openCreateJobModal();
+      const sel = document.getElementById('jobTargetSelect');
+      if (sel) sel.value = slug;
+      switchStudioTab('manager');
+    };
+
+    // Load Studio Dashboard Data
     async function loadStudioData() {
       try {
-        const [overviewRes, enginesRes, templatesRes, catalogRes, jobsRes] = await Promise.all([
+        const [overviewRes, enginesRes, templatesRes, catalogRes, jobsRes, mediaRes] = await Promise.all([
           fetchStudioOverview().catch(() => null),
           fetchStudioEngines().catch(() => null),
           fetchSceneTemplates().catch(() => null),
           fetchCatalogProducts().catch(() => null),
-          fetchStudioJobs().catch(() => null)
+          fetchStudioJobs().catch(() => null),
+          fetchStudioMedia().catch(() => null)
         ]);
 
-        // 1. Populate Metrics
+        // 1. Overview Metrics
         if (overviewRes?.overview) {
           const ov = overviewRes.overview;
           document.getElementById('stTotalMedia').textContent = ov.total_media_assets || 0;
@@ -768,7 +1646,7 @@
           document.getElementById('stTotalCost').textContent = '$' + (Number(ov.total_production_cost_usd || 0)).toFixed(2);
         }
 
-        // 2. Populate Engines
+        // 2. Engines Matrix
         const enginesWrap = document.getElementById('overviewEnginesList');
         if (enginesRes?.engines && enginesWrap) {
           enginesWrap.innerHTML = enginesRes.engines.map(eng => `
@@ -782,7 +1660,7 @@
           `).join('');
         }
 
-        // 3. Populate Scene Templates Grid
+        // 3. Scene Templates Grid
         const tplGrid = document.getElementById('sceneTemplatesGrid');
         const templates = templatesRes?.scene_templates || [];
         if (tplGrid && templates.length > 0) {
@@ -808,17 +1686,310 @@
           `).join('');
         }
 
-        // 4. Populate Product Dropdown (Module 7 Bridge)
-        await loadCatalogReference();
+        // 4. Catalog References
+        if (catalogRes?.products) {
+          currentCatalog = catalogRes;
+          populateCatalogSelectors();
+          renderCatalogExplorer();
+        }
 
-        // 5. Populate Jobs Table
-        renderJobsTable(jobsRes?.jobs || []);
+        // 5. Media Library & 3D Studio
+        currentMediaList = mediaRes?.media_assets || [];
+        renderMediaLibrary(currentMediaList);
+        render3DStudioModels(currentMediaList);
+        populateSourceAssetSelectors();
+
+        // 6. Jobs Table
+        currentJobsList = jobsRes?.jobs || [];
+        renderJobsTable(currentJobsList);
 
       } catch (err) {
         console.error('Stüdyo verisi yüklenirken hata:', err);
       }
     }
 
+    // Media Library Rendering
+    window.setMediaViewMode = function(mode) {
+      currentViewMode = mode;
+      document.getElementById('btnMediaGrid')?.classList.toggle('active', mode === 'grid');
+      document.getElementById('btnMediaList')?.classList.toggle('active', mode === 'list');
+      renderMediaLibrary(currentMediaList);
+    };
+
+    function renderMediaLibrary(assets) {
+      const container = document.getElementById('mediaLibraryContainer');
+      if (!container) return;
+
+      if (!assets || assets.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🗂️</div>
+            <h3 class="empty-state-title">Medya Kütüphanesi Boş</h3>
+            <p class="empty-state-desc">Modül 8 üzerinden yüklenen veya render edilen medya varlıkları burada listelenir.</p>
+            <button type="button" class="btn-emerald" onclick="openUploadModal()">⬆️ İlk Medyayı Yükle</button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentViewMode === 'grid') {
+        container.innerHTML = `
+          <div class="media-grid">
+            ${assets.map(a => `
+              <div class="asset-card">
+                <div class="asset-thumb-wrap" onclick="viewAssetDetail('${a.id}')">
+                  ${a.mime_type.startsWith('image/')
+                    ? `<img src="${a.public_url || a.storage_path}" alt="${a.file_name}" loading="lazy">`
+                    : a.mime_type.startsWith('video/')
+                      ? `<div style="font-size:42px;">🎥</div>`
+                      : `<div style="font-size:42px;">🧊</div>`
+                  }
+                  <span class="asset-type-badge">${a.asset_type}</span>
+                </div>
+                <div class="asset-meta-body">
+                  <div class="asset-title" title="${a.file_name}">${a.file_name}</div>
+                  <div class="asset-specs">
+                    <span>${a.product_slug || a.collection_id || 'Genel'}</span>
+                    <span>${(a.file_size_bytes / (1024 * 1024)).toFixed(2)} MB</span>
+                  </div>
+                  <div class="asset-card-actions">
+                    <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px; flex:1;" onclick="viewAssetDetail('${a.id}')">İncele</button>
+                    ${(a.asset_type === '3d_model' || (a.file_name && (a.file_name.endsWith('.glb') || a.file_name.endsWith('.gltf')))) ? `
+                      <button type="button" class="btn-gold" style="padding:4px 8px; font-size:11px;" onclick="open3DViewer('${a.public_url || a.storage_path}', '${escapeHtml(a.file_name)}')">✦ 3D</button>
+                    ` : ''}
+                    <a href="${a.public_url || a.storage_path}" target="_blank" class="btn-ghost" style="padding:4px 8px; font-size:11px;" download>İndir</a>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+      } else {
+        container.innerHTML = `
+          <table class="studio-table">
+            <thead>
+              <tr>
+                <th>Önizleme</th>
+                <th>Dosya Adı</th>
+                <th>Tür</th>
+                <th>Ürün / Koleksiyon</th>
+                <th>Boyut</th>
+                <th>MIME</th>
+                <th>Tarih</th>
+                <th>İşlemler</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${assets.map(a => `
+                <tr>
+                  <td>
+                    ${a.mime_type.startsWith('image/')
+                      ? `<img src="${a.public_url || a.storage_path}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;">`
+                      : `<span style="font-size:24px;">📁</span>`
+                    }
+                  </td>
+                  <td><strong>${escapeHtml(a.file_name)}</strong></td>
+                  <td><span class="mini-chip">${a.asset_type}</span></td>
+                  <td>${escapeHtml(a.product_slug || a.collection_id || '-')}</td>
+                  <td>${(a.file_size_bytes / (1024 * 1024)).toFixed(2)} MB</td>
+                  <td><code style="font-size:11px;">${a.mime_type}</code></td>
+                  <td>${a.created_at ? a.created_at.slice(0, 10) : '-'}</td>
+                  <td>
+                    <div style="display:flex; gap:6px;">
+                      <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="viewAssetDetail('${a.id}')">Detay</button>
+                      ${(a.asset_type === '3d_model' || (a.file_name && (a.file_name.endsWith('.glb') || a.file_name.endsWith('.gltf')))) ? `
+                        <button type="button" class="btn-gold" style="padding:4px 8px; font-size:11px;" onclick="open3DViewer('${a.public_url || a.storage_path}', '${escapeHtml(a.file_name)}')">✦ 3D</button>
+                      ` : ''}
+                    </div>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+    }
+
+    window.filterMediaLibrary = function() {
+      const typeFilter = document.getElementById('mediaFilterType')?.value || 'ALL';
+      const prodFilter = document.getElementById('mediaFilterProduct')?.value || '';
+      const q = (document.getElementById('mediaSearchInput')?.value || '').toLowerCase();
+
+      let filtered = currentMediaList;
+      if (typeFilter !== 'ALL') filtered = filtered.filter(a => a.asset_type === typeFilter);
+      if (prodFilter) filtered = filtered.filter(a => a.product_slug === prodFilter || a.collection_id === prodFilter);
+      if (q) {
+        filtered = filtered.filter(a =>
+          (a.file_name && a.file_name.toLowerCase().includes(q)) ||
+          (a.product_slug && a.product_slug.toLowerCase().includes(q)) ||
+          (a.asset_type && a.asset_type.toLowerCase().includes(q))
+        );
+      }
+      renderMediaLibrary(filtered);
+    };
+
+    window.handleMediaSearch = function() {
+      filterMediaLibrary();
+    };
+
+    function populateSourceAssetSelectors() {
+      const selects = [
+        document.getElementById('jobSourceAssetSelect'),
+        document.getElementById('uploadSourceAssetSelect')
+      ];
+      const options = ['<option value="">-- Kaynak Medya Yok --</option>'];
+      currentMediaList.forEach(a => {
+        options.push(`<option value="${a.id}">${a.file_name} (${a.asset_type})</option>`);
+      });
+      selects.forEach(sel => {
+        if (sel) sel.innerHTML = options.join('');
+      });
+    }
+
+    // View Asset Detail Drawer
+    window.viewAssetDetail = async function(assetId) {
+      try {
+        const res = await fetchMediaDetail(assetId);
+        if (!res?.asset) {
+          alert('Varlık bulunamadı.');
+          return;
+        }
+
+        const a = res.asset;
+        const chain = res.provenance_chain || [a];
+        const body = document.getElementById('dtAssetBody');
+        document.getElementById('dtAssetTitle').textContent = a.file_name;
+
+        body.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:18px;">
+            <div style="width:100%; max-height:360px; background:#090D14; border-radius:12px; display:flex; align-items:center; justify-content:center; overflow:hidden; border:1px solid var(--studio-border);">
+              ${a.mime_type.startsWith('image/')
+                ? `<img src="${a.public_url || a.storage_path}" style="max-width:100%; max-height:360px; object-fit:contain;">`
+                : a.mime_type.startsWith('video/')
+                  ? `<video controls src="${a.public_url || a.storage_path}" style="max-width:100%; max-height:360px;"></video>`
+                  : (a.asset_type === '3d_model' || (a.file_name && (a.file_name.endsWith('.glb') || a.file_name.endsWith('.gltf'))))
+                    ? `<div style="display:flex; flex-direction:column; align-items:center; gap:14px; padding:32px;">
+                        <div style="font-size:64px;">🧊</div>
+                        <button type="button" class="btn-gold" style="padding:10px 22px; font-size:13px; font-weight:700;" onclick="closeModal('modalAssetDetail'); open3DViewer('${a.public_url || a.storage_path}', '${escapeHtml(a.file_name)}')">
+                          ✦ WebGL 3D Model Viewer ile 360° İncele
+                        </button>
+                      </div>`
+                    : `<div style="font-size:64px; padding:40px;">🧊 3D Varlık</div>`
+              }
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;">
+              <div><strong>Varlık Türü:</strong> <span class="mini-chip">${a.asset_type}</span></div>
+              <div><strong>Dosya Boyutu:</strong> ${(a.file_size_bytes / (1024 * 1024)).toFixed(2)} MB</div>
+              <div><strong>MIME Türü:</strong> <code>${a.mime_type}</code></div>
+              <div><strong>Çözünürlük:</strong> ${a.width_px && a.height_px ? `${a.width_px} × ${a.height_px} px` : 'N/A'}</div>
+              <div><strong>Ürün / Koleksiyon:</strong> ${a.product_slug || a.collection_id || 'Genel'}</div>
+              <div><strong>Depolama Yolu:</strong> <code style="font-size:11px;">${a.storage_path}</code></div>
+            </div>
+
+            <!-- Provenance Chain -->
+            <div>
+              <h4 style="font-size:13px; font-weight:700; color:var(--accent-gold); margin-bottom:8px;">Köken &amp; Türetim Silsilesi (Provenance Lineage)</h4>
+              <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                ${chain.map((c, idx) => `
+                  <div style="background:rgba(255,255,255,0.04); border:1px solid var(--studio-border); border-radius:8px; padding:6px 12px; font-size:11.5px;">
+                    <strong>${idx + 1}. ${c.asset_type}</strong>
+                    <div style="color:var(--text-dim); font-size:10px;">${c.file_name}</div>
+                  </div>
+                  ${idx < chain.length - 1 ? '<span style="color:var(--accent-gold);">→</span>' : ''}
+                `).join('')}
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:12px;">
+              <a href="${a.public_url || a.storage_path}" target="_blank" class="btn-emerald" download>⬇️ Dosyayı İndir</a>
+            </div>
+          </div>
+        `;
+
+        openModal('modalAssetDetail');
+      } catch (err) {
+        alert('Detay yükleme hatası: ' + err.message);
+      }
+    };
+
+    // Safe Upload Flow
+    window.openUploadModal = function(defaultType = 'raw_photo') {
+      const typeSel = document.getElementById('uploadAssetTypeSelect');
+      if (typeSel) typeSel.value = defaultType;
+      openModal('modalUpload');
+    };
+
+    window.handleFileSelected = function(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      selectedUploadFileName = file.name;
+      selectedUploadFileMime = file.type || 'application/octet-stream';
+      selectedUploadFileSize = file.size;
+
+      document.getElementById('uploadFileNameLabel').textContent = file.name;
+      document.getElementById('uploadFileInfoLabel').textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB • ${selectedUploadFileMime}`;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        selectedUploadFileBase64 = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.handleUploadSubmit = async function(e) {
+      e.preventDefault();
+      if (!selectedUploadFileBase64) {
+        alert('Lütfen yüklenecek bir dosya seçin.');
+        return;
+      }
+
+      const pSlug = document.getElementById('uploadProductSelect')?.value;
+      const aType = document.getElementById('uploadAssetTypeSelect')?.value;
+      const sAsset = document.getElementById('uploadSourceAssetSelect')?.value;
+
+      const progressBox = document.getElementById('uploadProgressBox');
+      const progressBar = document.getElementById('uploadProgressBar');
+      const progressPercent = document.getElementById('uploadProgressPercent');
+      const btn = document.getElementById('btnUploadSubmit');
+
+      btn.disabled = true;
+      if (progressBox) progressBox.style.display = 'block';
+      if (progressBar) progressBar.style.width = '45%';
+      if (progressPercent) progressPercent.textContent = '45%';
+
+      try {
+        const payload = {
+          file_base64: selectedUploadFileBase64,
+          file_name: selectedUploadFileName,
+          mime_type: selectedUploadFileMime,
+          asset_type: aType,
+          product_slug: pSlug,
+          source_asset_id: sAsset || null
+        };
+
+        const res = await uploadStudioMedia(payload);
+
+        if (progressBar) progressBar.style.width = '100%';
+        if (progressPercent) progressPercent.textContent = '100%';
+
+        if (res.ok) {
+          alert('Dosya güvenli şekilde yüklendi ve medya varlığı oluşturuldu!');
+          closeModal('modalUpload');
+          loadStudioData();
+        } else {
+          alert('Yükleme hatası: ' + res.error);
+        }
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        if (progressBox) progressBox.style.display = 'none';
+      }
+    };
+
+    // Jobs Lifecycle Management
     function renderJobsTable(jobs) {
       const tbody = document.getElementById('jobsTableBody');
       if (!tbody) return;
@@ -826,7 +1997,7 @@
       if (!jobs || jobs.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="8" style="text-align:center; padding:36px; color:var(--text-muted);">
+            <td colspan="9" style="text-align:center; padding:36px; color:var(--text-muted);">
               Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
             </td>
           </tr>
@@ -841,44 +2012,243 @@
           <td><span class="mini-chip">${j.production_type}</span></td>
           <td>${j.selected_engine}</td>
           <td><span class="status-badge status-${j.status}">${j.status}</span></td>
-          <td>${j.progress_percent || 0}%</td>
-          <td>${j.created_at ? j.created_at.slice(0, 16).replace('T', ' ') : '-'}</td>
           <td>
-            ${['queued', 'processing'].includes(j.status) 
-              ? `<button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="cancelJob('${j.id}')">İptal Et</button>` 
-              : `<span style="color:var(--text-dim); font-size:11px;">-</span>`}
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${j.progress_percent || 0}%;"></div></div>
+            <small>${j.progress_percent || 0}%</small>
+          </td>
+          <td>${j.retry_count || 0} / ${j.max_retries || 3}</td>
+          <td>${j.created_at ? j.created_at.slice(0, 16).replace('T', ' ') : '-'}</td>
+          <td style="white-space:nowrap;">
+            <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="viewJobDetail('${j.id}')">Detay</button>
+            ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries || 3)
+              ? `<button type="button" class="btn-emerald" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="retryJobAction('${j.id}')">Yeniden Dene</button>`
+              : ''}
+            ${['queued', 'processing'].includes(j.status)
+              ? `<button type="button" class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="cancelJobAction('${j.id}')">İptal</button>`
+              : ''}
           </td>
         </tr>
       `).join('');
     }
 
-    window.refreshStudioJobs = async function() {
-      const res = await fetchStudioJobs().catch(() => null);
-      renderJobsTable(res?.jobs || []);
+    window.filterJobsTable = function() {
+      const st = document.getElementById('jobsStatusFilter')?.value || 'ALL';
+      let filtered = currentJobsList;
+      if (st !== 'ALL') filtered = filtered.filter(j => j.status === st);
+      renderJobsTable(filtered);
     };
 
-    window.cancelJob = async function(jobId) {
+    window.refreshStudioJobs = async function() {
+      const res = await fetchStudioJobs().catch(() => null);
+      currentJobsList = res?.jobs || [];
+      renderJobsTable(currentJobsList);
+    };
+
+    window.viewJobDetail = async function(jobId) {
       try {
-        const res = await fetch('/api/module8?action=jobs', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: jobId })
-        });
-        const data = await res.json();
-        if (data.ok) {
-          alert('Görev iptal edildi.');
+        const res = await fetchJobDetail(jobId);
+        if (!res?.job) {
+          alert('Görev bulunamadı.');
+          return;
+        }
+
+        const j = res.job;
+        const events = res.events || [];
+        const outputs = res.outputs || [];
+        const body = document.getElementById('dtJobBody');
+        document.getElementById('dtJobTitle').textContent = `Görev Detayı: ${j.id}`;
+
+        body.innerHTML = `
+          <div style="display:flex; flex-direction:column; gap:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:10px; border:1px solid var(--studio-border);">
+              <div>
+                <span class="status-badge status-${j.status}">${j.status}</span>
+                <strong style="margin-left:10px; font-size:14px; color:#fff;">${j.title || j.id}</strong>
+              </div>
+              <div style="font-size:12px; color:var(--text-muted);">
+                İlerleme: <strong>${j.progress_percent || 0}%</strong> • Yeniden Deneme: <strong>${j.retry_count || 0}/${j.max_retries || 3}</strong>
+              </div>
+            </div>
+
+            <!-- Structured Error Alert if Failed -->
+            ${j.status === 'failed' && j.error_message ? `
+              <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px 16px; color:#F87171; font-size:12px;">
+                <strong>⚠️ Hata Kaydı:</strong> ${j.error_message}
+                ${j.error_details ? `<pre style="margin-top:6px; font-family:var(--font-mono); font-size:11px; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; overflow-x:auto;">${JSON.stringify(j.error_details, null, 2)}</pre>` : ''}
+              </div>
+            ` : ''}
+
+            <!-- Technical details -->
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;">
+              <div><strong>Üretim Türü:</strong> <span class="mini-chip">${j.production_type}</span></div>
+              <div><strong>Seçili Motor:</strong> ${j.selected_engine}</div>
+              <div><strong>Hedef Ürün:</strong> ${j.product_slug || j.collection_id || 'Genel'}</div>
+              <div><strong>Oluşturulma:</strong> ${j.created_at || '-'}</div>
+              <div><strong>Başlangıç:</strong> ${j.started_at || '-'}</div>
+              <div><strong>Bitiş:</strong> ${j.completed_at || '-'}</div>
+            </div>
+
+            <!-- Parameters JSON -->
+            <div>
+              <strong style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Yapılandırma Parametreleri:</strong>
+              <pre style="background:#090D14; border:1px solid var(--studio-border); border-radius:8px; padding:10px; font-family:var(--font-mono); font-size:11px; color:#A7F3D0; overflow-x:auto;">${JSON.stringify(j.config_params || {}, null, 2)}</pre>
+            </div>
+
+            <!-- Outputs Gallery -->
+            ${outputs.length ? `
+              <div>
+                <h4 style="font-size:13px; font-weight:700; color:var(--accent-forest); margin-bottom:8px;">Üretilen Çıktılar (${outputs.length})</h4>
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:10px;">
+                  ${outputs.map(out => `
+                    <div style="background:rgba(0,0,0,0.3); border:1px solid var(--studio-border); border-radius:8px; padding:10px; font-size:11.5px;">
+                      <strong>${out.output_type}</strong>
+                      <div style="color:var(--text-dim); font-size:10px;">${out.resolution_label || 'Standart'} • ${out.file_format}</div>
+                    </div>
+                  `).join('')}
+                </div>
+              </div>
+            ` : ''}
+
+            <!-- Event Timeline -->
+            <div>
+              <h4 style="font-size:13px; font-weight:700; color:var(--accent-gold); margin-bottom:8px;">İşlem Olay Günlüğü (Event Timeline)</h4>
+              <div class="event-timeline">
+                ${events.length ? events.map(ev => `
+                  <div class="event-item">
+                    <span class="event-time">${ev.created_at ? ev.created_at.slice(11, 19) : ''}</span>
+                    <div>
+                      <div class="event-label">${ev.event_type}</div>
+                      <div class="event-desc">${JSON.stringify(ev.event_details || {})}</div>
+                    </div>
+                  </div>
+                `).join('') : '<span style="color:var(--text-dim); font-size:11px;">Henüz kaydedilmiş olay bulunmuyor.</span>'}
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
+              ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries || 3) ? `
+                <button type="button" class="btn-emerald" onclick="retryJobAction('${j.id}')">✦ Görevi Yeniden Dene</button>
+              ` : ''}
+              ${['queued', 'processing'].includes(j.status) ? `
+                <button type="button" class="btn-danger" onclick="cancelJobAction('${j.id}')">Görevi İptal Et</button>
+              ` : ''}
+            </div>
+          </div>
+        `;
+
+        openModal('modalJobDetail');
+      } catch (err) {
+        alert('Detay yükleme hatası: ' + err.message);
+      }
+    };
+
+    window.openCreateJobModal = function(defaultType = 'image_enhance') {
+      const typeSel = document.getElementById('jobTypeSelect');
+      if (typeSel) typeSel.value = defaultType;
+      handleJobTypeChange(defaultType);
+      openModal('modalCreateJob');
+    };
+
+    window.handleJobTypeChange = function(type) {
+      const engSel = document.getElementById('jobEngineSelect');
+      if (!engSel) return;
+      if (type === 'blender_render' || type === 'cinematic_video') engSel.value = 'blender_headless';
+      else if (type === '3d_reconstruction') engSel.value = 'ai_3d_recon';
+      else if (type === 'multi_format_transcode') engSel.value = 'ffmpeg_transcoder';
+      else engSel.value = 'ai_enhancer';
+    };
+
+    window.handleJobTargetChange = function(slug) {
+      // Pre-fill parameters or show specific preview
+    };
+
+    window.handleCreateJobSubmit = async function(e) {
+      e.preventDefault();
+      const targetSlug = document.getElementById('jobTargetSelect')?.value;
+      const jobType = document.getElementById('jobTypeSelect')?.value;
+      const engine = document.getElementById('jobEngineSelect')?.value;
+      const sourceAssetId = document.getElementById('jobSourceAssetSelect')?.value;
+      const sceneTpl = document.getElementById('jobSceneTemplateSelect')?.value;
+      const resLabel = document.getElementById('jobResolutionSelect')?.value;
+
+      const idempotencyKey = `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const payload = {
+        product_slug: targetSlug,
+        production_type: jobType,
+        selected_engine: engine,
+        source_asset_id: sourceAssetId || null,
+        idempotency_key: idempotencyKey,
+        parameters: {
+          sceneTemplateId: sceneTpl,
+          resolution: resLabel,
+          samples: 128
+        }
+      };
+
+      try {
+        const res = await submitStudioJob(payload);
+        if (res.ok) {
+          alert(`Prodüksiyon görevi kuyruğa eklendi! Görev ID: ${res.job.id}`);
+          closeModal('modalCreateJob');
+          switchStudioTab('manager');
           refreshStudioJobs();
         } else {
-          alert('Hata: ' + data.error);
+          alert('Görev oluşturma hatası: ' + res.error);
         }
-      } catch (e) {
-        alert('İşlem hatası: ' + e.message);
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      }
+    };
+
+    window.cancelJobAction = async function(jobId) {
+      if (!confirm('Bu prodüksiyon görevini iptal etmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await cancelStudioJob(jobId);
+        if (res.ok) {
+          alert('Görev başarıyla iptal edildi.');
+          closeModal('modalJobDetail');
+          refreshStudioJobs();
+        } else {
+          alert('İptal hatası: ' + res.error);
+        }
+      } catch (err) {
+        alert('İşlem hatası: ' + err.message);
+      }
+    };
+
+    window.retryJobAction = async function(jobId) {
+      try {
+        const res = await retryStudioJob(jobId);
+        if (res.ok) {
+          alert('Görev başarıyla yeniden kuyruğa alındı (Retry).');
+          closeModal('modalJobDetail');
+          refreshStudioJobs();
+        } else {
+          alert('Yeniden deneme hatası: ' + res.error);
+        }
+      } catch (err) {
+        alert('İşlem hatası: ' + err.message);
       }
     };
 
     window.startRenderWithTemplate = function(sceneSlug) {
-      switchStudioTab('cinematic');
-      alert(`Blender Sahne Şablonu Seçildi: ${sceneSlug}\nHarici render worker konfigürasyonu için iş kuyruğuna yönlendiriliyorsunuz.`);
+      openCreateJobModal('blender_render');
+      const tplSel = document.getElementById('jobSceneTemplateSelect');
+      if (tplSel) tplSel.value = sceneSlug;
+      switchStudioTab('manager');
+    };
+
+    window.handleAiProductSelect = function(slug) {
+      const box = document.getElementById('aiPreviewBox');
+      if (!box) return;
+      const prod = (currentCatalog.products || []).find(p => p.slug === slug);
+      if (prod && prod.thumbnail) {
+        box.innerHTML = `
+          <img src="${prod.thumbnail}" style="max-width:100%; max-height:220px; object-fit:contain; border-radius:8px; margin-bottom:12px;">
+          <strong style="color:#fff; font-size:14px;">${prod.title}</strong>
+          <span style="font-size:11.5px; color:var(--text-muted);">${prod.category} • SKU: ${prod.sku}</span>
+        `;
+      }
     };
 
     window.submitAIJob = async function() {
@@ -896,7 +2266,7 @@
           params: { mode }
         });
         if (res.ok) {
-          alert(`İşlem Kuyruğa Alındı! Görev ID: ${res.job.id}`);
+          alert(`AI İyileştirme Kuyruğa Alındı! Görev ID: ${res.job.id}`);
           switchStudioTab('manager');
           refreshStudioJobs();
         } else {
@@ -907,6 +2277,7 @@
       }
     };
 
+    // Auto-init on load
     document.addEventListener('DOMContentLoaded', loadStudioData);
   </script>
 </body>

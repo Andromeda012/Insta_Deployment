@@ -1,0 +1,55 @@
+# ============================================================================
+# GLOBAL MOBİLYA — MODÜL 8 RENDER WORKER COMPOSE SPECIFICATION
+# ============================================================================
+# RUNS COMPLETELY INDEPENDENT FROM 'nova-publisher'
+# Resource Limits ensure publisher is NEVER starved of CPU or RAM.
+# ============================================================================
+
+services:
+  nova-render-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nova_render_worker
+    restart: on-failure:5
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=production
+      - SERVICE_NAME=nova-render-worker
+      - TZ=Europe/Istanbul
+      - BLENDER_DEVICE=CPU
+      - CYCLES_CPU_THREADS=1
+      - BLENDER_NICE_LEVEL=19
+    # HARD RESOURCE LIMITS TO PROTECT VPS HOST & PUBLISHER CONTAINER
+    deploy:
+      resources:
+        limits:
+          cpus: '0.80'       # Max 80% of 1 CPU core; leaves >= 20% for publisher
+          memory: 1400M      # Leaves >= 600MB RAM for host & publisher
+        reservations:
+          cpus: '0.20'
+          memory: 512M
+    # SECURITY HARDENING
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=512m
+    # HEALTHCHECK
+    healthcheck:
+      test: ["CMD", "node", "-e", "process.exit(0)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "2"
+    networks:
+      - worker_isolated_net
+
+networks:
+  worker_isolated_net:
+    driver: bridge

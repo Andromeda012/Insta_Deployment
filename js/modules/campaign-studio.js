@@ -980,6 +980,18 @@ function renderReviewCards() {
               ${item.slides && item.slides.length ? `<span style="font-size:10px; background:#1e293b; color:#38bdf8; padding:2px 6px; border-radius:4px;">📚 ${item.slides.length} Slayt</span>` : ''}
               ${item.music_track ? `<span style="font-size:10px; background:#1e293b; color:#a7f3d0; padding:2px 6px; border-radius:4px;">🎵 ${escapeHtml(item.music_track.id || 'Müzik')}</span>` : ''}
             </div>
+
+            <!-- MODÜL 8 MEDYA KÜTÜPHANESİNDEN BAĞLA -->
+            <div style="margin-top:6px;">
+              <button type="button" onclick="window.openM8MediaPickerForItem('${escapeHtml(item.id)}')" style="width:100%; padding:6px 10px; font-size:11px; font-weight:700; background:rgba(212,175,55,0.15); border:1px solid rgba(212,175,55,0.45); color:#fde68a; border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;">
+                <span>✨</span> Modül 8'den Medya Bağla
+              </button>
+              ${item.source_asset_id ? `
+                <div style="margin-top:4px; font-size:10px; color:#34d399; display:flex; align-items:center; gap:4px; background:rgba(16,185,129,0.1); padding:3px 6px; border-radius:4px; border:1px solid rgba(16,185,129,0.25);">
+                  <span>✓</span> Modül 8 Bağlı: <strong>${escapeHtml(item.asset_ref?.file_name || String(item.source_asset_id).slice(0, 8))}</strong>
+                </div>
+              ` : ''}
+            </div>
           </div>
 
           <!-- RIGHT: EDITABLE FIELDS -->
@@ -1303,6 +1315,246 @@ export async function bulkQueueSelectedApprovedItems() {
   }
 }
 
+// ============================================================================
+// MODÜL 8 APPROVED MEDIA INTEGRATION
+// ============================================================================
+let activePickerItemId = null;
+let cachedM8MediaList = [];
+
+function ensureM8PickerModalInDom() {
+  if (document.getElementById('m8MediaPickerModal')) return;
+
+  const html = `
+    <div id="m8MediaPickerModal" class="campaign-modal-backdrop" style="display:none; position:fixed; inset:0; z-index:100030; background:rgba(3,7,18,0.92); backdrop-filter:blur(8px); align-items:center; justify-content:center; padding:16px;">
+      <div class="campaign-modal-window" style="background:#0f172a; border:1px solid rgba(212,175,55,0.45); border-radius:18px; width:940px; max-width:96vw; max-height:90vh; overflow-y:auto; box-shadow:0 25px 70px rgba(0,0,0,0.85); color:#f8fafc; display:flex; flex-direction:column;">
+        
+        <!-- HEADER -->
+        <div style="display:flex; align-items:center; justify-content:space-between; padding:18px 24px; border-bottom:1px solid rgba(148,163,184,0.18); background:linear-gradient(135deg, rgba(15,23,42,0.95), rgba(30,41,59,0.85)); position:sticky; top:0; z-index:20;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:38px; height:38px; border-radius:10px; background:linear-gradient(135deg,#D4AF37,#8c6b1b); color:#030712; font-size:20px; font-weight:900; display:flex; align-items:center; justify-content:center;">
+              ✨
+            </div>
+            <div>
+              <h2 style="font-size:16px; font-weight:800; color:#fff; margin:0;">Modül 8 Stüdyo Medya Seçici</h2>
+              <p id="m8PickerTargetHint" style="font-size:11.5px; color:#94a3b8; margin:2px 0 0;">Stüdyo render ve görsel varlıklarını seçin.</p>
+            </div>
+          </div>
+          <button type="button" onclick="window.closeM8MediaPicker()" style="background:transparent; border:none; color:#94a3b8; font-size:22px; cursor:pointer;">✕</button>
+        </div>
+
+        <!-- FILTER BAR -->
+        <div style="padding:14px 24px; border-bottom:1px solid rgba(148,163,184,0.12); display:flex; gap:12px; align-items:center; flex-wrap:wrap; background:rgba(15,23,42,0.6);">
+          <select id="m8PickerFilterType" onchange="window.filterM8Picker()" style="padding:6px 12px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#fff; font-size:11.5px;">
+            <option value="ALL">Tüm Varlık Türleri</option>
+            <option value="render_output">Render Çıktıları</option>
+            <option value="raw_photo">Ham Fotoğraflar</option>
+            <option value="cinematic_video">Sinematik Videolar</option>
+            <option value="ai_enhanced">AI İyileştirilmiş</option>
+            <option value="3d_model">3D Modeller</option>
+          </select>
+          <input type="text" id="m8PickerSearchInp" oninput="window.filterM8Picker()" placeholder="Dosya adı veya koleksiyon ara..." style="flex:1; min-width:200px; padding:6px 12px; border-radius:6px; background:#090f1c; border:1px solid #334155; color:#fff; font-size:11.5px;">
+          <span id="m8PickerCountBadge" style="font-size:11px; color:#cbd5e1; background:#1e293b; padding:4px 8px; border-radius:4px;">0 Varlık</span>
+        </div>
+
+        <!-- MEDIA GRID -->
+        <div id="m8PickerGrid" style="padding:20px 24px; display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:16px;">
+          <div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px; grid-column:1/-1;">Modül 8 medya kütüphanesi taranıyor...</div>
+        </div>
+
+        <!-- FOOTER -->
+        <div style="padding:14px 24px; border-top:1px solid rgba(148,163,184,0.18); display:flex; justify-content:space-between; align-items:center; background:#0b1120;">
+          <span style="font-size:11px; color:#64748b;">🔗 Varlıklar fiziksel olarak çoğaltılmaz; referans URI ile kampanyaya güvenle bağlanır.</span>
+          <button type="button" onclick="window.closeM8MediaPicker()" style="padding:7px 16px; border-radius:6px; border:1px solid #475569; background:rgba(30,41,59,0.7); color:#e2e8f0; font-size:12px; font-weight:700; cursor:pointer;">Vazgeç</button>
+        </div>
+
+      </div>
+    </div>
+  `;
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  document.body.appendChild(div.firstElementChild);
+}
+
+export async function openM8MediaPickerForItem(itemId) {
+  activePickerItemId = itemId;
+  ensureM8PickerModalInDom();
+
+  const modal = document.getElementById('m8MediaPickerModal');
+  if (modal) modal.style.display = 'flex';
+
+  const item = (activeReviewCampaign?.items || []).find(i => i.id === itemId);
+  const hintEl = document.getElementById('m8PickerTargetHint');
+  
+  let targetAspect = '1:1';
+  let formatLabel = '1:1 Kare / 4:5 Dikey';
+  if (item) {
+    if (['REELS', 'SHORTS', 'TIKTOK_VIDEO'].includes(item.content_type) || ['tiktok'].includes(item.platform)) {
+      targetAspect = '9:16';
+      formatLabel = '9:16 Dikey Video/Story';
+    } else if (item.platform === 'youtube' && !['SHORTS'].includes(item.content_type)) {
+      targetAspect = '16:9';
+      formatLabel = '16:9 Yatay';
+    }
+    if (hintEl) {
+      hintEl.innerHTML = `Hedef: <strong>${escapeHtml(item.platform.toUpperCase())}</strong> &bull; Format: <strong style="color:#fde68a;">${escapeHtml(formatLabel)}</strong> &bull; İdeal Oran: <code>${targetAspect}</code>`;
+    }
+  }
+
+  try {
+    const res = await fetch('/api/module8?action=media', { cache: 'no-store' }).then(r => r.json());
+    cachedM8MediaList = Array.isArray(res?.media_assets) ? res.media_assets : [];
+    renderM8PickerGrid(cachedM8MediaList, targetAspect);
+  } catch (err) {
+    const grid = document.getElementById('m8PickerGrid');
+    if (grid) {
+      grid.innerHTML = `<div style="text-align:center; padding:30px; color:#fca5a5; font-size:12px; grid-column:1/-1;">Modül 8 medya verisi yüklenemedi: ${escapeHtml(err.message)}</div>`;
+    }
+  }
+}
+
+export function closeM8MediaPicker() {
+  const modal = document.getElementById('m8MediaPickerModal');
+  if (modal) modal.style.display = 'none';
+  activePickerItemId = null;
+}
+
+export function filterM8Picker() {
+  const typeFilter = document.getElementById('m8PickerFilterType')?.value || 'ALL';
+  const q = (document.getElementById('m8PickerSearchInp')?.value || '').toLowerCase().trim();
+
+  const item = (activeReviewCampaign?.items || []).find(i => i.id === activePickerItemId);
+  let targetAspect = '1:1';
+  if (item && (['REELS', 'SHORTS', 'TIKTOK_VIDEO'].includes(item.content_type) || item.platform === 'tiktok')) {
+    targetAspect = '9:16';
+  }
+
+  let list = cachedM8MediaList;
+  if (typeFilter !== 'ALL') {
+    list = list.filter(m => m.asset_type === typeFilter);
+  }
+  if (q) {
+    list = list.filter(m =>
+      (m.file_name && m.file_name.toLowerCase().includes(q)) ||
+      (m.product_slug && m.product_slug.toLowerCase().includes(q)) ||
+      (m.collection_id && m.collection_id.toLowerCase().includes(q))
+    );
+  }
+
+  renderM8PickerGrid(list, targetAspect);
+}
+
+function renderM8PickerGrid(mediaList, targetAspect = '1:1') {
+  const grid = document.getElementById('m8PickerGrid');
+  const countBadge = document.getElementById('m8PickerCountBadge');
+  if (countBadge) countBadge.textContent = `${mediaList.length} Varlık`;
+  if (!grid) return;
+
+  if (!mediaList.length) {
+    grid.innerHTML = `
+      <div style="text-align:center; padding:40px; color:#94a3b8; font-size:13px; grid-column:1/-1;">
+        Kriterlere uygun Modül 8 medya varlığı bulunamadı.
+      </div>
+    `;
+    return;
+  }
+
+  grid.innerHTML = mediaList.map(asset => {
+    const isImage = (asset.mime_type || '').startsWith('image/');
+    const isVideo = (asset.mime_type || '').startsWith('video/');
+    const aspect = asset.aspect_ratio || (asset.width_px && asset.height_px ? (asset.height_px > asset.width_px ? '9:16' : asset.width_px === asset.height_px ? '1:1' : '16:9') : '1:1');
+    const isCompatible = aspect === targetAspect || (targetAspect === '1:1' && aspect === '4:5');
+
+    return `
+      <div style="background:#090f1c; border:1px solid ${isCompatible ? 'rgba(16,185,129,0.5)' : '#334155'}; border-radius:10px; overflow:hidden; display:flex; flex-direction:column; position:relative;">
+        <div style="position:relative; width:100%; height:140px; background:#020617; display:flex; align-items:center; justify-content:center; overflow:hidden;">
+          ${isImage
+            ? `<img src="${asset.public_url || asset.storage_path}" style="width:100%; height:100%; object-fit:cover;" loading="lazy">`
+            : isVideo
+              ? `<div style="font-size:36px;">🎥</div>`
+              : `<div style="font-size:36px;">🧊</div>`
+          }
+          <span style="position:absolute; top:6px; left:6px; font-size:10px; font-weight:700; background:rgba(0,0,0,0.75); padding:2px 6px; border-radius:4px; color:#cbd5e1;">
+            ${asset.asset_type}
+          </span>
+          ${isCompatible ? `
+            <span style="position:absolute; top:6px; right:6px; font-size:10px; font-weight:800; background:rgba(16,185,129,0.85); color:#fff; padding:2px 7px; border-radius:4px;">
+              ✓ Format Uyumlu
+            </span>
+          ` : `
+            <span style="position:absolute; top:6px; right:6px; font-size:10px; background:rgba(30,41,59,0.8); color:#94a3b8; padding:2px 6px; border-radius:4px;">
+              ${aspect}
+            </span>
+          `}
+        </div>
+
+        <div style="padding:10px 12px; display:flex; flex-direction:column; gap:6px; flex:1;">
+          <strong style="font-size:12px; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${escapeHtml(asset.file_name)}">
+            ${escapeHtml(asset.file_name)}
+          </strong>
+          <div style="display:flex; justify-content:space-between; font-size:10.5px; color:#94a3b8;">
+            <span>${escapeHtml(asset.product_slug || asset.collection_id || 'Genel')}</span>
+            <span>${(asset.file_size_bytes / (1024 * 1024)).toFixed(1)} MB</span>
+          </div>
+          <button type="button" onclick="window.attachM8MediaToItem('${escapeHtml(asset.id)}')" style="margin-top:auto; padding:7px 12px; border-radius:6px; border:1px solid #d4af37; background:linear-gradient(135deg,#d4af37,#9b7220); color:#0b1120; font-size:11.5px; font-weight:800; cursor:pointer;">
+            ✦ Bu Medyayı Bağla
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+export async function attachM8MediaToItem(assetId) {
+  if (!activePickerItemId || !activeReviewCampaign) return;
+
+  const asset = cachedM8MediaList.find(m => m.id === assetId);
+  const item = (activeReviewCampaign.items || []).find(i => i.id === activePickerItemId);
+
+  if (!asset || !item) {
+    alert('Varlık veya kampanya öğesi bulunamadı.');
+    return;
+  }
+
+  const mediaUrl = asset.public_url || asset.storage_path;
+  item.cover_url = mediaUrl;
+  item.media_urls = [mediaUrl];
+  item.source_asset_id = asset.id;
+  item.asset_ref = {
+    id: asset.id,
+    file_name: asset.file_name,
+    asset_type: asset.asset_type,
+    resolution: asset.resolution || (asset.width_px && asset.height_px ? `${asset.width_px}x${asset.height_px}` : '1080x1080'),
+    aspect_ratio: asset.aspect_ratio || '1:1'
+  };
+
+  // Close picker
+  closeM8MediaPicker();
+
+  // Re-render review cards immediately
+  renderReviewCards();
+
+  // Persist attachment asynchronously
+  try {
+    await fetch('/api/module2?action=campaign-item-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        item_id: item.id,
+        cover_url: item.cover_url,
+        media_urls: item.media_urls,
+        source_asset_id: item.source_asset_id,
+        asset_ref: item.asset_ref
+      })
+    });
+  } catch (err) {
+    console.warn('Medya bağlama persist uyarısı:', err);
+  }
+
+  if (typeof window.showToast === 'function') {
+    window.showToast(`✨ Modül 8 varlığı (${asset.file_name}) başarıyla kampanyaya bağlandı.`);
+  }
+}
+
 // Window export
 if (typeof window !== 'undefined') {
   window.openCampaignStudioModal = openCampaignStudioModal;
@@ -1330,4 +1582,8 @@ if (typeof window !== 'undefined') {
   window.onMultiItemToggle = onMultiItemToggle;
   window.onSingleCollectionSelected = () => {};
   window.onSingleProductSelected = () => {};
+  window.openM8MediaPickerForItem = openM8MediaPickerForItem;
+  window.closeM8MediaPicker = closeM8MediaPicker;
+  window.filterM8Picker = filterM8Picker;
+  window.attachM8MediaToItem = attachM8MediaToItem;
 }

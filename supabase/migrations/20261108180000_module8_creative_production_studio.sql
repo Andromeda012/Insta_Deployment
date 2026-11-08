@@ -14,8 +14,8 @@ CREATE TABLE IF NOT EXISTS public.media_assets (
     collection_id TEXT,
     asset_type TEXT NOT NULL CHECK (asset_type IN (
         'raw_photo', 'processed_photo', 'ai_enhanced', 'ai_generated',
-        'render_frame', 'video_render', '3d_model', 'scene_template',
-        'texture_map', 'variant_export'
+        'render_frame', 'video_render', 'rendered_video', '3d_model', 'scene_template',
+        'texture_map', 'variant_export', 'blender_project'
     )),
     storage_path TEXT NOT NULL,
     file_name TEXT NOT NULL,
@@ -46,8 +46,10 @@ CREATE TABLE IF NOT EXISTS public.production_jobs (
     product_slug TEXT REFERENCES public.products(slug) ON DELETE SET NULL,
     collection_id TEXT,
     production_type TEXT NOT NULL CHECK (production_type IN (
-        'image_enhance', 'background_removal', '3d_reconstruction',
-        'blender_render', 'cinematic_video', 'multi_format_transcode',
+        'image_enhance', 'image_enhancement', 'background_removal', 'background_processing',
+        '3d_reconstruction', 'image_to_3d', 'photogrammetry',
+        'blender_render', 'cinematic_render', 'cinematic_video',
+        'multi_format_transcode', 'video_editing', 'media_export',
         'texture_synthesis'
     )),
     pipeline_type TEXT NOT NULL DEFAULT 'standard',
