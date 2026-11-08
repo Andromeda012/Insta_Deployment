@@ -9,6 +9,7 @@ import { renderProductionModule } from './js/modules/production.js';
 import { renderOperationsModule } from './js/modules/operations.js';
 import { renderAnalyticsModule } from './js/modules/analytics.js';
 import { renderPermissionsModule } from './js/modules/permissions.js';
+import { renderStudioModule } from './js/modules/studio.js';
 
 // Application State
 const state = {
@@ -32,6 +33,7 @@ function canAccessRoute(route) {
     if (state.roles.includes('admin')) return true;
     if (route === 'products') return state.roles.includes('product_manager');
     if (route === 'website' || route === 'social') return state.roles.includes('content_manager');
+    if (route === 'studio') return state.roles.includes('production_manager') || state.roles.includes('content_manager');
     return false;
 }
 
@@ -39,13 +41,14 @@ function getDefaultRoute() {
     if (canAccessRoute('products')) return 'products';
     if (canAccessRoute('website')) return 'website';
     if (canAccessRoute('social')) return 'social';
+    if (canAccessRoute('studio')) return 'studio';
     return 'products';
 }
 
 function applyAuthenticatedUser(user) {
     state.user = user;
     state.roles = getUserRoles(user);
-    const roleLabels = { admin: 'Sistem Yöneticisi', product_manager: 'Ürün Yöneticisi', content_manager: 'İçerik Yöneticisi' };
+    const roleLabels = { admin: 'Sistem Yöneticisi', product_manager: 'Ürün Yöneticisi', content_manager: 'İçerik Yöneticisi', production_manager: 'Prodüksiyon Yöneticisi' };
     const label = state.roles.map(role => roleLabels[role] || role).join(' • ');
     if (activeRoleBadge) activeRoleBadge.textContent = label || 'Yetki yok';
     const email = user.email || 'Yetkili kullanıcı';
@@ -105,7 +108,7 @@ if (typeof window !== 'undefined') window.navigateTo = navigateTo;
 function renderCurrentView() {
     if (!contentContainer) return;
 
-    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'social' || state.currentRoute === 'products' || state.currentRoute === 'production';
+    const isEmbeddedModule = state.currentRoute === 'website' || state.currentRoute === 'social' || state.currentRoute === 'products' || state.currentRoute === 'production' || state.currentRoute === 'studio';
     contentContainer.classList.toggle('full-bleed-module', isEmbeddedModule);
     document.body.classList.toggle('module-immersive-view', isEmbeddedModule);
 
@@ -118,6 +121,9 @@ function renderCurrentView() {
             break;
         case 'products':
             contentContainer.innerHTML = renderProductsModule(mockData);
+            break;
+        case 'studio':
+            contentContainer.innerHTML = renderStudioModule(mockData);
             break;
         case 'crm':
             contentContainer.innerHTML = renderCrmModule(mockData);

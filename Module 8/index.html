@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Modül 8 — Creative Production Studio | Global Mobilya</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Cormorant+Garamond:wght@600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/site-modal-feedback.js"></script>
+
+  <style>
+    :root {
+      /* Studio Creative Dark Palette */
+      --studio-bg: #0C1017;
+      --studio-surface: #121824;
+      --studio-surface-card: #182030;
+      --studio-border: rgba(148, 163, 184, 0.14);
+      --studio-border-focus: rgba(197, 160, 89, 0.4);
+
+      /* Forest, Olive & Gold Creative Accents */
+      --accent-forest: #1E3827;
+      --accent-forest-glow: rgba(30, 56, 39, 0.6);
+      --accent-olive: #475841;
+      --accent-sage: #8A9A86;
+      --accent-gold: #D4AF37;
+      --accent-gold-muted: #C5A059;
+      --accent-cyan: #38BDF8;
+      --accent-emerald: #10B981;
+      --accent-amber: #F59E0B;
+      --accent-rose: #FB7185;
+
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+
+      --font-main: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-editorial: 'Cormorant Garamond', Georgia, serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-main);
+      background: radial-gradient(circle at 10% 10%, rgba(30, 56, 39, 0.25), transparent 40%),
+                  radial-gradient(circle at 90% 90%, rgba(197, 160, 89, 0.08), transparent 45%),
+                  var(--studio-bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 18px 24px 60px;
+      line-height: 1.5;
+    }
+
+    /* ── HEADER ── */
+    .studio-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 18px 24px;
+      background: linear-gradient(135deg, rgba(18, 24, 36, 0.95), rgba(12, 16, 23, 0.95));
+      border: 1px solid var(--studio-border-focus);
+      border-radius: 16px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-logo-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--accent-gold), var(--accent-forest));
+      color: #0C1017;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+    }
+    .header-titles h1 {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-titles p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .header-status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(30, 56, 39, 0.4);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 8px 14px;
+      border-radius: 20px;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #6EE7B7;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    /* ── INTERNAL STUDIO NAVIGATION (TABS) ── */
+    .studio-nav {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--studio-border);
+    }
+    .nav-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: rgba(18, 24, 36, 0.6);
+      border: 1px solid var(--studio-border);
+      color: var(--text-muted);
+      font-family: var(--font-main);
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+    .nav-tab-btn:hover {
+      background: rgba(30, 56, 39, 0.3);
+      color: #fff;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .nav-tab-btn.active {
+      background: linear-gradient(135deg, rgba(30, 56, 39, 0.8), rgba(18, 24, 36, 0.9));
+      color: var(--accent-gold);
+      border-color: var(--accent-gold-muted);
+      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+    }
+
+    /* ── STUDIO CONTENT PANELS ── */
+    .studio-panel {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    .studio-panel.active {
+      display: block;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── STATS ROW (OVERVIEW) ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--studio-surface-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .stat-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .stat-card-value {
+      font-size: 30px;
+      font-weight: 900;
+      color: #fff;
+      font-family: var(--font-mono);
+    }
+    .stat-card-meta {
+      font-size: 11.5px;
+      color: var(--text-dim);
+    }
+
+    /* ── CARDS & SECTIONS ── */
+    .content-box {
+      background: var(--studio-surface);
+      border: 1px solid var(--studio-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+    .box-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--studio-border);
+    }
+    .box-title {
+      font-size: 16px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .box-desc {
+      font-size: 12.5px;
+      color: var(--text-muted);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      border: 2px dashed rgba(148, 163, 184, 0.15);
+      border-radius: 14px;
+      color: var(--text-muted);
+    }
+    .empty-state-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+      opacity: 0.8;
+    }
+    .empty-state-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+    .empty-state-desc {
+      font-size: 12.5px;
+      max-width: 460px;
+      margin: 0 auto 18px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-gold {
+      background: linear-gradient(135deg, var(--accent-gold), var(--accent-gold-muted));
+      color: #0C1017;
+      font-family: var(--font-main);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-gold:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 14px rgba(212, 175, 55, 0.35);
+    }
+    .btn-ghost {
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-family: var(--font-main);
+      font-size: 12px;
+      font-weight: 700;
+      padding: 9px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--studio-border);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .btn-ghost:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    /* ── TABLES & LISTS ── */
+    .studio-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .studio-table th {
+      text-align: left;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--studio-border);
+    }
+    .studio-table td {
+      padding: 14px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.08);
+      vertical-align: middle;
+    }
+    .studio-table tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Status Pills */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .status-queued { background: rgba(148, 163, 184, 0.15); color: #94A3B8; }
+    .status-processing { background: rgba(56, 189, 248, 0.15); color: var(--accent-cyan); }
+    .status-rendering { background: rgba(245, 158, 11, 0.15); color: var(--accent-amber); }
+    .status-completed { background: rgba(16, 185, 129, 0.15); color: var(--accent-emerald); }
+    .status-failed { background: rgba(251, 113, 133, 0.15); color: var(--accent-rose); }
+    .status-cancelled { background: rgba(100, 116, 139, 0.2); color: #64748B; }
+
+    /* Grid for Media & Templates */
+    .studio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 18px;
+    }
+    .template-card {
+      background: var(--studio-surface-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: all 0.2s ease;
+    }
+    .template-card:hover {
+      border-color: var(--accent-gold-muted);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+    }
+    .template-img-frame {
+      height: 160px;
+      background: #0A0D14;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .template-body {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      flex-grow: 1;
+    }
+    .template-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .template-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+    .template-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+    .mini-chip {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--accent-sage);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="studio-header">
+    <div class="brand-wrap">
+      <div class="brand-logo-badge">🎬</div>
+      <div class="header-titles">
+        <h1>CREATIVE PRODUCTION STUDIO <span style="font-size:12px; color:var(--accent-gold); font-weight:700; border:1px solid rgba(212,175,55,0.4); padding:2px 8px; border-radius:20px;">MODÜL 8</span></h1>
+        <p>3D Blender Sahneleme, AI Görsel İyileştirme, Sinematik Video ve Çoklu Format Çıktı Merkezi</p>
+      </div>
+    </div>
+
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <div class="header-status-pill">
+        <span class="status-dot"></span>
+        <span>Studio Motorları Hazır (4 Motor)</span>
+      </div>
+      <button type="button" class="btn-gold" onclick="switchStudioTab('cinematic')">
+        ✦ Yeni Prodüksiyon Başlat
+      </button>
+    </div>
+  </header>
+
+  <!-- INTERNAL NAVIGATION -->
+  <nav class="studio-nav" id="studioNav" aria-label="Stüdyo Gezintisi">
+    <button type="button" class="nav-tab-btn active" data-tab="overview" onclick="switchStudioTab('overview')">
+      <span>📊</span> Genel Bakış (Overview)
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="media" onclick="switchStudioTab('media')">
+      <span>🖼️</span> Medya Kütüphanesi
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="ai-image" onclick="switchStudioTab('ai-image')">
+      <span>✨</span> AI Görsel Stüdyosu
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="three-d" onclick="switchStudioTab('three-d')">
+      <span>📐</span> 3D Model &amp; Varlıklar
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="cinematic" onclick="switchStudioTab('cinematic')">
+      <span>🎬</span> Sinematik Sahne &amp; Blender
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="video" onclick="switchStudioTab('video')">
+      <span>🎥</span> Video Prodüksiyon
+    </button>
+    <button type="button" class="nav-tab-btn" data-tab="manager" onclick="switchStudioTab('manager')">
+      <span>⚙️</span> İş Yöneticisi (Jobs)
+    </button>
+  </nav>
+
+  <!-- TAB A: OVERVIEW -->
+  <section class="studio-panel active" id="panel-overview">
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-label">Toplam Medya Varlığı <span>🖼️</span></div>
+        <div class="stat-card-value" id="stTotalMedia">0</div>
+        <div class="stat-card-meta">İşlenmiş &amp; orijinal varlık</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Aktif Görevler <span>⚡</span></div>
+        <div class="stat-card-value" id="stActiveJobs" style="color:var(--accent-cyan);">0</div>
+        <div class="stat-card-meta">Kuyrukta veya render aşamasında</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Tamamlanan Üretimler <span>✓</span></div>
+        <div class="stat-card-value" id="stCompletedJobs" style="color:var(--accent-emerald);">0</div>
+        <div class="stat-card-meta">Kalite kontrolü geçmiş</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Kayıtlı 3D Modeller <span>📐</span></div>
+        <div class="stat-card-value" id="stTotalModels">0</div>
+        <div class="stat-card-meta">GLB, FBX, BLEND formatları</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Harcanan Maliyet (USD) <span>💰</span></div>
+        <div class="stat-card-value" id="stTotalCost">$0.00</div>
+        <div class="stat-card-meta">GPU &amp; API kullanım kaydı</div>
+      </div>
+    </div>
+
+    <!-- Overview Grid -->
+    <div style="display:grid; grid-template-columns: 1.3fr 1fr; gap:20px;">
+      
+      <!-- Recent Jobs Box -->
+      <div class="content-box">
+        <div class="box-header">
+          <div>
+            <h2 class="box-title"><span>⚙️</span> Son Prodüksiyon İşlemleri</h2>
+            <p class="box-desc">Gerçek zamanlı iş kuyruğu ve render kayıtları.</p>
+          </div>
+          <button type="button" class="btn-ghost" onclick="switchStudioTab('manager')">Tümünü Gör →</button>
+        </div>
+
+        <div id="overviewRecentJobsWrap">
+          <div class="empty-state">
+            <div class="empty-state-icon">📋</div>
+            <h3 class="empty-state-title">Henüz İşlem Kaydı Bulunmuyor</h3>
+            <p class="empty-state-desc">Yeni bir Blender render, AI görsel iyileştirme veya video oluşturma görevi başlattığınızda burada listelenecektir.</p>
+            <button type="button" class="btn-gold" onclick="switchStudioTab('cinematic')">✦ İlk Görevi Başlat</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Engine & Infrastructure Box -->
+      <div class="content-box">
+        <div class="box-header">
+          <div>
+            <h2 class="box-title"><span>🚀</span> Üretim Motorları Durumu</h2>
+            <p class="box-desc">Bağımsız render ve işleme altyapısı.</p>
+          </div>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:12px;" id="overviewEnginesList">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- TAB B: MEDIA LIBRARY -->
+  <section class="studio-panel" id="panel-media">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>🖼️</span> Merkezi Medya Kütüphanesi</h2>
+          <p class="box-desc">Modül 7 katalog ürünleriyle ilişkili ham, işlenmiş, AI türevli ve 3D varlık kayıtları.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+          <select id="mediaFilterType" onchange="filterMediaLibrary()" style="background:#182030; color:#fff; border:1px solid var(--studio-border); padding:8px 12px; border-radius:8px; font-size:12px;">
+            <option value="">Tüm Varlık Türleri</option>
+            <option value="raw_photo">Ham Fotoğraf</option>
+            <option value="processed_photo">İşlenmiş Fotoğraf</option>
+            <option value="render_frame">3D Render Karesi</option>
+            <option value="video_render">Sinematik Video</option>
+            <option value="3d_model">3D Model Dosyası</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="mediaLibraryContainer">
+        <div class="empty-state">
+          <div class="empty-state-icon">🗂️</div>
+          <h3 class="empty-state-title">Medya Kütüphanesi Boş</h3>
+          <p class="empty-state-desc">Modül 8 üzerinden üretilen veya tescillenen medya dosyaları doğrudan burada katalogla senkronize olarak yönetilecektir.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB C: AI IMAGE STUDIO -->
+  <section class="studio-panel" id="panel-ai-image">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>✨</span> AI Görsel İşleme &amp; İyileştirme Stüdyosu</h2>
+          <p class="box-desc">Ürün geometrisi, CNC membran kapak ve masif ahşap dokusunu %100 koruyarak dinamik ışık ve arka plan işleme.</p>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+        <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:14px; padding:20px;">
+          <h3 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:12px;">1. Kaynak Ürün Seçimi (Modül 7 Read-Only)</h3>
+          <select id="aiSelectProduct" style="width:100%; background:#0C1017; color:#fff; border:1px solid var(--studio-border); padding:10px; border-radius:8px; font-size:13px; margin-bottom:16px;">
+            <option value="">Katalogdan Ürün Seçin...</option>
+          </select>
+          
+          <h3 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:12px;">2. İşleme Modu</h3>
+          <div style="display:flex; flex-direction:column; gap:10px;">
+            <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+              <input type="radio" name="ai_mode" value="pbr_texture" checked>
+              <span>🪵 PBR Doku İyileştirme (Masif Ahşap &amp; Membran Koruma)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+              <input type="radio" name="ai_mode" value="lighting_balance">
+              <span>☀️ Doğal Gün Işığı &amp; Atmosferik Gölge Dengeleme</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer;">
+              <input type="radio" name="ai_mode" value="bg_extract">
+              <span>🪞 Yüksek Hassasiyetli Arka Plan Ayrıştırma</span>
+            </label>
+          </div>
+
+          <button type="button" class="btn-gold" style="margin-top:20px; width:100%; justify-content:center;" onclick="submitAIJob()">
+            ✦ İyileştirme Görevi Oluştur
+          </button>
+        </div>
+
+        <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:14px; padding:20px; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;">
+          <div style="font-size:48px; margin-bottom:12px; opacity:0.6;">👁️</div>
+          <h4 style="font-size:15px; font-weight:700; color:#fff; margin-bottom:6px;">Canlı Önizleme Alanı</h4>
+          <p style="font-size:12px; color:var(--text-muted); max-width:320px;">Bir ürün seçildiğinde orijinal fotoğrafı ve işleme parametreleri bu alanda görüntülenecektir.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB D: 3D ASSET STUDIO -->
+  <section class="studio-panel" id="panel-three-d">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>📐</span> 3D Model &amp; Varlık Stüdyosu</h2>
+          <p class="box-desc">CAD model dosyaları (BLEND, GLB, FBX, OBJ) ve geometri doğrulama durumu.</p>
+        </div>
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-state-icon">🧊</div>
+        <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
+        <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve fotogrametri çıktıları burada listelenir. Henüz harici model yüklenmemiştir.</p>
+        <span class="mini-chip" style="font-size:11px; padding:6px 12px;">Desteklenen Formatlar: BLEND • GLB • GLTF • FBX • OBJ</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB E: CINEMATIC STUDIO -->
+  <section class="studio-panel" id="panel-cinematic">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>🎬</span> Blender Sinematik Sahne Şablonları</h2>
+          <p class="box-desc">Koleksiyonlara özel ışık, kamera ve materyal şablonları.</p>
+        </div>
+      </div>
+
+      <div class="studio-grid" id="sceneTemplatesGrid">
+        <!-- Injected via JS from DEFAULT_SCENE_TEMPLATES -->
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB F: VIDEO PRODUCTION -->
+  <section class="studio-panel" id="panel-video">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>🎥</span> Video Prodüksiyon &amp; Format Dağıtımı</h2>
+          <p class="box-desc">Instagram Reels (9:16), YouTube (16:9), Web Showroom ve Kare (1:1) video çıktıları.</p>
+        </div>
+      </div>
+
+      <div class="empty-state">
+        <div class="empty-state-icon">🎬</div>
+        <h3 class="empty-state-title">Henüz İşlenmiş Video Yok</h3>
+        <p class="empty-state-desc">Blender render worker veya video dönüştürücü görevleri tamamlandığında, video önizlemeleri ve platform çıktıları burada sunulacaktır.</p>
+        <div style="display:flex; justify-content:center; gap:8px; margin-top:14px; flex-wrap:wrap;">
+          <span class="mini-chip">9:16 Reels</span>
+          <span class="mini-chip">16:9 4K</span>
+          <span class="mini-chip">4:5 Post</span>
+          <span class="mini-chip">1:1 Kare</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB G: PRODUCTION MANAGER -->
+  <section class="studio-panel" id="panel-manager">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>⚙️</span> Prodüksiyon İş &amp; Kuyruk Yöneticisi</h2>
+          <p class="box-desc">Tüm render, dönüştürme ve AI görevlerinin yaşam döngüsü durumu.</p>
+        </div>
+        <button type="button" class="btn-ghost" onclick="refreshStudioJobs()">Yenile ↻</button>
+      </div>
+
+      <div style="overflow-x:auto;">
+        <table class="studio-table">
+          <thead>
+            <tr>
+              <th>Görev ID</th>
+              <th>Ürün / Koleksiyon</th>
+              <th>İşlem Türü</th>
+              <th>Motor</th>
+              <th>Durum</th>
+              <th>İlerleme</th>
+              <th>Tarih</th>
+              <th>İşlemler</th>
+            </tr>
+          </thead>
+          <tbody id="jobsTableBody">
+            <tr>
+              <td colspan="8" style="text-align:center; padding:36px; color:var(--text-muted);">
+                Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCRIPTS -->
+  <script type="module">
+    import {
+      fetchStudioOverview,
+      fetchStudioMedia,
+      fetchStudioJobs,
+      fetchSceneTemplates,
+      fetchStudioEngines,
+      fetchCatalogProducts
+    } from './js/studio-api.js';
+
+    import {
+      studioRegistry,
+      BlenderHeadlessEngine,
+      AIImageEnhanceEngine,
+      VideoTranscodeEngine
+    } from './js/studio-engine.js';
+
+    let currentCatalog = { products: [], registered_templates: [] };
+
+    window.switchStudioTab = function(tabKey) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabKey);
+      });
+      document.querySelectorAll('.studio-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `panel-${tabKey}`);
+      });
+    };
+
+    window.loadCatalogReference = async function loadCatalogReference() {
+      try {
+        const catalogRes = await fetchCatalogProducts().catch(() => null);
+        if (catalogRes?.products) {
+          currentCatalog = catalogRes;
+          const prodSelect = document.getElementById('aiSelectProduct');
+          if (prodSelect) {
+            prodSelect.innerHTML = '<option value="">Katalogdan Ürün Seçin...</option>' +
+              catalogRes.products.map(p => `<option value="${p.slug}">${p.title} (${p.category || 'Mobilya'})</option>`).join('');
+          }
+        }
+        return currentCatalog;
+      } catch (e) {
+        console.warn('loadCatalogReference warning:', e);
+        return null;
+      }
+    };
+
+    async function loadStudioData() {
+      try {
+        const [overviewRes, enginesRes, templatesRes, catalogRes, jobsRes] = await Promise.all([
+          fetchStudioOverview().catch(() => null),
+          fetchStudioEngines().catch(() => null),
+          fetchSceneTemplates().catch(() => null),
+          fetchCatalogProducts().catch(() => null),
+          fetchStudioJobs().catch(() => null)
+        ]);
+
+        // 1. Populate Metrics
+        if (overviewRes?.overview) {
+          const ov = overviewRes.overview;
+          document.getElementById('stTotalMedia').textContent = ov.total_media_assets || 0;
+          document.getElementById('stActiveJobs').textContent = ov.active_jobs_count || 0;
+          document.getElementById('stCompletedJobs').textContent = ov.completed_jobs_count || 0;
+          document.getElementById('stTotalModels').textContent = ov.three_d_models_count || 0;
+          document.getElementById('stTotalCost').textContent = '$' + (Number(ov.total_production_cost_usd || 0)).toFixed(2);
+        }
+
+        // 2. Populate Engines
+        const enginesWrap = document.getElementById('overviewEnginesList');
+        if (enginesRes?.engines && enginesWrap) {
+          enginesWrap.innerHTML = enginesRes.engines.map(eng => `
+            <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:10px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
+              <div>
+                <strong style="font-size:13px; color:#fff; display:block;">${eng.name}</strong>
+                <span style="font-size:11px; color:var(--text-muted);">${eng.description}</span>
+              </div>
+              <span class="status-badge status-completed" style="font-size:10px;">${eng.status}</span>
+            </div>
+          `).join('');
+        }
+
+        // 3. Populate Scene Templates Grid
+        const tplGrid = document.getElementById('sceneTemplatesGrid');
+        const templates = templatesRes?.scene_templates || [];
+        if (tplGrid && templates.length > 0) {
+          tplGrid.innerHTML = templates.map(t => `
+            <div class="template-card">
+              <div class="template-img-frame">
+                <span style="font-size:40px;">🏛️</span>
+                <span style="position:absolute; top:10px; right:10px; font-size:10px; font-weight:700; background:rgba(0,0,0,0.6); padding:3px 8px; border-radius:4px; color:var(--accent-gold);">
+                  ${t.render_engine ? t.render_engine.toUpperCase() : 'CYCLES'}
+                </span>
+              </div>
+              <div class="template-body">
+                <h3 class="template-title">${t.name}</h3>
+                <p class="template-sub">💡 ${t.lighting_preset}</p>
+                <div class="template-chips">
+                  ${(t.camera_presets || []).map(cp => `<span class="mini-chip">📷 ${cp}</span>`).join('')}
+                </div>
+                <button type="button" class="btn-ghost" style="margin-top:14px; justify-content:center;" onclick="startRenderWithTemplate('${t.scene_slug}')">
+                  ✦ Bu Sahne İle Render Kur
+                </button>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        // 4. Populate Product Dropdown (Module 7 Bridge)
+        await loadCatalogReference();
+
+        // 5. Populate Jobs Table
+        renderJobsTable(jobsRes?.jobs || []);
+
+      } catch (err) {
+        console.error('Stüdyo verisi yüklenirken hata:', err);
+      }
+    }
+
+    function renderJobsTable(jobs) {
+      const tbody = document.getElementById('jobsTableBody');
+      if (!tbody) return;
+
+      if (!jobs || jobs.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:36px; color:var(--text-muted);">
+              Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = jobs.map(j => `
+        <tr>
+          <td><code style="font-family:var(--font-mono); color:var(--accent-gold);">${j.id}</code></td>
+          <td><strong>${j.product_slug || j.collection_id || 'Genel Sahne'}</strong></td>
+          <td><span class="mini-chip">${j.production_type}</span></td>
+          <td>${j.selected_engine}</td>
+          <td><span class="status-badge status-${j.status}">${j.status}</span></td>
+          <td>${j.progress_percent || 0}%</td>
+          <td>${j.created_at ? j.created_at.slice(0, 16).replace('T', ' ') : '-'}</td>
+          <td>
+            ${['queued', 'processing'].includes(j.status) 
+              ? `<button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="cancelJob('${j.id}')">İptal Et</button>` 
+              : `<span style="color:var(--text-dim); font-size:11px;">-</span>`}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.refreshStudioJobs = async function() {
+      const res = await fetchStudioJobs().catch(() => null);
+      renderJobsTable(res?.jobs || []);
+    };
+
+    window.cancelJob = async function(jobId) {
+      try {
+        const res = await fetch('/api/module8?action=jobs', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: jobId })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          alert('Görev iptal edildi.');
+          refreshStudioJobs();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (e) {
+        alert('İşlem hatası: ' + e.message);
+      }
+    };
+
+    window.startRenderWithTemplate = function(sceneSlug) {
+      switchStudioTab('cinematic');
+      alert(`Blender Sahne Şablonu Seçildi: ${sceneSlug}\nHarici render worker konfigürasyonu için iş kuyruğuna yönlendiriliyorsunuz.`);
+    };
+
+    window.submitAIJob = async function() {
+      const pSlug = document.getElementById('aiSelectProduct')?.value;
+      if (!pSlug) {
+        alert('Lütfen önce bir ürün seçin.');
+        return;
+      }
+      const mode = document.querySelector('input[name="ai_mode"]:checked')?.value || 'pbr_texture';
+
+      try {
+        const engine = studioRegistry.get('ai_enhancer');
+        const res = await engine.submitJob({
+          product_slug: pSlug,
+          params: { mode }
+        });
+        if (res.ok) {
+          alert(`İşlem Kuyruğa Alındı! Görev ID: ${res.job.id}`);
+          switchStudioTab('manager');
+          refreshStudioJobs();
+        } else {
+          alert('Hata: ' + res.error);
+        }
+      } catch (e) {
+        alert('İşlem hatası: ' + e.message);
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', loadStudioData);
+  </script>
+</body>
+</html>
