@@ -109,6 +109,175 @@ export async function fetchStudioEngines() {
   return res.json();
 }
 
+export async function fetchReconCostEstimate() {
+  const res = await fetch('/api/module8?action=recon-cost-estimate', { cache: 'no-store' });
+  return res.json();
+}
+
+export async function fetchReconJobs() {
+  const res = await fetch('/api/module8?action=recon-jobs', { cache: 'no-store' });
+  return res.json();
+}
+
+export async function prepareReconImage(payload) {
+  const res = await fetch('/api/module8?action=recon-prepare', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function startReconGeneration(payload) {
+  const res = await fetch('/api/module8?action=recon-start', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function pollReconTask(jobId) {
+  const res = await fetch(`/api/module8?action=recon-poll&job_id=${encodeURIComponent(jobId)}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function sendReconAssetToBlender(payload) {
+  const res = await fetch('/api/module8?action=recon-to-blender-job', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// ============================================================================
+// MODULE 8.2 — AI SCENE BUILDER & ENVIRONMENT STUDIO SDK
+// ============================================================================
+
+export async function fetchSceneBuilderCatalog() {
+  const res = await fetch('/api/module8?action=scene-builder-catalog', { cache: 'no-store' });
+  return res.json();
+}
+
+export async function analyzeReferenceRoomImage(payload) {
+  const res = await fetch('/api/module8?action=scene-analyze-ref', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function saveStudioScene(payload) {
+  const res = await fetch('/api/module8?action=scene-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function loadStudioScene(sceneId = '') {
+  const qs = sceneId ? `&scene_id=${encodeURIComponent(sceneId)}` : '';
+  const res = await fetch(`/api/module8?action=scene-load${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function approveStudioScene(payload) {
+  const res = await fetch('/api/module8?action=scene-approve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function triggerApprovedSceneRender(payload) {
+  const res = await fetch('/api/module8?action=scene-final-render', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// ============================================================================
+// MODULE 8.3 — CINEMATIC STUDIO & CAMERA ANIMATION ENGINE SDK
+// ============================================================================
+
+export async function fetchCinematicCatalog() {
+  const res = await fetch('/api/module8?action=cinematic-catalog', { cache: 'no-store' });
+  return res.json();
+}
+
+export async function saveCinematicAnimation(payload) {
+  const res = await fetch('/api/module8?action=cinematic-save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function loadCinematicAnimation(cinematicId = '') {
+  const qs = cinematicId ? `&cinematic_id=${encodeURIComponent(cinematicId)}` : '';
+  const res = await fetch(`/api/module8?action=cinematic-load${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function triggerCinematicRender(payload) {
+  const res = await fetch('/api/module8?action=cinematic-render', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+// ── MODULE 8.4: MULTI-PLATFORM VIDEO PRODUCTION ENGINE API CLIENT ────────────
+export async function fetchVideoCatalog() {
+  const res = await fetch('/api/module8?action=video-catalog', { cache: 'no-store' });
+  return res.json();
+}
+
+export async function producePlatformVideos(payload) {
+  const res = await fetch('/api/module8?action=video-produce', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function fetchPlatformVideos(projectId = '', platform = '') {
+  const params = new URLSearchParams();
+  if (projectId) params.set('project_id', projectId);
+  if (platform) params.set('platform', platform);
+  const qs = params.toString() ? `&${params.toString()}` : '';
+  const res = await fetch(`/api/module8?action=video-load${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+// ── MODULE 8.5: NON-INVASIVE MEDIA DISTRIBUTION BRIDGE API CLIENT ────────────
+export async function distributePlatformVideo(payload) {
+  const res = await fetch('/api/module8?action=video-distribute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  return res.json();
+}
+
+export async function fetchMediaDistributions(targetModule = '', platform = '') {
+  const params = new URLSearchParams();
+  if (targetModule) params.set('target_module', targetModule);
+  if (platform) params.set('platform', platform);
+  const qs = params.toString() ? `&${params.toString()}` : '';
+  const res = await fetch(`/api/module8?action=video-distribute${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
 // Aliases for unified SDK compatibility
 export const fetchOverview = fetchStudioOverview;
 export const fetchJobs = fetchStudioJobs;

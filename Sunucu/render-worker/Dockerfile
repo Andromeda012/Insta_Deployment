@@ -26,6 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxinerama1 \
     libxkbcommon0 \
     libsm6 \
+    ffmpeg \
     dumb-init \
     && rm -rf /var/lib/apt/lists/*
 

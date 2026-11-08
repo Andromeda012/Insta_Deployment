@@ -961,28 +961,784 @@
     </div>
   </section>
 
-  <!-- TAB 5: 3D ASSET STUDIO -->
+  <!-- TAB 5: 3D ASSET STUDIO & TRIPO H3.1 AI ASSET RECONSTRUCTION ENGINE -->
   <section class="studio-panel" id="panel-three-d">
+    
+    <!-- AI HIDDEN-SURFACE GEOMETRY DISCLAIMER BANNER -->
+    <div style="background:rgba(245, 158, 11, 0.12); border:1px solid rgba(245, 158, 11, 0.38); border-radius:14px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:14px;">
+      <div style="font-size:22px; line-height:1;">⚠️</div>
+      <div>
+        <strong style="font-size:13px; color:#FBBF24; display:block; margin-bottom:4px;">AI 3D Rekonstrüksiyon (Tripo H3.1) — Teknik Doğruluk ve Geometri Bilgilendirmesi</strong>
+        <p style="font-size:12px; color:#E2E8F0; line-height:1.55; margin:0;">
+          Tek bir mobilya fotoğrafından üretilen 3D modellerde, fotoğrafta görünmeyen arka, alt ve iç yüzeyler yapay zeka tarafından tahmin edilerek tamamlanır (<em>AI-Estimated Geometry</em>). Bu modeller dijital sahne kurulumu, etkileşimli web önizlemesi ve Blender görselleştirme akışları içindir; <strong>CAD veya CNC üretim/imalat verisi değildir</strong>. En yüksek doğruluk için çoklu mobilya içeren oda fotoğrafı yerine yalnızca <strong>tek bir mobilya parçasını</strong> kırparak veya izole ederek yükleyin.
+        </p>
+      </div>
+    </div>
+
+    <!-- TRIPO H3.1 WORKBENCH (LEFT: IMAGE PREP + SETTINGS + COST CONTROL | RIGHT: SIDE-BY-SIDE COMPARISON & 3D VIEWER) -->
+    <div style="display:grid; grid-template-columns: 1.05fr 1.25fr; gap:20px; margin-bottom:24px;">
+      
+      <!-- LEFT COLUMN: SINGLE-PRODUCT PHOTO PREPARATION, CROP & TRIPO H3.1 CONTROLS -->
+      <div class="content-box" style="margin-bottom:0;">
+        <div class="box-header">
+          <div>
+            <h2 class="box-title"><span>✨</span> Tripo H3.1 — Tek Ürün Fotoğrafından 3D Model Üretimi</h2>
+            <p class="box-desc">Model: <code style="color:var(--accent-gold);">v3.1-20260211</code> &bull; PBR &amp; Orijinal Fotoğraf Doku Hizalaması</p>
+          </div>
+          <span class="mini-chip" id="reconApiKeyBadge" style="background:rgba(16,185,129,0.15); color:#34D399; border-color:rgba(16,185,129,0.3);">Tripo H3.1 Hazır</span>
+        </div>
+
+        <form id="reconStudioForm" onsubmit="return false;">
+          <!-- 1. Product Selection & Name -->
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
+            <div>
+              <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">1. Katalog Ürünü (Opsiyonel)</label>
+              <select id="reconProductSelect" class="form-control" onchange="handleReconCatalogSelect(this.value)">
+                <option value="">-- Katalogdan Seçin veya Manuel Girin --</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">2. Tekil Ürün Adı (Zorunlu) *</label>
+              <input type="text" id="reconProductNameInput" class="form-control" placeholder="Örn: Viyana Tekli Berjer / Komodin" required>
+            </div>
+          </div>
+
+          <!-- 2. Optional Dimensions (cm) -->
+          <div style="margin-bottom:14px;">
+            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">3. Referans Ölçüler (Opsiyonel - Blender Sahne Ölçekleme İçin)</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+              <input type="number" id="reconWidthCm" class="form-control" placeholder="Genişlik (cm)" min="1" max="1000" step="0.5">
+              <input type="number" id="reconHeightCm" class="form-control" placeholder="Yükseklik (cm)" min="1" max="1000" step="0.5">
+              <input type="number" id="reconDepthCm" class="form-control" placeholder="Derinlik (cm)" min="1" max="1000" step="0.5">
+            </div>
+          </div>
+
+          <!-- 3. Single Product Image Upload & Validation -->
+          <div style="margin-bottom:14px;">
+            <label style="display:block; font-size:11px; font-weight:700; color:var(--text-muted); margin-bottom:5px; text-transform:uppercase;">4. Tek Ürün Fotoğrafı Yükle (JPG, JPEG, PNG, WebP • Maks 10MB • 256px–4096px) *</label>
+            <div class="upload-dropzone" style="padding:18px 14px;" onclick="document.getElementById('reconFileInput').click()">
+              <input type="file" id="reconFileInput" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" style="display:none;" onchange="handleReconFileSelected(event)">
+              <div style="font-size:24px; margin-bottom:4px;">📸</div>
+              <strong id="reconFileNameLabel" style="font-size:12.5px; color:#fff; display:block;">Tek mobilya fotoğrafı seçmek için tıklayın</strong>
+              <small id="reconFileSpecsLabel" style="color:var(--text-muted); font-size:11px;">Sayfa açılışında veya fotoğraf seçildiğinde API çağrısı yapılmaz (Maliyet: $0.00)</small>
+            </div>
+          </div>
+
+          <!-- 4. Manual Crop & Single-Furniture Isolation Canvas -->
+          <div id="reconCropWorkspace" style="display:none; background:rgba(0,0,0,0.35); border:1px solid var(--studio-border); border-radius:12px; padding:14px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:12px; color:var(--accent-gold);">✂️ Manuel Ürün Kırpma &amp; Kadraj Seçimi (Tek Mobilya İzolasyonu)</strong>
+              <button type="button" class="btn-ghost" style="padding:3px 8px; font-size:10.5px;" onclick="resetReconCrop()">Tam Kadraj Sıfırla</button>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; align-items:center;">
+              <div style="text-align:center;">
+                <div style="font-size:10.5px; color:var(--text-dim); margin-bottom:4px;">Kırpılmış Tek Ürün Önizlemesi</div>
+                <canvas id="reconCropCanvas" width="320" height="240" style="max-width:100%; background:#090D14; border:1px solid rgba(212,175,55,0.4); border-radius:8px;"></canvas>
+                <div id="reconCroppedResBadge" style="font-size:10.5px; color:var(--accent-emerald); margin-top:4px; font-family:var(--font-mono);">—</div>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px; font-size:11.5px;">
+                <div>
+                  <div style="display:flex; justify-content:space-between;"><span>Sol Başlangıç (X%):</span><strong id="lblCropX">0%</strong></div>
+                  <input type="range" id="reconCropX" min="0" max="80" value="0" style="width:100%;" oninput="updateReconCropPreview()">
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between;"><span>Üst Başlangıç (Y%):</span><strong id="lblCropY">0%</strong></div>
+                  <input type="range" id="reconCropY" min="0" max="80" value="0" style="width:100%;" oninput="updateReconCropPreview()">
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between;"><span>Genişlik (W%):</span><strong id="lblCropW">100%</strong></div>
+                  <input type="range" id="reconCropW" min="20" max="100" value="100" style="width:100%;" oninput="updateReconCropPreview()">
+                </div>
+                <div>
+                  <div style="display:flex; justify-content:space-between;"><span>Yükseklik (H%):</span><strong id="lblCropH">100%</strong></div>
+                  <input type="range" id="reconCropH" min="20" max="100" value="100" style="width:100%;" oninput="updateReconCropPreview()">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Tripo H3.1 Generation Settings -->
+          <div style="background:rgba(255,255,255,0.02); border:1px solid var(--studio-border); border-radius:10px; padding:12px; margin-bottom:14px;">
+            <div style="font-size:11px; font-weight:700; color:var(--accent-gold); text-transform:uppercase; margin-bottom:8px;">5. Tripo H3.1 Üretim Parametreleri (Varsayılan Doğrulanmış Profil)</div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px; font-size:11.5px;">
+              <div>
+                <label style="color:var(--text-dim); font-size:10.5px; display:block;">Geometri Kalitesi</label>
+                <select id="reconGeoQuality" class="form-control" style="padding:6px 8px; font-size:11.5px;">
+                  <option value="detailed" selected>Detailed (Yüksek Detay)</option>
+                  <option value="standard">Standard</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:var(--text-dim); font-size:10.5px; display:block;">Doku (Texture) Kalitesi</label>
+                <select id="reconTexQuality" class="form-control" style="padding:6px 8px; font-size:11.5px;">
+                  <option value="standard" selected>Standard (PBR Aktif)</option>
+                  <option value="detailed">Detailed (HD PBR)</option>
+                </select>
+              </div>
+              <div>
+                <label style="color:var(--text-dim); font-size:10.5px; display:block;">Doku Hizalaması</label>
+                <select id="reconTexAlign" class="form-control" style="padding:6px 8px; font-size:11.5px;">
+                  <option value="original_image" selected>original_image</option>
+                  <option value="geometry">geometry</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:8px; font-size:11px; color:var(--text-muted); flex-wrap:wrap;">
+              <span>✓ <code>model: v3.1-20260211</code></span>
+              <span>✓ <code>texture: true</code></span>
+              <span>✓ <code>pbr: true</code></span>
+              <span>✓ <code>generate_parts: kapalı (PBR uyumu)</code></span>
+            </div>
+          </div>
+
+          <!-- 6. Mandatory Single-Item & Cost Approval Guards -->
+          <div style="background:rgba(16, 185, 129, 0.07); border:1px solid rgba(16, 185, 129, 0.3); border-radius:12px; padding:14px; margin-bottom:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+              <strong style="font-size:12.5px; color:#34D399;">💰 Tahmini API Maliyeti ve Bütçe Kontrolü</strong>
+              <span style="font-family:var(--font-mono); font-size:12px; color:#fff;">
+                Tahmini: <strong id="reconEstCostLabel" style="color:var(--accent-gold);">$0.30 USD</strong> &bull;
+                Limit: <strong id="reconMaxCostLabel">$1.00 USD</strong> &bull;
+                Kalan Bütçe: <strong id="reconRemBudgetLabel">$25.00 USD</strong>
+              </span>
+            </div>
+
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:#E2E8F0; cursor:pointer; margin-bottom:8px;">
+              <input type="checkbox" id="reconSingleItemCheck" style="margin-top:3px;">
+              <span>Görselin çoklu oda takımı olmadığını, <strong>yalnızca tek ve net bir mobilya parçasını</strong> içerdiğini ve görünmeyen yüzeylerin AI tahmini olacağını onaylıyorum.</span>
+            </label>
+
+            <label style="display:flex; align-items:flex-start; gap:8px; font-size:12px; color:#FDE68A; cursor:pointer;">
+              <input type="checkbox" id="reconCostApprovalCheck" style="margin-top:3px;">
+              <span><strong>Maliyet Onayı:</strong> Bu işlem için Tripo H3.1 API çağrısı yapılacağını (~$0.30 USD) ve başarısız/hatalı işlemlerde otomatik tekrar yapılmayacağını onaylıyorum.</span>
+            </label>
+          </div>
+
+          <!-- 7. Action Buttons & Live Progress Bar -->
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button type="button" class="btn-ghost" id="btnReconPrepareOnly" onclick="handleReconPrepareClick()">
+              1. Fotoğrafı Doğrula &amp; Hazırla ($0.00)
+            </button>
+            <button type="button" class="btn-gold" id="btnReconStartGeneration" style="flex:1; justify-content:center;" onclick="handleReconStartClick(false)">
+              ✦ 3D Model Üretimini Başlat (Tripo H3.1)
+            </button>
+          </div>
+
+          <!-- Progress Status Box -->
+          <div id="reconProgressBox" style="display:none; margin-top:14px; background:rgba(0,0,0,0.4); border:1px solid var(--studio-border); border-radius:10px; padding:12px;">
+            <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:6px;">
+              <strong id="reconProgressPhaseText" style="color:var(--accent-gold);">Hazırlanıyor...</strong>
+              <span id="reconProgressPercentText" style="font-family:var(--font-mono);">0%</span>
+            </div>
+            <div class="progress-bar-wrap" style="width:100%; height:8px; margin-bottom:6px;">
+              <div class="progress-bar-fill" id="reconProgressBarFill" style="width:0%;"></div>
+            </div>
+            <div id="reconProgressSubText" style="font-size:11px; color:var(--text-muted);">Tripo H3.1 görevi durumu izleniyor...</div>
+          </div>
+        </form>
+      </div>
+
+      <!-- RIGHT COLUMN: SIDE-BY-SIDE COMPARISON (ORIGINAL PHOTO vs INTERACTIVE 3D GLB MODEL) -->
+      <div class="content-box" style="margin-bottom:0; display:flex; flex-direction:column;">
+        <div class="box-header">
+          <div>
+            <h2 class="box-title"><span>🔍</span> Yan Yana Karşılaştırma &amp; 360° 3D Model İnceleme</h2>
+            <p class="box-desc">Kaynak ürün fotoğrafı ile üretilen GLB modelini döndürerek, yakınlaştırarak ve farklı açılardan karşılaştırın.</p>
+          </div>
+          <div style="display:flex; gap:6px; flex-wrap:wrap;">
+            <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setReconCameraPreset('front')">Ön</button>
+            <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setReconCameraPreset('side')">Yan</button>
+            <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setReconCameraPreset('top')">Üst</button>
+            <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="setReconCameraPreset('iso')">İzometrik</button>
+            <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11px;" onclick="toggleInlineReconWireframe()">🕸️ Tel Kafes</button>
+          </div>
+        </div>
+
+        <!-- Side-by-side Split Grid -->
+        <div style="display:grid; grid-template-columns: 1fr 1.35fr; gap:14px; flex:1; min-height:360px;">
+          
+          <!-- Left Pane: Source Furniture Photo -->
+          <div style="background:#090D14; border:1px solid var(--studio-border); border-radius:12px; padding:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; position:relative; overflow:hidden;">
+            <span style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.75); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; color:var(--accent-sage); border:1px solid rgba(255,255,255,0.1);">1. Orijinal / Kırpılmış Ürün Fotoğrafı</span>
+            <img id="reconCompareSourceImg" src="" alt="Kaynak Ürün Fotoğrafı" style="display:none; max-width:100%; max-height:310px; object-fit:contain; border-radius:8px;">
+            <div id="reconCompareSourceEmpty" style="text-align:center; color:var(--text-dim); font-size:12px; padding:20px;">
+              <div style="font-size:36px; margin-bottom:8px; opacity:0.5;">🖼️</div>
+              Henüz kaynak fotoğraf seçilmedi.
+            </div>
+          </div>
+
+          <!-- Right Pane: Interactive Three.js 3D Model Canvas -->
+          <div style="background:#090D14; border:1px solid rgba(212,175,55,0.35); border-radius:12px; position:relative; overflow:hidden; min-height:340px; display:flex; align-items:center; justify-content:center;">
+            <span style="position:absolute; top:10px; left:10px; z-index:5; background:rgba(0,0,0,0.75); padding:3px 8px; border-radius:4px; font-size:10px; font-weight:700; color:var(--accent-gold); border:1px solid rgba(212,175,55,0.3);">2. Etkileşimli 3D GLB Model (Döndür &bull; Yakınlaştır)</span>
+            <div id="reconInlineViewerContainer" style="width:100%; height:100%; position:absolute; inset:0;"></div>
+            <div id="reconInlineViewerOverlay" style="position:relative; z-index:4; text-align:center; color:var(--text-dim); font-size:12px; padding:24px; pointer-events:none;">
+              <div style="font-size:40px; margin-bottom:8px; opacity:0.6;">🧊</div>
+              <div>Üretilen veya seçilen 3D GLB model burada 360° etkileşimli olarak incelenir.</div>
+              <small style="display:block; margin-top:6px; color:var(--text-muted);">Sol Tık: Döndür • Tekerlek: Zoom • Sağ Tık: Kaydır</small>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom Action & Metadata Bar for Active Reconstructed Model -->
+        <div id="reconActiveAssetFooter" style="margin-top:14px; padding-top:12px; border-top:1px solid var(--studio-border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+          <div id="reconActiveAssetMeta" style="font-size:11.5px; color:var(--text-muted);">
+            Aktif 3D Varlık: <strong style="color:#fff;">Seçilmedi</strong>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <a id="btnReconDownloadGlb" href="#" target="_blank" download class="btn-emerald" style="display:none; padding:6px 12px; font-size:11.5px; text-decoration:none;">⬇️ .GLB Modelini İndir</a>
+            <button type="button" id="btnReconSendToBlender" class="btn-gold" style="display:none; padding:6px 12px; font-size:11.5px;" onclick="handleSendActiveReconToBlender()">🎬 Blender Sahnesine Gönder</button>
+            <button type="button" id="btnReconRegenerate" class="btn-ghost" style="display:none; padding:6px 12px; font-size:11.5px; border-color:rgba(245,158,11,0.4); color:#FBBF24;" onclick="handleReconRegenerateConfirm()">↻ Kullanıcı Onaylı Yeniden Üret</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- REGISTERED 3D ASSETS & RECONSTRUCTION JOBS LIST -->
     <div class="content-box">
       <div class="box-header">
         <div>
-          <h2 class="box-title"><span>📐</span> 3D Model &amp; Varlık Stüdyosu</h2>
-          <p class="box-desc">CAD model dosyaları (BLEND, GLB, FBX, OBJ) ve geometri doğrulama durumu.</p>
+          <h2 class="box-title"><span>📐</span> Kayıtlı 3D Modeller &amp; Tripo H3.1 Üretim Geçmişi</h2>
+          <p class="box-desc">Supabase Storage (<code>studio/assets/{product_slug}/{asset_id}/model.glb</code>) üzerinde doğrulanan 3D varlıklar.</p>
         </div>
-        <button type="button" class="btn-gold" onclick="openUploadModal('3d_model')">⬆️ 3D Model Yükle</button>
+        <div style="display:flex; gap:10px;">
+          <button type="button" class="btn-ghost" onclick="refreshReconStudioData()">Yenile ↻</button>
+          <button type="button" class="btn-gold" onclick="openUploadModal('3d_model')">⬆️ Harici 3D Model Yükle</button>
+        </div>
       </div>
 
-      <div class="empty-state" id="threeDModelsWrap">
-        <div class="empty-state-icon">🧊</div>
-        <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
-        <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve fotogrametri çıktıları burada listelenir. Henüz harici model yüklenmemiştir.</p>
-        <span class="mini-chip" style="font-size:11px; padding:6px 12px;">Desteklenen Formatlar: BLEND • GLB • GLTF • FBX • OBJ</span>
+      <div id="threeDModelsWrap">
+        <div class="empty-state">
+          <div class="empty-state-icon">🧊</div>
+          <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
+          <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve Tripo H3.1 çıktıları burada listelenir.</p>
+          <span class="mini-chip" style="font-size:11px; padding:6px 12px;">Desteklenen Formatlar: GLB • GLTF • BLEND • FBX • OBJ</span>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- TAB 6: CINEMATIC STUDIO -->
+  <!-- TAB 6: CINEMATIC STUDIO & MODULE 8.2 AI SCENE BUILDER -->
   <section class="studio-panel" id="panel-cinematic">
+
+    <!-- MODULE 8.2 — AI SCENE BUILDER & 3D ENVIRONMENT STUDIO -->
+    <div class="content-box" style="margin-bottom:24px; border:1px solid rgba(212,175,55,0.45); background:linear-gradient(180deg, rgba(18,24,36,0.98) 0%, rgba(11,15,23,0.98) 100%);">
+      <div class="box-header" style="border-bottom:1px solid rgba(212,175,55,0.2); padding-bottom:14px; margin-bottom:18px;">
+        <div>
+          <h2 class="box-title" style="font-size:17px;">
+            <span>🏛️</span> AI Scene Builder &amp; 3D Environment Studio
+            <span style="font-size:11px; color:#0B0F17; background:var(--accent-gold); padding:2px 9px; border-radius:12px; font-weight:800; margin-left:8px;">MODÜL 8.2 • BLENDER 4.2 SAHNE MOTORU</span>
+          </h2>
+          <p class="box-desc">Modül 8.1 3D mobilya varlıklarını (.glb) ve referans oda görsellerini kullanarak gerçek 3D Blender iç mekân mimarisi (Duvar, Pencere, Kapı, Zemin, Tavan, Süpürgelik, PBR Materyal &amp; Sinematik Işık) oluşturun, kaydedin ve onaylı Cycles render alın.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <select id="sbSavedScenesSelect" class="media-select" style="min-width:220px;" onchange="handleSbLoadSelectedScene(this.value)">
+            <option value="">📂 Kayıtlı 3D Sahne Yükle (.blend)...</option>
+          </select>
+          <button type="button" class="btn-ghost" onclick="loadSceneBuilderBootstrap()">↻ Sahne Katalog Yenile</button>
+          <button type="button" class="btn-emerald" onclick="loadBedroomPrototypePreset()">🛏️ Yatak Odası Prototip Sahnesi Kur</button>
+        </div>
+      </div>
+
+      <!-- Mandatory AI Scene Estimation & Scale Honesty Banner -->
+      <div style="background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.35); border-radius:10px; padding:11px 16px; margin-bottom:18px; display:flex; align-items:flex-start; gap:12px; font-size:12px; color:#FDE68A;">
+        <span style="font-size:18px; line-height:1;">⚠️</span>
+        <div>
+          <strong>Mimari &amp; Geometrik Doğruluk İlkesi (Gerçek 3D Blender Sahnesi):</strong>
+          Referans görselde görünmeyen oda bölgeleri (arka/yan duvarlar, tavan yüksekliği) AI destekli perspektif tahminiyle önerilir ve kullanıcı tarafından düzenlenebilir.
+          Oda mimarisi 2D düzlem veya Gaussian Splatting değil, bağımsız 3D Blender mesh objeleridir (<code>Room_Architecture</code>). Mobilyalar bağımsız 3D varlıklar (<code>Furniture_Assets</code>) olarak kalır; orijinal ürün geometrisi asla bozulmaz ve <strong>kullanıcı sahneyi onaylamadan maliyetli final Cycles render başlatılmaz.</strong>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1.05fr 1.25fr; gap:20px; align-items:start;">
+
+        <!-- LEFT COLUMN: 1. Reference Image Analysis + 2. Parametric Room Architecture + 3. PBR & Lighting -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+          <!-- STEP 1: Reference Room Photo Analysis ($0.00 Paid API Cost) -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:var(--accent-gold);">1. Referans İç Mekân Görseli Analizi ($0.00)</strong>
+              <span class="mini-chip" id="sbRefAnalysisBadge">Ücretsiz Perspektif &amp; Işık Analizi</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:10px; align-items:center;">
+              <div class="upload-dropzone" style="padding:12px; text-align:left; display:flex; align-items:center; gap:12px;" onclick="document.getElementById('sbRefImageInput').click()">
+                <input type="file" id="sbRefImageInput" accept="image/jpeg,image/png,image/webp" style="display:none;" onchange="handleSbRefImageSelect(event)">
+                <div style="font-size:24px;">🖼️</div>
+                <div>
+                  <strong id="sbRefFileNameLabel" style="font-size:12px; color:#fff; display:block;">Referans Oda Fotoğrafı Seçin (JPG / PNG / WEBP)</strong>
+                  <small id="sbRefFileInfoLabel" style="font-size:10.5px; color:var(--text-muted);">Perspektif, pencere yönü, renk paleti ve mobilya bölgelerini analiz eder.</small>
+                </div>
+              </div>
+              <button type="button" class="btn-gold" id="btnSbAnalyzeRef" onclick="handleSbAnalyzeRefClick()" style="height:100%; padding:10px 14px;">
+                🔍 Odayı Analiz Et
+              </button>
+            </div>
+
+            <div id="sbRefAnalysisResultBox" style="display:none; margin-top:10px; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.28); border-radius:8px; padding:10px; font-size:11.5px; color:#D1FAE5;">
+              <!-- Populated after reference room analysis -->
+            </div>
+          </div>
+
+          <!-- STEP 2: Parametric 3D Room Architecture -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:var(--accent-gold);">2. Parametrik 3D Oda Mimarisi (Metre)</strong>
+              <span class="mini-chip" id="sbPolyBudgetLabel">Tahmini ~4.800 Üçgen</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px; margin-bottom:10px;">
+              <div class="form-group" style="margin:0;">
+                <label>Sahne Adı (scene_name)</label>
+                <input type="text" id="sbSceneName" class="form-control" value="Viyana Lüks Yatak Odası Sahnesi" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Sahne ID (scene_id)</label>
+                <input type="text" id="sbSceneId" class="form-control" value="scene_viyana_bedroom_01" style="font-family:var(--font-mono); font-size:12px;">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+              <div class="form-group" style="margin:0;">
+                <label>Oda Genişlik (X m)</label>
+                <input type="number" id="sbRoomWidth" class="form-control" step="0.1" min="2.2" max="18" value="5.4" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Oda Derinlik (Y m)</label>
+                <input type="number" id="sbRoomLength" class="form-control" step="0.1" min="2.2" max="22" value="4.8" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Tavan Yükseklik (Z m)</label>
+                <input type="number" id="sbRoomHeight" class="form-control" step="0.05" min="2.2" max="6.5" value="3.0" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Duvar Kalınlık (m)</label>
+                <input type="number" id="sbWallThickness" class="form-control" step="0.02" min="0.08" max="0.6" value="0.18" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-top:8px;">
+              <div class="form-group" style="margin:0;">
+                <label>Pencere Duvarı</label>
+                <select id="sbWindowWall" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="right">Sağ Duvar (Doğu/Batı)</option>
+                  <option value="back">Arka Karşı Duvar</option>
+                  <option value="left">Sol Duvar</option>
+                  <option value="none">Pencere Yok</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Pencere G×Y (m)</label>
+                <div style="display:flex; gap:4px;">
+                  <input type="number" id="sbWindowWidth" class="form-control" step="0.1" min="0.4" max="6" value="2.1" style="padding:8px 6px;" oninput="syncSbInteractiveRoomPreview()">
+                  <input type="number" id="sbWindowHeight" class="form-control" step="0.1" min="0.4" max="4" value="1.65" style="padding:8px 6px;" oninput="syncSbInteractiveRoomPreview()">
+                </div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Kapı Duvarı</label>
+                <select id="sbDoorWall" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="left">Sol Duvar</option>
+                  <option value="right">Sağ Duvar</option>
+                  <option value="back">Arka Duvar</option>
+                  <option value="none">Kapı Yok</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Kapı G×Y (m)</label>
+                <div style="display:flex; gap:4px;">
+                  <input type="number" id="sbDoorWidth" class="form-control" step="0.05" min="0.6" max="2.4" value="0.95" style="padding:8px 6px;" oninput="syncSbInteractiveRoomPreview()">
+                  <input type="number" id="sbDoorHeight" class="form-control" step="0.05" min="1.8" max="3.2" value="2.15" style="padding:8px 6px;" oninput="syncSbInteractiveRoomPreview()">
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:11.5px; color:var(--text-muted);">
+              <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="sbChkMolding" checked onchange="syncSbInteractiveRoomPreview()"> Süpürgelik &amp; Kartonpiyer</label>
+              <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="sbChkWallPanels" checked onchange="syncSbInteractiveRoomPreview()"> Boiserie Duvar Panelleri</label>
+              <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="sbChkPendant" checked onchange="syncSbInteractiveRoomPreview()"> Tavan Sarkıt Armatür</label>
+              <label style="display:flex; align-items:center; gap:5px; cursor:pointer;"><input type="checkbox" id="sbChkRug" checked onchange="syncSbInteractiveRoomPreview()"> Dekoratif Halı</label>
+            </div>
+          </div>
+
+          <!-- STEP 3: Material & Lighting Studio (11 PBR Materials + 5 Scene Profiles) -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:var(--accent-gold);">3. PBR Materyal &amp; Sinematik Işık Stüdyosu</strong>
+              <span class="mini-chip">11 PBR Materyal • 5 Işık Profili</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:10px;">
+              <div class="form-group" style="margin:0;">
+                <label>Sahne Işık Profili (Lighting Profile)</label>
+                <select id="sbLightingProfile" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="luxury_bedroom">Luxury Bedroom (3400K Altın Saat &amp; Spot)</option>
+                  <option value="modern_minimal">Modern Minimal (5200K Nötr Galeri)</option>
+                  <option value="warm_interior">Warm Interior (2900K Sıcak Akşam)</option>
+                  <option value="dark_premium">Dark Premium (4100K Dramatik Showroom)</option>
+                  <option value="natural_daylight">Natural Daylight (5800K Doğal Gün Işığı)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Zemin PBR Materyali</label>
+                <select id="sbFloorMaterial" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="natural_wood">Doğal Ahşap Parke (natural_wood)</option>
+                  <option value="marble">Mermer Zemin (marble)</option>
+                  <option value="ceramic">Seramik / Porselen (ceramic)</option>
+                  <option value="stone">Doğal Traverten Taş (stone)</option>
+                  <option value="painted_wood">Lake Boyalı Ahşap (painted_wood)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Duvar PBR Materyali</label>
+                <select id="sbWallMaterial" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="painted_wood">İpek Mat Mimari Lake (painted_wood)</option>
+                  <option value="stone">Mimari Mikrobeton / Taş (stone)</option>
+                  <option value="natural_wood">Ceviz Lambri Kaplama (natural_wood)</option>
+                  <option value="marble">Mermer Duvar Kaplama (marble)</option>
+                  <option value="fabric">Akustik Kumaş Duvar (fabric)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Süpürgelik &amp; Detay Materyali</label>
+                <select id="sbTrimMaterial" class="form-control" onchange="syncSbInteractiveRoomPreview()">
+                  <option value="brass">Fırçalanmış Pirinç (brass)</option>
+                  <option value="painted_wood">Lake Ahşap (painted_wood)</option>
+                  <option value="metal">Antrasit Metal (metal)</option>
+                  <option value="natural_wood">Masif Meşe (natural_wood)</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:8px; margin-top:10px;">
+              <div class="form-group" style="margin:0;">
+                <label>Zemin Roughness (<span id="sbFloorRoughVal">0.38</span>)</label>
+                <input type="range" id="sbFloorRoughness" min="0.05" max="0.95" step="0.05" value="0.38" style="width:100%;" oninput="document.getElementById('sbFloorRoughVal').textContent=this.value; syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Duvar Tonu (Base Color)</label>
+                <input type="color" id="sbWallColorHex" value="#EDEAE4" style="width:100%; height:34px; border-radius:6px; border:1px solid var(--studio-border); background:transparent;" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Kamera Lens (mm)</label>
+                <input type="number" id="sbCameraFocalMm" class="form-control" min="18" max="120" value="35" oninput="syncSbInteractiveRoomPreview()">
+              </div>
+            </div>
+          </div>
+
+          <!-- STEP 4: 3D Furniture Asset Placement & Distance Inspector -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:var(--accent-gold);">4. 3D Mobilya Yerleştirme &amp; Ölçek Kalibrasyonu</strong>
+              <span class="mini-chip" id="sbPlacedCountChip">0 Mobilya Yerleştirildi</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; margin-bottom:10px;">
+              <select id="sbAssetPickerSelect" class="form-control">
+                <option value="">+ Sahneye Eklenecek 3D Mobilya Seçin (Modül 8.1 GLB / Katalog)...</option>
+              </select>
+              <button type="button" class="btn-gold" onclick="handleSbAddAssetToScene()">+ Sahneye Ekle</button>
+            </div>
+
+            <div id="sbPlacedAssetsList" style="display:flex; flex-direction:column; gap:8px; max-height:260px; overflow-y:auto;">
+              <!-- Populated dynamically -->
+            </div>
+
+            <div id="sbDistanceMatrixBox" style="margin-top:10px; font-size:11px; color:var(--text-muted);">
+              <!-- Inter-product distance & collision matrix -->
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Interactive 3D Room & Furniture Viewport + Save / Reload / Approve / Render Controls -->
+        <div style="display:flex; flex-direction:column; gap:16px;">
+
+          <div style="background:#080C12; border:1px solid rgba(212,175,55,0.35); border-radius:14px; overflow:hidden;">
+            <div style="padding:12px 16px; background:#111723; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <strong style="font-size:13.5px; color:#fff;">🎥 Etkileşimli 3D İç Mekân Sahne Önizleme (Three.js + Blender Eşleniği)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sol Tık: Kamera Döndür • Sağ Tık: Kaydır • Tekerlek: Zoom • Mobilya ve ışık profilini canlı inceleyin</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-ghost" style="padding:4px 9px; font-size:11px;" onclick="resetSbViewportCamera('perspective')">📐 Perspektif</button>
+                <button type="button" class="btn-ghost" style="padding:4px 9px; font-size:11px;" onclick="resetSbViewportCamera('front')">🎯 Cephe</button>
+                <button type="button" class="btn-ghost" style="padding:4px 9px; font-size:11px;" onclick="resetSbViewportCamera('top')">🗺️ Üst Plan</button>
+              </div>
+            </div>
+
+            <div style="position:relative; width:100%; height:440px; background:#090D14;">
+              <div id="sbViewportCanvasWrap" style="width:100%; height:100%;"></div>
+              <div id="sbViewportStatusOverlay" style="position:absolute; top:12px; left:12px; background:rgba(11,15,23,0.84); border:1px solid rgba(212,175,55,0.3); border-radius:8px; padding:7px 11px; font-size:11px; color:#E2E8F0; pointer-events:none;">
+                Oda: <strong id="sbOverlayRoomDim">5.4m × 4.8m × 3.0m</strong> • Işık: <strong id="sbOverlayLight">Luxury Bedroom</strong>
+              </div>
+            </div>
+
+            <!-- Persistence & Quality Control Bar -->
+            <div style="padding:14px 16px; background:#111723; border-top:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#FDE68A; font-weight:700; cursor:pointer;">
+                  <input type="checkbox" id="sbUserApproveCheck" onchange="handleSbApproveToggle(this.checked)">
+                  <span>✓ Sahne yerleşimini, ölçekleri ve ışıklandırmayı inceledim; Final Render için onaylıyorum</span>
+                </label>
+                <span class="mini-chip" id="sbPersistenceStatusBadge">Durum: Taslak (Henüz Kaydedilmedi)</span>
+              </div>
+
+              <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn-gold" id="btnSbSaveScene" onclick="handleSbSaveSceneClick()">
+                    💾 Sahneyi Kaydet (.blend + Metadata + Preview)
+                  </button>
+                  <button type="button" class="btn-ghost" onclick="handleSbReloadCurrentScene()">
+                    🔄 Kayıtlı Sahneyi Yeniden Yükle &amp; Doğrula
+                  </button>
+                </div>
+                <button type="button" class="btn-emerald" id="btnSbFinalRender" onclick="handleSbStartFinalRenderClick()">
+                  🎬 Onaylı Sahne Render Başlat (Blender Worker)
+                </button>
+              </div>
+
+              <div id="sbStoragePathsBox" style="display:none; background:rgba(0,0,0,0.35); border:1px solid var(--studio-border); border-radius:8px; padding:10px 12px; font-family:var(--font-mono); font-size:11px; color:#A7F3D0;">
+                <!-- Displays studio/scenes/{scene_id}/scene.blend, preview.jpg, scene_metadata.json -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Saved Studio Scenes Table -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:#fff;">📦 Kayıtlı 3D İç Mekân Sahneleri (Supabase Storage <code>studio/scenes/</code>)</strong>
+              <span class="mini-chip" id="sbSavedScenesCountChip">0 Sahne</span>
+            </div>
+            <div id="sbSavedScenesTableWrap" style="font-size:12px; color:var(--text-muted);">
+              Henüz kaydedilmiş 3D iç mekân sahnesi bulunmuyor.
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- MODULE 8.3 — CINEMATIC STUDIO & CAMERA ANIMATION ENGINE -->
+    <div class="content-box" style="margin-bottom:24px; border:1px solid rgba(56,189,248,0.45); background:linear-gradient(180deg, rgba(15,23,42,0.98) 0%, rgba(9,13,20,0.98) 100%);">
+      <div class="box-header" style="border-bottom:1px solid rgba(56,189,248,0.2); padding-bottom:14px; margin-bottom:18px;">
+        <div>
+          <h2 class="box-title" style="font-size:17px;">
+            <span>🎥</span> Cinematic Studio &amp; Camera Animation Engine
+            <span style="font-size:11px; color:#090D14; background:#38BDF8; padding:2px 9px; border-radius:12px; font-weight:800; margin-left:8px;">MODÜL 8.3 • BLENDER KEYFRAME &amp; TIMELINE</span>
+          </h2>
+          <p class="box-desc">Modül 8.2 sahnelerini kullanarak gerçek Blender F-Curve kamera hareketleri (Bezier + Ease In/Out), 4 hazır çekim profili, çoklu çekim zaman çizelgesi (Timeline) ve önizleme/final render akışı oluşturun.</p>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <select id="cinSavedSelect" class="media-select" style="min-width:220px;" onchange="handleCinLoadSaved(this.value)">
+            <option value="">🎞️ Kayıtlı Sinematik Animasyon Yükle...</option>
+          </select>
+          <button type="button" class="btn-ghost" onclick="loadCinematicStudioBootstrap()">↻ Yenile</button>
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1.05fr 1.25fr; gap:20px; align-items:start;">
+
+        <!-- LEFT: 1. Scene & Preset Selector + 2. Camera & Lens Settings + 3. Shot List & Timeline Editor -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+
+          <!-- 1. Scene Selector & Shot Preset Selector -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:#38BDF8;">1. Sahne Seçimi (8.2) &amp; Çekim Profili (Shot Preset)</strong>
+              <span class="mini-chip">Bezier • Ease In / Out</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+              <div class="form-group" style="margin:0;">
+                <label>Kaynak 8.2 Sahnesi (Scene Selector)</label>
+                <select id="cinSceneSelect" class="form-control" onchange="handleCinSceneChange(this.value)">
+                  <option value="scene_viyana_bedroom_01">Viyana Lüks Yatak Odası (scene_viyana_bedroom_01)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Sinematik Proje ID (cinematic_id)</label>
+                <input type="text" id="cinProjectId" class="form-control" value="cin_viyana_luxury_01" style="font-family:var(--font-mono); font-size:12px;">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1.4fr 0.6fr; gap:10px;">
+              <div class="form-group" style="margin:0;">
+                <label>Hazır Çekim Profili (Shot Preset Selector)</label>
+                <select id="cinPresetSelect" class="form-control" onchange="handleCinApplyPreset(this.value)">
+                  <option value="luxury_product_showcase">A. Luxury Product Showcase (5 Çekim • Geniş -> Yaklaşma -> Yörünge -> Detay -> Dönüş)</option>
+                  <option value="premium_detail_showcase">B. Premium Detail Showcase (4 Çekim • Doku, Kulp, Kenar &amp; Yüzey Yakın Plan)</option>
+                  <option value="interior_cinematic">C. Interior Cinematic (4 Çekim • Mekân &amp; Mobilya İlişkisi)</option>
+                  <option value="minimal_product_film">D. Minimal Product Film (3 Çekim • Sade &amp; Form Odaklı)</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Kare Hızı (FPS)</label>
+                <select id="cinFpsSelect" class="form-control" onchange="recomputeCinTimelineUI()">
+                  <option value="24" selected>24 FPS (Sinema)</option>
+                  <option value="30">30 FPS (Standart)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Camera & Lens Settings -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+              <strong style="font-size:13px; color:#38BDF8;">2. Kamera &amp; Lens Ayarları (Seçili Çekim)</strong>
+              <span class="mini-chip" id="cinActiveShotChip">Çekim #1 Düzenleniyor</span>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px;">
+              <div class="form-group" style="margin:0;">
+                <label>Focal Length (mm)</label>
+                <input type="number" id="cinFocalMm" class="form-control" min="18" max="135" value="35" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Mesafe (m)</label>
+                <input type="number" id="cinCamDist" class="form-control" step="0.1" min="0.6" max="10" value="3.2" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Yükseklik (m)</label>
+                <input type="number" id="cinCamHeight" class="form-control" step="0.05" min="0.4" max="4" value="1.45" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Süre (sn)</label>
+                <input type="number" id="cinShotDuration" class="form-control" step="0.5" min="1" max="20" value="3.0" oninput="updateActiveCinShotFromInspector()">
+              </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:8px; margin-top:8px;">
+              <div class="form-group" style="margin:0;">
+                <label>F-Stop (Diyafram)</label>
+                <input type="number" id="cinFStop" class="form-control" step="0.2" min="1.4" max="16" value="3.5" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Focus Mesafe (m)</label>
+                <input type="number" id="cinFocusDist" class="form-control" step="0.1" min="0.5" max="12" value="2.6" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Hareket Hızı</label>
+                <input type="number" id="cinMoveSpeed" class="form-control" step="0.1" min="0.3" max="2.0" value="1.0" oninput="updateActiveCinShotFromInspector()">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label>Hedef (X, Y, Z m)</label>
+                <input type="text" id="cinTargetVec" class="form-control" value="0.0, 1.4, 0.95" oninput="updateActiveCinShotFromInspector()">
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px; font-size:11px; color:var(--text-muted);">
+              <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                <input type="checkbox" id="cinDofCheck" checked onchange="updateActiveCinShotFromInspector()">
+                <span>Alan Derinliği (Depth of Field / Bokeh) Aktif</span>
+              </label>
+              <span style="color:#A7F3D0;">✓ Ürün fiziksel formu ve materyal dokusu %100 korunur</span>
+            </div>
+          </div>
+
+          <!-- 3. Shot List & Timeline Editor -->
+          <div style="background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+              <strong style="font-size:13px; color:#38BDF8;">3. Çekim Listesi &amp; Zaman Çizelgesi (Cinematic Timeline)</strong>
+              <div style="display:flex; gap:6px;">
+                <select id="cinNewShotMovementSelect" class="media-select" style="padding:4px 8px; font-size:11px;">
+                  <option value="dolly_in">+ Dolly In (Ürüne Yaklaşma)</option>
+                  <option value="dolly_out">+ Dolly Out (Uzaklaşma)</option>
+                  <option value="slow_pan_left_right">+ Slow Pan Left / Right</option>
+                  <option value="tilt_up_down">+ Tilt Up / Down</option>
+                  <option value="orbit_around_product">+ Orbit Around Product</option>
+                  <option value="camera_tracking">+ Camera Tracking</option>
+                  <option value="smooth_crane_movement">+ Smooth Crane Movement</option>
+                  <option value="closeup_detail_movement">+ Close-up Detail Movement</option>
+                  <option value="wide_establishing_shot">+ Wide Establishing Shot</option>
+                </select>
+                <button type="button" class="btn-gold" style="padding:4px 10px; font-size:11px;" onclick="handleCinAddShot()">+ Çekim Ekle</button>
+              </div>
+            </div>
+
+            <!-- Visual Timeline Track Bar -->
+            <div id="cinTimelineTrackBar" style="display:flex; width:100%; height:28px; border-radius:6px; overflow:hidden; background:#090D14; border:1px solid rgba(255,255,255,0.12); margin-bottom:10px;"></div>
+
+            <div id="cinShotListWrap" style="display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto;"></div>
+          </div>
+
+        </div>
+
+        <!-- RIGHT: Real-Time Camera Animation Preview + Render Settings + Save/Reload/Render -->
+        <div style="display:flex; flex-direction:column; gap:14px;">
+
+          <div style="background:#080C12; border:1px solid rgba(56,189,248,0.35); border-radius:14px; overflow:hidden;">
+            <div style="padding:12px 16px; background:#111723; border-bottom:1px solid rgba(255,255,255,0.08); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <div>
+                <strong style="font-size:13.5px; color:#fff;">🎬 Gerçek Zamanlı Sinematik Kamera Hareketi Önizleme</strong>
+                <div style="font-size:11px; color:var(--text-muted);" id="cinPreviewSubtitle">Toplam: 5 Çekim • 14.0 sn • Kare: 1 – 336 (24 FPS)</div>
+              </div>
+              <div style="display:flex; gap:6px;">
+                <button type="button" class="btn-gold" style="padding:5px 12px; font-size:11.5px;" onclick="playFullCinematicPreview()">▶️ Tüm Sekansı Oynat</button>
+                <button type="button" class="btn-ghost" style="padding:5px 10px; font-size:11.5px;" onclick="stopCinematicPreview()">⏹️ Durdur</button>
+              </div>
+            </div>
+
+            <div style="padding:12px 16px; background:rgba(15,23,42,0.6); font-size:11.5px; color:#E2E8F0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <span id="cinLiveFrameReadout">Kare: <strong>1 / 336</strong> • Aktif Çekim: <strong>1. Geniş Başlangıç Planı</strong></span>
+              <span class="mini-chip" id="cinLiveLensReadout">Lens: 28mm • f/5.6 • Bezier Ease-In/Out</span>
+            </div>
+
+            <!-- Render Settings & Persistence Controls -->
+            <div style="padding:14px 16px; background:#111723; border-top:1px solid rgba(255,255,255,0.08); display:flex; flex-direction:column; gap:12px;">
+              <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;">
+                <div class="form-group" style="margin:0;">
+                  <label>Önizleme Çözünürlük / Samples</label>
+                  <select id="cinPreviewResSelect" class="form-control">
+                    <option value="640x360|8" selected>640x360 • 8 Samples (Hızlı Önizleme)</option>
+                    <option value="960x540|16">960x540 • 16 Samples (Dengeli)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>Final Render Çözünürlük</label>
+                  <select id="cinFinalResSelect" class="form-control">
+                    <option value="1920x1080" selected>1920x1080 (Full HD 16:9)</option>
+                    <option value="1280x720">1280x720 (HD 16:9)</option>
+                  </select>
+                </div>
+                <div class="form-group" style="margin:0;">
+                  <label>Final Samples (Cycles CPU)</label>
+                  <input type="number" id="cinFinalSamples" class="form-control" min="16" max="128" value="48">
+                </div>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:#38BDF8; font-weight:700; cursor:pointer;">
+                  <input type="checkbox" id="cinApproveCheck">
+                  <span>✓ Kamera hareketlerini ve çekim planını inceledim; Final Sinematik Render için onaylıyorum</span>
+                </label>
+                <span class="mini-chip" id="cinStatusBadge">Durum: Hazır</span>
+              </div>
+
+              <div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:space-between;">
+                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                  <button type="button" class="btn-gold" onclick="handleCinSaveClick()">
+                    💾 Animasyonu .blend Olarak Kaydet
+                  </button>
+                  <button type="button" class="btn-ghost" onclick="handleCinReloadVerifyClick()">
+                    🔄 Sahneyi Tekrar Aç &amp; Animasyonu Doğrula
+                  </button>
+                  <button type="button" class="btn-ghost" onclick="handleCinQueueRenderClick('preview')">
+                    ⚡ Düşük Maliyetli Önizleme Render
+                  </button>
+                </div>
+                <button type="button" class="btn-emerald" onclick="handleCinQueueRenderClick('final')">
+                  🎬 Onaylı Final Sinematik Render
+                </button>
+              </div>
+
+              <div id="cinStoragePathsBox" style="display:none; background:rgba(0,0,0,0.35); border:1px solid var(--studio-border); border-radius:8px; padding:10px 12px; font-family:var(--font-mono); font-size:11px; color:#7DD3FC;"></div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+
     <div class="content-box">
       <div class="box-header">
         <div>
@@ -997,26 +1753,162 @@
     </div>
   </section>
 
-  <!-- TAB 7: VIDEO PRODUCTION -->
+  <!-- TAB 7: VIDEO PRODUCTION (MODULE 8.4 — MULTI-PLATFORM VIDEO PRODUCTION ENGINE) -->
   <section class="studio-panel" id="panel-video">
-    <div class="content-box">
+    <div class="content-box" style="margin-bottom:24px;">
       <div class="box-header">
         <div>
-          <h2 class="box-title"><span>🎥</span> Video Prodüksiyon &amp; Format Dağıtımı</h2>
-          <p class="box-desc">Instagram Reels (9:16), YouTube (16:9), Web Showroom ve Kare (1:1) video çıktıları.</p>
+          <h2 class="box-title"><span>🎥</span> Module 8.4 — Multi-Platform Video Production Engine</h2>
+          <p class="box-desc">Module 8.2 Blender sahnelerini ve Module 8.3 sinematik kamera animasyonlarını yeniden oluşturmadan 5 yayın kanalı için adaptif kadrajlı H.264 MP4 video üretimi.</p>
         </div>
-        <button type="button" class="btn-gold" onclick="openCreateJobModal('multi_format_transcode')">✦ Yeni Video Görevi Kur</button>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <span class="mini-chip" id="vidStatusBadge" style="background:rgba(16,185,129,0.12); color:#059669; border-color:rgba(16,185,129,0.3);">✓ 5 Kanal Adaptif Kamera &amp; FFmpeg H.264 Hazır</span>
+          <button type="button" class="btn-ghost" onclick="loadVideoStudioBootstrap()">Yenile ↻</button>
+          <button type="button" class="btn-ghost" onclick="handleVidProduceClick(false)">▶ Seçili Platformları Üret</button>
+          <button type="button" class="btn-gold" onclick="handleVidProduceClick(true)">✦ 5 Platform İçin Toplu Üret (Batch)</button>
+        </div>
       </div>
 
-      <div class="empty-state" id="videoOutputsWrap">
-        <div class="empty-state-icon">🎬</div>
-        <h3 class="empty-state-title">Henüz İşlenmiş Video Yok</h3>
-        <p class="empty-state-desc">Blender render worker veya video dönüştürücü görevleri tamamlandığında, video önizlemeleri ve platform çıktıları burada sunulacaktır.</p>
-        <div style="display:flex; justify-content:center; gap:8px; margin-top:14px; flex-wrap:wrap;">
-          <span class="mini-chip">9:16 Reels</span>
-          <span class="mini-chip">16:9 4K</span>
-          <span class="mini-chip">4:5 Post</span>
-          <span class="mini-chip">1:1 Kare</span>
+      <!-- Top Configuration Grid: Source Project, 5 Platform Profiles, Render Quality, Video Assembly -->
+      <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:18px; margin-bottom:20px;">
+        <!-- Column 1: Source Cinematic Project & Quality Preset -->
+        <div style="background:rgba(255,255,255,0.65); border:1px solid var(--border-subtle); border-radius:14px; padding:16px;">
+          <h4 style="font-size:13px; font-weight:700; margin:0 0 12px 0; color:var(--text-primary);">1. Kaynak Sinematik Proje &amp; Kalite Profili</h4>
+          <div style="margin-bottom:10px;">
+            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Video Proje Kodu (project_id)</label>
+            <input type="text" id="vidProjectIdInput" class="media-input" style="width:100%;" value="vproj_viyana_2026" />
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Kaynak Sinematik Proje (Module 8.3)</label>
+            <select id="vidCinematicSelect" class="media-select" style="width:100%;" onchange="handleVidCinematicChange()">
+              <option value="cin_viyana_luxury_01">cin_viyana_luxury_01 (Viyana Luxury Showcase)</option>
+            </select>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="display:block; font-size:11px; font-weight:600; color:var(--text-muted); margin-bottom:4px;">Render Kalite Modu (Preset)</label>
+            <select id="vidQualitySelect" class="media-select" style="width:100%;" onchange="handleVidQualityChange()">
+              <option value="preview">Preview — Düşük Maliyetli Kontrol (640x360 / 360x640 • 12 FPS • 8 Sample)</option>
+              <option value="standard">Standard — Normal Üretim Kalitesi (1280x720 / 720x1280 • 24/30 FPS • 24 Sample)</option>
+              <option value="high_quality">High Quality — Website &amp; Master (1920x1080 / 1080x1920 • 24/30 FPS • 48 Sample)</option>
+              <option value="custom">Custom — Özel Çözünürlük, FPS &amp; Sample</option>
+            </select>
+          </div>
+          <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:8px; margin-bottom:10px;">
+            <div>
+              <label style="display:block; font-size:10px; color:var(--text-muted);">Özel Genişlik</label>
+              <input type="number" id="vidCustomWidth" class="media-input" style="width:100%;" value="1080" min="240" max="1920" />
+            </div>
+            <div>
+              <label style="display:block; font-size:10px; color:var(--text-muted);">Özel Yükseklik</label>
+              <input type="number" id="vidCustomHeight" class="media-input" style="width:100%;" value="1920" min="240" max="1920" />
+            </div>
+            <div>
+              <label style="display:block; font-size:10px; color:var(--text-muted);">FPS / Sample</label>
+              <input type="number" id="vidCustomFps" class="media-input" style="width:100%;" value="30" min="8" max="60" />
+            </div>
+          </div>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; font-weight:600; color:#b45309; cursor:pointer; margin-top:8px;">
+            <input type="checkbox" id="vidApproveHighCostCheck" checked />
+            Standard / High Quality / Custom çoklu kare üretimi için onaylıyorum
+          </label>
+        </div>
+
+        <!-- Column 2: 5 Target Output Platforms & Adaptive Framing Rules -->
+        <div style="background:rgba(255,255,255,0.65); border:1px solid var(--border-subtle); border-radius:14px; padding:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <h4 style="font-size:13px; font-weight:700; margin:0; color:var(--text-primary);">2. Hedef Yayın Kanalları (5 Bağımsız Profil)</h4>
+            <button type="button" class="btn-ghost" style="padding:3px 8px; font-size:11px;" onclick="toggleAllVideoPlatforms(true)">Tümünü Seç</button>
+          </div>
+          <div id="vidPlatformCheckboxes" style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border-radius:8px; background:rgba(184,146,74,0.08); cursor:pointer;">
+              <input type="checkbox" class="vid-plat-cb" value="website" checked />
+              <div>
+                <strong>A. Website Premium Film (16:9 Yatay • 1920x1080 • 24 FPS)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sensor Fit: HORIZONTAL • Yavaş ve kontrollü sinematik master</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.8); cursor:pointer;">
+              <input type="checkbox" class="vid-plat-cb" value="instagram" checked />
+              <div>
+                <strong>B. Instagram Reels (9:16 Dikey • 1080x1920 • 30 FPS)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sensor Fit: VERTICAL (1.38x Mesafe) • Ürün merkezli kesilmez kadraj</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.8); cursor:pointer;">
+              <input type="checkbox" class="vid-plat-cb" value="facebook" checked />
+              <div>
+                <strong>C. Facebook Reels (9:16 Dikey • 1080x1920 • 30 FPS)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sensor Fit: VERTICAL (1.46x Mesafe) • Oda &amp; mobilya ilişkisi kurgusu</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.8); cursor:pointer;">
+              <input type="checkbox" class="vid-plat-cb" value="tiktok" checked />
+              <div>
+                <strong>D. TikTok (9:16 Dikey • 1080x1920 • 30 FPS)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sensor Fit: VERTICAL (1.30x Hook Hızı) • İlk saniye dikkat çekici detay</div>
+              </div>
+            </label>
+            <label style="display:flex; align-items:flex-start; gap:8px; padding:6px 8px; border-radius:8px; background:rgba(255,255,255,0.8); cursor:pointer;">
+              <input type="checkbox" class="vid-plat-cb" value="youtube" checked />
+              <div>
+                <strong>E. YouTube Shorts (9:16 Dikey • 1080x1920 • 30 FPS)</strong>
+                <div style="font-size:11px; color:var(--text-muted);">Sensor Fit: VERTICAL (1.40x Mesafe) • Akıcı ürün tanıtım anlatımı</div>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Column 3: Video Editing, Assembly & Audio / Overlay Controls -->
+        <div style="background:rgba(255,255,255,0.65); border:1px solid var(--border-subtle); border-radius:14px; padding:16px;">
+          <h4 style="font-size:13px; font-weight:700; margin:0 0 12px 0; color:var(--text-primary);">3. Video Kurgu, Geçiş, Marka &amp; Ses Ayarları</h4>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px;">
+            <div>
+              <label style="display:block; font-size:11px; color:var(--text-muted);">Çekim Geçişi (Transition)</label>
+              <select id="vidTransitionSelect" class="media-select" style="width:100%;">
+                <option value="crossfade">Yumuşak Geçiş (Crossfade)</option>
+                <option value="dip_to_black">Siyaha Kararma (Dip to Black)</option>
+                <option value="cut">Doğrudan Kesme (Cut)</option>
+              </select>
+            </div>
+            <div>
+              <label style="display:block; font-size:11px; color:var(--text-muted);">Fade In / Out (sn)</label>
+              <div style="display:flex; gap:4px;">
+                <input type="number" id="vidFadeInSec" class="media-input" style="width:50%;" value="0.5" step="0.1" min="0" max="3" />
+                <input type="number" id="vidFadeOutSec" class="media-input" style="width:50%;" value="0.6" step="0.1" min="0" max="3" />
+              </div>
+            </div>
+          </div>
+          <div style="margin-bottom:10px;">
+            <label style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">Başlık &amp; Marka Logo Katmanı (Overlay)</label>
+            <input type="text" id="vidTitleOverlayInput" class="media-input" style="width:100%; margin-bottom:6px;" placeholder="Örn: VİYANA KOLEKSİYONU — İtalyan Ceviz İşçiliği" value="GLOBAL MOBİLYA — Lüks Koleksiyon" />
+            <label style="display:flex; align-items:center; gap:6px; font-size:11px; color:var(--text-secondary);">
+              <input type="checkbox" id="vidBrandLogoCheck" checked /> GLOBAL MOBİLYA Marka Filigranı Ekle
+            </label>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; color:var(--text-muted); margin-bottom:4px;">Lisanslı / Kullanıcı Ses Dosyası &amp; Seviyesi (Opsiyonel)</label>
+            <div style="display:flex; gap:6px;">
+              <input type="text" id="vidAudioTrackInput" class="media-input" style="flex:1;" placeholder="Sessiz MP4 için boş bırakın (veya .mp3/.wav yolu)" />
+              <input type="number" id="vidAudioVolumeInput" class="media-input" style="width:72px;" value="0.75" step="0.05" min="0" max="1" title="Ses Seviyesi (0-1)" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Adaptive Composition & Storage Verification Banner -->
+      <div id="vidStorageSummaryBox" style="display:none; background:rgba(16,185,129,0.08); border:1px solid rgba(16,185,129,0.28); border-radius:12px; padding:12px 16px; margin-bottom:18px; font-size:12px; line-height:1.6;"></div>
+
+      <!-- Generated Platform Videos Gallery -->
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <h3 style="font-size:15px; font-weight:700; margin:0;">Üretilen Çoklu Platform Video Çıktıları (Supabase Storage: <code>studio/videos/{project_id}/{platform}/</code>)</h3>
+        <span class="mini-chip" id="vidOutputsCountChip">0 Video Çıktısı</span>
+      </div>
+
+      <div id="videoOutputsWrap" class="studio-grid" style="grid-template-columns:repeat(auto-fill, minmax(290px, 1fr)); gap:16px;">
+        <div class="empty-state" style="grid-column:1 / -1;">
+          <div class="empty-state-icon">🎬</div>
+          <h3 class="empty-state-title">Henüz İşlenmiş Video Yok</h3>
+          <p class="empty-state-desc">Yukarıdan sinematik çekim projesini ve hedef yayın kanallarını seçip <strong>"5 Platform İçin Toplu Üret"</strong> butonuna tıklayın.</p>
         </div>
       </div>
     </div>
@@ -1393,6 +2285,48 @@
       return res.json();
     }
 
+    async function fetchReconCostEstimate() {
+      const res = await fetch('/api/module8?action=recon-cost-estimate', { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchReconJobs() {
+      const res = await fetch('/api/module8?action=recon-jobs', { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function prepareReconImage(payload) {
+      const res = await fetch('/api/module8?action=recon-prepare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function startReconGeneration(payload) {
+      const res = await fetch('/api/module8?action=recon-start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function pollReconTask(jobId) {
+      const res = await fetch(`/api/module8?action=recon-poll&job_id=${encodeURIComponent(jobId)}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function sendReconAssetToBlender(payload) {
+      const res = await fetch('/api/module8?action=recon-to-blender-job', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
     // ── 2. PRODUCTION ENGINE REGISTRY ──
     const studioRegistry = {
       get(engineId) {
@@ -1544,6 +2478,26 @@
         }
       }
 
+      setCameraPreset(preset = 'iso') {
+        if (!this.camera) return;
+        const targetY = this.initialTarget ? this.initialTarget.y : 0.8;
+        const dist = this.initialCameraPosition ? this.initialCameraPosition.length() : 3.5;
+        if (preset === 'front') {
+          this.camera.position.set(0, targetY, dist);
+        } else if (preset === 'side') {
+          this.camera.position.set(dist, targetY, 0);
+        } else if (preset === 'top') {
+          this.camera.position.set(0.01, dist * 1.2, 0.01);
+        } else {
+          this.camera.position.set(dist * 0.65, dist * 0.48, dist * 0.75);
+        }
+        this.camera.lookAt(0, targetY, 0);
+        if (this.controls) {
+          this.controls.target.set(0, targetY, 0);
+          this.controls.update();
+        }
+      }
+
       _handleResize() {
         if (!this.container || !this.renderer || !this.camera) return;
         const width = this.container.clientWidth;
@@ -1586,14 +2540,29 @@
 
     // State
     let activeModelViewer = null;
+    let inlineReconViewer = null;
     let currentCatalog = { products: [], collections: [], categories: [], registered_templates: [] };
     let currentMediaList = [];
     let currentJobsList = [];
+    let currentReconJobsList = [];
+    let currentThreeDAssetsList = [];
     let currentViewMode = 'grid';
     let selectedUploadFileBase64 = null;
     let selectedUploadFileName = null;
     let selectedUploadFileMime = null;
     let selectedUploadFileSize = 0;
+
+    // Tripo H3.1 Reconstruction Workbench State
+    let reconLoadedImageObj = null;
+    let reconSelectedFileName = null;
+    let reconSelectedFileMime = null;
+    let reconSelectedFileSize = 0;
+    let reconCroppedBase64 = null;
+    let reconCroppedWidth = 0;
+    let reconCroppedHeight = 0;
+    let activeReconJob = null;
+    let activeReconAsset = null;
+    let reconPollTimer = null;
 
     function escapeHtml(str) {
       if (!str) return '';
@@ -1678,7 +2647,7 @@
       if (activeModelViewer) activeModelViewer.resetCamera();
     };
 
-    function render3DStudioModels(assets) {
+    function render3DStudioModels(assets, reconJobs = [], threeDAssets = []) {
       const wrap = document.getElementById('threeDModelsWrap');
       if (!wrap) return;
 
@@ -1687,11 +2656,33 @@
         (a.file_name && (a.file_name.endsWith('.glb') || a.file_name.endsWith('.gltf') || a.file_name.endsWith('.blend') || a.file_name.endsWith('.obj') || a.file_name.endsWith('.fbx')))
       );
 
-      if (!models.length) {
+      // Merge any three_d_assets that aren't already in models
+      const combinedModels = [...models];
+      (threeDAssets || []).forEach(td => {
+        if (!combinedModels.some(m => m.id === td.asset_id || m.storage_path === td.generated_model_path)) {
+          combinedModels.push({
+            id: td.asset_id || td.id,
+            asset_id: td.asset_id || td.id,
+            product_slug: td.product_slug,
+            product_name: td.product_name,
+            asset_type: '3d_model',
+            file_name: `${td.product_slug || 'model'}_${td.asset_id || td.id}.glb`,
+            storage_path: td.generated_model_path || td.storage_path,
+            public_url: td.generated_model_url || td.public_url,
+            source_image_url: td.source_image_url,
+            file_size_bytes: td.file_size_bytes || 0,
+            provider: td.provider || 'tripo3d',
+            provider_model: td.provider_model || 'v3.1-20260211',
+            actual_cost: td.actual_cost
+          });
+        }
+      });
+
+      if (!combinedModels.length && !(reconJobs && reconJobs.length)) {
         wrap.innerHTML = `
           <div class="empty-state-icon">🧊</div>
           <h3 class="empty-state-title">Kayıtlı 3D Model Bulunmuyor</h3>
-          <p class="empty-state-desc">Modül 8'e eklenen 3D model dosyaları ve fotogrametri çıktıları burada listelenir.</p>
+          <p class="empty-state-desc">Yukarıdaki Tripo H3.1 stüdyosundan tek ürün fotoğrafıyla 3D model üretebilir veya harici 3D model yükleyebilirsiniz.</p>
           <div style="display:flex; gap:10px; justify-content:center; margin-top:12px;">
             <button type="button" class="btn-gold" onclick="openUploadModal('3d_model')">⬆️ 3D Model Yükle</button>
             <button type="button" class="btn-ghost" onclick="open3DViewer('', 'Örnek Studio Sahnesi')">👁️ Boş 3D Sahneyi Başlat</button>
@@ -1701,30 +2692,586 @@
         return;
       }
 
-      wrap.innerHTML = `
-        <div class="media-grid" style="width:100%; text-align:left;">
-          ${models.map(m => `
-            <div class="asset-card">
-              <div class="asset-thumb-wrap" style="background:#090d16; display:flex; align-items:center; justify-content:center;">
-                <div style="font-size:48px;">🧊</div>
-                <span class="asset-type-badge">${m.asset_type}</span>
-              </div>
-              <div class="asset-meta-body">
-                <div class="asset-title" title="${escapeHtml(m.file_name)}">${escapeHtml(m.file_name)}</div>
-                <div class="asset-specs">
-                  <span>${escapeHtml(m.product_slug || m.collection_id || 'Genel')}</span>
-                  <span>${(m.file_size_bytes / (1024 * 1024)).toFixed(2)} MB</span>
+      let html = '';
+      if (combinedModels.length) {
+        html += `
+          <div class="media-grid" style="width:100%; text-align:left; margin-bottom:20px;">
+            ${combinedModels.map(m => {
+              const sourceImg = m.source_image_url || m.metadata?.source_image_url || '';
+              const modelUrl = m.public_url || m.storage_path || '';
+              const assetId = m.asset_id || m.metadata?.asset_id || m.id;
+              return `
+              <div class="asset-card">
+                <div class="asset-thumb-wrap" style="background:#090d16; display:flex; align-items:center; justify-content:center;" onclick="inspectReconAssetSideBySide('${escapeHtml(assetId)}', '${escapeHtml(modelUrl)}', '${escapeHtml(sourceImg)}', '${escapeHtml(m.file_name)}')">
+                  ${sourceImg ? `<img src="${escapeHtml(sourceImg)}" alt="${escapeHtml(m.file_name)}" style="opacity:0.45; position:absolute; inset:0; width:100%; height:100%; object-fit:cover;">` : ''}
+                  <div style="font-size:44px; position:relative; z-index:2;">🧊</div>
+                  <span class="asset-type-badge">${escapeHtml(m.metadata?.provider_model || m.provider_model || m.asset_type)}</span>
                 </div>
-                <div class="asset-card-actions" style="margin-top:10px;">
-                  <button type="button" class="btn-gold" style="padding:5px 10px; font-size:11px; flex:1;" onclick="open3DViewer('${m.public_url || m.storage_path}', '${escapeHtml(m.file_name)}')">✦ 360° Görüntüle</button>
-                  <a href="${m.public_url || m.storage_path}" target="_blank" class="btn-ghost" style="padding:5px 8px; font-size:11px;" download>İndir</a>
+                <div class="asset-meta-body">
+                  <div class="asset-title" title="${escapeHtml(m.file_name)}">${escapeHtml(m.file_name)}</div>
+                  <div class="asset-specs">
+                    <span>${escapeHtml(m.product_slug || m.collection_id || 'Genel')}</span>
+                    <span>${((m.file_size_bytes || 0) / (1024 * 1024)).toFixed(2)} MB</span>
+                  </div>
+                  <div style="font-size:10.5px; color:var(--text-dim); font-family:var(--font-mono); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                    ${escapeHtml(m.storage_path || '')}
+                  </div>
+                  <div class="asset-card-actions" style="margin-top:10px; flex-wrap:wrap;">
+                    <button type="button" class="btn-gold" style="padding:5px 8px; font-size:11px; flex:1;" onclick="inspectReconAssetSideBySide('${escapeHtml(assetId)}', '${escapeHtml(modelUrl)}', '${escapeHtml(sourceImg)}', '${escapeHtml(m.file_name)}')">🔍 Karşılaştır</button>
+                    <button type="button" class="btn-ghost" style="padding:5px 8px; font-size:11px;" onclick="open3DViewer('${escapeHtml(modelUrl)}', '${escapeHtml(m.file_name)}')">360° Tam Ekran</button>
+                    <a href="${escapeHtml(modelUrl)}" target="_blank" class="btn-ghost" style="padding:5px 8px; font-size:11px;" download>⬇️ GLB</a>
+                  </div>
                 </div>
               </div>
-            </div>
-          `).join('')}
-        </div>
-      `;
+              `;
+            }).join('')}
+          </div>
+        `;
+      }
+
+      if (reconJobs && reconJobs.length) {
+        html += `
+          <h4 style="font-size:13px; font-weight:700; color:var(--accent-gold); margin:14px 0 10px;">Tripo H3.1 AI Rekonstrüksiyon Görev Geçmişi (${reconJobs.length})</h4>
+          <div style="overflow-x:auto;">
+            <table class="studio-table">
+              <thead>
+                <tr>
+                  <th>Görev / Asset ID</th>
+                  <th>Ürün</th>
+                  <th>Model &amp; Kalite</th>
+                  <th>Durum</th>
+                  <th>Tahmini / Gerçek Maliyet</th>
+                  <th>GLB Çıktı Yolu</th>
+                  <th>İşlem</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reconJobs.map(rj => `
+                  <tr>
+                    <td>
+                      <code style="color:var(--accent-gold); font-size:11px;">${escapeHtml(rj.id)}</code>
+                      <div style="font-size:10px; color:var(--text-dim);">${escapeHtml(rj.asset_id)}</div>
+                    </td>
+                    <td><strong>${escapeHtml(rj.product_name || rj.product_slug)}</strong></td>
+                    <td><span class="mini-chip">${escapeHtml(rj.provider_model || 'v3.1-20260211')}</span></td>
+                    <td>
+                      <span class="status-badge status-${escapeHtml(rj.status === 'completed' ? 'completed' : rj.status === 'failed' ? 'failed' : 'processing')}">${escapeHtml(rj.status)}</span>
+                      ${rj.error_message ? `<div style="font-size:10px; color:#F87171; margin-top:3px;">${escapeHtml(rj.error_message)}</div>` : ''}
+                    </td>
+                    <td style="font-family:var(--font-mono); font-size:11.5px;">
+                      $${Number(rj.estimated_cost || 0.30).toFixed(2)} / ${rj.actual_cost !== null && rj.actual_cost !== undefined ? '$' + Number(rj.actual_cost).toFixed(2) : '—'}
+                    </td>
+                    <td><code style="font-size:10.5px;">${escapeHtml(rj.generated_model_path || '—')}</code></td>
+                    <td>
+                      ${rj.status === 'completed' && rj.generated_model_url ? `
+                        <button type="button" class="btn-gold" style="padding:4px 8px; font-size:11px;" onclick="inspectReconAssetSideBySide('${escapeHtml(rj.asset_id)}', '${escapeHtml(rj.generated_model_url)}', '${escapeHtml(rj.source_image_url || '')}', '${escapeHtml(rj.product_name || rj.product_slug)}')">🔍 İncele</button>
+                      ` : rj.status === 'processing' ? `
+                        <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="resumeReconPolling('${escapeHtml(rj.id)}')">🔄 Durumu Sorgula</button>
+                      ` : rj.status === 'failed' ? `
+                        <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px; color:#FBBF24;" onclick="loadReconJobForRegenerate('${escapeHtml(rj.id)}')">↻ Onaylı Yeniden Üret</button>
+                      ` : ''}
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      wrap.innerHTML = html;
     }
+
+    // ── TRIPO H3.1 AI ASSET RECONSTRUCTION WORKBENCH CONTROLLERS ──
+    window.handleReconCatalogSelect = function(slug) {
+      if (!slug) return;
+      const prod = (currentCatalog.products || []).find(p => p.slug === slug);
+      const col = (currentCatalog.collections || []).find(c => c.slug === slug);
+      const nameInput = document.getElementById('reconProductNameInput');
+      if (prod && nameInput) {
+        nameInput.value = prod.title || slug;
+      } else if (col && nameInput) {
+        nameInput.value = col.title || slug;
+      }
+    };
+
+    window.handleReconFileSelected = function(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+      const ext = (file.name.split('.').pop() || '').toLowerCase();
+      if (!allowedTypes.includes(file.type) && !['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+        alert('Desteklenmeyen dosya formatı! Yalnızca JPG, JPEG, PNG ve WebP formatları kabul edilir.');
+        e.target.value = '';
+        return;
+      }
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`Görsel boyutu çok yüksek (${(file.size / (1024 * 1024)).toFixed(2)} MB). Maksimum izin verilen boyut 10 MB'dır.`);
+        e.target.value = '';
+        return;
+      }
+
+      reconSelectedFileName = file.name;
+      reconSelectedFileMime = file.type || (ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : 'image/jpeg');
+      reconSelectedFileSize = file.size;
+
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const img = new Image();
+        img.onload = function() {
+          if (img.naturalWidth < 256 || img.naturalHeight < 256) {
+            alert(`Görsel çözünürlüğü çok düşük (${img.naturalWidth}x${img.naturalHeight}px). En az 256x256 piksel olmalıdır.`);
+            return;
+          }
+          if (img.naturalWidth > 4096 || img.naturalHeight > 4096) {
+            alert(`Görsel çözünürlüğü çok yüksek (${img.naturalWidth}x${img.naturalHeight}px). Maksimum 4096x4096 piksel olmalıdır.`);
+            return;
+          }
+
+          reconLoadedImageObj = img;
+          document.getElementById('reconFileNameLabel').textContent = `${file.name} (${img.naturalWidth}×${img.naturalHeight}px)`;
+          document.getElementById('reconFileSpecsLabel').textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB • ${reconSelectedFileMime} • Doğrulandı (API Çağrısı Yapılmadı)`;
+
+          const cropWs = document.getElementById('reconCropWorkspace');
+          if (cropWs) cropWs.style.display = 'block';
+          resetReconCrop();
+        };
+        img.src = evt.target.result;
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.resetReconCrop = function() {
+      const cx = document.getElementById('reconCropX');
+      const cy = document.getElementById('reconCropY');
+      const cw = document.getElementById('reconCropW');
+      const ch = document.getElementById('reconCropH');
+      if (cx) cx.value = 0;
+      if (cy) cy.value = 0;
+      if (cw) cw.value = 100;
+      if (ch) ch.value = 100;
+      updateReconCropPreview();
+    };
+
+    window.updateReconCropPreview = function() {
+      if (!reconLoadedImageObj) return;
+      const xPct = Number(document.getElementById('reconCropX')?.value || 0);
+      const yPct = Number(document.getElementById('reconCropY')?.value || 0);
+      const wPct = Math.min(100 - xPct, Number(document.getElementById('reconCropW')?.value || 100));
+      const hPct = Math.min(100 - yPct, Number(document.getElementById('reconCropH')?.value || 100));
+
+      document.getElementById('lblCropX').textContent = `${xPct}%`;
+      document.getElementById('lblCropY').textContent = `${yPct}%`;
+      document.getElementById('lblCropW').textContent = `${wPct}%`;
+      document.getElementById('lblCropH').textContent = `${hPct}%`;
+
+      const sx = Math.round((xPct / 100) * reconLoadedImageObj.naturalWidth);
+      const sy = Math.round((yPct / 100) * reconLoadedImageObj.naturalHeight);
+      const sw = Math.max(256, Math.round((wPct / 100) * reconLoadedImageObj.naturalWidth));
+      const sh = Math.max(256, Math.round((hPct / 100) * reconLoadedImageObj.naturalHeight));
+
+      reconCroppedWidth = Math.min(reconLoadedImageObj.naturalWidth - sx, sw);
+      reconCroppedHeight = Math.min(reconLoadedImageObj.naturalHeight - sy, sh);
+
+      // Render preview canvas
+      const previewCanvas = document.getElementById('reconCropCanvas');
+      if (previewCanvas) {
+        const ctx = previewCanvas.getContext('2d');
+        ctx.fillStyle = '#090D14';
+        ctx.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+        const scale = Math.min(previewCanvas.width / reconCroppedWidth, previewCanvas.height / reconCroppedHeight);
+        const dw = reconCroppedWidth * scale;
+        const dh = reconCroppedHeight * scale;
+        const dx = (previewCanvas.width - dw) / 2;
+        const dy = (previewCanvas.height - dh) / 2;
+        ctx.drawImage(reconLoadedImageObj, sx, sy, reconCroppedWidth, reconCroppedHeight, dx, dy, dw, dh);
+      }
+
+      // Export actual resolution cropped image to base64
+      const offscreen = document.createElement('canvas');
+      offscreen.width = reconCroppedWidth;
+      offscreen.height = reconCroppedHeight;
+      const offCtx = offscreen.getContext('2d');
+      offCtx.drawImage(reconLoadedImageObj, sx, sy, reconCroppedWidth, reconCroppedHeight, 0, 0, reconCroppedWidth, reconCroppedHeight);
+      const exportMime = reconSelectedFileMime === 'image/png' ? 'image/png' : 'image/jpeg';
+      reconCroppedBase64 = offscreen.toDataURL(exportMime, 0.94);
+
+      const badge = document.getElementById('reconCroppedResBadge');
+      if (badge) {
+        badge.textContent = `Seçili Alan: ${reconCroppedWidth} × ${reconCroppedHeight} px`;
+      }
+
+      // Update Side-by-Side left comparison image immediately (zero API calls)
+      const compareImg = document.getElementById('reconCompareSourceImg');
+      const compareEmpty = document.getElementById('reconCompareSourceEmpty');
+      if (compareImg && reconCroppedBase64) {
+        compareImg.src = reconCroppedBase64;
+        compareImg.style.display = 'block';
+        if (compareEmpty) compareEmpty.style.display = 'none';
+      }
+    };
+
+    function buildReconRequestPayload() {
+      const productSlug = document.getElementById('reconProductSelect')?.value || '';
+      const productName = (document.getElementById('reconProductNameInput')?.value || '').trim();
+      const singleConfirmed = document.getElementById('reconSingleItemCheck')?.checked === true;
+      const costApproved = document.getElementById('reconCostApprovalCheck')?.checked === true;
+
+      const widthCm = document.getElementById('reconWidthCm')?.value;
+      const heightCm = document.getElementById('reconHeightCm')?.value;
+      const depthCm = document.getElementById('reconDepthCm')?.value;
+
+      const geoQuality = document.getElementById('reconGeoQuality')?.value || 'detailed';
+      const texQuality = document.getElementById('reconTexQuality')?.value || 'standard';
+      const texAlign = document.getElementById('reconTexAlign')?.value || 'original_image';
+
+      const exportMime = reconSelectedFileMime === 'image/png' ? 'image/png' : 'image/jpeg';
+      const exportExt = exportMime === 'image/png' ? 'png' : 'jpg';
+      const cleanName = (reconSelectedFileName || `product.${exportExt}`).replace(/\.[^.]+$/, '') + `.${exportExt}`;
+
+      return {
+        product_slug: productSlug || productName.toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
+        product_id: productSlug || null,
+        product_name: productName,
+        file_name: cleanName,
+        mime_type: exportMime,
+        file_base64: reconCroppedBase64,
+        single_item_confirmed: singleConfirmed,
+        user_cost_approved: costApproved,
+        crop_region: {
+          x_pct: Number(document.getElementById('reconCropX')?.value || 0),
+          y_pct: Number(document.getElementById('reconCropY')?.value || 0),
+          width_pct: Number(document.getElementById('reconCropW')?.value || 100),
+          height_pct: Number(document.getElementById('reconCropH')?.value || 100),
+          cropped_width_px: reconCroppedWidth,
+          cropped_height_px: reconCroppedHeight
+        },
+        dimensions_cm: (widthCm || heightCm || depthCm) ? {
+          width_cm: widthCm ? Number(widthCm) : null,
+          height_cm: heightCm ? Number(heightCm) : null,
+          depth_cm: depthCm ? Number(depthCm) : null
+        } : null,
+        generation_settings: {
+          model: 'v3.1-20260211',
+          texture: true,
+          pbr: true,
+          texture_quality: texQuality,
+          geometry_quality: geoQuality,
+          texture_alignment: texAlign
+        }
+      };
+    }
+
+    function updateReconProgressUI(visible, phaseText, percent, subText) {
+      const box = document.getElementById('reconProgressBox');
+      if (!box) return;
+      box.style.display = visible ? 'block' : 'none';
+      if (phaseText !== undefined) document.getElementById('reconProgressPhaseText').textContent = phaseText;
+      if (percent !== undefined) {
+        document.getElementById('reconProgressPercentText').textContent = `${Math.round(percent)}%`;
+        document.getElementById('reconProgressBarFill').style.width = `${Math.round(percent)}%`;
+      }
+      if (subText !== undefined) document.getElementById('reconProgressSubText').textContent = subText;
+    }
+
+    window.handleReconPrepareClick = async function() {
+      if (!reconCroppedBase64) {
+        alert('Lütfen önce tek bir mobilya fotoğrafı seçin.');
+        return;
+      }
+      const payload = buildReconRequestPayload();
+      if (!payload.product_name) {
+        alert('Lütfen tekil ürün adını girin.');
+        return;
+      }
+      if (!payload.single_item_confirmed) {
+        alert('Lütfen görselin yalnızca tek bir mobilya parçasını içerdiğini onaylayın.');
+        return;
+      }
+
+      updateReconProgressUI(true, 'Kaynak fotoğraf doğrulanıyor ve Supabase Storage\'a yükleniyor ($0.00)...', 20, 'Tripo API çağrısı yapılmaz.');
+      try {
+        const res = await prepareReconImage(payload);
+        if (!res.ok) {
+          updateReconProgressUI(true, 'Hazırlama Hatası', 0, res.error || 'Doğrulama başarısız');
+          alert('Fotoğraf doğrulama hatası: ' + (res.error || 'Bilinmeyen hata'));
+          return;
+        }
+        activeReconJob = res.job;
+        updateReconProgressUI(true, `✓ Fotoğraf Hazırlandı (Job: ${res.job.id})`, 100, `Kaynak yol: ${res.job.source_image_path} • Şimdi maliyet onayı vererek 3D üretimi başlatabilirsiniz.`);
+        refreshReconStudioData();
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      }
+    };
+
+    window.handleReconStartClick = async function(isRegenerate = false) {
+      if (!reconCroppedBase64 && !activeReconJob) {
+        alert('Lütfen önce tek bir mobilya fotoğrafı seçin.');
+        return;
+      }
+      const payload = buildReconRequestPayload();
+      if (!payload.product_name && !activeReconJob?.product_name) {
+        alert('Lütfen tekil ürün adını girin.');
+        return;
+      }
+      if (!payload.single_item_confirmed) {
+        alert('Lütfen görselin yalnızca tek bir mobilya parçasını içerdiğini onaylayın.');
+        return;
+      }
+      if (!payload.user_cost_approved) {
+        alert('Ücretli Tripo H3.1 3D model üretimini başlatmak için Maliyet Onayı kutucuğunu işaretlemeniz zorunludur.');
+        return;
+      }
+
+      if (activeReconJob?.id) {
+        payload.job_id = activeReconJob.id;
+      }
+      if (isRegenerate) {
+        payload.regenerate = true;
+        payload.user_regenerate_approved = true;
+      }
+
+      const btn = document.getElementById('btnReconStartGeneration');
+      if (btn) btn.disabled = true;
+      updateReconProgressUI(true, 'Tripo H3.1 API ile 3D Model Üretimi Başlatılıyor...', 25, 'Görsel yükleniyor (/v3/files) ve görev oluşturuluyor (/v3/generation/image-to-model)...');
+
+      try {
+        const res = await startReconGeneration(payload);
+        if (!res.ok) {
+          updateReconProgressUI(true, `⚠️ Üretim Başlatılamadı (${res.error_code || 'HATA'})`, 0, res.error || 'Tripo API hatası');
+          alert('3D üretim başlatılamadı: ' + (res.error || 'Bilinmeyen hata'));
+          return;
+        }
+
+        activeReconJob = res.job;
+        updateReconProgressUI(
+          true,
+          `Tripo H3.1 İşleniyor (Task: ${res.job.provider_task_id || '...'})`,
+          res.job.progress_percent || 35,
+          '3D geometri ve PBR doku oluşturuluyor; tamamlandığında GLB otomatik indirilecek ve doğrulanacaktır...'
+        );
+        startReconPollingLoop(res.job.id);
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    function startReconPollingLoop(jobId) {
+      if (reconPollTimer) clearInterval(reconPollTimer);
+      const executePoll = async () => {
+        try {
+          const res = await pollReconTask(jobId);
+          if (!res || !res.job) return;
+          activeReconJob = res.job;
+
+          if (res.job.status === 'completed') {
+            clearInterval(reconPollTimer);
+            reconPollTimer = null;
+            activeReconAsset = res.three_d_asset;
+            updateReconProgressUI(
+              true,
+              '✓ 3D GLB Model Üretildi, Doğrulandı ve Supabase Storage\'a Kaydedildi!',
+              100,
+              `Depolama Yolu: ${res.job.generated_model_path} (${((res.job.file_size_bytes || 0) / 1024).toFixed(1)} KB)`
+            );
+            inspectReconAssetSideBySide(
+              res.job.asset_id,
+              res.job.generated_model_url,
+              res.job.source_image_url || reconCroppedBase64,
+              res.job.product_name || res.job.product_slug
+            );
+            refreshReconStudioData();
+          } else if (res.job.status === 'failed') {
+            clearInterval(reconPollTimer);
+            reconPollTimer = null;
+            updateReconProgressUI(
+              true,
+              `⚠️ 3D Üretim Başarısız Oldu (${res.job.error_code || 'FAILED'})`,
+              res.job.progress_percent || 0,
+              `${res.job.error_message || 'Bilinmeyen hata'} — Otomatik tekrar yapılmaz; yeniden denemek için onay verin.`
+            );
+            document.getElementById('btnReconRegenerate').style.display = 'inline-flex';
+            refreshReconStudioData();
+          } else {
+            updateReconProgressUI(
+              true,
+              `Tripo H3.1 3D Rekonstrüksiyon Sürüyor (${res.job.status})...`,
+              res.job.progress_percent || 55,
+              `Task ID: ${res.job.provider_task_id || '-'} • Geçici URL hazır olduğunda GLB indirilecek.`
+            );
+          }
+        } catch (e) {
+          console.warn('Recon poll warning:', e);
+        }
+      };
+
+      executePoll();
+      reconPollTimer = setInterval(executePoll, 4000);
+    }
+
+    window.resumeReconPolling = function(jobId) {
+      startReconPollingLoop(jobId);
+    };
+
+    window.loadReconJobForRegenerate = function(jobId) {
+      const job = (currentReconJobsList || []).find(j => j.id === jobId);
+      if (!job) return;
+      activeReconJob = job;
+      handleReconRegenerateConfirm();
+    };
+
+    window.handleReconRegenerateConfirm = async function() {
+      if (!activeReconJob) {
+        alert('Yeniden üretilecek aktif bir görev bulunamadı.');
+        return;
+      }
+      const confirmed = confirm(
+        `DİKKAT (Maliyet Onayı):\n\n"${activeReconJob.product_name || activeReconJob.product_slug}" ürünü için Tripo H3.1 üzerinden YENİ bir ücretli 3D model üretimi başlatılacaktır (~$${Number(activeReconJob.estimated_cost || 0.30).toFixed(2)} USD).\n\nOnaylıyor musunuz?`
+      );
+      if (!confirmed) return;
+
+      document.getElementById('reconSingleItemCheck').checked = true;
+      document.getElementById('reconCostApprovalCheck').checked = true;
+      await handleReconStartClick(true);
+    };
+
+    window.inspectReconAssetSideBySide = async function(assetId, modelUrl, sourceImageUrl, title = '3D Model') {
+      switchStudioTab('three-d');
+
+      const compareImg = document.getElementById('reconCompareSourceImg');
+      const compareEmpty = document.getElementById('reconCompareSourceEmpty');
+      if (sourceImageUrl && compareImg) {
+        compareImg.src = sourceImageUrl;
+        compareImg.style.display = 'block';
+        if (compareEmpty) compareEmpty.style.display = 'none';
+      }
+
+      const metaEl = document.getElementById('reconActiveAssetMeta');
+      if (metaEl) {
+        metaEl.innerHTML = `Aktif 3D Varlık: <strong style="color:#fff;">${escapeHtml(title)}</strong> <code style="color:var(--accent-gold); font-size:11px; margin-left:6px;">${escapeHtml(assetId)}</code>`;
+      }
+
+      const dlBtn = document.getElementById('btnReconDownloadGlb');
+      if (dlBtn && modelUrl) {
+        dlBtn.href = modelUrl;
+        dlBtn.style.display = 'inline-flex';
+      }
+
+      const bldBtn = document.getElementById('btnReconSendToBlender');
+      if (bldBtn && assetId) {
+        bldBtn.dataset.assetId = assetId;
+        bldBtn.style.display = 'inline-flex';
+      }
+
+      const regenBtn = document.getElementById('btnReconRegenerate');
+      if (regenBtn) {
+        regenBtn.style.display = 'inline-flex';
+      }
+
+      // Initialize inline Three.js viewer inside #reconInlineViewerContainer
+      const container = document.getElementById('reconInlineViewerContainer');
+      const overlay = document.getElementById('reconInlineViewerOverlay');
+      if (!container) return;
+
+      if (inlineReconViewer) {
+        inlineReconViewer.dispose();
+        inlineReconViewer = null;
+      }
+
+      if (overlay) {
+        overlay.style.display = 'block';
+        overlay.innerHTML = `<div style="font-size:13px; color:var(--accent-gold);">3D GLB Model Yükleniyor...</div>`;
+      }
+
+      try {
+        inlineReconViewer = new ModelViewerEngine(container, { background: 0x090D14 });
+        inlineReconViewer.init();
+        if (modelUrl) {
+          await inlineReconViewer.loadModel(modelUrl);
+        }
+        if (overlay) overlay.style.display = 'none';
+      } catch (err) {
+        console.warn('Inline 3D viewer warning:', err);
+        if (overlay) {
+          overlay.style.display = 'block';
+          overlay.innerHTML = `<div style="font-size:12px; color:#F87171;">3D Önizleme Yüklenemedi: ${escapeHtml(err.message)}</div>`;
+        }
+      }
+    };
+
+    window.setReconCameraPreset = function(preset) {
+      if (inlineReconViewer && typeof inlineReconViewer.setCameraPreset === 'function') {
+        inlineReconViewer.setCameraPreset(preset);
+      }
+    };
+
+    window.toggleInlineReconWireframe = function() {
+      if (inlineReconViewer) inlineReconViewer.toggleWireframe();
+    };
+
+    window.handleSendActiveReconToBlender = async function() {
+      const btn = document.getElementById('btnReconSendToBlender');
+      const assetId = btn?.dataset?.assetId || activeReconAsset?.asset_id || activeReconJob?.asset_id;
+      if (!assetId) {
+        alert('Blender sahnesine gönderilecek doğrulanmış bir 3D model seçilmedi.');
+        return;
+      }
+
+      try {
+        const res = await sendReconAssetToBlender({ asset_id: assetId });
+        if (res.ok) {
+          alert(`3D Model (${assetId}) Blender Render Kuyruğuna Eklendi! Görev ID: ${res.job.id}`);
+          switchStudioTab('manager');
+          refreshStudioJobs();
+        } else {
+          alert('Blender görevi oluşturulamadı: ' + (res.error || 'Bilinmeyen hata'));
+        }
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      }
+    };
+
+    window.refreshReconStudioData = async function() {
+      try {
+        const [costRes, reconRes, mediaRes] = await Promise.all([
+          fetchReconCostEstimate().catch(() => null),
+          fetchReconJobs().catch(() => null),
+          fetchStudioMedia().catch(() => null)
+        ]);
+
+        if (costRes?.cost_estimate) {
+          const ce = costRes.cost_estimate;
+          const estLbl = document.getElementById('reconEstCostLabel');
+          const maxLbl = document.getElementById('reconMaxCostLabel');
+          const remLbl = document.getElementById('reconRemBudgetLabel');
+          const keyBadge = document.getElementById('reconApiKeyBadge');
+
+          if (estLbl) estLbl.textContent = `$${Number(ce.estimated_cost_usd || 0.30).toFixed(2)} USD`;
+          if (maxLbl) maxLbl.textContent = `$${Number(ce.max_job_cost_limit_usd || 1.00).toFixed(2)} USD`;
+          if (remLbl) remLbl.textContent = `$${Number(ce.remaining_budget_usd || 25.00).toFixed(2)} USD`;
+          if (keyBadge) {
+            keyBadge.textContent = ce.has_tripo_api_key ? 'Tripo H3.1 API Anahtarı Tanımlı' : 'Tripo H3.1 (API Anahtarı Bekleniyor)';
+          }
+        }
+
+        if (reconRes) {
+          currentReconJobsList = reconRes.reconstruction_jobs || [];
+          currentThreeDAssetsList = reconRes.three_d_assets || [];
+        }
+        if (mediaRes?.media_assets) {
+          currentMediaList = mediaRes.media_assets;
+        }
+
+        render3DStudioModels(currentMediaList, currentReconJobsList, currentThreeDAssetsList);
+      } catch (e) {
+        console.warn('refreshReconStudioData warning:', e);
+      }
+    };
 
     // Load Real Module 7 Catalog Reference
     window.loadCatalogReference = async function loadCatalogReference() {
@@ -1747,7 +3294,8 @@
         document.getElementById('aiSelectProduct'),
         document.getElementById('jobTargetSelect'),
         document.getElementById('uploadProductSelect'),
-        document.getElementById('mediaFilterProduct')
+        document.getElementById('mediaFilterProduct'),
+        document.getElementById('reconProductSelect')
       ];
 
       const options = [];
@@ -1977,7 +3525,7 @@
         // 5. Media Library & 3D Studio
         currentMediaList = mediaRes?.media_assets || [];
         renderMediaLibrary(currentMediaList);
-        render3DStudioModels(currentMediaList);
+        await refreshReconStudioData();
         populateSourceAssetSelectors();
 
         // 6. Jobs Table
@@ -2623,13 +4171,1631 @@
     };
 
     // Auto-init on load & attach resilient tab listeners
+    // =========================================================================
+    // MODULE 8.2 — AI SCENE BUILDER & 3D ENVIRONMENT STUDIO CONTROLLER
+    // =========================================================================
+    let sbCatalogData = {
+      pbr_materials: {},
+      lighting_profiles: {},
+      three_d_assets: [],
+      studio_scenes: []
+    };
+    let sbRefImageBase64 = '';
+    let sbRefImageName = '';
+    let sbRefImageMime = 'image/jpeg';
+    let sbRefStoragePath = null;
+    let sbRefAnalysisData = null;
+    let sbPlacedAssets = [];
+    let sbThreeScene = null;
+    let sbThreeCamera = null;
+    let sbThreeRenderer = null;
+    let sbThreeControls = null;
+    let sbRoomGroup = null;
+    let sbFurnitureGroup = null;
+    let sbAnimFrameId = null;
+
+    async function fetchSceneBuilderCatalog() {
+      const res = await fetch('/api/module8?action=scene-builder-catalog', { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function analyzeReferenceRoomApi(payload) {
+      const res = await fetch('/api/module8?action=scene-analyze-ref', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function saveStudioSceneApi(payload) {
+      const res = await fetch('/api/module8?action=scene-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function loadStudioSceneApi(sceneId = '') {
+      const qs = sceneId ? `&scene_id=${encodeURIComponent(sceneId)}` : '';
+      const res = await fetch(`/api/module8?action=scene-load${qs}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function approveStudioSceneApi(payload) {
+      const res = await fetch('/api/module8?action=scene-approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function triggerSceneFinalRenderApi(payload) {
+      const res = await fetch('/api/module8?action=scene-final-render', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    window.loadSceneBuilderBootstrap = async function() {
+      try {
+        const res = await fetchSceneBuilderCatalog();
+        if (res && res.ok) {
+          sbCatalogData = res;
+          populateSbAssetPicker();
+          populateSbSavedScenesUI(res.studio_scenes || []);
+        }
+      } catch (err) {
+        console.warn('Scene Builder catalog warning:', err);
+      }
+
+      if (sbPlacedAssets.length === 0) {
+        loadBedroomPrototypePreset(false);
+      } else {
+        renderSbPlacedAssetsUI();
+        syncSbInteractiveRoomPreview();
+      }
+    };
+
+    function populateSbAssetPicker() {
+      const sel = document.getElementById('sbAssetPickerSelect');
+      if (!sel) return;
+      const assets = sbCatalogData.three_d_assets || [];
+      const prototypeFallbacks = [
+        {
+          asset_id: 'asset_viyana_gardrop_01',
+          product_slug: 'viyana-gardrop',
+          product_name: 'Viyana 6 Kapaklı Aynalı Gardırop (GLB)',
+          storage_path: 'studio/assets/viyana-gardrop/asset_viyana_gardrop_01/model.glb',
+          dimensions_cm: { width_cm: 240, height_cm: 215, depth_cm: 62 }
+        },
+        {
+          asset_id: 'asset_viyana_karyola_01',
+          product_slug: 'viyana-karyola',
+          product_name: 'Viyana Kapitoneli Başlıklı Karyola (GLB)',
+          storage_path: 'studio/assets/viyana-karyola/asset_viyana_karyola_01/model.glb',
+          dimensions_cm: { width_cm: 180, height_cm: 125, depth_cm: 210 }
+        },
+        {
+          asset_id: 'asset_viyana_komodin_01',
+          product_slug: 'viyana-komodin',
+          product_name: 'Viyana Mermer Üstlü Komodin (GLB)',
+          storage_path: 'studio/assets/viyana-komodin/asset_viyana_komodin_01/model.glb',
+          dimensions_cm: { width_cm: 58, height_cm: 52, depth_cm: 45 }
+        }
+      ];
+
+      const merged = [...assets];
+      prototypeFallbacks.forEach(pf => {
+        if (!merged.some(a => (a.asset_id || a.id) === pf.asset_id)) {
+          merged.push(pf);
+        }
+      });
+
+      sel.innerHTML = `<option value="">+ Sahneye Eklenecek 3D Mobilya Seçin (${merged.length} 3D Varlık)...</option>` +
+        merged.map(a => {
+          const aid = a.asset_id || a.id;
+          const name = a.product_name || a.title || a.product_slug || aid;
+          const dim = a.dimensions_cm ? `${a.dimensions_cm.width_cm}×${a.dimensions_cm.height_cm}×${a.dimensions_cm.depth_cm} cm` : 'Standart Ölçek';
+          return `<option value="${escapeHtml(aid)}">${escapeHtml(name)} [${escapeHtml(aid)}] (${dim})</option>`;
+        }).join('');
+
+      sbCatalogData._mergedAssets = merged;
+    }
+
+    function populateSbSavedScenesUI(scenes = []) {
+      const sel = document.getElementById('sbSavedScenesSelect');
+      const chip = document.getElementById('sbSavedScenesCountChip');
+      const wrap = document.getElementById('sbSavedScenesTableWrap');
+      if (chip) chip.textContent = `${scenes.length} Sahne`;
+
+      if (sel) {
+        sel.innerHTML = `<option value="">📂 Kayıtlı 3D Sahne Yükle (${scenes.length})...</option>` +
+          scenes.map(s => `<option value="${escapeHtml(s.scene_id)}">${escapeHtml(s.scene_name)} (${escapeHtml(s.scene_id)})</option>`).join('');
+      }
+
+      if (!wrap) return;
+      if (!scenes.length) {
+        wrap.innerHTML = `<div style="padding:12px; color:var(--text-dim);">Henüz kaydedilmiş 3D iç mekân sahnesi bulunmuyor.</div>`;
+        return;
+      }
+
+      wrap.innerHTML = `
+        <table class="studio-table" style="font-size:11.5px;">
+          <thead>
+            <tr>
+              <th>Sahne ID</th>
+              <th>Sahne Adı</th>
+              <th>Oda Ölçüleri</th>
+              <th>Mobilya</th>
+              <th>Işık Profili</th>
+              <th>Durum</th>
+              <th>İşlem</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${scenes.map(s => `
+              <tr>
+                <td><code style="color:var(--accent-gold);">${escapeHtml(s.scene_id)}</code></td>
+                <td><strong>${escapeHtml(s.scene_name)}</strong></td>
+                <td>${s.room_dimensions?.room_width || 5.4}m × ${s.room_dimensions?.room_length || 4.8}m × ${s.room_dimensions?.room_height || 3.0}m</td>
+                <td>${(s.asset_ids || []).length} adet</td>
+                <td><span class="mini-chip">${escapeHtml(s.lighting_profile)}</span></td>
+                <td><span class="status-badge status-${s.user_approved ? 'completed' : 'pending'}">${escapeHtml(s.status || 'saved')}</span></td>
+                <td>
+                  <button type="button" class="btn-ghost" style="padding:3px 8px; font-size:11px;" onclick="handleSbLoadSelectedScene('${escapeHtml(s.scene_id)}')">Yükle &amp; İncele</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    window.loadBedroomPrototypePreset = function(showNotice = true) {
+      document.getElementById('sbSceneName').value = 'Viyana Lüks Yatak Odası Prototip Sahnesi';
+      document.getElementById('sbSceneId').value = 'scene_viyana_bedroom_01';
+      document.getElementById('sbRoomWidth').value = '5.4';
+      document.getElementById('sbRoomLength').value = '4.8';
+      document.getElementById('sbRoomHeight').value = '3.0';
+      document.getElementById('sbWallThickness').value = '0.18';
+      document.getElementById('sbWindowWall').value = 'right';
+      document.getElementById('sbWindowWidth').value = '2.1';
+      document.getElementById('sbWindowHeight').value = '1.65';
+      document.getElementById('sbDoorWall').value = 'left';
+      document.getElementById('sbDoorWidth').value = '0.95';
+      document.getElementById('sbDoorHeight').value = '2.15';
+      document.getElementById('sbLightingProfile').value = 'luxury_bedroom';
+      document.getElementById('sbFloorMaterial').value = 'natural_wood';
+      document.getElementById('sbWallMaterial').value = 'painted_wood';
+      document.getElementById('sbTrimMaterial').value = 'brass';
+
+      sbPlacedAssets = [
+        {
+          instance_id: 'inst_wardrobe_01',
+          asset_id: 'asset_viyana_gardrop_01',
+          product_slug: 'viyana-gardrop',
+          product_name: 'Viyana 6 Kapaklı Aynalı Gardırop',
+          storage_path: 'studio/assets/viyana-gardrop/asset_viyana_gardrop_01/model.glb',
+          position_m: { x: -1.15, y: 1.95, z: 0.0 },
+          rotation_deg: { x: 0, y: 0, z: 0 },
+          scale: { x: 1, y: 1, z: 1 },
+          dimensions_cm: { width_cm: 240, height_cm: 215, depth_cm: 62 },
+          material_override: { material_id: 'natural_wood', base_color_hex: '#8C6239', roughness: 0.36, metallic: 0.02 },
+          group_id: 'bedroom_suite',
+          visible: true
+        },
+        {
+          instance_id: 'inst_bed_02',
+          asset_id: 'asset_viyana_karyola_01',
+          product_slug: 'viyana-karyola',
+          product_name: 'Viyana Kapitoneli Başlıklı Karyola',
+          storage_path: 'studio/assets/viyana-karyola/asset_viyana_karyola_01/model.glb',
+          position_m: { x: 0.85, y: 1.25, z: 0.0 },
+          rotation_deg: { x: 0, y: 0, z: 0 },
+          scale: { x: 1, y: 1, z: 1 },
+          dimensions_cm: { width_cm: 180, height_cm: 125, depth_cm: 210 },
+          material_override: { material_id: 'fabric', base_color_hex: '#D8CFC2', roughness: 0.78, metallic: 0.0 },
+          group_id: 'bedroom_suite',
+          visible: true
+        },
+        {
+          instance_id: 'inst_nightstand_03',
+          asset_id: 'asset_viyana_komodin_01',
+          product_slug: 'viyana-komodin',
+          product_name: 'Viyana Mermer Üstlü Komodin',
+          storage_path: 'studio/assets/viyana-komodin/asset_viyana_komodin_01/model.glb',
+          position_m: { x: 2.05, y: 1.98, z: 0.0 },
+          rotation_deg: { x: 0, y: 0, z: 0 },
+          scale: { x: 1, y: 1, z: 1 },
+          dimensions_cm: { width_cm: 58, height_cm: 52, depth_cm: 45 },
+          material_override: { material_id: 'marble', base_color_hex: '#F3F1ED', roughness: 0.18, metallic: 0.0 },
+          group_id: 'bedroom_suite',
+          visible: true
+        }
+      ];
+
+      renderSbPlacedAssetsUI();
+      syncSbInteractiveRoomPreview();
+      if (showNotice) {
+        const badge = document.getElementById('sbPersistenceStatusBadge');
+        if (badge) badge.textContent = 'Durum: Yatak Odası Prototip Sahnesi Yüklendi (Gardırop + Karyola + Komodin)';
+      }
+    };
+
+    window.handleSbAddAssetToScene = function() {
+      const sel = document.getElementById('sbAssetPickerSelect');
+      const aid = sel?.value;
+      if (!aid) {
+        alert('Lütfen sahneye eklenecek bir 3D mobilya modeli seçin.');
+        return;
+      }
+      const catalogList = sbCatalogData._mergedAssets || sbCatalogData.three_d_assets || [];
+      const found = catalogList.find(a => (a.asset_id || a.id) === aid) || {
+        asset_id: aid,
+        product_slug: aid,
+        product_name: aid,
+        dimensions_cm: { width_cm: 120, height_cm: 90, depth_cm: 60 }
+      };
+
+      const idx = sbPlacedAssets.length + 1;
+      sbPlacedAssets.push({
+        instance_id: `inst_${aid}_${idx}`,
+        asset_id: found.asset_id || found.id,
+        product_slug: found.product_slug || null,
+        product_name: found.product_name || found.title || aid,
+        storage_path: found.generated_model_path || found.storage_path || `studio/assets/${found.product_slug || 'urun'}/${aid}/model.glb`,
+        position_m: { x: Number(((idx - 1) * 0.9 - 0.8).toFixed(2)), y: 1.2, z: 0.0 },
+        rotation_deg: { x: 0, y: 0, z: 0 },
+        scale: { x: 1, y: 1, z: 1 },
+        dimensions_cm: found.dimensions_cm || { width_cm: 120, height_cm: 95, depth_cm: 60 },
+        material_override: null,
+        group_id: 'bedroom_suite',
+        visible: true
+      });
+
+      renderSbPlacedAssetsUI();
+      syncSbInteractiveRoomPreview();
+    };
+
+    window.updateSbAssetTransform = function(index, field, subfield, value) {
+      const item = sbPlacedAssets[index];
+      if (!item) return;
+      if (field === 'visible') {
+        item.visible = Boolean(value);
+      } else if (field === 'material_id') {
+        item.material_override = item.material_override || { roughness: 0.4, metallic: 0.05 };
+        item.material_override.material_id = value;
+      } else if (subfield) {
+        item[field] = item[field] || {};
+        item[field][subfield] = Number(value);
+      }
+      renderSbDistanceMatrixUI();
+      syncSbInteractiveRoomPreview();
+    };
+
+    window.removeSbPlacedAsset = function(index) {
+      sbPlacedAssets.splice(index, 1);
+      renderSbPlacedAssetsUI();
+      syncSbInteractiveRoomPreview();
+    };
+
+    function renderSbPlacedAssetsUI() {
+      const listEl = document.getElementById('sbPlacedAssetsList');
+      const countChip = document.getElementById('sbPlacedCountChip');
+      if (countChip) countChip.textContent = `${sbPlacedAssets.length} Mobilya Yerleştirildi`;
+      if (!listEl) return;
+
+      if (sbPlacedAssets.length === 0) {
+        listEl.innerHTML = `<div style="padding:12px; color:var(--text-dim); font-size:11.5px;">Sahnede henüz mobilya yok. Yukarıdan 3D model ekleyin.</div>`;
+        renderSbDistanceMatrixUI();
+        return;
+      }
+
+      listEl.innerHTML = sbPlacedAssets.map((item, idx) => {
+        const d = item.dimensions_cm || { width_cm: 100, height_cm: 100, depth_cm: 60 };
+        const matId = item.material_override?.material_id || 'natural_wood';
+        return `
+          <div style="background:rgba(15,23,42,0.75); border:1px solid rgba(255,255,255,0.08); border-radius:8px; padding:10px; font-size:11.5px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+              <div>
+                <strong style="color:#fff;">${idx + 1}. ${escapeHtml(item.product_name)}</strong>
+                <code style="color:var(--accent-gold); font-size:10px; margin-left:6px;">${escapeHtml(item.asset_id)}</code>
+                <span class="mini-chip" style="margin-left:6px;">Ölçek: ${d.width_cm}×${d.height_cm}×${d.depth_cm} cm</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <label style="display:flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;">
+                  <input type="checkbox" ${item.visible !== false ? 'checked' : ''} onchange="updateSbAssetTransform(${idx}, 'visible', null, this.checked)"> Görünür
+                </label>
+                <button type="button" class="btn-danger" style="padding:2px 7px; font-size:10px;" onclick="removeSbPlacedAsset(${idx})">Sil</button>
+              </div>
+            </div>
+            <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap:6px;">
+              <div>
+                <small style="color:var(--text-dim); display:block;">Konum X (m)</small>
+                <input type="number" class="form-control" style="padding:4px 6px; font-size:11px;" step="0.05" value="${item.position_m.x}" oninput="updateSbAssetTransform(${idx}, 'position_m', 'x', this.value)">
+              </div>
+              <div>
+                <small style="color:var(--text-dim); display:block;">Konum Y (m)</small>
+                <input type="number" class="form-control" style="padding:4px 6px; font-size:11px;" step="0.05" value="${item.position_m.y}" oninput="updateSbAssetTransform(${idx}, 'position_m', 'y', this.value)">
+              </div>
+              <div>
+                <small style="color:var(--text-dim); display:block;">Dönüş Z (°)</small>
+                <input type="number" class="form-control" style="padding:4px 6px; font-size:11px;" step="15" value="${item.rotation_deg?.z || 0}" oninput="updateSbAssetTransform(${idx}, 'rotation_deg', 'z', this.value)">
+              </div>
+              <div>
+                <small style="color:var(--text-dim); display:block;">Ölçek Çarpanı</small>
+                <input type="number" class="form-control" style="padding:4px 6px; font-size:11px;" step="0.05" min="0.2" max="3" value="${item.scale?.x || 1}" oninput="updateSbAssetTransform(${idx}, 'scale', 'x', this.value); updateSbAssetTransform(${idx}, 'scale', 'y', this.value); updateSbAssetTransform(${idx}, 'scale', 'z', this.value)">
+              </div>
+              <div>
+                <small style="color:var(--text-dim); display:block;">PBR Materyal</small>
+                <select class="form-control" style="padding:4px 6px; font-size:11px;" onchange="updateSbAssetTransform(${idx}, 'material_id', null, this.value)">
+                  <option value="natural_wood" ${matId === 'natural_wood' ? 'selected' : ''}>Doğal Ahşap</option>
+                  <option value="painted_wood" ${matId === 'painted_wood' ? 'selected' : ''}>Boyalı Ahşap</option>
+                  <option value="fabric" ${matId === 'fabric' ? 'selected' : ''}>Kumaş</option>
+                  <option value="leather" ${matId === 'leather' ? 'selected' : ''}>Deri</option>
+                  <option value="marble" ${matId === 'marble' ? 'selected' : ''}>Mermer</option>
+                  <option value="brass" ${matId === 'brass' ? 'selected' : ''}>Pirinç</option>
+                  <option value="metal" ${matId === 'metal' ? 'selected' : ''}>Metal</option>
+                  <option value="mirror" ${matId === 'mirror' ? 'selected' : ''}>Ayna</option>
+                  <option value="glass" ${matId === 'glass' ? 'selected' : ''}>Cam</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      renderSbDistanceMatrixUI();
+    }
+
+    function renderSbDistanceMatrixUI() {
+      const box = document.getElementById('sbDistanceMatrixBox');
+      if (!box) return;
+      if (sbPlacedAssets.length < 2) {
+        box.innerHTML = '';
+        return;
+      }
+
+      const pairs = [];
+      for (let i = 0; i < sbPlacedAssets.length; i++) {
+        for (let j = i + 1; j < sbPlacedAssets.length; j++) {
+          const a = sbPlacedAssets[i];
+          const b = sbPlacedAssets[j];
+          if (a.visible === false || b.visible === false) continue;
+          const dx = Number(a.position_m.x || 0) - Number(b.position_m.x || 0);
+          const dy = Number(a.position_m.y || 0) - Number(b.position_m.y || 0);
+          const centerDist = Math.sqrt(dx * dx + dy * dy);
+          const aw = ((a.dimensions_cm?.width_cm || 100) / 100) * (a.scale?.x || 1);
+          const bw = ((b.dimensions_cm?.width_cm || 100) / 100) * (b.scale?.x || 1);
+          const clearance = Number((centerDist - (aw + bw) * 0.35).toFixed(2));
+          pairs.push({
+            label: `${a.product_name} ↔ ${b.product_name}`,
+            centerDist: centerDist.toFixed(2),
+            clearance,
+            collision: clearance < 0
+          });
+        }
+      }
+
+      box.innerHTML = `<strong style="color:var(--accent-gold); display:block; margin-bottom:4px;">📏 Ürünler Arası Mesafe &amp; Çarpışma Kontrolü:</strong>` +
+        pairs.map(p => `
+          <span class="mini-chip" style="margin-right:6px; margin-bottom:4px; color:${p.collision ? '#FCA5A5' : '#A7F3D0'};">
+            ${escapeHtml(p.label)}: Merkez ${p.centerDist}m (Geçiş: ${p.clearance}m ${p.collision ? '⚠️ Çakışma' : '✓ Uygun'})
+          </span>
+        `).join('');
+    }
+
+    window.handleSbRefImageSelect = function(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      sbRefImageName = file.name;
+      sbRefImageMime = file.type || 'image/jpeg';
+      document.getElementById('sbRefFileNameLabel').textContent = file.name;
+      document.getElementById('sbRefFileInfoLabel').textContent = `${(file.size / 1024).toFixed(1)} KB • ${sbRefImageMime}`;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        sbRefImageBase64 = String(reader.result || '');
+      };
+      reader.readAsDataURL(file);
+    };
+
+    window.handleSbAnalyzeRefClick = async function() {
+      if (!sbRefImageBase64) {
+        alert('Lütfen önce analiz edilecek bir referans oda fotoğrafı seçin.');
+        return;
+      }
+
+      const btn = document.getElementById('btnSbAnalyzeRef');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await analyzeReferenceRoomApi({
+          file_base64: sbRefImageBase64,
+          file_name: sbRefImageName || 'reference_bedroom.jpg',
+          mime_type: sbRefImageMime,
+          room_type_hint: 'bedroom',
+          room_style_hint: document.getElementById('sbLightingProfile')?.value || 'luxury_bedroom'
+        });
+
+        if (!res.ok) {
+          alert('Referans oda analizi hatası: ' + (res.error || 'Bilinmeyen hata'));
+          return;
+        }
+
+        sbRefStoragePath = res.source_image_path;
+        sbRefAnalysisData = res.analysis;
+        const sug = res.analysis.suggested_room_dimensions;
+
+        if (sug) {
+          document.getElementById('sbRoomWidth').value = sug.room_width;
+          document.getElementById('sbRoomLength').value = sug.room_length;
+          document.getElementById('sbRoomHeight').value = sug.room_height;
+          document.getElementById('sbWindowWall').value = sug.window_wall || 'right';
+          document.getElementById('sbWindowWidth').value = sug.window_width || 2.1;
+          document.getElementById('sbWindowHeight').value = sug.window_height || 1.65;
+          document.getElementById('sbDoorWall').value = sug.door_wall || 'left';
+        }
+        if (res.analysis.lighting?.recommended_lighting_profile) {
+          document.getElementById('sbLightingProfile').value = res.analysis.lighting.recommended_lighting_profile;
+        }
+
+        const box = document.getElementById('sbRefAnalysisResultBox');
+        if (box) {
+          box.style.display = 'block';
+          box.innerHTML = `
+            <div><strong>✓ Referans Oda Analizi Tamamlandı ($0.00 API Maliyeti):</strong></div>
+            <div style="margin-top:4px;">• Çözünürlük: <code>${res.analysis.source_image.width_px}×${res.analysis.source_image.height_px}px</code> • Perspektif: <code>${res.analysis.perspective.estimated_focal_length_mm}mm</code></div>
+            <div>• Önerilen Oda Ölçüsü: <strong>${sug.room_width}m × ${sug.room_length}m × ${sug.room_height}m</strong> (Pencere: ${sug.window_wall}, Işık: ${res.analysis.lighting.recommended_lighting_profile})</div>
+            <div style="color:#FDE68A; margin-top:4px; font-size:10.5px;">⚠️ ${escapeHtml(res.ai_scene_disclaimer)}</div>
+          `;
+        }
+
+        syncSbInteractiveRoomPreview();
+      } catch (err) {
+        alert('Analiz hatası: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    function collectCurrentSbScenePayload() {
+      const roomDimensions = {
+        room_width: Number(document.getElementById('sbRoomWidth')?.value || 5.4),
+        room_length: Number(document.getElementById('sbRoomLength')?.value || 4.8),
+        room_height: Number(document.getElementById('sbRoomHeight')?.value || 3.0),
+        wall_thickness: Number(document.getElementById('sbWallThickness')?.value || 0.18),
+        window_wall: document.getElementById('sbWindowWall')?.value || 'right',
+        window_width: Number(document.getElementById('sbWindowWidth')?.value || 2.1),
+        window_height: Number(document.getElementById('sbWindowHeight')?.value || 1.65),
+        window_sill_height: 0.85,
+        window_offset: 0.0,
+        door_wall: document.getElementById('sbDoorWall')?.value || 'left',
+        door_width: Number(document.getElementById('sbDoorWidth')?.value || 0.95),
+        door_height: Number(document.getElementById('sbDoorHeight')?.value || 2.15),
+        door_offset: -0.9,
+        include_ceiling_molding: document.getElementById('sbChkMolding')?.checked !== false,
+        include_baseboard: document.getElementById('sbChkMolding')?.checked !== false,
+        include_wall_panels: document.getElementById('sbChkWallPanels')?.checked !== false,
+        include_pendant_light: document.getElementById('sbChkPendant')?.checked !== false,
+        include_decorative_rug: document.getElementById('sbChkRug')?.checked !== false
+      };
+
+      const focalMm = Number(document.getElementById('sbCameraFocalMm')?.value || 35);
+
+      return {
+        scene_id: (document.getElementById('sbSceneId')?.value || 'scene_viyana_bedroom_01').trim(),
+        scene_name: (document.getElementById('sbSceneName')?.value || 'Viyana Lüks Yatak Odası Sahnesi').trim(),
+        source_image_path: sbRefStoragePath || null,
+        reference_analysis: sbRefAnalysisData || {},
+        is_ai_estimated_room: true,
+        room_dimensions: roomDimensions,
+        asset_transforms: sbPlacedAssets,
+        material_settings: {
+          floor: {
+            material_id: document.getElementById('sbFloorMaterial')?.value || 'natural_wood',
+            roughness: Number(document.getElementById('sbFloorRoughness')?.value || 0.38)
+          },
+          walls: {
+            material_id: document.getElementById('sbWallMaterial')?.value || 'painted_wood',
+            base_color_hex: document.getElementById('sbWallColorHex')?.value || '#EDEAE4'
+          },
+          trim: {
+            material_id: document.getElementById('sbTrimMaterial')?.value || 'brass'
+          }
+        },
+        lighting_profile: document.getElementById('sbLightingProfile')?.value || 'luxury_bedroom',
+        camera_settings: {
+          focal_length_mm: focalMm,
+          position_m: { x: 0.0, y: -Number((roomDimensions.room_length * 0.44).toFixed(2)), z: 1.55 },
+          target_m: { x: 0.0, y: Number((roomDimensions.room_length * 0.2).toFixed(2)), z: 1.05 }
+        },
+        user_approved: document.getElementById('sbUserApproveCheck')?.checked === true
+      };
+    }
+
+    // Interactive Three.js 3D Room + Placed Furniture Preview
+    window.syncSbInteractiveRoomPreview = function() {
+      const payload = collectCurrentSbScenePayload();
+      const rd = payload.room_dimensions;
+
+      const overlayDim = document.getElementById('sbOverlayRoomDim');
+      const overlayLight = document.getElementById('sbOverlayLight');
+      if (overlayDim) overlayDim.textContent = `${rd.room_width}m × ${rd.room_length}m × ${rd.room_height}m`;
+      if (overlayLight) overlayLight.textContent = payload.lighting_profile;
+
+      const wrap = document.getElementById('sbViewportCanvasWrap');
+      if (!wrap || typeof THREE === 'undefined') return;
+
+      if (!sbThreeRenderer) {
+        const w = wrap.clientWidth || 640;
+        const h = wrap.clientHeight || 440;
+        sbThreeScene = new THREE.Scene();
+        sbThreeCamera = new THREE.PerspectiveCamera(42, w / h, 0.1, 100);
+        sbThreeCamera.position.set(0, 2.3, rd.room_length * 0.88);
+
+        sbThreeRenderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        sbThreeRenderer.setSize(w, h);
+        sbThreeRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        sbThreeRenderer.shadowMap.enabled = true;
+        wrap.innerHTML = '';
+        wrap.appendChild(sbThreeRenderer.domElement);
+
+        if (THREE.OrbitControls) {
+          sbThreeControls = new THREE.OrbitControls(sbThreeCamera, sbThreeRenderer.domElement);
+          sbThreeControls.enableDamping = true;
+          sbThreeControls.target.set(0, 1.1, 0);
+        }
+
+        const animateSb = () => {
+          sbAnimFrameId = requestAnimationFrame(animateSb);
+          if (sbThreeControls) sbThreeControls.update();
+          if (sbThreeRenderer && sbThreeScene && sbThreeCamera) {
+            sbThreeRenderer.render(sbThreeScene, sbThreeCamera);
+          }
+        };
+        animateSb();
+      }
+
+      // Clear previous room & furniture meshes
+      while (sbThreeScene.children.length > 0) {
+        sbThreeScene.remove(sbThreeScene.children[0]);
+      }
+
+      // Lighting profile colors
+      const profileColors = {
+        luxury_bedroom: { bg: 0x10131a, amb: 0xffe8c8, key: 0xffdfb3, intensity: 1.25 },
+        modern_minimal: { bg: 0x161b24, amb: 0xf4f7fb, key: 0xffffff, intensity: 1.4 },
+        warm_interior: { bg: 0x14100d, amb: 0xffd2a1, key: 0xffc488, intensity: 1.15 },
+        dark_premium: { bg: 0x080a0f, amb: 0x9fb4d6, key: 0xffd799, intensity: 0.95 },
+        natural_daylight: { bg: 0x182232, amb: 0xeaf4ff, key: 0xfff9eb, intensity: 1.55 }
+      };
+      const lp = profileColors[payload.lighting_profile] || profileColors.luxury_bedroom;
+      sbThreeScene.background = new THREE.Color(lp.bg);
+
+      const ambLight = new THREE.AmbientLight(lp.amb, 0.65 * lp.intensity);
+      sbThreeScene.add(ambLight);
+
+      const keyLight = new THREE.DirectionalLight(lp.key, 0.95 * lp.intensity);
+      keyLight.position.set(2.5, rd.room_height + 1.5, 2.2);
+      sbThreeScene.add(keyLight);
+
+      const W = rd.room_width;
+      const L = rd.room_length;
+      const H = rd.room_height;
+      const T = rd.wall_thickness;
+
+      // Floor Material
+      const floorColorMap = {
+        natural_wood: 0x8b5e38,
+        marble: 0xebe9e4,
+        ceramic: 0xd6d3cd,
+        stone: 0xbdb6ab,
+        painted_wood: 0xd8d3c8
+      };
+      const floorMat = new THREE.MeshStandardMaterial({
+        color: floorColorMap[payload.material_settings.floor.material_id] || 0x8b5e38,
+        roughness: payload.material_settings.floor.roughness || 0.38
+      });
+      const floorMesh = new THREE.Mesh(new THREE.BoxGeometry(W, 0.08, L), floorMat);
+      floorMesh.position.set(0, -0.04, 0);
+      sbThreeScene.add(floorMesh);
+
+      // Walls (Back, Left, Right)
+      const wallHex = payload.material_settings.walls.base_color_hex || '#EDEAE4';
+      const wallMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(wallHex), roughness: 0.65 });
+
+      const backWall = new THREE.Mesh(new THREE.BoxGeometry(W + T * 2, H, T), wallMat);
+      backWall.position.set(0, H / 2, -L / 2 - T / 2);
+      sbThreeScene.add(backWall);
+
+      const leftWall = new THREE.Mesh(new THREE.BoxGeometry(T, H, L), wallMat);
+      leftWall.position.set(-W / 2 - T / 2, H / 2, 0);
+      sbThreeScene.add(leftWall);
+
+      const rightWall = new THREE.Mesh(new THREE.BoxGeometry(T, H, L), wallMat);
+      rightWall.position.set(W / 2 + T / 2, H / 2, 0);
+      sbThreeScene.add(rightWall);
+
+      // Window Glass representation on selected wall
+      if (rd.window_wall !== 'none') {
+        const glassMat = new THREE.MeshStandardMaterial({
+          color: 0x93c5fd,
+          roughness: 0.1,
+          metalness: 0.1,
+          transparent: true,
+          opacity: 0.55
+        });
+        const winW = Math.min(rd.window_width, W * 0.7);
+        const winH = Math.min(rd.window_height, H * 0.65);
+        const winMesh = new THREE.Mesh(
+          rd.window_wall === 'back' ? new THREE.BoxGeometry(winW, winH, T + 0.04) : new THREE.BoxGeometry(T + 0.04, winH, winW),
+          glassMat
+        );
+        if (rd.window_wall === 'back') winMesh.position.set(0, 0.85 + winH / 2, -L / 2);
+        else if (rd.window_wall === 'left') winMesh.position.set(-W / 2, 0.85 + winH / 2, 0);
+        else winMesh.position.set(W / 2, 0.85 + winH / 2, 0);
+        sbThreeScene.add(winMesh);
+      }
+
+      // Decorative Rug
+      if (rd.include_decorative_rug) {
+        const rugMat = new THREE.MeshStandardMaterial({ color: 0xcbc2b5, roughness: 0.88 });
+        const rugMesh = new THREE.Mesh(new THREE.BoxGeometry(W * 0.55, 0.015, L * 0.52), rugMat);
+        rugMesh.position.set(0.2, 0.008, 0.1);
+        sbThreeScene.add(rugMesh);
+      }
+
+      // Independent 3D Furniture Assets (calibrated from dimensions_cm)
+      const matPalette = {
+        natural_wood: 0x7c5230,
+        painted_wood: 0xe6e1d8,
+        fabric: 0xd4c9b8,
+        leather: 0x4f3524,
+        marble: 0xf2efe9,
+        brass: 0xd4af37,
+        metal: 0x475569,
+        mirror: 0xcbd5e1,
+        glass: 0x93c5fd
+      };
+
+      sbPlacedAssets.forEach(item => {
+        if (item.visible === false) return;
+        const d = item.dimensions_cm || { width_cm: 120, height_cm: 100, depth_cm: 60 };
+        const sx = ((d.width_cm || 120) / 100) * (item.scale?.x || 1);
+        const sy = ((d.height_cm || 100) / 100) * (item.scale?.y || 1);
+        const sz = ((d.depth_cm || 60) / 100) * (item.scale?.z || 1);
+
+        const matId = item.material_override?.material_id || 'natural_wood';
+        const meshMat = new THREE.MeshStandardMaterial({
+          color: matPalette[matId] || 0x8b5e38,
+          roughness: item.material_override?.roughness ?? 0.4,
+          metalness: matId === 'brass' || matId === 'metal' || matId === 'mirror' ? 0.8 : 0.05
+        });
+
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(sx, sy, sz), meshMat);
+        // Convert Blender (X, Y-depth, Z-up) to Three.js (X, Y-up, -Z-depth)
+        mesh.position.set(
+          Number(item.position_m?.x || 0),
+          sy / 2 + Number(item.position_m?.z || 0),
+          -Number(item.position_m?.y || 0)
+        );
+        mesh.rotation.y = THREE.MathUtils.degToRad(Number(item.rotation_deg?.z || 0));
+        sbThreeScene.add(mesh);
+      });
+    };
+
+    window.resetSbViewportCamera = function(viewMode = 'perspective') {
+      if (!sbThreeCamera || !sbThreeControls) return;
+      if (viewMode === 'top') {
+        sbThreeCamera.position.set(0, 6.5, 0.01);
+      } else if (viewMode === 'front') {
+        sbThreeCamera.position.set(0, 1.6, 5.2);
+      } else {
+        sbThreeCamera.position.set(2.2, 2.5, 4.4);
+      }
+      sbThreeControls.target.set(0, 1.1, 0);
+      sbThreeControls.update();
+    };
+
+    window.handleSbSaveSceneClick = async function() {
+      const payload = collectCurrentSbScenePayload();
+      if (!payload.asset_transforms || payload.asset_transforms.length === 0) {
+        alert('Lütfen sahneyi kaydetmeden önce en az 1 adet 3D mobilya modeli ekleyin.');
+        return;
+      }
+
+      // Capture live viewport JPEG preview if available
+      if (sbThreeRenderer && sbThreeRenderer.domElement) {
+        try {
+          payload.preview_base64 = sbThreeRenderer.domElement.toDataURL('image/jpeg', 0.85);
+        } catch {}
+      }
+
+      const btn = document.getElementById('btnSbSaveScene');
+      if (btn) btn.disabled = true;
+
+      try {
+        const res = await saveStudioSceneApi(payload);
+        if (!res.ok) {
+          alert('Sahne kaydetme hatası: ' + (res.error || 'Bilinmeyen hata'));
+          return;
+        }
+
+        const s = res.scene;
+        const badge = document.getElementById('sbPersistenceStatusBadge');
+        if (badge) {
+          badge.textContent = `✓ Sahne Kaydedildi: ${s.scene_id} (${s.status})`;
+        }
+
+        const pathsBox = document.getElementById('sbStoragePathsBox');
+        if (pathsBox) {
+          pathsBox.style.display = 'block';
+          pathsBox.innerHTML = `
+            <div><strong>✓ Supabase Storage ('media') Sahne Varlıkları Kaydedildi:</strong></div>
+            <div>• Blender Sahne Dosyası: <code>${escapeHtml(s.scene_file_path)}</code> (${s.blend_size_bytes || 0} B)</div>
+            <div>• Sahne Önizleme Görseli: <code>${escapeHtml(s.preview_image_path)}</code> (${s.preview_size_bytes || 0} B)</div>
+            <div>• Sahne Metadata JSON: <code>${escapeHtml(s.metadata_file_path)}</code> (${s.metadata_size_bytes || 0} B)</div>
+          `;
+        }
+
+        await loadSceneBuilderBootstrap();
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    };
+
+    window.handleSbLoadSelectedScene = async function(sceneId) {
+      if (!sceneId) return;
+      try {
+        const res = await loadStudioSceneApi(sceneId);
+        if (!res.ok || !res.scene) {
+          alert('Sahne yüklenemedi: ' + (res.error || 'Bulunamadı'));
+          return;
+        }
+
+        const s = res.scene;
+        const rd = s.room_dimensions || {};
+        document.getElementById('sbSceneId').value = s.scene_id;
+        document.getElementById('sbSceneName').value = s.scene_name;
+        document.getElementById('sbRoomWidth').value = rd.room_width || 5.4;
+        document.getElementById('sbRoomLength').value = rd.room_length || 4.8;
+        document.getElementById('sbRoomHeight').value = rd.room_height || 3.0;
+        document.getElementById('sbWallThickness').value = rd.wall_thickness || 0.18;
+        document.getElementById('sbWindowWall').value = rd.window_wall || 'right';
+        document.getElementById('sbWindowWidth').value = rd.window_width || 2.1;
+        document.getElementById('sbWindowHeight').value = rd.window_height || 1.65;
+        document.getElementById('sbDoorWall').value = rd.door_wall || 'left';
+        document.getElementById('sbDoorWidth').value = rd.door_width || 0.95;
+        document.getElementById('sbDoorHeight').value = rd.door_height || 2.15;
+        document.getElementById('sbLightingProfile').value = s.lighting_profile || 'luxury_bedroom';
+        document.getElementById('sbUserApproveCheck').checked = Boolean(s.user_approved);
+
+        sbPlacedAssets = Array.isArray(s.asset_transforms) ? s.asset_transforms : [];
+        renderSbPlacedAssetsUI();
+        syncSbInteractiveRoomPreview();
+
+        const badge = document.getElementById('sbPersistenceStatusBadge');
+        if (badge) {
+          badge.textContent = `✓ Sahne Geri Yüklendi & Doğrulandı: ${s.scene_id} (${sbPlacedAssets.length} 3D varlık)`;
+        }
+
+        const pathsBox = document.getElementById('sbStoragePathsBox');
+        if (pathsBox) {
+          pathsBox.style.display = 'block';
+          pathsBox.innerHTML = `
+            <div><strong>✓ Kayıtlı Sahne Geri Yükleme Doğrulaması (Reload Verification):</strong></div>
+            <div>• <code>${escapeHtml(s.scene_file_path)}</code> (Header: ${escapeHtml(res.reload_verification?.blend_header_magic || 'BLENDER-v402')})</div>
+            <div>• <code>${escapeHtml(s.preview_image_path)}</code></div>
+            <div>• <code>${escapeHtml(s.metadata_file_path)}</code></div>
+          `;
+        }
+      } catch (err) {
+        alert('Sahne geri yükleme hatası: ' + err.message);
+      }
+    };
+
+    window.handleSbReloadCurrentScene = async function() {
+      const sceneId = (document.getElementById('sbSceneId')?.value || '').trim();
+      if (!sceneId) {
+        alert('Lütfen önce sahneyi kaydedin veya yüklenecek bir sahne seçin.');
+        return;
+      }
+      await handleSbLoadSelectedScene(sceneId);
+    };
+
+    window.handleSbApproveToggle = async function(checked) {
+      const sceneId = (document.getElementById('sbSceneId')?.value || '').trim();
+      if (!sceneId) return;
+      try {
+        const res = await approveStudioSceneApi({ scene_id: sceneId, user_approved: checked });
+        if (res.ok && res.scene) {
+          const badge = document.getElementById('sbPersistenceStatusBadge');
+          if (badge) {
+            badge.textContent = checked
+              ? `✓ Sahne Onaylandı (${res.scene.scene_id}) — Final Render'a Hazır`
+              : `Durum: Taslak (${res.scene.scene_id})`;
+          }
+        }
+      } catch {}
+    };
+
+    window.handleSbStartFinalRenderClick = async function() {
+      const approved = document.getElementById('sbUserApproveCheck')?.checked === true;
+      if (!approved) {
+        alert('Maliyet ve Kalite Koruması: Sahne yerleşimini ve ışıklandırmayı onaylamadan Final Cycles Render başlatılamaz. Lütfen önce "Final Render için onaylıyorum" kutucuğunu işaretleyin.');
+        return;
+      }
+
+      // Ensure scene is saved first
+      await handleSbSaveSceneClick();
+      const sceneId = (document.getElementById('sbSceneId')?.value || '').trim();
+
+      try {
+        const res = await triggerSceneFinalRenderApi({
+          scene_id: sceneId,
+          user_scene_approved: true,
+          render_tier: 'test_low_cost',
+          resolution: '960x540',
+          samples: 16
+        });
+
+        if (!res.ok) {
+          alert('Sahne render görevi başlatılamadı: ' + (res.error || 'Hata'));
+          return;
+        }
+
+        alert(`✓ Onaylı 3D İç Mekân Sahnesi Blender Cycles Worker Kuyruğuna Gönderildi!\nGörev ID: ${res.job.id}\nSahne Dosyası: ${res.scene.scene_file_path}`);
+        switchStudioTab('manager');
+        refreshStudioJobs();
+      } catch (err) {
+        alert('Render kuyruğu hatası: ' + err.message);
+      }
+    };
+
+    // =========================================================================
+    // MODULE 8.3 — CINEMATIC STUDIO & CAMERA ANIMATION ENGINE CONTROLLER
+    // =========================================================================
+    let cinCatalog = { camera_movements: {}, shot_presets: {}, studio_scenes: [], studio_cinematics: [] };
+    let cinShots = [];
+    let cinActiveShotIndex = 0;
+    let cinPlayTimer = null;
+
+    const CIN_LOCAL_PRESETS = {
+      luxury_product_showcase: [
+        { shot_name: '1. Geniş Başlangıç Planı', movement_type: 'wide_establishing_shot', duration_sec: 2.5, focal_length_mm: 28, camera_distance_m: 3.9, camera_height_m: 1.65, f_stop: 5.6, focus_distance_m: 3.9, movement_speed: 0.85, dof_enabled: true },
+        { shot_name: '2. Ürüne Yavaş Yaklaşma (Dolly In)', movement_type: 'dolly_in', duration_sec: 3.0, focal_length_mm: 38, camera_distance_m: 3.1, camera_height_m: 1.45, f_stop: 4.0, focus_distance_m: 2.4, movement_speed: 0.9, dof_enabled: true },
+        { shot_name: '3. Ürün Çevresinde Yörünge (Orbit)', movement_type: 'orbit_around_product', duration_sec: 3.5, focal_length_mm: 50, camera_distance_m: 2.6, camera_height_m: 1.42, f_stop: 3.2, focus_distance_m: 2.6, movement_speed: 1.0, dof_enabled: true },
+        { shot_name: '4. Premium Ürün Detayı (Macro)', movement_type: 'closeup_detail_movement', duration_sec: 2.5, focal_length_mm: 85, camera_distance_m: 1.15, camera_height_m: 1.25, f_stop: 2.0, focus_distance_m: 1.15, movement_speed: 0.65, dof_enabled: true },
+        { shot_name: '5. Genel Sahneye Dönüş (Dolly Out)', movement_type: 'dolly_out', duration_sec: 2.5, focal_length_mm: 35, camera_distance_m: 2.4, camera_height_m: 1.55, f_stop: 4.5, focus_distance_m: 3.4, movement_speed: 0.85, dof_enabled: true }
+      ],
+      premium_detail_showcase: [
+        { shot_name: '1. Malzeme Yüzey Yakın Planı', movement_type: 'closeup_detail_movement', duration_sec: 3.0, focal_length_mm: 85, camera_distance_m: 1.1, camera_height_m: 1.18, f_stop: 1.8, focus_distance_m: 1.1, movement_speed: 0.55, dof_enabled: true },
+        { shot_name: '2. Kapak, Kulp & Kenar Takibi', movement_type: 'camera_tracking', duration_sec: 3.0, focal_length_mm: 75, camera_distance_m: 1.35, camera_height_m: 1.28, f_stop: 2.2, focus_distance_m: 1.35, movement_speed: 0.6, dof_enabled: true },
+        { shot_name: '3. Doku & Dikey Hat Taraması (Tilt)', movement_type: 'tilt_up_down', duration_sec: 2.5, focal_length_mm: 65, camera_distance_m: 1.6, camera_height_m: 0.95, f_stop: 2.5, focus_distance_m: 1.6, movement_speed: 0.65, dof_enabled: true },
+        { shot_name: '4. Yavaş Yörünge Vurgusu', movement_type: 'orbit_around_product', duration_sec: 3.0, focal_length_mm: 55, camera_distance_m: 2.1, camera_height_m: 1.35, f_stop: 2.8, focus_distance_m: 2.1, movement_speed: 0.7, dof_enabled: true }
+      ],
+      interior_cinematic: [
+        { shot_name: '1. Mekân Genel Görünümü', movement_type: 'wide_establishing_shot', duration_sec: 3.0, focal_length_mm: 24, camera_distance_m: 4.2, camera_height_m: 1.75, f_stop: 8.0, focus_distance_m: 4.0, movement_speed: 0.8, dof_enabled: false },
+        { shot_name: '2. Vinç ile Mobilyaya Yaklaşma (Crane)', movement_type: 'smooth_crane_movement', duration_sec: 3.5, focal_length_mm: 35, camera_distance_m: 3.4, camera_height_m: 2.1, f_stop: 4.0, focus_distance_m: 2.8, movement_speed: 0.9, dof_enabled: true },
+        { shot_name: '3. Ürün & Çevre İlişkisi (Slow Pan)', movement_type: 'slow_pan_left_right', duration_sec: 3.5, focal_length_mm: 35, camera_distance_m: 2.9, camera_height_m: 1.42, f_stop: 4.0, focus_distance_m: 2.9, movement_speed: 0.85, dof_enabled: true },
+        { shot_name: '4. Geniş Açıyla Bitiş', movement_type: 'dolly_out', duration_sec: 3.0, focal_length_mm: 28, camera_distance_m: 2.6, camera_height_m: 1.6, f_stop: 6.3, focus_distance_m: 3.8, movement_speed: 0.85, dof_enabled: false }
+      ],
+      minimal_product_film: [
+        { shot_name: '1. Sade Cephe Kompozisyonu (Tracking)', movement_type: 'camera_tracking', duration_sec: 3.5, focal_length_mm: 50, camera_distance_m: 2.8, camera_height_m: 1.38, f_stop: 4.0, focus_distance_m: 2.8, movement_speed: 0.65, dof_enabled: true },
+        { shot_name: '2. Form Odaklı Yaklaşma (Dolly In)', movement_type: 'dolly_in', duration_sec: 3.5, focal_length_mm: 55, camera_distance_m: 2.7, camera_height_m: 1.35, f_stop: 3.5, focus_distance_m: 2.2, movement_speed: 0.6, dof_enabled: true },
+        { shot_name: '3. Kontrollü Minimal Yörünge', movement_type: 'orbit_around_product', duration_sec: 3.5, focal_length_mm: 50, camera_distance_m: 2.5, camera_height_m: 1.38, f_stop: 3.5, focus_distance_m: 2.5, movement_speed: 0.65, dof_enabled: true }
+      ]
+    };
+
+    window.loadCinematicStudioBootstrap = async function() {
+      try {
+        const res = await fetch('/api/module8?action=cinematic-catalog', { cache: 'no-store' }).then(r => r.json());
+        if (res && res.ok) {
+          cinCatalog = res;
+          const sceneSel = document.getElementById('cinSceneSelect');
+          if (sceneSel && Array.isArray(res.studio_scenes) && res.studio_scenes.length > 0) {
+            sceneSel.innerHTML = res.studio_scenes.map(s => `<option value="${escapeHtml(s.scene_id)}">${escapeHtml(s.scene_name)} (${escapeHtml(s.scene_id)})</option>`).join('');
+          }
+          const savedSel = document.getElementById('cinSavedSelect');
+          if (savedSel) {
+            const list = res.studio_cinematics || [];
+            savedSel.innerHTML = `<option value="">🎞️ Kayıtlı Sinematik Animasyon Yükle (${list.length})...</option>` +
+              list.map(c => `<option value="${escapeHtml(c.cinematic_id)}">${escapeHtml(c.cinematic_name)} (${escapeHtml(c.cinematic_id)})</option>`).join('');
+          }
+        }
+      } catch (e) {
+        console.warn('Cinematic bootstrap warning:', e);
+      }
+
+      if (cinShots.length === 0) {
+        handleCinApplyPreset('luxury_product_showcase');
+      } else {
+        recomputeCinTimelineUI();
+      }
+    };
+
+    window.handleCinSceneChange = function(sceneId) {
+      if (sceneId && typeof window.handleSbLoadSelectedScene === 'function') {
+        window.handleSbLoadSelectedScene(sceneId);
+      }
+    };
+
+    window.handleCinApplyPreset = function(presetId) {
+      const serverPreset = cinCatalog.shot_presets?.[presetId]?.shots;
+      const sourceShots = serverPreset || CIN_LOCAL_PRESETS[presetId] || CIN_LOCAL_PRESETS.luxury_product_showcase;
+      cinShots = sourceShots.map((s, i) => ({
+        shot_id: `shot_${i + 1}`,
+        shot_name: s.shot_name,
+        movement_type: s.movement_type,
+        duration_sec: Number(s.duration_sec || 3.0),
+        focal_length_mm: Number(s.focal_length_mm || 35),
+        camera_distance_m: Number(s.camera_distance_m || 2.8),
+        camera_height_m: Number(s.camera_height_m || 1.45),
+        f_stop: Number(s.f_stop || 3.5),
+        focus_distance_m: Number(s.focus_distance_m || 2.6),
+        movement_speed: Number(s.movement_speed || 1.0),
+        dof_enabled: s.dof_enabled !== false,
+        camera_target: s.camera_target || [0.0, 1.4, 0.95]
+      }));
+      cinActiveShotIndex = 0;
+      populateCinShotInspector(0);
+      recomputeCinTimelineUI();
+    };
+
+    function populateCinShotInspector(index) {
+      const shot = cinShots[index];
+      if (!shot) return;
+      cinActiveShotIndex = index;
+      const chip = document.getElementById('cinActiveShotChip');
+      if (chip) chip.textContent = `Çekim #${index + 1}: ${shot.shot_name}`;
+      document.getElementById('cinFocalMm').value = shot.focal_length_mm;
+      document.getElementById('cinCamDist').value = shot.camera_distance_m;
+      document.getElementById('cinCamHeight').value = shot.camera_height_m;
+      document.getElementById('cinShotDuration').value = shot.duration_sec;
+      document.getElementById('cinFStop').value = shot.f_stop;
+      document.getElementById('cinFocusDist').value = shot.focus_distance_m;
+      document.getElementById('cinMoveSpeed').value = shot.movement_speed;
+      document.getElementById('cinDofCheck').checked = shot.dof_enabled !== false;
+      const tgt = Array.isArray(shot.camera_target) ? shot.camera_target : [0.0, 1.4, 0.95];
+      document.getElementById('cinTargetVec').value = `${tgt[0]}, ${tgt[1]}, ${tgt[2]}`;
+    }
+
+    window.selectCinShot = function(index) {
+      populateCinShotInspector(index);
+      recomputeCinTimelineUI();
+      previewSingleCinShot(index);
+    };
+
+    window.updateActiveCinShotFromInspector = function() {
+      const shot = cinShots[cinActiveShotIndex];
+      if (!shot) return;
+      shot.focal_length_mm = Number(document.getElementById('cinFocalMm')?.value || 35);
+      shot.camera_distance_m = Number(document.getElementById('cinCamDist')?.value || 2.8);
+      shot.camera_height_m = Number(document.getElementById('cinCamHeight')?.value || 1.45);
+      shot.duration_sec = Math.max(0.5, Number(document.getElementById('cinShotDuration')?.value || 3.0));
+      shot.f_stop = Number(document.getElementById('cinFStop')?.value || 3.5);
+      shot.focus_distance_m = Number(document.getElementById('cinFocusDist')?.value || 2.5);
+      shot.movement_speed = Number(document.getElementById('cinMoveSpeed')?.value || 1.0);
+      shot.dof_enabled = document.getElementById('cinDofCheck')?.checked !== false;
+      const rawVec = (document.getElementById('cinTargetVec')?.value || '0, 1.4, 0.95').split(',').map(v => Number(v.trim()) || 0);
+      if (rawVec.length >= 3) shot.camera_target = [rawVec[0], rawVec[1], rawVec[2]];
+      recomputeCinTimelineUI();
+    };
+
+    window.handleCinAddShot = function() {
+      const mov = document.getElementById('cinNewShotMovementSelect')?.value || 'dolly_in';
+      const idx = cinShots.length + 1;
+      cinShots.push({
+        shot_id: `shot_${Date.now().toString(36)}`,
+        shot_name: `${idx}. Özel Çekim (${mov})`,
+        movement_type: mov,
+        duration_sec: 3.0,
+        focal_length_mm: mov === 'closeup_detail_movement' ? 85 : 38,
+        camera_distance_m: mov === 'closeup_detail_movement' ? 1.15 : 2.8,
+        camera_height_m: 1.42,
+        f_stop: 3.5,
+        focus_distance_m: 2.6,
+        movement_speed: 1.0,
+        dof_enabled: true,
+        camera_target: [0.0, 1.4, 0.95]
+      });
+      cinActiveShotIndex = cinShots.length - 1;
+      populateCinShotInspector(cinActiveShotIndex);
+      recomputeCinTimelineUI();
+    };
+
+    window.moveCinShot = function(index, dir) {
+      const targetIdx = index + dir;
+      if (targetIdx < 0 || targetIdx >= cinShots.length) return;
+      const tmp = cinShots[index];
+      cinShots[index] = cinShots[targetIdx];
+      cinShots[targetIdx] = tmp;
+      cinActiveShotIndex = targetIdx;
+      recomputeCinTimelineUI();
+    };
+
+    window.removeCinShot = function(index) {
+      if (cinShots.length <= 1) {
+        alert('Timeline üzerinde en az 1 çekim bulunmalıdır.');
+        return;
+      }
+      cinShots.splice(index, 1);
+      cinActiveShotIndex = Math.max(0, Math.min(cinActiveShotIndex, cinShots.length - 1));
+      populateCinShotInspector(cinActiveShotIndex);
+      recomputeCinTimelineUI();
+    };
+
+    window.changeCinShotMovement = function(index, mov) {
+      if (!cinShots[index]) return;
+      cinShots[index].movement_type = mov;
+      recomputeCinTimelineUI();
+    };
+
+    window.changeCinShotDuration = function(index, val) {
+      if (!cinShots[index]) return;
+      cinShots[index].duration_sec = Math.max(0.5, Number(val || 2.5));
+      if (index === cinActiveShotIndex) {
+        document.getElementById('cinShotDuration').value = cinShots[index].duration_sec;
+      }
+      recomputeCinTimelineUI();
+    };
+
+    window.recomputeCinTimelineUI = function() {
+      const fps = Number(document.getElementById('cinFpsSelect')?.value || 24);
+      let currentFrame = 1;
+      cinShots.forEach((s, i) => {
+        const frames = Math.max(2, Math.round(Number(s.duration_sec || 3) * fps));
+        s.shot_index = i + 1;
+        s.frame_start = currentFrame;
+        s.frame_end = currentFrame + frames - 1;
+        s.frame_count = frames;
+        currentFrame = s.frame_end + 1;
+      });
+
+      const totalDuration = cinShots.reduce((acc, s) => acc + Number(s.duration_sec || 0), 0);
+      const totalFrames = cinShots.length ? cinShots[cinShots.length - 1].frame_end : 0;
+
+      const sub = document.getElementById('cinPreviewSubtitle');
+      if (sub) {
+        sub.textContent = `Toplam: ${cinShots.length} Çekim • ${totalDuration.toFixed(1)} sn • Kare: 1 – ${totalFrames} (${fps} FPS)`;
+      }
+
+      // Render Track Bar
+      const trackBar = document.getElementById('cinTimelineTrackBar');
+      const colors = ['#0284C7', '#D97706', '#059669', '#7C3AED', '#DB2777', '#2563EB'];
+      if (trackBar) {
+        trackBar.innerHTML = cinShots.map((s, idx) => {
+          const pct = totalDuration > 0 ? ((s.duration_sec / totalDuration) * 100).toFixed(1) : 20;
+          const bg = colors[idx % colors.length];
+          const activeBorder = idx === cinActiveShotIndex ? '2px solid #fff' : 'none';
+          return `<div onclick="selectCinShot(${idx})" title="${escapeHtml(s.shot_name)} (${s.frame_start}-${s.frame_end})" style="width:${pct}%; background:${bg}; border:${activeBorder}; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#fff; cursor:pointer; overflow:hidden; white-space:nowrap;">#${idx + 1} (${s.duration_sec}s)</div>`;
+        }).join('');
+      }
+
+      // Render Shot List
+      const listWrap = document.getElementById('cinShotListWrap');
+      if (listWrap) {
+        listWrap.innerHTML = cinShots.map((s, idx) => `
+          <div style="background:${idx === cinActiveShotIndex ? 'rgba(56,189,248,0.14)' : 'rgba(15,23,42,0.75)'}; border:1px solid ${idx === cinActiveShotIndex ? 'rgba(56,189,248,0.6)' : 'rgba(255,255,255,0.08)'}; border-radius:8px; padding:8px 10px; font-size:11.5px; display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+            <div style="cursor:pointer; flex:1;" onclick="selectCinShot(${idx})">
+              <strong style="color:#fff;">#${idx + 1} ${escapeHtml(s.shot_name)}</strong>
+              <span class="mini-chip" style="margin-left:6px;">Kare ${s.frame_start}–${s.frame_end}</span>
+              <span class="mini-chip" style="margin-left:4px;">${s.focal_length_mm}mm • f/${s.f_stop}</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:5px;">
+              <select class="form-control" style="padding:3px 6px; font-size:10.5px; width:135px;" onchange="changeCinShotMovement(${idx}, this.value)">
+                <option value="wide_establishing_shot" ${s.movement_type === 'wide_establishing_shot' ? 'selected' : ''}>Wide Establishing</option>
+                <option value="dolly_in" ${s.movement_type === 'dolly_in' ? 'selected' : ''}>Dolly In</option>
+                <option value="dolly_out" ${s.movement_type === 'dolly_out' ? 'selected' : ''}>Dolly Out</option>
+                <option value="slow_pan_left_right" ${s.movement_type === 'slow_pan_left_right' ? 'selected' : ''}>Slow Pan L/R</option>
+                <option value="tilt_up_down" ${s.movement_type === 'tilt_up_down' ? 'selected' : ''}>Tilt Up/Down</option>
+                <option value="orbit_around_product" ${s.movement_type === 'orbit_around_product' ? 'selected' : ''}>Orbit Product</option>
+                <option value="camera_tracking" ${s.movement_type === 'camera_tracking' ? 'selected' : ''}>Camera Tracking</option>
+                <option value="smooth_crane_movement" ${s.movement_type === 'smooth_crane_movement' ? 'selected' : ''}>Smooth Crane</option>
+                <option value="closeup_detail_movement" ${s.movement_type === 'closeup_detail_movement' ? 'selected' : ''}>Close-up Detail</option>
+              </select>
+              <input type="number" class="form-control" style="padding:3px 5px; font-size:10.5px; width:52px;" step="0.5" min="1" max="20" value="${s.duration_sec}" onchange="changeCinShotDuration(${idx}, this.value)">
+              <button type="button" class="btn-ghost" style="padding:2px 6px; font-size:10px;" onclick="previewSingleCinShot(${idx})">▶️</button>
+              <button type="button" class="btn-ghost" style="padding:2px 6px; font-size:10px;" onclick="moveCinShot(${idx}, -1)">↑</button>
+              <button type="button" class="btn-ghost" style="padding:2px 6px; font-size:10px;" onclick="moveCinShot(${idx}, 1)">↓</button>
+              <button type="button" class="btn-danger" style="padding:2px 6px; font-size:10px;" onclick="removeCinShot(${idx})">✕</button>
+            </div>
+          </div>
+        `).join('');
+      }
+    };
+
+    // Animate Three.js viewport camera along the shot's Bezier trajectory for real-time preview
+    function applyCameraShotProgressToViewport(shot, tNorm) {
+      if (!sbThreeCamera || !sbThreeControls) return;
+      // Smoothstep (Bezier Ease-In / Ease-Out)
+      const ease = tNorm * tNorm * (3 - 2 * tNorm);
+      const dist = Number(shot.camera_distance_m || 2.8);
+      const height = Number(shot.camera_height_m || 1.45);
+      const mov = shot.movement_type;
+
+      let cx = 0;
+      let cy = height;
+      let cz = dist;
+
+      if (mov === 'dolly_in') {
+        cz = dist - ease * 1.1;
+      } else if (mov === 'dolly_out') {
+        cz = dist + ease * 1.2;
+      } else if (mov === 'orbit_around_product') {
+        const angle = (ease - 0.5) * 0.95;
+        cx = Math.sin(angle) * dist;
+        cz = Math.cos(angle) * dist;
+      } else if (mov === 'slow_pan_left_right' || mov === 'camera_tracking') {
+        cx = (ease - 0.5) * 1.6;
+      } else if (mov === 'tilt_up_down') {
+        cy = height - 0.35 + ease * 0.7;
+      } else if (mov === 'smooth_crane_movement') {
+        cy = height + 0.5 - ease * 0.65;
+        cx = (ease - 0.5) * 0.8;
+      } else if (mov === 'closeup_detail_movement') {
+        cz = Math.min(1.35, dist) - ease * 0.25;
+        cx = (ease - 0.5) * 0.45;
+      } else {
+        cz = dist - ease * 0.4;
+        cx = (ease - 0.5) * 0.5;
+      }
+
+      sbThreeCamera.fov = Math.max(20, Math.min(75, Math.round(1500 / Number(shot.focal_length_mm || 35))));
+      sbThreeCamera.updateProjectionMatrix();
+      sbThreeCamera.position.set(cx, cy, cz);
+      sbThreeControls.target.set(0, 1.05, 0);
+      sbThreeControls.update();
+    }
+
+    window.previewSingleCinShot = function(index) {
+      stopCinematicPreview();
+      const shot = cinShots[index];
+      if (!shot) return;
+      let step = 0;
+      const totalSteps = 30;
+      cinPlayTimer = setInterval(() => {
+        step++;
+        const t = step / totalSteps;
+        const curFrame = Math.round(shot.frame_start + t * (shot.frame_end - shot.frame_start));
+        applyCameraShotProgressToViewport(shot, t);
+        const readout = document.getElementById('cinLiveFrameReadout');
+        if (readout) readout.innerHTML = `Kare: <strong>${curFrame} / ${cinShots[cinShots.length - 1]?.frame_end || 240}</strong> • Aktif Çekim: <strong>${escapeHtml(shot.shot_name)}</strong>`;
+        const lensEl = document.getElementById('cinLiveLensReadout');
+        if (lensEl) lensEl.textContent = `Lens: ${shot.focal_length_mm}mm • f/${shot.f_stop} • Bezier Ease-In/Out`;
+        if (step >= totalSteps) stopCinematicPreview();
+      }, 45);
+    };
+
+    window.playFullCinematicPreview = function() {
+      stopCinematicPreview();
+      if (!cinShots.length) return;
+      let sIdx = 0;
+      let step = 0;
+      const stepsPerShot = 24;
+      cinPlayTimer = setInterval(() => {
+        const shot = cinShots[sIdx];
+        if (!shot) {
+          stopCinematicPreview();
+          return;
+        }
+        step++;
+        const t = step / stepsPerShot;
+        const curFrame = Math.round(shot.frame_start + t * (shot.frame_end - shot.frame_start));
+        applyCameraShotProgressToViewport(shot, t);
+        const readout = document.getElementById('cinLiveFrameReadout');
+        if (readout) readout.innerHTML = `Kare: <strong>${curFrame} / ${cinShots[cinShots.length - 1].frame_end}</strong> • Oynatılan: <strong>${escapeHtml(shot.shot_name)}</strong>`;
+        const lensEl = document.getElementById('cinLiveLensReadout');
+        if (lensEl) lensEl.textContent = `Lens: ${shot.focal_length_mm}mm • f/${shot.f_stop} • Bezier Ease-In/Out`;
+        if (step >= stepsPerShot) {
+          step = 0;
+          sIdx++;
+          if (sIdx >= cinShots.length) stopCinematicPreview();
+        }
+      }, 45);
+    };
+
+    window.stopCinematicPreview = function() {
+      if (cinPlayTimer) {
+        clearInterval(cinPlayTimer);
+        cinPlayTimer = null;
+      }
+    };
+
+    function collectCinPayload() {
+      const prevParts = (document.getElementById('cinPreviewResSelect')?.value || '640x360|8').split('|');
+      return {
+        cinematic_id: (document.getElementById('cinProjectId')?.value || 'cin_viyana_luxury_01').trim(),
+        cinematic_name: `${document.getElementById('cinSceneSelect')?.value || 'Sahne'} — ${document.getElementById('cinPresetSelect')?.value || 'Luxury Showcase'}`,
+        scene_id: document.getElementById('cinSceneSelect')?.value || 'scene_viyana_bedroom_01',
+        preset_id: document.getElementById('cinPresetSelect')?.value || 'luxury_product_showcase',
+        fps: Number(document.getElementById('cinFpsSelect')?.value || 24),
+        shots: cinShots,
+        preview_settings: {
+          resolution: prevParts[0] || '640x360',
+          samples: Number(prevParts[1] || 8)
+        },
+        render_settings: {
+          resolution: document.getElementById('cinFinalResSelect')?.value || '1920x1080',
+          samples: Number(document.getElementById('cinFinalSamples')?.value || 48)
+        },
+        user_approved: document.getElementById('cinApproveCheck')?.checked === true
+      };
+    }
+
+    window.handleCinSaveClick = async function() {
+      const payload = collectCinPayload();
+      if (sbThreeRenderer && sbThreeRenderer.domElement) {
+        try {
+          payload.preview_base64 = sbThreeRenderer.domElement.toDataURL('image/jpeg', 0.82);
+        } catch {}
+      }
+
+      try {
+        const res = await fetch('/api/module8?action=cinematic-save', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (!res.ok) {
+          alert('Sinematik kaydetme hatası: ' + (res.error || 'Hata'));
+          return null;
+        }
+
+        const c = res.cinematic;
+        const badge = document.getElementById('cinStatusBadge');
+        if (badge) badge.textContent = `✓ Kaydedildi: ${c.cinematic_id} (${c.shot_count} Çekim, ${c.total_frames} Kare)`;
+
+        const box = document.getElementById('cinStoragePathsBox');
+        if (box) {
+          box.style.display = 'block';
+          box.innerHTML = `
+            <div><strong>✓ Supabase Storage ('media') Sinematik Varlıkları Kaydedildi:</strong></div>
+            <div>• Blender Animasyon Dosyası: <code>${escapeHtml(c.cinematic_blend_path)}</code> (${c.blend_size_bytes || 0} B)</div>
+            <div>• Sinematik Metadata JSON: <code>${escapeHtml(c.cinematic_metadata_path)}</code> (${c.metadata_size_bytes || 0} B)</div>
+            <div>• Önizleme Kare: <code>${escapeHtml(c.preview_image_path)}</code></div>
+          `;
+        }
+        await loadCinematicStudioBootstrap();
+        return c;
+      } catch (err) {
+        alert('Sunucu hatası: ' + err.message);
+        return null;
+      }
+    };
+
+    window.handleCinLoadSaved = async function(cinematicId) {
+      if (!cinematicId) return;
+      try {
+        const res = await fetch(`/api/module8?action=cinematic-load&cinematic_id=${encodeURIComponent(cinematicId)}`, { cache: 'no-store' }).then(r => r.json());
+        if (!res.ok || !res.cinematic) {
+          alert('Sinematik proje bulunamadı: ' + (res.error || 'Hata'));
+          return;
+        }
+
+        const c = res.cinematic;
+        document.getElementById('cinProjectId').value = c.cinematic_id;
+        document.getElementById('cinPresetSelect').value = c.preset_id || 'luxury_product_showcase';
+        document.getElementById('cinFpsSelect').value = String(c.fps || 24);
+        document.getElementById('cinApproveCheck').checked = Boolean(c.user_approved);
+
+        cinShots = Array.isArray(c.shots) ? c.shots : [];
+        cinActiveShotIndex = 0;
+        populateCinShotInspector(0);
+        recomputeCinTimelineUI();
+
+        const badge = document.getElementById('cinStatusBadge');
+        if (badge) badge.textContent = `✓ Doğrulandı: ${c.cinematic_id} (${res.reload_verification?.keyframes_restored_count || 0} Keyframe Korundu)`;
+
+        const box = document.getElementById('cinStoragePathsBox');
+        if (box) {
+          box.style.display = 'block';
+          box.innerHTML = `
+            <div><strong>✓ Animasyon Geri Yükleme Doğrulaması (Reload Verification):</strong></div>
+            <div>• <code>${escapeHtml(c.cinematic_blend_path)}</code> (Header: ${escapeHtml(res.reload_verification?.blend_header_magic || 'BLENDER-v402')})</div>
+            <div>• Çekim Sayısı: ${res.reload_verification?.shots_restored_count} • Keyframe Sayısı: ${res.reload_verification?.keyframes_restored_count} • Bezier: ✓</div>
+          `;
+        }
+      } catch (err) {
+        alert('Yükleme hatası: ' + err.message);
+      }
+    };
+
+    window.handleCinReloadVerifyClick = async function() {
+      const id = (document.getElementById('cinProjectId')?.value || '').trim();
+      if (!id) return;
+      await handleCinLoadSaved(id);
+    };
+
+    window.handleCinQueueRenderClick = async function(tier = 'preview') {
+      if (tier === 'final' && !document.getElementById('cinApproveCheck')?.checked) {
+        alert('Final Render Koruması: Lütfen önce "Final Sinematik Render için onaylıyorum" kutucuğunu işaretleyin.');
+        return;
+      }
+
+      const saved = await handleCinSaveClick();
+      if (!saved) return;
+
+      const prevParts = (document.getElementById('cinPreviewResSelect')?.value || '640x360|8').split('|');
+      const resolution = tier === 'final'
+        ? (document.getElementById('cinFinalResSelect')?.value || '1920x1080')
+        : (prevParts[0] || '640x360');
+      const samples = tier === 'final'
+        ? Number(document.getElementById('cinFinalSamples')?.value || 48)
+        : Number(prevParts[1] || 8);
+
+      try {
+        const res = await fetch('/api/module8?action=cinematic-render', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cinematic_id: saved.cinematic_id,
+            render_tier: tier,
+            user_approved: document.getElementById('cinApproveCheck')?.checked === true,
+            resolution,
+            samples
+          })
+        }).then(r => r.json());
+
+        if (!res.ok) {
+          alert('Render başlatılamadı: ' + (res.error || 'Hata'));
+          return;
+        }
+
+        alert(`✓ Sinematik ${tier === 'final' ? 'Final' : 'Önizleme'} Render Görevi Kuyruğa Eklendi!\nGörev ID: ${res.job.id}\nDosya: ${saved.cinematic_blend_path}`);
+        switchStudioTab('manager');
+        refreshStudioJobs();
+      } catch (err) {
+        alert('Render hatası: ' + err.message);
+      }
+    };
+
+    // ── MODULE 8.4: MULTI-PLATFORM VIDEO PRODUCTION STUDIO CONTROLLERS ──────────
+    let vidCatalogCache = null;
+
+    window.toggleAllVideoPlatforms = function(checked = true) {
+      document.querySelectorAll('.vid-plat-cb').forEach(cb => {
+        cb.checked = checked;
+      });
+    };
+
+    window.handleVidQualityChange = function() {
+      const q = document.getElementById('vidQualitySelect')?.value || 'preview';
+      const customW = document.getElementById('vidCustomWidth');
+      const customH = document.getElementById('vidCustomHeight');
+      const customFps = document.getElementById('vidCustomFps');
+      if (q === 'preview') {
+        if (customW) customW.value = '640';
+        if (customH) customH.value = '360';
+        if (customFps) customFps.value = '12';
+      } else if (q === 'standard') {
+        if (customW) customW.value = '1280';
+        if (customH) customH.value = '720';
+        if (customFps) customFps.value = '30';
+      } else if (q === 'high_quality') {
+        if (customW) customW.value = '1920';
+        if (customH) customH.value = '1080';
+        if (customFps) customFps.value = '30';
+      }
+    };
+
+    window.handleVidCinematicChange = function() {
+      const cinId = document.getElementById('vidCinematicSelect')?.value || '';
+      const projInput = document.getElementById('vidProjectIdInput');
+      if (cinId && projInput) {
+        projInput.value = `vproj_${cinId.replace(/^cin_/, '')}`;
+      }
+    };
+
+    window.loadVideoStudioBootstrap = async function() {
+      try {
+        const res = await fetch('/api/module8?action=video-catalog', { cache: 'no-store' }).then(r => r.json());
+        if (!res.ok) return;
+        vidCatalogCache = res;
+
+        const cinSel = document.getElementById('vidCinematicSelect');
+        if (cinSel && Array.isArray(res.studio_cinematics) && res.studio_cinematics.length > 0) {
+          const curVal = cinSel.value;
+          cinSel.innerHTML = res.studio_cinematics.map(c =>
+            `<option value="${escapeHtml(c.cinematic_id)}">${escapeHtml(c.cinematic_id)} (${escapeHtml(c.cinematic_name || 'Sinematik Proje')} • ${c.shot_count || 0} Çekim)</option>`
+          ).join('');
+          if (curVal && res.studio_cinematics.some(c => c.cinematic_id === curVal)) {
+            cinSel.value = curVal;
+          }
+        }
+
+        renderVideoOutputsGallery(res.studio_videos || []);
+      } catch (err) {
+        console.warn('[VideoStudio] Bootstrap warning:', err.message);
+      }
+    };
+
+    function renderVideoOutputsGallery(videos = []) {
+      const wrap = document.getElementById('videoOutputsWrap');
+      const chip = document.getElementById('vidOutputsCountChip');
+      if (chip) chip.textContent = `${videos.length} Video Çıktısı`;
+      if (!wrap) return;
+
+      if (!Array.isArray(videos) || videos.length === 0) {
+        wrap.innerHTML = `
+          <div class="empty-state" style="grid-column:1 / -1;">
+            <div class="empty-state-icon">🎬</div>
+            <h3 class="empty-state-title">Henüz İşlenmiş Video Yok</h3>
+            <p class="empty-state-desc">Yukarıdan sinematik çekim projesini ve hedef yayın kanallarını seçip <strong>"5 Platform İçin Toplu Üret"</strong> butonuna tıklayın.</p>
+          </div>
+        `;
+        return;
+      }
+
+      wrap.innerHTML = videos.map(v => {
+        const isVertical = v.aspect_ratio === '9:16';
+        return `
+          <div class="studio-card" style="padding:16px; display:flex; flex-direction:column; justify-content:space-between; border:1px solid var(--border-subtle); border-radius:14px; background:rgba(255,255,255,0.88);">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span class="mini-chip" style="font-weight:700; text-transform:uppercase;">${escapeHtml(v.platform)} (${escapeHtml(v.aspect_ratio)})</span>
+                <span class="mini-chip" style="background:rgba(16,185,129,0.12); color:#059669;">H.264 MP4 • ${escapeHtml(v.render_status || 'completed')}</span>
+              </div>
+              <h4 style="font-size:14px; font-weight:700; margin:0 0 6px 0;">${escapeHtml(v.platform_name || v.platform)}</h4>
+              <div style="font-size:11px; color:var(--text-secondary); line-height:1.5; margin-bottom:10px;">
+                <div>• Çözünürlük &amp; Kare Hızı: <strong>${escapeHtml(v.resolution)} @ ${v.fps} FPS</strong> (${v.duration_sec || v.duration} sn)</div>
+                <div>• Kamera Uyum (Sensor Fit): <strong>${escapeHtml(v.sensor_fit)}</strong> (Basit Kırpma Yok ✓)</div>
+                <div>• Kaynak Sinematik: <code>${escapeHtml(v.source_cinematic_project || '-')}</code></div>
+                <div>• Depolama Yolu: <code style="word-break:break-all;">${escapeHtml(v.storage_path)}</code></div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;">
+              <a href="${escapeHtml(v.public_url || '#')}" target="_blank" rel="noopener" class="btn-gold" style="flex:1; text-align:center; text-decoration:none; padding:7px 10px; font-size:12px;">⬇ MP4 İndir / Önizle (${isVertical ? '9:16' : '16:9'})</a>
+              ${v.platform === 'website'
+                ? `<button type="button" class="btn-emerald" style="padding:7px 10px; font-size:11.5px;" onclick="distributeModule8VideoToTarget('${escapeHtml(v.video_id || v.id)}', 'module1')">🌐 Modül 1'e Aktar (Website 16:9)</button>`
+                : `<button type="button" class="btn-emerald" style="padding:7px 10px; font-size:11.5px;" onclick="distributeModule8VideoToTarget('${escapeHtml(v.video_id || v.id)}', 'module2')">📤 Modül 2'ye Aktar (Sosyal Medya)</button>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.handleVidProduceClick = async function(batchAllFive = false) {
+      const projectId = (document.getElementById('vidProjectIdInput')?.value || 'vproj_viyana_2026').trim();
+      const cinematicId = document.getElementById('vidCinematicSelect')?.value || '';
+      const qualityPreset = document.getElementById('vidQualitySelect')?.value || 'preview';
+      const userApproved = document.getElementById('vidApproveHighCostCheck')?.checked === true;
+
+      if (qualityPreset !== 'preview' && !userApproved) {
+        alert('Yüksek Maliyetli Video Koruması: Standard, High Quality veya Custom modunda üretim için lütfen onay kutucuğunu işaretleyin.');
+        return;
+      }
+
+      const selectedPlatforms = batchAllFive
+        ? ['website', 'instagram', 'facebook', 'tiktok', 'youtube']
+        : Array.from(document.querySelectorAll('.vid-plat-cb:checked')).map(cb => cb.value);
+
+      if (selectedPlatforms.length === 0) {
+        alert('Lütfen en az bir yayın kanalı seçin.');
+        return;
+      }
+
+      const badge = document.getElementById('vidStatusBadge');
+      if (badge) badge.textContent = `⏳ ${selectedPlatforms.length} Platform İçin Adaptif Kamera & H.264 MP4 Üretiliyor...`;
+
+      try {
+        const payload = {
+          project_id: projectId,
+          cinematic_id: cinematicId || undefined,
+          platforms: selectedPlatforms,
+          quality_preset: qualityPreset,
+          user_approved: userApproved,
+          width: Number(document.getElementById('vidCustomWidth')?.value || 1080),
+          height: Number(document.getElementById('vidCustomHeight')?.value || 1920),
+          fps: Number(document.getElementById('vidCustomFps')?.value || 30),
+          editing_settings: {
+            transition_type: document.getElementById('vidTransitionSelect')?.value || 'crossfade',
+            fade_in_sec: Number(document.getElementById('vidFadeInSec')?.value || 0.5),
+            fade_out_sec: Number(document.getElementById('vidFadeOutSec')?.value || 0.6),
+            title_overlay: {
+              enabled: Boolean(document.getElementById('vidTitleOverlayInput')?.value),
+              text: document.getElementById('vidTitleOverlayInput')?.value || ''
+            },
+            brand_logo_overlay: {
+              enabled: document.getElementById('vidBrandLogoCheck')?.checked !== false,
+              brand_name: 'GLOBAL MOBİLYA'
+            },
+            audio_settings: {
+              enabled: Boolean(document.getElementById('vidAudioTrackInput')?.value),
+              audio_track_path: document.getElementById('vidAudioTrackInput')?.value || null,
+              volume: Number(document.getElementById('vidAudioVolumeInput')?.value || 0.75)
+            }
+          }
+        };
+
+        const res = await fetch('/api/module8?action=video-produce', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        }).then(r => r.json());
+
+        if (!res.ok) {
+          if (badge) badge.textContent = '⚠ Video Üretim Hatası';
+          alert('Video üretim hatası: ' + (res.error || 'Bilinmeyen hata'));
+          return;
+        }
+
+        if (badge) {
+          badge.textContent = `✓ ${res.videos.length} Kanal H.264 MP4 Üretildi (${res.project_id})`;
+        }
+
+        const sumBox = document.getElementById('vidStorageSummaryBox');
+        if (sumBox) {
+          sumBox.style.display = 'block';
+          sumBox.innerHTML = `
+            <div><strong>✓ Çoklu Platform Video Üretimi &amp; Supabase Storage Kaydı Tamamlandı (${escapeHtml(res.project_id)}):</strong></div>
+            ${res.videos.map(v => `<div>• <strong>[${escapeHtml(v.platform.toUpperCase())} ${escapeHtml(v.aspect_ratio)}]</strong> <code>${escapeHtml(v.storage_path)}</code> (${escapeHtml(v.resolution)} @ ${v.fps} FPS • Sensor: ${escapeHtml(v.sensor_fit)} • ${v.file_size} B)</div>`).join('')}
+            <div style="margin-top:4px; color:var(--text-muted);">${escapeHtml(res.resource_estimate?.disclaimer_tr || '')}</div>
+          `;
+        }
+
+        await loadVideoStudioBootstrap();
+      } catch (err) {
+        if (badge) badge.textContent = '⚠ Bağlantı Hatası';
+        alert('Video üretim sunucu hatası: ' + err.message);
+      }
+    };
+
+    window.distributeModule8VideoToTarget = async function(videoId, targetModule = 'module2') {
+      try {
+        const res = await fetch('/api/module8?action=video-distribute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            video_output_id: videoId,
+            target_module: targetModule
+          })
+        }).then(r => r.json());
+
+        if (!res.ok) {
+          alert('Medya aktarımı başarısız: ' + (res.error || 'Hata'));
+          return;
+        }
+        const d = res.distribution || {};
+        alert(`✓ Video çıktısı (${d.video_output_id}) ${targetModule === 'module1' ? 'Modül 1 (Website Vitrin)' : 'Modül 2 (AI Content Studio)'} havuzuna güvenle aktarıldı!\n• Platform: ${d.platform_profile}\n• Çözünürlük: ${d.resolution} (${d.duration} sn)\n• Mükerrer Koruması: ${res.deduplicated ? 'Mevcut kayıt güncellendi' : 'Yeni kayıt oluşturuldu'}`);
+      } catch (err) {
+        alert('Aktarım hatası: ' + err.message);
+      }
+    };
+
     function initStudioPortal() {
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           if (btn.dataset.tab) window.switchStudioTab(btn.dataset.tab);
+          if (btn.dataset.tab === 'cinematic') {
+            setTimeout(() => {
+              window.loadSceneBuilderBootstrap();
+              window.loadCinematicStudioBootstrap();
+            }, 60);
+          }
+          if (btn.dataset.tab === 'video') {
+            setTimeout(() => {
+              window.loadVideoStudioBootstrap();
+            }, 60);
+          }
         });
       });
       loadStudioData();
+      setTimeout(() => {
+        window.loadSceneBuilderBootstrap();
+        window.loadCinematicStudioBootstrap();
+        window.loadVideoStudioBootstrap();
+      }, 200);
     }
 
     if (document.readyState === 'loading') {

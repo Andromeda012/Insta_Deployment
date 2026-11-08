@@ -1,4 +1,10 @@
 import { authenticateRoles } from './_lib/auth.js';
+import {
+  MODULE8_DISTRIBUTION_STORE_KEY,
+  isModule8DistributionEnabled,
+  normalizeModule8VideoTransferPayload,
+  validateMediaTransferSafety
+} from './_lib/module8-distribution-bridge.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/+$/, '');
 const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -64,6 +70,80 @@ export default async function handler(req, res) {
     const user = await authenticate(req);
 
     if (req.method === 'GET') {
+      const action = String(req.query?.action || '').trim().toLowerCase();
+
+      // Module 8.5 Non-Invasive Website Premium Film (16:9) Listing
+      if (action === 'module8-website-videos' || action === 'website-videos') {
+        if (!isModule8DistributionEnabled(req)) {
+          return send(res, 200, {
+            ok: true,
+            feature_enabled: false,
+            videos: [],
+            assignments: {},
+            note: 'Module 8.5 medya dağıtım özelliği devre dışı (feature flag).'
+          });
+        }
+        try {
+          const [distRows, studioRows, assignRows] = await Promise.all([
+            supabaseRequest(`/rest/v1/site_settings?key=eq.${MODULE8_DISTRIBUTION_STORE_KEY}&select=data&limit=1`).catch(() => []),
+            supabaseRequest('/rest/v1/site_settings?key=eq.module8_studio_store&select=data&limit=1').catch(() => []),
+            supabaseRequest('/rest/v1/site_settings?key=eq.module1_product_videos&select=data&limit=1').catch(() => [])
+          ]);
+
+          const rawDist = Array.isArray(distRows?.[0]?.data?.distributions) ? distRows[0].data.distributions : [];
+          const studioStore = studioRows?.[0]?.data || {};
+          const studioDist = Array.isArray(studioStore.media_distributions) ? studioStore.media_distributions : [];
+          const studioVids = Array.isArray(studioStore.studio_videos) ? studioStore.studio_videos : [];
+
+          const map = new Map();
+          for (const d of [...rawDist, ...studioDist]) {
+            const norm = normalizeModule8VideoTransferPayload(d);
+            if (norm.platform_profile === 'website' && validateMediaTransferSafety(norm).valid) {
+              map.set(norm.video_output_id, norm);
+            }
+          }
+          for (const v of studioVids) {
+            if ((v.platform || v.platform_profile) === 'website') {
+              const norm = normalizeModule8VideoTransferPayload(v, {
+                target_module: 'module1',
+                platform_profile: 'website',
+                preview_url: v.preview_frame_url || v.preview_url
+              });
+              if (!map.has(norm.video_output_id) && validateMediaTransferSafety(norm).valid) {
+                map.set(norm.video_output_id, norm);
+              }
+            }
+          }
+
+          let videos = Array.from(map.values());
+          const productSlug = String(req.query?.product_slug || req.query?.product_id || '').trim();
+          if (productSlug) {
+            videos = videos.filter(v =>
+              v.product_slug === productSlug ||
+              v.product_id === productSlug ||
+              v.collection_slug === productSlug ||
+              v.product_id === 'genel-koleksiyon'
+            );
+          }
+
+          const assignments = assignRows?.[0]?.data?.assignments || {};
+          return send(res, 200, {
+            ok: true,
+            feature_enabled: true,
+            videos,
+            assignments
+          });
+        } catch (_) {
+          return send(res, 200, {
+            ok: true,
+            feature_enabled: true,
+            degraded: true,
+            videos: [],
+            assignments: {}
+          });
+        }
+      }
+
       const id = String(req.query?.id || '').trim();
       if (id) {
         if (!/^[0-9a-f-]{36}$/i.test(id)) return send(res, 400, { ok: false, error: 'Geçersiz revision_id.' });
@@ -81,6 +161,96 @@ export default async function handler(req, res) {
 
     const body = req.body || {};
     if (!validPayload(body)) return send(res, 413, { ok: false, error: 'İstek içeriği geçersiz veya çok büyük.' });
+
+    // Module 8.5 Non-Invasive Website Premium Film Approval & Product/Collection Assignment
+    if (body.action === 'approve-module8-website-video' || body.action === 'assign-website-video') {
+      if (!isModule8DistributionEnabled(req)) {
+        return send(res, 200, {
+          ok: true,
+          feature_enabled: false,
+          approved: false,
+          note: 'Module 8.5 medya dağıtım özelliği devre dışı (feature flag).'
+        });
+      }
+
+      const videoInput = body.video || body.distribution || body;
+      const normalized = normalizeModule8VideoTransferPayload(videoInput, {
+        target_module: 'module1',
+        platform_profile: 'website',
+        product_id: body.product_slug || body.product_id || videoInput.product_id || 'genel-koleksiyon',
+        product_slug: body.product_slug || body.product_id || videoInput.product_slug || 'genel-koleksiyon'
+      });
+
+      const safety = validateMediaTransferSafety(normalized);
+      if (!safety.valid) {
+        return send(res, 400, {
+          ok: false,
+          error: `Geçersiz Website Premium Film verisi: ${safety.errors.join(' ')}`,
+          validation_errors: safety.errors
+        });
+      }
+
+      const targetSlug = String(body.product_slug || body.collection_slug || normalized.product_slug || 'anasayfa_vitrin').trim();
+      const applyToHomepage = body.apply_to_homepage === true;
+      const nowIso = new Date().toISOString();
+
+      const approvalRecord = {
+        ...normalized,
+        product_slug: targetSlug,
+        approval_status: 'approved_and_published',
+        approved_by: user.email || user.id,
+        approved_at: nowIso,
+        published_at: nowIso
+      };
+
+      try {
+        const existingRows = await supabaseRequest('/rest/v1/site_settings?key=eq.module1_product_videos&select=data&limit=1').catch(() => []);
+        const currentAssignments = existingRows?.[0]?.data?.assignments || {};
+        currentAssignments[targetSlug] = approvalRecord;
+
+        await supabaseRequest('/rest/v1/site_settings', {
+          method: 'POST',
+          headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+          body: JSON.stringify({
+            key: 'module1_product_videos',
+            data: {
+              updated_at: nowIso,
+              assignments: currentAssignments
+            },
+            updated_at: nowIso
+          })
+        });
+
+        if (applyToHomepage) {
+          const homeRows = await supabaseRequest('/rest/v1/site_settings?key=eq.anasayfa&select=data&limit=1').catch(() => []);
+          const currentHome = homeRows?.[0]?.data || {};
+          const updatedHome = {
+            ...currentHome,
+            video_url: approvalRecord.public_url,
+            module8_website_video: approvalRecord
+          };
+          await supabaseRequest('/rest/v1/site_settings', {
+            method: 'POST',
+            headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+            body: JSON.stringify({
+              key: 'anasayfa',
+              data: updatedHome,
+              updated_at: nowIso
+            })
+          });
+        }
+      } catch (_) {}
+
+      return send(res, 200, {
+        ok: true,
+        feature_enabled: true,
+        approved: true,
+        published: true,
+        product_slug: targetSlug,
+        applied_to_homepage: applyToHomepage,
+        video_assignment: approvalRecord
+      });
+    }
 
     // Handle Publish
     if (body.action === 'publish') {

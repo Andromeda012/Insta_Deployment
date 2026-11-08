@@ -1296,6 +1296,41 @@ textarea.form-control { resize: vertical; min-height: 80px; }
             <input type="checkbox" id="h_video_autoplay"> 🔇 Sessiz Otomatik Oynat (Loop / Arka Plan Modu)
           </label>
         </div>
+
+        <!-- MODULE 8.5: NON-INVASIVE WEBSITE PREMIUM FILM (16:9) SEÇİMİ & ÜRÜN/KOLEKSİYON ATAMA -->
+        <div id="module8WebsiteVideoCard" style="margin-top:20px; padding:16px; background:rgba(15,23,42,0.75); border:1px solid rgba(56,189,248,0.35); border-radius:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom:10px;">
+            <div>
+              <div style="font-size:14px; font-weight:700; color:#38bdf8;">🎬 Modül 8 — Website Premium Film (16:9 • 1920x1080) Dağıtım & Ürün Bağlama</div>
+              <div style="font-size:12px; color:var(--text-muted);">Modül 8 (3D Creative Studio) tarafından üretilen 16:9 yatay vitrin filmlerini ilgili ürün/koleksiyonla ilişkilendirin, önizleyin ve onaylayarak yayınlayın.</div>
+            </div>
+            <button type="button" class="btn-secondary btn-sm" onclick="loadModule8WebsiteVideos()">🔄 Modül 8 Videolarını Yenile</button>
+          </div>
+
+          <div class="form-grid" style="margin-bottom:10px;">
+            <div class="form-group" style="margin-bottom:0;">
+              <label>Modül 8 Website Premium Film (16:9) Çıktısı Seçin</label>
+              <select class="form-control" id="m8_web_video_select" onchange="onModule8WebsiteVideoSelectChange()">
+                <option value="">— Modül 8 Website Premium Film Seçin (Opsiyonel) —</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom:0;">
+              <label>İlişkilendirilecek Ürün / Koleksiyon veya Vitrin Alanı</label>
+              <input type="text" class="form-control" id="m8_web_target_slug" placeholder="Örn: kopenhag-yatak-odasi veya anasayfa_vitrin">
+            </div>
+          </div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+            <label style="display:flex; align-items:center; gap:8px; font-size:12.5px; color:#cbd5e1; cursor:pointer;">
+              <input type="checkbox" id="m8_web_apply_home" checked> Seçilen 16:9 filmi aynı zamanda Ana Sayfa Kurumsal Vitrin oynatıcısına aktar
+            </label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button type="button" class="btn-secondary btn-sm" onclick="previewSelectedModule8WebsiteVideo()">▶️ Oynatıcıda Önizle</button>
+              <button type="button" class="btn-gold btn-sm" onclick="approveAndPublishModule8WebsiteVideo()">✅ Website Kullanımı İçin Onayla & Yayınla</button>
+            </div>
+          </div>
+          <div id="m8_web_status_box" style="margin-top:8px; font-size:12px; color:#34D399;"></div>
+        </div>
       </div>
 
       <!-- AKTİF SİTE TASARIM & RENK PALETİ HIZLI KONTROLÜ -->
@@ -4311,6 +4346,109 @@ function toggleParentFullscreen() {
     window.parent.toggleInAppFullscreen();
   }
 }
+
+// ══════════════════════════════════════════════════════════
+// MODULE 8.5: NON-INVASIVE WEBSITE PREMIUM FILM (16:9) INTEGRATION
+// ══════════════════════════════════════════════════════════
+let module8WebsiteVideos = [];
+
+async function loadModule8WebsiteVideos() {
+  try {
+    const res = await fetch('/api/module1-content?action=module8-website-videos', { cache: 'no-store' });
+    const data = await res.json().catch(() => ({}));
+    const card = document.getElementById('module8WebsiteVideoCard');
+    if (data.feature_enabled === false) {
+      if (card) card.style.display = 'none';
+      return;
+    }
+    module8WebsiteVideos = Array.isArray(data.videos) ? data.videos : [];
+    const sel = document.getElementById('m8_web_video_select');
+    if (!sel) return;
+    sel.innerHTML = '<option value="">— Modül 8 Website Premium Film Seçin (Opsiyonel) —</option>' +
+      module8WebsiteVideos.map(v =>
+        `<option value="${v.video_output_id}">[16:9 ${v.resolution}] ${v.video_output_id} — Ürün: ${v.product_slug || v.product_id} (${v.duration} sn)</option>`
+      ).join('');
+  } catch (_) {
+    // Fault isolation: never disrupt Module 1 if Module 8 is unreachable
+  }
+}
+
+function onModule8WebsiteVideoSelectChange() {
+  const sel = document.getElementById('m8_web_video_select');
+  const slugInput = document.getElementById('m8_web_target_slug');
+  if (!sel || !slugInput) return;
+  const v = module8WebsiteVideos.find(item => item.video_output_id === sel.value);
+  if (v && !slugInput.value.trim()) {
+    slugInput.value = v.product_slug || v.product_id || 'anasayfa_vitrin';
+  }
+}
+
+function previewSelectedModule8WebsiteVideo() {
+  const sel = document.getElementById('m8_web_video_select');
+  if (!sel || !sel.value) {
+    showToast('Lütfen önce listeden bir Modül 8 Website Premium Film (16:9) seçin.', 'info');
+    return;
+  }
+  const v = module8WebsiteVideos.find(item => item.video_output_id === sel.value);
+  if (!v || !v.public_url) return;
+  const extInput = document.getElementById('h_video_external_url');
+  const hiddenInput = document.getElementById('h_video_url');
+  if (extInput) extInput.value = v.public_url;
+  if (hiddenInput) hiddenInput.value = v.public_url;
+  if (typeof showVideoPreviewBox === 'function') {
+    showVideoPreviewBox(
+      v.public_url,
+      `${v.video_output_id} (${v.resolution})`,
+      `✓ Modül 8 Website Premium Film (16:9 • ${v.duration} sn • Ürün: ${v.product_slug || v.product_id})`
+    );
+  }
+  showToast('🎬 Modül 8 Website Premium Film önizleme oynatıcısına yüklendi.', 'success');
+}
+
+async function approveAndPublishModule8WebsiteVideo() {
+  const sel = document.getElementById('m8_web_video_select');
+  const slugInput = document.getElementById('m8_web_target_slug');
+  const applyHome = document.getElementById('m8_web_apply_home')?.checked !== false;
+  const statusBox = document.getElementById('m8_web_status_box');
+
+  if (!sel || !sel.value) {
+    showToast('Lütfen onaylamak için bir Modül 8 Website Premium Film seçin.', 'info');
+    return;
+  }
+  const v = module8WebsiteVideos.find(item => item.video_output_id === sel.value);
+  if (!v) return;
+
+  const targetSlug = (slugInput?.value || v.product_slug || v.product_id || 'anasayfa_vitrin').trim();
+  try {
+    const res = await fetch('/api/module1-content', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'approve-module8-website-video',
+        product_slug: targetSlug,
+        apply_to_homepage: applyHome,
+        video: v
+      })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || 'Website video onayı tamamlanamadı.');
+    }
+    if (applyHome) {
+      previewSelectedModule8WebsiteVideo();
+    }
+    if (statusBox) {
+      statusBox.textContent = `✅ Onaylandı & Yayınlandı: ${v.video_output_id} → Ürün/Vitrin: ${targetSlug} (${v.resolution}, ${v.duration} sn)`;
+    }
+    showToast(`✅ Modül 8 Website Premium Film (${v.video_output_id}) onaylandı ve yayına alındı!`, 'success');
+  } catch (err) {
+    showToast('Hata: ' + err.message, 'error');
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadModule8WebsiteVideos();
+});
 </script>
 
 </body>

@@ -445,6 +445,8 @@
   let currentCampaign = null;
   let currentPlatformFilter = 'ALL';
   let tiktokConnection = { code: 'missing_credentials', label: 'Hesap bilgileri eksik', canPublish: false };
+  let module8VideosList = [];
+  let module8DistributionEnabled = true;
 
   function escapeHtml(str) {
     return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -507,9 +509,10 @@
         onSourceSelectionChange();
       }
 
-      // Platform bağlantı durumunu ve kampanyaları yükle
+      // Platform bağlantı durumunu, kampanyaları ve opsiyonel Modül 8 videolarını yükle
       await Promise.all([
         loadPlatformHealth(),
+        loadModule8Videos(),
         loadCampaigns()
       ]);
     } catch (err) {
@@ -601,6 +604,58 @@
         $('hd_tiktok').textContent = p.tiktok.description || 'TikTok bağlantısı bekleniyor; içerik üretimi aktif.';
       }
     } catch {}
+  }
+
+  async function loadModule8Videos() {
+    try {
+      const res = await apiRequest('/api/module2?action=module8-videos');
+      module8DistributionEnabled = res.feature_enabled !== false;
+      module8VideosList = Array.isArray(res.videos) ? res.videos : [];
+    } catch {
+      // Fault isolation: if Module 8 endpoint is unavailable, Module 2 continues without interruption
+      module8VideosList = [];
+    }
+  }
+
+  async function attachSelectedModule8Video(itemId) {
+    const sel = $(`m8_sel_${itemId}`);
+    const selectedVideoId = sel ? sel.value : '';
+    if (!selectedVideoId) {
+      return detachModule8Video(itemId);
+    }
+    const videoObj = module8VideosList.find(v => v.video_output_id === selectedVideoId);
+    if (!videoObj) {
+      return showCustomToast('Seçilen Modül 8 videosu bulunamadı.', 'warning');
+    }
+    try {
+      await apiRequest('/api/module2?action=attach-module8-video', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: itemId,
+          video: videoObj
+        })
+      });
+      showCustomToast(`✅ Modül 8 videosu (${videoObj.video_output_id}) metin ve prompt korunarak bağlandı.`, 'success');
+      await loadCampaigns();
+    } catch (err) {
+      showCustomToast(err.message, 'error');
+    }
+  }
+
+  async function detachModule8Video(itemId) {
+    try {
+      await apiRequest('/api/module2?action=attach-module8-video', {
+        method: 'POST',
+        body: JSON.stringify({
+          item_id: itemId,
+          detach: true
+        })
+      });
+      showCustomToast('↩ Varsayılan Modül 2 medya kaynağına dönüldü.', 'info');
+      await loadCampaigns();
+    } catch (err) {
+      showCustomToast(err.message, 'error');
+    }
   }
 
   async function loadCampaigns() {
@@ -875,6 +930,48 @@
         Bu TikTok video paketi ve 5 sahneli senaryosu tamamen hazırlandı. TikTok hesap kurtarma ve API yetkilendirmesi tamamlandığında yayın kuyruğuna gönderilebilir. (Instagram, Facebook ve YouTube yayınları bu durumdan etkilenmez.)
       </div>` : '';
 
+    // Module 8.5 Non-Invasive Optional Video Source Selector & Inline Video Preview
+    const attachedM8 = item.asset_ref?.source === 'module8' ? item.asset_ref : null;
+    const compatibleM8Videos = module8VideosList.filter(v =>
+      !v.platform_profile || v.platform_profile === item.platform || v.platform_profile === 'instagram'
+    );
+    const activeVideoUrl = attachedM8?.public_url || (typeof item.cover_url === 'string' && item.cover_url.endsWith('.mp4') ? item.cover_url : '');
+    const module8SectionHtml = module8DistributionEnabled ? `
+      <div style="margin-top:12px; padding:10px 12px; background:rgba(56,189,248,0.06); border:1px solid rgba(56,189,248,0.28); border-radius:10px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:11.5px; font-weight:800; color:#38bdf8;">
+            🎬 Modül 8 (3D Creative Studio) Video Kaynağı Seçimi <span style="font-weight:500; color:#94a3b8;">(Opsiyonel — Mevcut AI Metin & Prompt Korunur)</span>
+          </div>
+          ${attachedM8 ? `
+            <span style="font-size:10.5px; background:rgba(16,185,129,0.18); color:#6ee7b7; border:1px solid rgba(16,185,129,0.4); padding:2px 8px; border-radius:999px; font-weight:700;">
+              ✓ Modül 8 Videosu Bağlı: ${escapeHtml(attachedM8.video_output_id)} (${escapeHtml(attachedM8.resolution)} • ${escapeHtml(attachedM8.duration)}sn)
+            </span>` : ''}
+        </div>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px;">
+          <select id="m8_sel_${item.id}" style="flex:1; min-width:220px; background:#070d19; color:#fff; border:1px solid #2e3e56; border-radius:7px; padding:6px 10px; font-size:11.5px;">
+            <option value="">— Mevcut Modül 2 Medya / Görsel Kaynağını Kullan (Varsayılan) —</option>
+            ${compatibleM8Videos.map(v => `
+              <option value="${escapeHtml(v.video_output_id)}" ${attachedM8?.video_output_id === v.video_output_id ? 'selected' : ''}>
+                [${escapeHtml((v.platform_profile || '').toUpperCase())} ${escapeHtml(v.resolution)}] ${escapeHtml(v.video_output_id)} — Ürün: ${escapeHtml(v.product_slug || v.product_id)} (${escapeHtml(v.duration)} sn)
+              </option>
+            `).join('')}
+          </select>
+          <button class="btn sm" onclick="attachSelectedModule8Video('${item.id}')">🔗 Modül 8 Videosunu Bağla</button>
+          ${attachedM8 ? `<button class="btn sm rose" onclick="detachModule8Video('${item.id}')">↩ Varsayılan Medyaya Dön</button>` : ''}
+        </div>
+        ${activeVideoUrl ? `
+          <div style="margin-top:10px; display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; background:#050911; padding:8px 10px; border-radius:8px; border:1px solid #1e293b;">
+            <video src="${escapeHtml(activeVideoUrl)}" controls preload="metadata" style="max-width:200px; max-height:180px; border-radius:6px; background:#000;"></video>
+            <div style="font-size:11px; color:#cbd5e1; line-height:1.5;">
+              <div><strong style="color:#fde68a;">Modül 8 Video Önizleme:</strong></div>
+              <div>• <strong>Video ID:</strong> ${escapeHtml(attachedM8?.video_output_id || 'MP4')}</div>
+              <div>• <strong>Sinematik Proje:</strong> ${escapeHtml(attachedM8?.cinematic_project_id || '-')}</div>
+              <div>• <strong>Format & Çözünürlük:</strong> ${escapeHtml((attachedM8?.encoding_format || 'mp4').toUpperCase())} • ${escapeHtml(attachedM8?.resolution || item.resolution)} • ${escapeHtml(attachedM8?.duration || item.duration_seconds || 8)} sn</div>
+              <div style="color:#6ee7b7; margin-top:4px;">✓ Gönderi metni, hashtag seti ve katmanlı AI promptu değiştirilmeden korundu.</div>
+            </div>
+          </div>` : ''}
+      </div>` : '';
+
     return `
       <div class="deliverable-card" id="deliv_${item.id}">
         <div class="deliv-top">
@@ -890,6 +987,7 @@
 
         ${tiktokWarningBanner}
 
+        ${module8SectionHtml}
         ${slidesHtml}
         ${scenesHtml}
 

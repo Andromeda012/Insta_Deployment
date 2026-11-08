@@ -22,6 +22,7 @@ const {
   validateSafeFilePath,
   parseAndValidateResolution,
   validateSamples,
+  inspectMp4VideoBuffer,
   ALLOWED_MODEL_EXTENSIONS
 } = require('./blender-runner.js');
 
@@ -211,6 +212,16 @@ class RenderWorkerDaemon {
     if (this.activeJobId) {
       throw new Error(`WORKER_BUSY: Already processing job ${this.activeJobId}.`);
     }
+
+    // Explicitly refuse AI 3D reconstruction jobs (Tripo H3.1) so Blender Worker never interferes
+    if (
+      job.selected_engine === 'ai_3d_recon' ||
+      ['3d_reconstruction', 'image_to_3d', 'photogrammetry'].includes(job.production_type)
+    ) {
+      console.warn(`[WORKER] Skipping AI 3D Reconstruction job (${job.id}) — handled by Tripo H3.1 Reconstruction Engine, not Blender Worker.`);
+      return false;
+    }
+
     const attemptKey = `${job.id}:attempt:${Number(job.retry_count || 0)}`;
     if (this.processedJobIds.has(job.id) || this.processedJobIds.has(attemptKey) || ['completed', 'cancelled', 'failed'].includes(job.status)) {
       console.warn(`[WORKER] Skipping already processed or terminal job: ${job.id} (status: ${job.status})`);
@@ -218,10 +229,26 @@ class RenderWorkerDaemon {
     }
 
     this.activeJobId = job.id;
+    const rawParams = {
+      ...(job.config_params || {}),
+      ...(job.parameters || {}),
+      ...(job.render_settings || {})
+    };
+    const isVideoJob =
+      job.production_type === 'multi_platform_video' ||
+      job.jobType === 'multi_platform_video' ||
+      rawParams.is_video_render === true ||
+      rawParams.output_format === 'mp4';
+
     // Generate a clean cryptographic UUID for temp file — NEVER use raw job.id in file paths!
     const fileUuid = crypto.randomUUID();
-    const safeFileName = `render_${fileUuid}.jpg`;
+    const safeFileName = isVideoJob
+      ? `video_${rawParams.platform || 'website'}_${fileUuid}.mp4`
+      : `render_${fileUuid}.jpg`;
     const outputPath = validateSafeFilePath(path.join(this.tempDir, safeFileName), this.tempDir);
+    const previewFramePath = isVideoJob
+      ? validateSafeFilePath(path.join(this.tempDir, `preview_${fileUuid}.jpg`), this.tempDir)
+      : null;
 
     try {
       // 1. Validate scene input first (rejects missing/unsupported 3D inputs immediately)
@@ -237,11 +264,7 @@ class RenderWorkerDaemon {
       }
 
       // 2. Validate render parameters (width, height, samples)
-      const params = {
-        ...(job.config_params || {}),
-        ...(job.parameters || {}),
-        ...(job.render_settings || {})
-      };
+      const params = rawParams;
       let dimensions;
       let samples;
       try {
@@ -261,20 +284,46 @@ class RenderWorkerDaemon {
       // 3. Initial heartbeat -> status 'processing'
       await this.client.updateProgress(job.id, 10, 'processing', 'Render Worker doğrulandı ve sahne işlenmeye başlandı.');
 
-      // 4. Execute Blender render
-      const renderResult = await this.runner.renderScene(
-        {
-          mode: sceneSpec.mode,
-          modelPath: sceneSpec.modelPath,
-          samples,
-          width: dimensions.width,
-          height: dimensions.height,
-          outputPath
-        },
-        async (percent, message) => {
-          await this.client.updateProgress(job.id, percent, 'processing', message).catch(() => null);
-        }
-      );
+      // 4. Execute Blender render (Video MP4 or Still JPEG)
+      const renderResult = isVideoJob
+        ? await this.runner.renderPlatformVideo(
+            {
+              project_id: params.project_id || 'vproj_default',
+              platform: params.platform || 'website',
+              aspect_ratio: params.aspect_ratio || (dimensions.width > dimensions.height ? '16:9' : '9:16'),
+              sensor_fit: params.sensor_fit || (dimensions.width > dimensions.height ? 'HORIZONTAL' : 'VERTICAL'),
+              input_blend_path: sceneSpec.modelPath,
+              output_mp4_path: outputPath,
+              preview_frame_path: previewFramePath,
+              width_px: dimensions.width,
+              height_px: dimensions.height,
+              fps: params.fps || 24,
+              samples,
+              frame_start: params.frame_start || 1,
+              frame_end: params.frame_end || 24,
+              total_frames: params.total_frames || 24,
+              duration_sec: params.duration_sec || 4.0,
+              shots: params.shots || [],
+              master_keyframes: params.master_keyframes || [],
+              editing_settings: params.editing_settings || {}
+            },
+            async (percent, message) => {
+              await this.client.updateProgress(job.id, percent, 'processing', message).catch(() => null);
+            }
+          )
+        : await this.runner.renderScene(
+            {
+              mode: sceneSpec.mode,
+              modelPath: sceneSpec.modelPath,
+              samples,
+              width: dimensions.width,
+              height: dimensions.height,
+              outputPath
+            },
+            async (percent, message) => {
+              await this.client.updateProgress(job.id, percent, 'processing', message).catch(() => null);
+            }
+          );
 
       // 5. Reject simulated outputs from being uploaded as real production assets
       if (renderResult.simulated && (this.isProduction || !this.allowSimulatedUploads)) {
@@ -288,14 +337,21 @@ class RenderWorkerDaemon {
         throw new Error('RENDER_OUTPUT_MISSING: Expected output file does not exist on disk.');
       }
       const stats = fs.statSync(outputPath);
-      if (stats.size < 100 || stats.size > MAX_UPLOAD_BYTES) {
+      if (stats.size < 36 || stats.size > MAX_UPLOAD_BYTES) {
         throw new Error(`RENDER_OUTPUT_SIZE_INVALID: Output size (${stats.size} bytes) is outside safe upload bounds.`);
       }
 
       const fileBytes = fs.readFileSync(outputPath);
-      // Verify JPEG SOI magic bytes (0xFF 0xD8 0xFF)
-      if (fileBytes.length < 3 || fileBytes[0] !== 0xFF || fileBytes[1] !== 0xD8 || fileBytes[2] !== 0xFF) {
-        throw new Error('RENDER_OUTPUT_INVALID_JPEG: Output file failed JPEG header signature verification.');
+      if (isVideoJob) {
+        const mp4Check = inspectMp4VideoBuffer(fileBytes);
+        if (!mp4Check.valid) {
+          throw new Error(`RENDER_OUTPUT_INVALID_MP4: ${mp4Check.reason}`);
+        }
+      } else {
+        // Verify JPEG SOI magic bytes (0xFF 0xD8 0xFF)
+        if (fileBytes.length < 3 || fileBytes[0] !== 0xFF || fileBytes[1] !== 0xD8 || fileBytes[2] !== 0xFF) {
+          throw new Error('RENDER_OUTPUT_INVALID_JPEG: Output file failed JPEG header signature verification.');
+        }
       }
 
       const fileBase64 = fileBytes.toString('base64');
@@ -303,23 +359,28 @@ class RenderWorkerDaemon {
       // 7. Transition job status to 'uploading' before Storage upload
       await this.client.updateProgress(job.id, 90, 'uploading', 'Render tamamlandı; çıktı Supabase Storage\'a yükleniyor...');
 
-      // 8. Upload rendered image via RenderWorkerClient with job_id correlation & duplicate protection
+      // 8. Upload rendered asset via RenderWorkerClient with job_id correlation & duplicate protection
       const uploadData = await this.client.uploadAsset({
         job_id: job.id,
         file_base64: fileBase64,
         file_name: safeFileName,
-        mime_type: 'image/jpeg',
+        mime_type: isVideoJob ? 'video/mp4' : 'image/jpeg',
         expected_size_bytes: stats.size,
-        asset_type: 'render_frame',
+        asset_type: isVideoJob ? 'video_render' : 'render_frame',
+        custom_storage_path: params.video_storage_path || null,
         product_slug: job.product_slug || null,
         collection_id: job.collection_id || null,
         source_asset_id: job.source_asset_id || null,
         metadata: {
           job_id: job.id,
+          platform: params.platform || null,
           samples,
           width: dimensions.width,
           height: dimensions.height,
           resolution: dimensions.label,
+          fps: isVideoJob ? (params.fps || 24) : null,
+          duration_sec: isVideoJob ? (params.duration_sec || null) : null,
+          encoding_format: isVideoJob ? 'mp4' : 'jpg',
           device: 'CPU',
           threads: renderResult.threads || 1,
           cpu_seconds: renderResult.durationSeconds,
@@ -336,16 +397,17 @@ class RenderWorkerDaemon {
         [
           {
             asset_id: verifiedAsset.id,
-            output_type: 'hero_still',
+            output_type: isVideoJob ? 'platform_video' : 'hero_still',
+            platform: params.platform || null,
             storage_path: verifiedAsset.storage_path,
             public_url: verifiedAsset.public_url || '',
             file_name: verifiedAsset.file_name || safeFileName,
-            file_format: 'jpg',
+            file_format: isVideoJob ? 'mp4' : 'jpg',
             file_size_bytes: stats.size,
             width_px: dimensions.width,
             height_px: dimensions.height,
             resolution_label: dimensions.label,
-            duration_seconds: null
+            duration_seconds: isVideoJob ? (params.duration_sec || null) : null
           }
         ],
         {
@@ -380,6 +442,9 @@ class RenderWorkerDaemon {
       this.activeJobId = null;
       if (fs.existsSync(outputPath)) {
         try { fs.unlinkSync(outputPath); } catch {}
+      }
+      if (previewFramePath && fs.existsSync(previewFramePath)) {
+        try { fs.unlinkSync(previewFramePath); } catch {}
       }
     }
   }
