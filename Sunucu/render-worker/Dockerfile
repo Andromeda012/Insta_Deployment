@@ -1,8 +1,8 @@
 # ============================================================================
-# GLOBAL MOBİLYA — MODÜL 8 RENDER WORKER DOCKERFILE
+# GLOBAL MOBİLYA — MODÜL 8 RENDER WORKER DOCKERFILE (PRODUCTION HARDENED)
 # ============================================================================
-# Blender 4.x Headless + Node.js 22 Execution Environment
-# Security: Non-root user, minimal package footprint, isolated network.
+# Blender 4.2 LTS Headless + Node.js 22 Execution Environment
+# Security: Non-root user, fail-fast dependency install, verified Blender binary.
 # ============================================================================
 
 FROM debian:bookworm-slim
@@ -34,31 +34,32 @@ RUN curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install -y --no-install-recommends nodejs \
     && rm -rf /var/lib/apt/lists/*
 
-# 3. Optional automated Blender 4.2 LTS headless download (can be skipped during dry-run build)
-ARG INSTALL_BLENDER=false
+# 3. Install and verify Blender 4.2 LTS headless binary
+ARG INSTALL_BLENDER=true
 RUN if [ "$INSTALL_BLENDER" = "true" ]; then \
-      echo "Downloading Blender 4.2 LTS headless..." \
+      echo "Downloading Blender 4.2.0 LTS headless..." \
       && curl -fsSL https://download.blender.org/release/Blender4.2/blender-4.2.0-linux-x64.tar.xz -o /tmp/blender.tar.xz \
       && tar -xJf /tmp/blender.tar.xz -C /opt \
       && ln -s /opt/blender-4.2.0-linux-x64/blender /usr/local/bin/blender \
-      && rm -f /tmp/blender.tar.xz ; \
+      && rm -f /tmp/blender.tar.xz \
+      && blender --version ; \
     fi
 
 # 4. Create non-root render user
 RUN useradd -m -u 1001 -s /bin/bash renderbot
 
-# 5. Setup working directory
+# 5. Setup working directory & strict dependency install (fail-fast on error)
 WORKDIR /app
 COPY package*.json ./
-RUN npm install --omit=dev || true
+RUN npm install --omit=dev
 
 COPY --chown=renderbot:renderbot . .
 
 USER renderbot
 
-# 6. Container Healthcheck
-HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD node -e "process.exit(0)"
+# 6. Comprehensive Container Healthcheck (verifies config, Blender binary, and host health)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+    CMD ["node", "healthcheck.js"]
 
 ENTRYPOINT ["dumb-init", "--"]
 CMD ["node", "worker-daemon.js"]

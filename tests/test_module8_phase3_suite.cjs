@@ -98,12 +98,13 @@ async function runSuite() {
     assert.strictEqual(runner.device, 'CPU');
   });
 
-  await runAsyncTest('BlenderRunner executes scene rendering in simulation mode cleanly', async () => {
-    const runner = new BlenderRunner({ threads: 1 });
+  await runAsyncTest('BlenderRunner executes scene rendering in explicit dev simulation mode cleanly', async () => {
+    const runner = new BlenderRunner({ threads: 1, nodeEnv: 'development', allowSimulation: true, allowedTempDir: ROOT_DIR });
     const tmpOut = path.join(ROOT_DIR, 'tmp_bench_out.jpg');
 
     const progressUpdates = [];
     const res = await runner.renderScene({
+      mode: 'benchmark',
       outputPath: tmpOut,
       samples: 16,
       resolution: 400

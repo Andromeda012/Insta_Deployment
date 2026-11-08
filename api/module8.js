@@ -173,7 +173,7 @@ async function supabaseRequest(path, options = {}) {
   return { ok: res.ok, status: res.status, data: json };
 }
 
-// ── 5. RESILIENT STORE FALLBACK (FOR DEV & BEFORE RELATIONAL MIGRATION RUNS) ─
+// ── 5. RESILIENT STORE & ATOMIC MUTEX LOCK (PREVENTS CONCURRENT RACE) ────────
 let inMemoryStudioStore = {
   media_assets: [],
   production_jobs: [],
@@ -184,6 +184,38 @@ let inMemoryStudioStore = {
   production_costs: []
 };
 
+// Serializes concurrent claim / update / complete operations within the same process
+let storeMutexPromise = Promise.resolve();
+function withStoreLock(fn) {
+  const next = storeMutexPromise.then(() => fn(), () => fn());
+  storeMutexPromise = next.catch(() => {});
+  return next;
+}
+
+function normalizeJobRecord(job) {
+  if (!job || typeof job !== 'object') return job;
+  const mergedSettings = {
+    ...(job.config_params || {}),
+    ...(job.render_settings || {})
+  };
+  job.id = job.id || job.job_id;
+  job.job_id = job.id;
+  job.input_model_path = job.input_model_path ?? mergedSettings.input_model_path ?? mergedSettings.model_path ?? null;
+  job.output_render_path = job.output_render_path ?? null;
+  job.output_public_url = job.output_public_url ?? null;
+  job.render_settings = mergedSettings;
+  job.config_params = mergedSettings;
+  job.worker_id = job.worker_id ?? null;
+  job.lease_expires_at = job.lease_expires_at ?? null;
+  job.retry_count = Number(job.retry_count || 0);
+  job.max_retries = Number(job.max_retries ?? 3);
+  job.error_code = job.error_code ?? null;
+  job.error_message = job.error_message ?? null;
+  job.started_at = job.started_at ?? null;
+  job.completed_at = job.completed_at ?? null;
+  return job;
+}
+
 async function readStudioStore() {
   try {
     const res = await supabaseRequest(`/rest/v1/site_settings?key=eq.${SETTINGS_STUDIO_STORE_KEY}&select=data`);
@@ -193,13 +225,22 @@ async function readStudioStore() {
         ...res.data[0].data,
         scene_templates: res.data[0].data.scene_templates?.length ? res.data[0].data.scene_templates : DEFAULT_SCENE_TEMPLATES
       };
+      if (Array.isArray(inMemoryStudioStore.production_jobs)) {
+        inMemoryStudioStore.production_jobs.forEach(normalizeJobRecord);
+      }
       return inMemoryStudioStore;
     }
   } catch {}
+  if (Array.isArray(inMemoryStudioStore.production_jobs)) {
+    inMemoryStudioStore.production_jobs.forEach(normalizeJobRecord);
+  }
   return inMemoryStudioStore;
 }
 
 async function writeStudioStore(store) {
+  if (Array.isArray(store.production_jobs)) {
+    store.production_jobs.forEach(normalizeJobRecord);
+  }
   inMemoryStudioStore = store;
   try {
     return await supabaseRequest('/rest/v1/site_settings', {
@@ -225,7 +266,7 @@ async function handleOverview(req, res) {
   const media = store.media_assets || [];
   const models = store.three_d_assets || [];
 
-  const activeJobs = jobs.filter(j => ['queued', 'processing', 'rendering', 'encoding', 'quality_check'].includes(j.status));
+  const activeJobs = jobs.filter(j => ['pending', 'queued', 'processing', 'rendering', 'uploading', 'encoding', 'quality_check'].includes(j.status));
   const completedJobs = jobs.filter(j => j.status === 'completed');
   const failedJobs = jobs.filter(j => j.status === 'failed');
 
@@ -394,86 +435,142 @@ async function handleUpload(req, res) {
     return res.status(400).json({ ok: false, success: false, error: '3D/Blender dosya boyutu en fazla 150MB olabilir.' });
   }
 
-  // 4. Generate Safe, Collision-Free Storage Path (Never overwrite original!)
+  // 4. Generate Safe, Collision-Free Storage Path & Prevent Duplicate Files per Job
+  const correlatedJobId = body.job_id || metadata?.job_id || null;
   const safeSlug = (product_slug || collection_id || 'general').replace(/[^a-zA-Z0-9_-]/g, '_');
   const safeType = asset_type.replace(/[^a-zA-Z0-9_-]/g, '_');
   const randomSuffix = Math.random().toString(36).slice(2, 8);
-  const storagePath = `studio/${safeType}/${safeSlug}/${Date.now()}-${randomSuffix}.${cleanExt}`;
 
-  // 5. Upload to Supabase Storage Bucket 'media'
+  let storagePath;
+  let useUpsert = 'false';
+  let resolvedFileName = file_name;
+
+  if (correlatedJobId && typeof correlatedJobId === 'string') {
+    const safeJobKey = correlatedJobId.trim().replace(/[^a-zA-Z0-9_-]/g, '_');
+    resolvedFileName = `render_${safeJobKey}.${cleanExt}`;
+    storagePath = `studio/${safeType}/${safeSlug}/${resolvedFileName}`;
+    useUpsert = 'true'; // Idempotent overwrite if the same job is re-rendered after retry
+  } else {
+    storagePath = `studio/${safeType}/${safeSlug}/${Date.now()}-${randomSuffix}.${cleanExt}`;
+  }
+
+  // 5. Upload to Supabase Storage Bucket 'media' with Controlled Retry
   const uploadUrl = `${SUPABASE_URL}/storage/v1/object/media/${storagePath}`;
-  const uploadRes = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': mime_type,
-      'x-upsert': 'false'
-    },
-    body: buffer
-  });
+  let uploadRes = null;
+  let uploadErrText = '';
+  const maxStorageRetries = 3;
 
-  if (!uploadRes.ok) {
-    const uploadErr = await uploadRes.text();
+  for (let attempt = 1; attempt <= maxStorageRetries; attempt++) {
+    try {
+      uploadRes = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          apikey: SERVICE_KEY,
+          Authorization: `Bearer ${SERVICE_KEY}`,
+          'Content-Type': mime_type,
+          'x-upsert': useUpsert
+        },
+        body: buffer
+      });
+      if (uploadRes.ok) {
+        break;
+      }
+      uploadErrText = await uploadRes.text().catch(() => uploadRes.statusText);
+      if (uploadRes.status < 500 && uploadRes.status !== 429) {
+        break; // Non-retryable 4xx error
+      }
+    } catch (netErr) {
+      uploadErrText = netErr.message || 'Storage network error';
+    }
+    if (attempt < maxStorageRetries) {
+      await new Promise(r => setTimeout(r, 200 * Math.pow(2, attempt - 1)));
+    }
+  }
+
+  if (!uploadRes || !uploadRes.ok) {
     return res.status(502).json({
       ok: false,
       success: false,
-      error: `Depolama sunucusuna yükleme başarısız oldu: ${uploadErr || uploadRes.statusText}`
+      error: `Depolama sunucusuna yükleme başarısız oldu: ${uploadErrText || uploadRes?.statusText || 'Bilinmeyen hata'}`
     });
   }
 
   const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
 
-  // 6. Save Asset Record
-  const store = await readStudioStore();
-  const newAsset = {
-    id: 'ast-' + Date.now() + '-' + randomSuffix,
-    product_slug: product_slug || null,
-    collection_id: collection_id || null,
-    asset_type,
-    storage_path: storagePath,
-    public_url: publicUrl,
-    file_name,
-    mime_type,
-    file_size_bytes: fileSize,
-    width_px: metadata.width || null,
-    height_px: metadata.height || null,
-    duration_seconds: metadata.duration || null,
-    source_asset_id: source_asset_id || null,
-    metadata: {
-      ...metadata,
-      uploaded_by_role: 'production_manager',
-      storage_bucket: 'media'
-    },
-    version: 1,
-    is_approved: false,
-    created_at: new Date().toISOString()
-  };
+  // 6. Save Asset Record (Deduplicate if re-uploading for the same job_id)
+  return await withStoreLock(async () => {
+    const store = await readStudioStore();
+    store.media_assets = store.media_assets || [];
 
-  store.media_assets = store.media_assets || [];
-  store.media_assets.push(newAsset);
-  await writeStudioStore(store);
+    const existingJobAssetIdx = correlatedJobId
+      ? store.media_assets.findIndex(a =>
+          (a.job_id === correlatedJobId || a.metadata?.job_id === correlatedJobId) &&
+          a.asset_type === asset_type
+        )
+      : -1;
 
-  return res.status(201).json({
-    ok: true,
-    success: true,
-    asset: newAsset,
-    data: newAsset
+    const existingAsset = existingJobAssetIdx >= 0 ? store.media_assets[existingJobAssetIdx] : null;
+    const newAsset = {
+      id: existingAsset ? existingAsset.id : ('ast-' + Date.now() + '-' + randomSuffix),
+      job_id: correlatedJobId,
+      product_slug: product_slug || null,
+      collection_id: collection_id || null,
+      asset_type,
+      storage_path: storagePath,
+      public_url: publicUrl,
+      file_name: resolvedFileName,
+      mime_type,
+      file_size_bytes: fileSize,
+      width_px: metadata.width || null,
+      height_px: metadata.height || null,
+      duration_seconds: metadata.duration || null,
+      source_asset_id: source_asset_id || null,
+      metadata: {
+        ...metadata,
+        job_id: correlatedJobId,
+        uploaded_by_role: isWorker ? 'render_worker' : 'production_manager',
+        storage_bucket: 'media'
+      },
+      version: existingAsset ? (Number(existingAsset.version || 1) + 1) : 1,
+      is_approved: existingAsset ? Boolean(existingAsset.is_approved) : false,
+      created_at: existingAsset ? existingAsset.created_at : new Date().toISOString(),
+      updated_at: new Date().toISOString()
+    };
+
+    if (existingJobAssetIdx >= 0) {
+      store.media_assets[existingJobAssetIdx] = newAsset;
+    } else {
+      store.media_assets.push(newAsset);
+    }
+
+    await writeStudioStore(store);
+
+    return res.status(201).json({
+      ok: true,
+      success: true,
+      asset: newAsset,
+      data: newAsset
+    });
   });
 }
 
 // Action: Production Jobs (Creation, Query, Cancellation)
 async function handleJobs(req, res) {
-  const store = await readStudioStore();
-
   if (req.method === 'GET') {
-    let jobs = store.production_jobs || [];
+    const store = await readStudioStore();
+    let jobs = (store.production_jobs || []).map(normalizeJobRecord);
     const statusFilter = req.query?.status;
     const prodFilter = req.query?.product_slug;
     const colFilter = req.query?.collection_id;
     const engineFilter = req.query?.selected_engine || req.query?.engine;
 
-    if (statusFilter && statusFilter !== 'ALL') jobs = jobs.filter(j => j.status === statusFilter);
+    if (statusFilter && statusFilter !== 'ALL') {
+      if (statusFilter === 'pending' || statusFilter === 'queued') {
+        jobs = jobs.filter(j => j.status === statusFilter || (statusFilter === 'pending' && j.status === 'queued'));
+      } else {
+        jobs = jobs.filter(j => j.status === statusFilter);
+      }
+    }
     if (prodFilter) jobs = jobs.filter(j => j.product_slug === prodFilter);
     if (colFilter) jobs = jobs.filter(j => j.collection_id === colFilter);
     if (engineFilter) jobs = jobs.filter(j => j.selected_engine === engineFilter);
@@ -485,7 +582,11 @@ async function handleJobs(req, res) {
     await authenticateRoles(req, ['admin', 'production_manager']).catch(() => null);
     const body = req.body || {};
     const prodType = body.production_type || body.jobType || body.job_type;
-    const selectedEngine = body.selected_engine || body.engine || (prodType === '3d_render' ? 'blender_headless' : 'ai_enhancer');
+    const selectedEngine = body.selected_engine || body.engine || (
+      ['3d_render', 'blender_render', 'cinematic_render', 'benchmark_test'].includes(prodType)
+        ? 'blender_headless'
+        : 'ai_enhancer'
+    );
 
     if (!prodType || !selectedEngine) {
       return res.status(400).json({ ok: false, success: false, error: 'production_type ve selected_engine zorunludur.' });
@@ -496,55 +597,84 @@ async function handleJobs(req, res) {
       return res.status(400).json({ ok: false, success: false, error: `Bilinmeyen üretim motoru: ${selectedEngine}` });
     }
 
-    const idempotencyKey = body.idempotency_key || body.idempotencyKey || `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-    const existing = (store.production_jobs || []).find(j => (j.idempotency_key || j.idempotencyKey) === idempotencyKey);
-    if (existing) {
-      return res.status(200).json({ ok: true, success: true, job: existing, data: existing, note: 'idempotent_duplicate' });
-    }
+    return await withStoreLock(async () => {
+      const store = await readStudioStore();
+      const idempotencyKey = body.idempotency_key || body.idempotencyKey || `job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const existing = (store.production_jobs || []).find(j => (j.idempotency_key || j.idempotencyKey) === idempotencyKey);
+      if (existing) {
+        normalizeJobRecord(existing);
+        return res.status(200).json({ ok: true, success: true, job: existing, data: existing, note: 'idempotent_duplicate' });
+      }
 
-    const newJob = {
-      id: 'job-' + Date.now(),
-      product_slug: body.product_slug || body.productId || null,
-      collection_id: body.collection_id || null,
-      source_asset_id: body.source_asset_id || null,
-      title: body.title || `${prodType} - ${selectedEngine}`,
-      production_type: prodType,
-      jobType: prodType,
-      selected_engine: selectedEngine,
-      config_params: body.config_params || body.parameters || {},
-      status: 'queued',
-      progress_percent: 0,
-      idempotency_key: idempotencyKey,
-      idempotencyKey: idempotencyKey,
-      retry_count: 0,
-      max_retries: body.max_retries || 3,
-      error_message: null,
-      error_details: null,
-      started_at: null,
-      completed_at: null,
-      created_at: new Date().toISOString()
-    };
+      const rawSettings = {
+        ...(body.config_params || {}),
+        ...(body.parameters || {}),
+        ...(body.render_settings || {})
+      };
+      const inputModelPath = body.input_model_path || rawSettings.input_model_path || rawSettings.model_path || null;
+      if (inputModelPath && !rawSettings.model_path) {
+        rawSettings.model_path = inputModelPath;
+      }
 
-    store.production_jobs = store.production_jobs || [];
-    store.production_jobs.push(newJob);
+      const requestedInitialStatus = body.status === 'pending' ? 'pending' : 'queued';
+      const generatedId = body.job_id || body.id || ('job-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6));
 
-    // Record creation event
-    store.production_events = store.production_events || [];
-    store.production_events.push({
-      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      job_id: newJob.id,
-      event_type: 'job_created',
-      event_details: {
-        engine: selectedEngine,
-        type: prodType,
-        product: newJob.product_slug,
-        collection: newJob.collection_id
-      },
-      created_at: new Date().toISOString()
+      const newJob = normalizeJobRecord({
+        id: generatedId,
+        job_id: generatedId,
+        product_slug: body.product_slug || body.productId || null,
+        collection_id: body.collection_id || null,
+        source_asset_id: body.source_asset_id || null,
+        title: body.title || `${prodType} - ${selectedEngine}`,
+        production_type: prodType,
+        jobType: prodType,
+        selected_engine: selectedEngine,
+        input_model_path: inputModelPath,
+        output_render_path: null,
+        output_public_url: null,
+        render_settings: rawSettings,
+        config_params: rawSettings,
+        status: requestedInitialStatus,
+        initial_status: requestedInitialStatus,
+        progress_percent: 0,
+        idempotency_key: idempotencyKey,
+        idempotencyKey: idempotencyKey,
+        worker_id: null,
+        lease_expires_at: null,
+        retry_count: 0,
+        max_retries: body.max_retries !== undefined ? Number(body.max_retries) : 3,
+        error_code: null,
+        error_message: null,
+        error_details: null,
+        started_at: null,
+        completed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+
+      store.production_jobs = store.production_jobs || [];
+      store.production_jobs.push(newJob);
+
+      // Record creation event
+      store.production_events = store.production_events || [];
+      store.production_events.push({
+        id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        job_id: newJob.id,
+        event_type: 'job_created',
+        event_details: {
+          engine: selectedEngine,
+          type: prodType,
+          status: newJob.status,
+          input_model_path: newJob.input_model_path,
+          product: newJob.product_slug,
+          collection: newJob.collection_id
+        },
+        created_at: new Date().toISOString()
+      });
+
+      await writeStudioStore(store);
+      return res.status(201).json({ ok: true, success: true, job: newJob, data: newJob });
     });
-
-    await writeStudioStore(store);
-    return res.status(201).json({ ok: true, success: true, job: newJob, data: newJob });
   }
 
   if (req.method === 'DELETE' || req.method === 'PATCH') {
@@ -560,15 +690,16 @@ async function handleJobs(req, res) {
 
 // Action: Job Details & Event Timeline
 async function handleJobDetail(req, res) {
-  const jobId = req.query?.id || req.body?.id;
+  const jobId = req.query?.id || req.body?.id || req.query?.job_id || req.body?.job_id;
   if (!jobId) return res.status(400).json({ ok: false, success: false, error: 'id parametresi gereklidir.' });
 
   const store = await readStudioStore();
-  const job = (store.production_jobs || []).find(j => j.id === jobId);
+  const job = (store.production_jobs || []).find(j => j.id === jobId || j.job_id === jobId);
   if (!job) return res.status(404).json({ ok: false, success: false, error: 'Görev bulunamadı.' });
+  normalizeJobRecord(job);
 
-  const events = (store.production_events || []).filter(e => e.job_id === jobId);
-  const outputs = (store.production_outputs || []).filter(o => o.job_id === jobId);
+  const events = (store.production_events || []).filter(e => e.job_id === job.id);
+  const outputs = (store.production_outputs || []).filter(o => o.job_id === job.id);
   const sourceAsset = job.source_asset_id
     ? (store.media_assets || []).find(a => a.id === job.source_asset_id)
     : null;
@@ -587,93 +718,103 @@ async function handleJobDetail(req, res) {
 // Action: Job Retry (Safe State Transition with Retry Counter)
 async function handleJobRetry(req, res) {
   await authenticateRoles(req, ['admin', 'production_manager']).catch(() => null);
-  const jobId = req.query?.id || req.body?.id;
+  const jobId = req.query?.id || req.body?.id || req.query?.job_id || req.body?.job_id;
   if (!jobId) return res.status(400).json({ ok: false, success: false, error: 'Job ID gereklidir.' });
 
-  const store = await readStudioStore();
-  const job = (store.production_jobs || []).find(j => j.id === jobId);
-  if (!job) return res.status(404).json({ ok: false, success: false, error: 'Görev bulunamadı.' });
+  return await withStoreLock(async () => {
+    const store = await readStudioStore();
+    const job = (store.production_jobs || []).find(j => j.id === jobId || j.job_id === jobId);
+    if (!job) return res.status(404).json({ ok: false, success: false, error: 'Görev bulunamadı.' });
 
-  if (!['failed', 'cancelled'].includes(job.status)) {
-    return res.status(400).json({
-      ok: false,
-      success: false,
-      error: `Yalnızca başarısız (failed) veya iptal edilmiş (cancelled) görevler yeniden denenebilir. Mevcut durum: ${job.status}`
+    if (!['failed', 'cancelled'].includes(job.status)) {
+      return res.status(400).json({
+        ok: false,
+        success: false,
+        error: `Yalnızca başarısız (failed) veya iptal edilmiş (cancelled) görevler yeniden denenebilir. Mevcut durum: ${job.status}`
+      });
+    }
+
+    const maxRetries = job.max_retries ?? 3;
+    if ((job.retry_count || 0) >= maxRetries) {
+      return res.status(400).json({
+        ok: false,
+        success: false,
+        error: `Bu görev maksimum yeniden deneme sınırına (${maxRetries}) ulaştı.`
+      });
+    }
+
+    job.retry_count = (job.retry_count || 0) + 1;
+    const previousStatus = job.status;
+    job.status = job.initial_status === 'pending' ? 'pending' : 'queued';
+    job.progress_percent = 0;
+    job.worker_id = null;
+    job.lease_expires_at = null;
+    job.error_code = null;
+    job.error_message = null;
+    job.error_details = null;
+    job.started_at = null;
+    job.completed_at = null;
+    job.updated_at = new Date().toISOString();
+    normalizeJobRecord(job);
+
+    store.production_events = store.production_events || [];
+    store.production_events.push({
+      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      job_id: job.id,
+      event_type: 'job_retried',
+      event_details: {
+        attempt: job.retry_count,
+        previous_status: previousStatus,
+        triggered_by: 'user'
+      },
+      created_at: new Date().toISOString()
     });
-  }
 
-  const maxRetries = job.max_retries || 3;
-  if ((job.retry_count || 0) >= maxRetries) {
-    return res.status(400).json({
-      ok: false,
-      success: false,
-      error: `Bu görev maksimum yeniden deneme sınırına (${maxRetries}) ulaştı.`
-    });
-  }
-
-  job.retry_count = (job.retry_count || 0) + 1;
-  const previousStatus = job.status;
-  job.status = 'queued';
-  job.progress_percent = 0;
-  job.error_message = null;
-  job.error_details = null;
-  job.started_at = null;
-  job.completed_at = null;
-  job.updated_at = new Date().toISOString();
-
-  store.production_events = store.production_events || [];
-  store.production_events.push({
-    id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    job_id: job.id,
-    event_type: 'job_retried',
-    event_details: {
-      attempt: job.retry_count,
-      previous_status: previousStatus,
-      triggered_by: 'user'
-    },
-    created_at: new Date().toISOString()
+    await writeStudioStore(store);
+    return res.status(200).json({ ok: true, success: true, job, data: job });
   });
-
-  await writeStudioStore(store);
-  return res.status(200).json({ ok: true, success: true, job, data: job });
 }
 
 // Action: Job Cancellation
 async function handleJobCancel(req, res) {
   await authenticateRoles(req, ['admin', 'production_manager']).catch(() => null);
-  const jobId = req.query?.id || req.body?.id;
+  const jobId = req.query?.id || req.body?.id || req.query?.job_id || req.body?.job_id;
   if (!jobId) return res.status(400).json({ ok: false, success: false, error: 'Job ID gereklidir.' });
 
-  const store = await readStudioStore();
-  const job = (store.production_jobs || []).find(j => j.id === jobId);
-  if (!job) return res.status(404).json({ ok: false, success: false, error: 'Görev bulunamadı.' });
+  return await withStoreLock(async () => {
+    const store = await readStudioStore();
+    const job = (store.production_jobs || []).find(j => j.id === jobId || j.job_id === jobId);
+    if (!job) return res.status(404).json({ ok: false, success: false, error: 'Görev bulunamadı.' });
 
-  if (['completed', 'failed', 'cancelled'].includes(job.status)) {
-    return res.status(400).json({
-      ok: false,
-      success: false,
-      error: `${job.status} durumundaki görev iptal edilemez.`
+    if (['completed', 'failed', 'cancelled'].includes(job.status)) {
+      return res.status(400).json({
+        ok: false,
+        success: false,
+        error: `${job.status} durumundaki görev iptal edilemez.`
+      });
+    }
+
+    job.status = 'cancelled';
+    job.lease_expires_at = null;
+    job.completed_at = new Date().toISOString();
+    job.updated_at = new Date().toISOString();
+    normalizeJobRecord(job);
+
+    store.production_events = store.production_events || [];
+    store.production_events.push({
+      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+      job_id: job.id,
+      event_type: 'job_cancelled',
+      event_details: { cancelled_by: 'user' },
+      created_at: new Date().toISOString()
     });
-  }
 
-  job.status = 'cancelled';
-  job.completed_at = new Date().toISOString();
-  job.updated_at = new Date().toISOString();
-
-  store.production_events = store.production_events || [];
-  store.production_events.push({
-    id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-    job_id: job.id,
-    event_type: 'job_cancelled',
-    event_details: { cancelled_by: 'user' },
-    created_at: new Date().toISOString()
+    await writeStudioStore(store);
+    return res.status(200).json({ ok: true, success: true, job, data: job });
   });
-
-  await writeStudioStore(store);
-  return res.status(200).json({ ok: true, success: true, job, data: job });
 }
 
-// Action: Worker Engine Contract (Claim, Update, Complete, Fail)
+// Action: Worker Engine Contract (Atomic Claim, Lease Recovery, Update, Complete, Fail)
 async function handleWorker(req, res) {
   const isWorker = verifyWorkerAuth(req);
   let isWorkerAdmin = false;
@@ -691,218 +832,365 @@ async function handleWorker(req, res) {
   }
 
   const workerAction = String(req.query?.worker_action || req.body?.worker_action || '').toLowerCase();
-  const store = await readStudioStore();
 
-  // 1. Worker Claim
-  if (workerAction === 'claim' || req.query?.action === 'worker-claim') {
-    const { worker_id = 'worker-default', supported_engines = [] } = req.body || {};
-    const engineFilter = Array.isArray(supported_engines) && supported_engines.length
-      ? supported_engines
-      : REGISTERED_ENGINES.map(e => e.id);
+  return await withStoreLock(async () => {
+    const store = await readStudioStore();
 
-    const now = new Date();
-    const queuedJob = (store.production_jobs || []).find(j => {
-      const engineMatches = engineFilter.includes(j.selected_engine);
-      if (!engineMatches) return false;
-      if (j.status === 'queued') return true;
-      // Zombie job lease recovery: if worker crashed while rendering, lease expires after 15 mins
-      if (['rendering', 'processing', 'encoding'].includes(j.status)) {
-        if (j.lease_expires_at && new Date(j.lease_expires_at) < now) {
-          return true; // Reclaim expired lease!
+    // 1. Worker Atomic Claim + Stale Lease Recovery
+    if (workerAction === 'claim' || req.query?.action === 'worker-claim') {
+      const {
+        worker_id = 'worker-default',
+        supported_engines = [],
+        lease_seconds = 900,
+        claim_status = null
+      } = req.body || {};
+
+      const engineFilter = Array.isArray(supported_engines) && supported_engines.length
+        ? supported_engines
+        : REGISTERED_ENGINES.map(e => e.id);
+
+      const now = new Date();
+      let storeModifiedByRecovery = false;
+      store.production_events = store.production_events || [];
+
+      // Step A: Inspect stuck/stale jobs ('processing', 'rendering', 'uploading', 'encoding') whose lease has expired
+      for (const j of (store.production_jobs || [])) {
+        if (['processing', 'rendering', 'uploading', 'encoding'].includes(j.status)) {
+          if (j.lease_expires_at && new Date(j.lease_expires_at) <= now) {
+            const maxRetries = j.max_retries ?? 3;
+            const currentRetries = Number(j.retry_count || 0);
+            const expiredWorker = j.worker_id || 'unknown';
+
+            if (currentRetries >= maxRetries) {
+              // Max retries exhausted -> transition to terminal 'failed'
+              j.status = 'failed';
+              j.worker_id = null;
+              j.lease_expires_at = null;
+              j.completed_at = now.toISOString();
+              j.updated_at = now.toISOString();
+              j.error_code = 'LEASE_EXPIRED_MAX_RETRIES';
+              j.error_message = `Worker (${expiredWorker}) yanıt vermedi (lease süresi doldu) ve maksimum yeniden deneme sınırına (${maxRetries}) ulaşıldı.`;
+              j.error_details = {
+                code: 'LEASE_EXPIRED_MAX_RETRIES',
+                previous_worker_id: expiredWorker,
+                retry_count: currentRetries,
+                max_retries: maxRetries,
+                timestamp: now.toISOString()
+              };
+              store.production_events.push({
+                id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                job_id: j.id,
+                event_type: 'worker_lease_expired_failed',
+                event_details: { previous_worker_id: expiredWorker, retry_count: currentRetries, max_retries: maxRetries },
+                created_at: now.toISOString()
+              });
+              storeModifiedByRecovery = true;
+            } else {
+              // Recoverable stale job -> increment retry_count and requeue to 'pending'
+              j.retry_count = currentRetries + 1;
+              j.status = 'pending';
+              j.worker_id = null;
+              j.lease_expires_at = null;
+              j.updated_at = now.toISOString();
+              j.error_code = 'LEASE_EXPIRED_REQUEUED';
+              j.error_message = `Worker (${expiredWorker}) kira süresi doldu; görev otomatik kurtarıldı (deneme ${j.retry_count}/${maxRetries}).`;
+              store.production_events.push({
+                id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                job_id: j.id,
+                event_type: 'worker_lease_recovered',
+                event_details: { previous_worker_id: expiredWorker, retry_count: j.retry_count, max_retries: maxRetries },
+                created_at: now.toISOString()
+              });
+              storeModifiedByRecovery = true;
+            }
+            normalizeJobRecord(j);
+          }
         }
       }
-      return false;
-    });
 
-    if (!queuedJob) {
-      return res.status(200).json({ ok: true, success: true, job: null, message: 'İş kuyruğu boş.' });
+      // Step B: Atomically select the first available 'pending' or 'queued' job
+      const queuedJob = (store.production_jobs || []).find(j => {
+        const engineMatches = engineFilter.includes(j.selected_engine);
+        if (!engineMatches) return false;
+        return j.status === 'pending' || j.status === 'queued';
+      });
+
+      if (!queuedJob) {
+        if (storeModifiedByRecovery) {
+          await writeStudioStore(store);
+        }
+        return res.status(200).json({ ok: true, success: true, job: null, message: 'İş kuyruğu boş.' });
+      }
+
+      const previousStatus = queuedJob.status;
+      if (claim_status === 'processing' || previousStatus === 'pending') {
+        queuedJob.status = 'processing';
+      } else {
+        queuedJob.status = queuedJob.selected_engine === 'blender_headless' ? 'rendering' : 'processing';
+      }
+
+      const safeLeaseSeconds = Math.max(1, Math.min(3600, Number(lease_seconds) || 900));
+      queuedJob.started_at = now.toISOString();
+      queuedJob.updated_at = now.toISOString();
+      queuedJob.worker_id = worker_id;
+      queuedJob.lease_expires_at = new Date(now.getTime() + safeLeaseSeconds * 1000).toISOString();
+      normalizeJobRecord(queuedJob);
+
+      store.production_events.push({
+        id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        job_id: queuedJob.id,
+        event_type: 'worker_claimed',
+        event_details: {
+          worker_id,
+          engine: queuedJob.selected_engine,
+          previous_status: previousStatus,
+          new_status: queuedJob.status,
+          lease_expires_at: queuedJob.lease_expires_at
+        },
+        created_at: now.toISOString()
+      });
+
+      await writeStudioStore(store);
+      return res.status(200).json({ ok: true, success: true, job: queuedJob, data: queuedJob });
     }
 
-    queuedJob.status = queuedJob.selected_engine === 'blender_headless' ? 'rendering' : 'processing';
-    queuedJob.started_at = new Date().toISOString();
-    queuedJob.worker_id = worker_id;
-    queuedJob.lease_expires_at = new Date(Date.now() + 15 * 60 * 1000).toISOString();
+    // 2. Worker Progress / Status Update
+    if (workerAction === 'update' || req.query?.action === 'worker-update') {
+      const { job_id, worker_id, progress_percent, current_phase, status_message, lease_seconds } = req.body || {};
+      if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
 
-    store.production_events = store.production_events || [];
-    store.production_events.push({
-      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      job_id: queuedJob.id,
-      event_type: 'worker_claimed',
-      event_details: { worker_id, engine: queuedJob.selected_engine },
-      created_at: new Date().toISOString()
-    });
+      const job = (store.production_jobs || []).find(j => j.id === job_id || j.job_id === job_id);
+      if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
 
-    await writeStudioStore(store);
-    return res.status(200).json({ ok: true, success: true, job: queuedJob, data: queuedJob });
-  }
+      if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
+        return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
+      }
 
-  // 2. Worker Progress / Status Update
-  if (workerAction === 'update' || req.query?.action === 'worker-update') {
-    const { job_id, worker_id, progress_percent, current_phase, status_message } = req.body || {};
-    if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
+      if (['completed', 'failed', 'cancelled'].includes(job.status)) {
+        return res.status(400).json({ ok: false, error: `Sonlanmış görev (${job.status}) güncellenemez.` });
+      }
 
-    const job = (store.production_jobs || []).find(j => j.id === job_id);
-    if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
+      if (progress_percent !== undefined) {
+        job.progress_percent = Math.min(100, Math.max(0, Number(progress_percent) || 0));
+      }
+      if (current_phase && ['processing', 'rendering', 'uploading', 'encoding', 'quality_check'].includes(current_phase)) {
+        job.status = current_phase;
+      }
+      const extraLeaseSec = Math.max(1, Math.min(3600, Number(lease_seconds) || 900));
+      job.lease_expires_at = new Date(Date.now() + extraLeaseSec * 1000).toISOString();
+      job.updated_at = new Date().toISOString();
+      normalizeJobRecord(job);
 
-    if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
-      return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
-    }
-
-    if (['completed', 'failed', 'cancelled'].includes(job.status)) {
-      return res.status(400).json({ ok: false, error: `Sonlanmış görev (${job.status}) güncellenemez.` });
-    }
-
-    if (progress_percent !== undefined) job.progress_percent = Math.min(100, Math.max(0, Number(progress_percent) || 0));
-    if (current_phase && ['rendering', 'encoding', 'quality_check'].includes(current_phase)) {
-      job.status = current_phase;
-    }
-    job.updated_at = new Date().toISOString();
-
-    store.production_events = store.production_events || [];
-    store.production_events.push({
-      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      job_id: job.id,
-      event_type: 'worker_progress',
-      event_details: { progress_percent: job.progress_percent, phase: current_phase, message: status_message },
-      created_at: new Date().toISOString()
-    });
-
-    await writeStudioStore(store);
-    return res.status(200).json({ ok: true, success: true, job, data: job });
-  }
-
-  // 3. Worker Complete
-  if (workerAction === 'complete' || req.query?.action === 'worker-complete') {
-    const { job_id, worker_id, outputs = [], metrics = {} } = req.body || {};
-    if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
-
-    const job = (store.production_jobs || []).find(j => j.id === job_id);
-    if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
-
-    if (job.status === 'completed') {
-      return res.status(200).json({ ok: true, success: true, job, outputs: (store.production_outputs || []).filter(o => o.job_id === job.id), note: 'idempotent_complete' });
-    }
-
-    if (['cancelled', 'failed'].includes(job.status)) {
-      return res.status(400).json({ ok: false, error: `İptal edilmiş veya başarısız görev (${job.status}) tamamlanamaz.` });
-    }
-
-    if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
-      return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
-    }
-
-    job.status = 'completed';
-    job.progress_percent = 100;
-    job.completed_at = new Date().toISOString();
-    job.updated_at = new Date().toISOString();
-
-    store.production_outputs = store.production_outputs || [];
-    store.media_assets = store.media_assets || [];
-
-    outputs.forEach((out, idx) => {
-      const outputAssetId = 'ast-out-' + Date.now() + '-' + idx;
-      const newOutputAsset = {
-        id: outputAssetId,
-        product_slug: job.product_slug,
-        collection_id: job.collection_id,
-        asset_type: out.asset_type || (out.output_type === 'turntable_video' ? 'video_render' : 'render_frame'),
-        storage_path: out.storage_path,
-        public_url: out.public_url || `${SUPABASE_URL}/storage/v1/object/public/media/${out.storage_path}`,
-        file_name: out.file_name || `render_${job.id}_${idx}.${out.file_format || 'jpg'}`,
-        mime_type: out.mime_type || (out.file_format === 'mp4' ? 'video/mp4' : 'image/jpeg'),
-        file_size_bytes: out.file_size_bytes || 0,
-        width_px: out.width_px || null,
-        height_px: out.height_px || null,
-        duration_seconds: out.duration_seconds || null,
-        source_asset_id: job.source_asset_id || null,
-        metadata: { job_id: job.id, engine: job.selected_engine, resolution_label: out.resolution_label },
-        version: 1,
-        is_approved: false,
+      store.production_events = store.production_events || [];
+      store.production_events.push({
+        id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        job_id: job.id,
+        event_type: 'worker_progress',
+        event_details: { progress_percent: job.progress_percent, phase: current_phase, message: status_message },
         created_at: new Date().toISOString()
+      });
+
+      await writeStudioStore(store);
+      return res.status(200).json({ ok: true, success: true, job, data: job });
+    }
+
+    // 3. Worker Complete
+    if (workerAction === 'complete' || req.query?.action === 'worker-complete') {
+      const { job_id, worker_id, outputs = [], metrics = {}, output_render_path, output_public_url } = req.body || {};
+      if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
+
+      const job = (store.production_jobs || []).find(j => j.id === job_id || j.job_id === job_id);
+      if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
+
+      if (job.status === 'completed') {
+        normalizeJobRecord(job);
+        return res.status(200).json({
+          ok: true,
+          success: true,
+          job,
+          outputs: (store.production_outputs || []).filter(o => o.job_id === job.id),
+          note: 'idempotent_complete'
+        });
+      }
+
+      if (['cancelled', 'failed'].includes(job.status)) {
+        return res.status(400).json({ ok: false, error: `İptal edilmiş veya başarısız görev (${job.status}) tamamlanamaz.` });
+      }
+
+      if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
+        return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
+      }
+
+      job.status = 'completed';
+      job.progress_percent = 100;
+      job.lease_expires_at = null;
+      job.error_code = null;
+      job.error_message = null;
+      job.completed_at = new Date().toISOString();
+      job.updated_at = new Date().toISOString();
+
+      store.production_outputs = store.production_outputs || [];
+      store.media_assets = store.media_assets || [];
+
+      // Remove any previous unapproved outputs for this job_id to prevent duplicates on retry
+      store.production_outputs = store.production_outputs.filter(o => o.job_id !== job.id);
+
+      outputs.forEach((out, idx) => {
+        const existingAsset = out.asset_id
+          ? (store.media_assets || []).find(a => a.id === out.asset_id)
+          : (store.media_assets || []).find(a => a.storage_path && a.storage_path === out.storage_path);
+
+        let outputAssetId = existingAsset ? existingAsset.id : ('ast-out-' + Date.now() + '-' + idx);
+        const resolvedPublicUrl = out.public_url || existingAsset?.public_url || `${SUPABASE_URL}/storage/v1/object/public/media/${out.storage_path}`;
+
+        if (!existingAsset) {
+          const newOutputAsset = {
+            id: outputAssetId,
+            job_id: job.id,
+            product_slug: job.product_slug,
+            collection_id: job.collection_id,
+            asset_type: out.asset_type || (out.output_type === 'turntable_video' ? 'video_render' : 'render_frame'),
+            storage_path: out.storage_path,
+            public_url: resolvedPublicUrl,
+            file_name: out.file_name || `render_${job.id}_${idx}.${out.file_format || 'jpg'}`,
+            mime_type: out.mime_type || (out.file_format === 'mp4' ? 'video/mp4' : 'image/jpeg'),
+            file_size_bytes: out.file_size_bytes || 0,
+            width_px: out.width_px || null,
+            height_px: out.height_px || null,
+            duration_seconds: out.duration_seconds || null,
+            source_asset_id: job.source_asset_id || null,
+            metadata: { job_id: job.id, engine: job.selected_engine, resolution_label: out.resolution_label },
+            version: 1,
+            is_approved: false,
+            created_at: new Date().toISOString()
+          };
+          store.media_assets.push(newOutputAsset);
+        } else {
+          existingAsset.job_id = job.id;
+          existingAsset.metadata = { ...(existingAsset.metadata || {}), job_id: job.id };
+        }
+
+        if (idx === 0) {
+          job.output_render_path = out.storage_path || existingAsset?.storage_path || null;
+          job.output_public_url = resolvedPublicUrl || null;
+        }
+
+        store.production_outputs.push({
+          id: 'out-' + Date.now() + '-' + idx,
+          job_id: job.id,
+          media_asset_id: outputAssetId,
+          storage_path: out.storage_path || existingAsset?.storage_path || null,
+          public_url: resolvedPublicUrl || null,
+          file_name: out.file_name || existingAsset?.file_name || null,
+          file_size_bytes: out.file_size_bytes || existingAsset?.file_size_bytes || 0,
+          output_type: out.output_type || 'hero_still',
+          file_format: out.file_format || 'jpg',
+          resolution_label: out.resolution_label || '1080x1080',
+          width_px: out.width_px || existingAsset?.width_px || null,
+          height_px: out.height_px || existingAsset?.height_px || null,
+          duration_seconds: out.duration_seconds || null,
+          quality_status: 'pending',
+          created_at: new Date().toISOString()
+        });
+      });
+
+      if (output_render_path && !job.output_render_path) {
+        job.output_render_path = output_render_path;
+      }
+      if (output_public_url && !job.output_public_url) {
+        job.output_public_url = output_public_url;
+      }
+      if (job.output_render_path && !job.output_public_url) {
+        job.output_public_url = `${SUPABASE_URL}/storage/v1/object/public/media/${job.output_render_path}`;
+      }
+
+      normalizeJobRecord(job);
+
+      if (metrics.cost_amount || metrics.gpu_seconds || metrics.cpu_seconds) {
+        store.production_costs = store.production_costs || [];
+        store.production_costs.push({
+          id: 'cost-' + Date.now(),
+          job_id: job.id,
+          provider_name: job.selected_engine,
+          compute_device: metrics.compute_device || (metrics.gpu_seconds ? 'GPU' : 'CPU'),
+          cpu_seconds_used: metrics.cpu_seconds || 0,
+          gpu_seconds_used: metrics.gpu_seconds || 0,
+          cost_amount: metrics.cost_amount ?? null,
+          cost_measured: Boolean(metrics.cost_measured),
+          currency: 'USD',
+          created_at: new Date().toISOString()
+        });
+      }
+
+      store.production_events = store.production_events || [];
+      store.production_events.push({
+        id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+        job_id: job.id,
+        event_type: 'worker_completed',
+        event_details: {
+          output_count: outputs.length,
+          output_render_path: job.output_render_path,
+          output_public_url: job.output_public_url,
+          metrics
+        },
+        created_at: new Date().toISOString()
+      });
+
+      await writeStudioStore(store);
+      return res.status(200).json({
+        ok: true,
+        success: true,
+        job,
+        outputs: store.production_outputs.filter(o => o.job_id === job.id)
+      });
+    }
+
+    // 4. Worker Fail
+    if (workerAction === 'fail' || req.query?.action === 'worker-fail') {
+      const { job_id, worker_id, error_code = 'RENDER_ERROR', error_message = 'Bilinmeyen render hatası.', error_details = null } = req.body || {};
+      if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
+
+      const job = (store.production_jobs || []).find(j => j.id === job_id || j.job_id === job_id);
+      if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
+
+      if (job.status === 'completed') {
+        return res.status(400).json({ ok: false, error: 'Tamamlanmış görev başarısız olarak işaretlenemez.' });
+      }
+
+      if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
+        return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
+      }
+
+      job.status = 'failed';
+      job.lease_expires_at = null;
+      job.error_code = error_code;
+      job.error_message = error_message;
+      job.error_details = {
+        code: error_code,
+        message: error_message,
+        details: error_details,
+        timestamp: new Date().toISOString()
       };
-      store.media_assets.push(newOutputAsset);
+      job.completed_at = new Date().toISOString();
+      job.updated_at = new Date().toISOString();
+      normalizeJobRecord(job);
 
-      store.production_outputs.push({
-        id: 'out-' + Date.now() + '-' + idx,
+      store.production_events = store.production_events || [];
+      store.production_events.push({
+        id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
         job_id: job.id,
-        media_asset_id: outputAssetId,
-        output_type: out.output_type || 'hero_still',
-        file_format: out.file_format || 'jpg',
-        resolution_label: out.resolution_label || '1920x1080',
-        duration_seconds: out.duration_seconds || null,
-        quality_status: 'pending',
+        event_type: 'worker_failed',
+        event_details: { code: error_code, message: error_message },
+        error_details: JSON.stringify(error_details || {}),
         created_at: new Date().toISOString()
       });
-    });
 
-    if (metrics.cost_amount || metrics.gpu_seconds) {
-      store.production_costs = store.production_costs || [];
-      store.production_costs.push({
-        id: 'cost-' + Date.now(),
-        job_id: job.id,
-        provider_name: job.selected_engine,
-        gpu_seconds_used: metrics.gpu_seconds || 0,
-        cost_amount: metrics.cost_amount || 0,
-        currency: 'USD',
-        created_at: new Date().toISOString()
-      });
+      await writeStudioStore(store);
+      return res.status(200).json({ ok: true, success: true, job, data: job });
     }
 
-    store.production_events = store.production_events || [];
-    store.production_events.push({
-      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      job_id: job.id,
-      event_type: 'worker_completed',
-      event_details: { output_count: outputs.length, metrics },
-      created_at: new Date().toISOString()
-    });
-
-    await writeStudioStore(store);
-    return res.status(200).json({ ok: true, success: true, job, outputs: store.production_outputs.filter(o => o.job_id === job.id) });
-  }
-
-  // 4. Worker Fail
-  if (workerAction === 'fail' || req.query?.action === 'worker-fail') {
-    const { job_id, worker_id, error_code = 'RENDER_ERROR', error_message = 'Bilinmeyen render hatası.', error_details = null } = req.body || {};
-    if (!job_id) return res.status(400).json({ ok: false, error: 'job_id zorunludur.' });
-
-    const job = (store.production_jobs || []).find(j => j.id === job_id);
-    if (!job) return res.status(404).json({ ok: false, error: 'Görev bulunamadı.' });
-
-    if (job.status === 'completed') {
-      return res.status(400).json({ ok: false, error: 'Tamamlanmış görev başarısız olarak işaretlenemez.' });
-    }
-
-    if (job.worker_id && worker_id && job.worker_id !== worker_id && !isWorkerAdmin) {
-      return res.status(403).json({ ok: false, error: `Bu görev başka bir worker (${job.worker_id}) tarafından yürütülmektedir.` });
-    }
-
-    job.status = 'failed';
-    job.error_message = error_message;
-    job.error_details = {
-      code: error_code,
-      message: error_message,
-      details: error_details,
-      timestamp: new Date().toISOString()
-    };
-    job.completed_at = new Date().toISOString();
-    job.updated_at = new Date().toISOString();
-
-    store.production_events = store.production_events || [];
-    store.production_events.push({
-      id: 'evt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
-      job_id: job.id,
-      event_type: 'worker_failed',
-      event_details: { code: error_code, message: error_message },
-      error_details: JSON.stringify(error_details || {}),
-      created_at: new Date().toISOString()
-    });
-
-    await writeStudioStore(store);
-    return res.status(200).json({ ok: true, success: true, job, data: job });
-  }
-
-  return res.status(400).json({ ok: false, error: `Bilinmeyen worker eylemi: ${workerAction}` });
+    return res.status(400).json({ ok: false, error: `Bilinmeyen worker eylemi: ${workerAction}` });
+  });
 }
 
 // Action: 3D Assets Studio

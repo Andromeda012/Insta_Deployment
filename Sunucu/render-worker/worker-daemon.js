@@ -1,9 +1,13 @@
 /**
- * GLOBAL MOBİLYA — MODÜL 8 RENDER WORKER DAEMON
+ * GLOBAL MOBİLYA — MODÜL 8 RENDER WORKER DAEMON (PRODUCTION HARDENED)
  * ============================================================================
- * Autonomous production worker daemon decoupled from the social publisher.
- * Polls Module 8 API queue, checks host load, renders via BlenderRunner,
- * uploads outputs to Supabase Storage, and completes jobs.
+ * Autonomous headless render worker decoupled from the social publisher.
+ * Enforces:
+ * - Mandatory production config & Blender binary verification
+ * - Real 3D scene input validation (no fake benchmark fallback for products)
+ * - UUID temporary paths & path traversal protection
+ * - Verified Storage upload before job completion (zero fake storage paths)
+ * - Accurate width x height metadata & honest CPU metrics (gpu_seconds: 0)
  * ============================================================================
  */
 'use strict';
@@ -11,29 +15,85 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { RenderWorkerClient } = require('./worker-client.cjs');
-const { BlenderRunner } = require('./blender-runner.js');
+const crypto = require('crypto');
+const { RenderWorkerClient, sanitizeSecret } = require('./worker-client.cjs');
+const {
+  BlenderRunner,
+  validateSafeFilePath,
+  parseAndValidateResolution,
+  validateSamples,
+  ALLOWED_MODEL_EXTENSIONS
+} = require('./blender-runner.js');
+
+const MAX_UPLOAD_BYTES = 25 * 1024 * 1024; // 25 MB max safe memory buffer for upload
 
 class RenderWorkerDaemon {
   constructor(config = {}) {
-    this.apiBaseUrl = config.apiBaseUrl || process.env.API_BASE_URL || 'http://localhost:3000';
-    this.workerKey = config.workerKey || process.env.RENDER_WORKER_KEY || '';
-    this.pollIntervalMs = config.pollIntervalMs || 10000;
-    this.maxLoadAvg = config.maxLoadAvg || 2.5; // Guard VPS publisher!
-    this.minFreeMemMb = config.minFreeMemMb || 256; // 256MB headroom
-    this.isRunning = false;
+    this.nodeEnv = config.nodeEnv || process.env.NODE_ENV || 'development';
+    this.isProduction = this.nodeEnv === 'production';
 
-    this.client = new RenderWorkerClient({
+    const rawApiUrl = config.apiBaseUrl !== undefined
+      ? config.apiBaseUrl
+      : (process.env.API_BASE_URL !== undefined ? process.env.API_BASE_URL : (this.isProduction ? '' : 'http://localhost:3000'));
+
+    this.apiBaseUrl = String(rawApiUrl || '').trim().replace(/\/+$/, '');
+    this.workerKey = String(config.workerKey !== undefined ? config.workerKey : (process.env.RENDER_WORKER_KEY || '')).trim();
+    this.pollIntervalMs = Number(config.pollIntervalMs || process.env.POLL_INTERVAL_MS || 10000);
+    this.maxLoadAvg = Number(config.maxLoadAvg || process.env.MAX_LOAD_AVG || 1.5); // Conservative for 1 vCPU VPS
+    this.minFreeMemMb = Number(config.minFreeMemMb || process.env.MIN_FREE_MEM_MB || 350); // Protect publisher RAM
+    this.tempDir = config.tempDir || os.tmpdir();
+    this.isRunning = false;
+    this.activeJobId = null;
+    this.processedJobIds = new Set();
+
+    // Simulation uploads are strictly forbidden in production
+    this.allowSimulatedUploads = !this.isProduction && config.allowSimulatedUploads === true;
+
+    this.client = config.client || new RenderWorkerClient({
+      nodeEnv: this.nodeEnv,
       baseUrl: this.apiBaseUrl,
       workerKey: this.workerKey,
-      workerId: `vps-worker-${os.hostname()}-${process.pid}`,
-      supportedEngines: ['blender_headless', 'ffmpeg_transcoder']
+      workerId: config.workerId || `vps-worker-${os.hostname()}-${process.pid}`,
+      supportedEngines: ['blender_headless'],
+      enforceValidation: this.isProduction || config.enforceValidation === true,
+      fetchImpl: config.fetchImpl
     });
 
-    this.runner = new BlenderRunner({
-      device: process.env.BLENDER_DEVICE || 'CPU',
-      threads: 1
+    this.runner = config.runner || new BlenderRunner({
+      nodeEnv: this.nodeEnv,
+      blenderBin: config.blenderBin || process.env.BLENDER_BIN || 'blender',
+      device: 'CPU',
+      threads: 1,
+      timeoutMs: config.timeoutMs || process.env.RENDER_TIMEOUT_MS || 300000,
+      allowSimulation: !this.isProduction && config.allowSimulation === true,
+      allowedTempDir: this.tempDir,
+      requireBinaryInProduction: this.isProduction
     });
+
+    if (this.isProduction || config.enforceValidation === true) {
+      this.validateStartup();
+    }
+  }
+
+  /**
+   * Validates that all required configuration and runtime binaries exist before starting
+   */
+  validateStartup() {
+    this.client.validateConfig();
+
+    if (this.isProduction) {
+      if (this.runner.allowSimulation || process.env.RENDER_SIMULATION_MODE === 'true') {
+        // Ensure simulation flag is forcibly off in production
+        this.runner.allowSimulation = false;
+      }
+      if (!this.runner.isBlenderAvailable) {
+        throw new Error(
+          'WORKER_STARTUP_BLOCKED: Blender binary is not available on this host. Production worker cannot start without Blender.'
+        );
+      }
+    }
+
+    return true;
   }
 
   /**
@@ -55,7 +115,7 @@ class RenderWorkerDaemon {
 
     // Disk write probe to verify /tmp filesystem has space and is writable
     try {
-      const probePath = path.join(os.tmpdir(), `probe_${process.pid}.tmp`);
+      const probePath = path.join(this.tempDir, `probe_${process.pid}_${crypto.randomUUID().slice(0, 8)}.tmp`);
       fs.writeFileSync(probePath, 'probe');
       fs.unlinkSync(probePath);
     } catch (diskErr) {
@@ -67,99 +127,257 @@ class RenderWorkerDaemon {
   }
 
   /**
-   * Process a Single Job
+   * Validates the job's scene & 3D asset input.
+   * Benchmark cube scene is NEVER used as a fallback for real product jobs.
+   */
+  resolveAndValidateSceneInput(job) {
+    if (!job || typeof job !== 'object') {
+      throw new Error('UNSUPPORTED_SCENE_INPUT: Job payload is missing or invalid.');
+    }
+
+    const params = {
+      ...(job.config_params || {}),
+      ...(job.parameters || {}),
+      ...(job.render_settings || {})
+    };
+    const rawInputPath =
+      job.input_model_path ||
+      params.input_model_path ||
+      params.model_path ||
+      params.scene_file ||
+      job.source_asset?.local_path ||
+      job.three_d_asset?.local_path ||
+      '';
+
+    const isExplicitBenchmark =
+      job.production_type === 'benchmark_test' ||
+      params.mode === 'benchmark' ||
+      params.is_benchmark === true ||
+      rawInputPath === 'benchmark://cube' ||
+      rawInputPath === 'benchmark';
+
+    if (isExplicitBenchmark) {
+      if (job.product_slug || job.collection_id) {
+        throw new Error(
+          'UNSUPPORTED_SCENE_INPUT: Benchmark mode cannot be used to fabricate renders for real catalog products or collections.'
+        );
+      }
+      return { mode: 'benchmark', modelPath: '' };
+    }
+
+    // Real production job: must have a validated 3D model input (.glb, .gltf, .obj, .fbx, .blend)
+    const candidatePath = rawInputPath;
+    const candidateType = job.source_asset?.asset_type || params.asset_type || '';
+    if (candidateType && !['3d_model', 'blender_project', ''].includes(candidateType)) {
+      throw new Error(
+        `UNSUPPORTED_SCENE_INPUT: Source asset type '${candidateType}' is not a valid 3D model or scene.`
+      );
+    }
+
+    if (!candidatePath || typeof candidatePath !== 'string') {
+      throw new Error(
+        'UNSUPPORTED_SCENE_INPUT: Real product render requires a verified 3D model file (.glb, .gltf, .obj, .fbx, .blend). No 3D asset is attached to this job.'
+      );
+    }
+
+    const safeModelPath = validateSafeFilePath(candidatePath, params.allowed_model_dir || null);
+    const ext = path.extname(safeModelPath).toLowerCase();
+    if (!ALLOWED_MODEL_EXTENSIONS.has(ext)) {
+      throw new Error(
+        `UNSUPPORTED_SCENE_INPUT: File extension '${ext}' is not supported for 3D rendering.`
+      );
+    }
+
+    if (!fs.existsSync(safeModelPath) || !fs.statSync(safeModelPath).isFile()) {
+      throw new Error(
+        `UNSUPPORTED_SCENE_INPUT: Referenced 3D model file does not exist or is not readable.`
+      );
+    }
+
+    return { mode: 'product', modelPath: safeModelPath };
+  }
+
+  /**
+   * Process a Single Job with Strict Validation
    */
   async processJob(job) {
-    console.log(`[WORKER] Starting execution of job: ${job.id} (${job.production_type} on ${job.selected_engine})`);
-    const outputPath = path.join(os.tmpdir(), `output_${job.id}.jpg`);
+    const jobId = job?.id || job?.job_id;
+    if (!job || !jobId || typeof jobId !== 'string') {
+      throw new Error('INVALID_JOB: Job object is missing a valid id.');
+    }
+    job.id = jobId;
+
+    // Prevent duplicate or concurrent processing of the same job
+    if (this.activeJobId) {
+      throw new Error(`WORKER_BUSY: Already processing job ${this.activeJobId}.`);
+    }
+    const attemptKey = `${job.id}:attempt:${Number(job.retry_count || 0)}`;
+    if (this.processedJobIds.has(job.id) || this.processedJobIds.has(attemptKey) || ['completed', 'cancelled', 'failed'].includes(job.status)) {
+      console.warn(`[WORKER] Skipping already processed or terminal job: ${job.id} (status: ${job.status})`);
+      return false;
+    }
+
+    this.activeJobId = job.id;
+    // Generate a clean cryptographic UUID for temp file — NEVER use raw job.id in file paths!
+    const fileUuid = crypto.randomUUID();
+    const safeFileName = `render_${fileUuid}.jpg`;
+    const outputPath = validateSafeFilePath(path.join(this.tempDir, safeFileName), this.tempDir);
 
     try {
-      // 1. Initial heartbeat
-      await this.client.updateProgress(job.id, 10, 'rendering', 'Render Worker başlatıldı.');
+      // 1. Validate scene input first (rejects missing/unsupported 3D inputs immediately)
+      let sceneSpec;
+      try {
+        sceneSpec = this.resolveAndValidateSceneInput(job);
+      } catch (sceneErr) {
+        await this.client.failJob(job.id, 'unsupported_input', sceneErr.message, {
+          reason: 'UNSUPPORTED_SCENE_INPUT',
+          production_type: job.production_type
+        }).catch(() => null);
+        return false;
+      }
 
-      // 2. Prepare render options
-      const params = job.config_params || {};
-      const samples = params.samples || 32;
-      const resolution = params.resolution === '1920x1080' ? 1080 : 800;
+      // 2. Validate render parameters (width, height, samples)
+      const params = {
+        ...(job.config_params || {}),
+        ...(job.parameters || {}),
+        ...(job.render_settings || {})
+      };
+      let dimensions;
+      let samples;
+      try {
+        dimensions = parseAndValidateResolution({
+          width: params.width,
+          height: params.height,
+          resolution: params.resolution || '1080x1080'
+        });
+        samples = validateSamples(params.samples !== undefined ? params.samples : 32);
+      } catch (paramErr) {
+        await this.client.failJob(job.id, 'invalid_parameters', paramErr.message, {
+          reason: 'INVALID_RENDER_PARAMETERS'
+        }).catch(() => null);
+        return false;
+      }
 
-      // 3. Execute Blender render
+      // 3. Initial heartbeat -> status 'processing'
+      await this.client.updateProgress(job.id, 10, 'processing', 'Render Worker doğrulandı ve sahne işlenmeye başlandı.');
+
+      // 4. Execute Blender render
       const renderResult = await this.runner.renderScene(
-        { samples, resolution, outputPath },
+        {
+          mode: sceneSpec.mode,
+          modelPath: sceneSpec.modelPath,
+          samples,
+          width: dimensions.width,
+          height: dimensions.height,
+          outputPath
+        },
         async (percent, message) => {
-          // Throttled progress report
-          await this.client.updateProgress(job.id, percent, 'rendering', message).catch(() => null);
+          await this.client.updateProgress(job.id, percent, 'processing', message).catch(() => null);
         }
       );
 
-      console.log(`[WORKER] Render finished in ${renderResult.durationSeconds}s. Size: ${renderResult.fileSizeBytes} bytes.`);
+      // 5. Reject simulated outputs from being uploaded as real production assets
+      if (renderResult.simulated && (this.isProduction || !this.allowSimulatedUploads)) {
+        throw new Error(
+          'SIMULATION_OUTPUT_REJECTED: Simulated render outputs cannot be uploaded to Storage or recorded as completed jobs.'
+        );
+      }
 
-      // 4. Read rendered file
+      // 6. Verify output file on disk before upload
+      if (!fs.existsSync(outputPath)) {
+        throw new Error('RENDER_OUTPUT_MISSING: Expected output file does not exist on disk.');
+      }
+      const stats = fs.statSync(outputPath);
+      if (stats.size < 100 || stats.size > MAX_UPLOAD_BYTES) {
+        throw new Error(`RENDER_OUTPUT_SIZE_INVALID: Output size (${stats.size} bytes) is outside safe upload bounds.`);
+      }
+
       const fileBytes = fs.readFileSync(outputPath);
+      // Verify JPEG SOI magic bytes (0xFF 0xD8 0xFF)
+      if (fileBytes.length < 3 || fileBytes[0] !== 0xFF || fileBytes[1] !== 0xD8 || fileBytes[2] !== 0xFF) {
+        throw new Error('RENDER_OUTPUT_INVALID_JPEG: Output file failed JPEG header signature verification.');
+      }
+
       const fileBase64 = fileBytes.toString('base64');
 
-      // 5. Upload rendered image to Supabase Storage via Module 8 safe upload API
-      const safeSlug = job.product_slug || job.collection_id || 'general';
-      const uploadRes = await fetch(`${this.apiBaseUrl}/api/module8?action=upload`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-worker-key': this.workerKey
-        },
-        body: JSON.stringify({
-          file_base64: fileBase64,
-          file_name: `render_${job.id}.jpg`,
-          mime_type: 'image/jpeg',
-          asset_type: 'render_frame',
-          product_slug: job.product_slug,
-          collection_id: job.collection_id,
-          source_asset_id: job.source_asset_id,
-          metadata: {
-            samples,
-            resolution: `${resolution}x${resolution}`,
-            device: renderResult.device,
-            durationSeconds: renderResult.durationSeconds
-          }
-        })
+      // 7. Transition job status to 'uploading' before Storage upload
+      await this.client.updateProgress(job.id, 90, 'uploading', 'Render tamamlandı; çıktı Supabase Storage\'a yükleniyor...');
+
+      // 8. Upload rendered image via RenderWorkerClient with job_id correlation & duplicate protection
+      const uploadData = await this.client.uploadAsset({
+        job_id: job.id,
+        file_base64: fileBase64,
+        file_name: safeFileName,
+        mime_type: 'image/jpeg',
+        expected_size_bytes: stats.size,
+        asset_type: 'render_frame',
+        product_slug: job.product_slug || null,
+        collection_id: job.collection_id || null,
+        source_asset_id: job.source_asset_id || null,
+        metadata: {
+          job_id: job.id,
+          samples,
+          width: dimensions.width,
+          height: dimensions.height,
+          resolution: dimensions.label,
+          device: 'CPU',
+          threads: renderResult.threads || 1,
+          cpu_seconds: renderResult.durationSeconds,
+          simulated: false,
+          mode: sceneSpec.mode
+        }
       });
 
-      const uploadData = await uploadRes.json();
-      const storagePath = uploadData?.asset?.storage_path || `studio/render_frame/${safeSlug}/render_${job.id}.jpg`;
-      const publicUrl = uploadData?.asset?.public_url || '';
+      const verifiedAsset = uploadData.asset;
 
-      // 6. Complete Job
+      // 9. Complete Job ONLY after upload has been 100% verified (records output_render_path & output_public_url)
       const compRes = await this.client.completeJob(
         job.id,
         [
           {
+            asset_id: verifiedAsset.id,
             output_type: 'hero_still',
-            storage_path: storagePath,
-            public_url: publicUrl,
-            file_name: `render_${job.id}.jpg`,
+            storage_path: verifiedAsset.storage_path,
+            public_url: verifiedAsset.public_url || '',
+            file_name: verifiedAsset.file_name || safeFileName,
             file_format: 'jpg',
-            resolution_label: `${resolution}x${resolution}`,
+            file_size_bytes: stats.size,
+            width_px: dimensions.width,
+            height_px: dimensions.height,
+            resolution_label: dimensions.label,
             duration_seconds: null
           }
         ],
         {
-          gpu_seconds: renderResult.durationSeconds,
-          cost_amount: 0.0050 // Minimal estimated CPU compute cost
+          compute_device: 'CPU',
+          cpu_seconds: renderResult.durationSeconds,
+          gpu_seconds: 0,
+          cost_amount: null,
+          cost_measured: false
+        },
+        {
+          output_render_path: verifiedAsset.storage_path,
+          output_public_url: verifiedAsset.public_url || ''
         }
       );
+
+      this.processedJobIds.add(job.id);
+      this.processedJobIds.add(attemptKey);
 
       if (compRes?.error && compRes.error.includes('İptal')) {
         console.warn(`[WORKER] Job ${job.id} was cancelled by user during render.`);
       } else {
-        console.log(`[WORKER] Successfully completed and registered job: ${job.id}`);
+        console.log(`[WORKER] Successfully completed and verified job: ${job.id} (asset: ${verifiedAsset.id}, path: ${verifiedAsset.storage_path})`);
       }
 
       return true;
-
     } catch (err) {
-      console.error(`[WORKER ERROR] Job ${job.id} failed:`, err.message);
-      await this.client.failJob(job.id, 'RENDER_EXECUTION_FAILED', err.message, { stack: err.stack }).catch(() => null);
+      const safeErrMsg = sanitizeSecret(err.message, this.workerKey);
+      console.error(`[WORKER ERROR] Job ${job.id} failed:`, safeErrMsg);
+      await this.client.failJob(job.id, 'RENDER_EXECUTION_FAILED', safeErrMsg).catch(() => null);
       return false;
     } finally {
-      // Guaranteed temp file cleanup
+      this.activeJobId = null;
       if (fs.existsSync(outputPath)) {
         try { fs.unlinkSync(outputPath); } catch {}
       }
@@ -170,7 +388,7 @@ class RenderWorkerDaemon {
    * Run Once (Single polling cycle)
    */
   async runCycle() {
-    if (!this.isHostHealthy()) {
+    if (this.activeJobId || !this.isHostHealthy()) {
       return null;
     }
 
@@ -181,7 +399,7 @@ class RenderWorkerDaemon {
         return claimRes.job;
       }
     } catch (err) {
-      console.warn(`[WORKER] Poll error:`, err.message);
+      console.warn(`[WORKER] Poll error:`, sanitizeSecret(err.message, this.workerKey));
     }
     return null;
   }
@@ -190,6 +408,7 @@ class RenderWorkerDaemon {
    * Start Standalone Daemon Loop
    */
   async start() {
+    this.validateStartup();
     this.isRunning = true;
     console.log(`[WORKER DAEMON] Started on ${this.client.workerId}. Polling ${this.apiBaseUrl}...`);
 
@@ -207,11 +426,19 @@ class RenderWorkerDaemon {
 
 // Standalone execution entry point
 if (require.main === module) {
-  const daemon = new RenderWorkerDaemon();
-  daemon.start().catch(console.error);
+  try {
+    const daemon = new RenderWorkerDaemon({ enforceValidation: true });
+    daemon.start().catch(err => {
+      console.error('[WORKER FATAL]', err.message);
+      process.exit(1);
+    });
 
-  process.on('SIGINT', () => { daemon.stop(); process.exit(0); });
-  process.on('SIGTERM', () => { daemon.stop(); process.exit(0); });
+    process.on('SIGINT', () => { daemon.stop(); process.exit(0); });
+    process.on('SIGTERM', () => { daemon.stop(); process.exit(0); });
+  } catch (startupErr) {
+    console.error('[WORKER STARTUP FATAL]', startupErr.message);
+    process.exit(1);
+  }
 }
 
 module.exports = { RenderWorkerDaemon };

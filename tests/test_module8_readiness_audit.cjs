@@ -255,6 +255,9 @@ async function runAuditSuite() {
 
   runTest('RenderWorkerDaemon isHostHealthy verifies CPU, memory and /tmp disk write probe', () => {
     const daemon = new RenderWorkerDaemon({
+      nodeEnv: 'development',
+      apiBaseUrl: 'https://api.example.com',
+      workerKey: VALID_TEST_KEY,
       maxLoadAvg: 2.5,
       minFreeMemMb: 256
     });
@@ -278,14 +281,15 @@ async function runAuditSuite() {
     const df = fs.readFileSync(path.join(ROOT_DIR, 'Sunucu', 'render-worker', 'Dockerfile'), 'utf8');
     assert.ok(df.includes('USER renderbot'), 'Must switch to unprivileged user renderbot');
     assert.ok(df.includes('HEALTHCHECK'), 'Must define container HEALTHCHECK');
+    assert.ok(!df.includes('|| true'), 'Must not suppress npm install errors');
   });
 
   runTest('Docker compose worker specifies no-new-privileges and tmpfs mount', () => {
     const compose = fs.readFileSync(path.join(ROOT_DIR, 'Sunucu', 'render-worker', 'docker-compose.worker.yml'), 'utf8');
     assert.ok(compose.includes('no-new-privileges:true'), 'Must forbid privilege escalation');
     assert.ok(compose.includes('tmpfs:'), 'Must mount tmpfs for temporary render frames');
-    assert.ok(compose.includes('cpus: \'0.80\''), 'Must enforce 0.80 CPU ceiling');
-    assert.ok(compose.includes('memory: 1400M'), 'Must enforce 1400M RAM ceiling');
+    assert.ok(compose.includes('cpus: \'0.60\''), 'Must enforce 0.60 CPU ceiling for 1 vCPU VPS');
+    assert.ok(compose.includes('memory: 850M'), 'Must enforce 850M RAM ceiling for ~2 GB VPS');
   });
 
   runTest('.dockerignore exists and excludes secrets and node_modules', () => {

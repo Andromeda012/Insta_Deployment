@@ -48,25 +48,32 @@ CREATE TABLE IF NOT EXISTS public.production_jobs (
     production_type TEXT NOT NULL CHECK (production_type IN (
         'image_enhance', 'image_enhancement', 'background_removal', 'background_processing',
         '3d_reconstruction', 'image_to_3d', 'photogrammetry',
-        'blender_render', 'cinematic_render', 'cinematic_video',
+        '3d_render', 'blender_render', 'cinematic_render', 'cinematic_video',
         'multi_format_transcode', 'video_editing', 'media_export',
-        'texture_synthesis'
+        'texture_synthesis', 'benchmark_test'
     )),
     pipeline_type TEXT NOT NULL DEFAULT 'standard',
     selected_engine TEXT NOT NULL CHECK (selected_engine IN (
         'blender_headless', 'ai_enhancer', 'ai_3d_recon',
         'ffmpeg_transcoder', 'cloud_gpu_cluster'
     )),
+    input_model_path TEXT,
+    output_render_path TEXT,
+    output_public_url TEXT,
+    render_settings JSONB NOT NULL DEFAULT '{}'::jsonb,
     config_params JSONB NOT NULL DEFAULT '{}'::jsonb,
-    status TEXT NOT NULL DEFAULT 'queued' CHECK (status IN (
-        'queued', 'processing', 'rendering', 'encoding',
+    status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN (
+        'pending', 'queued', 'processing', 'rendering', 'uploading', 'encoding',
         'quality_check', 'completed', 'failed', 'cancelled'
     )),
     progress_percent INT DEFAULT 0 CHECK (progress_percent BETWEEN 0 AND 100),
     idempotency_key TEXT UNIQUE,
+    worker_id TEXT,
+    lease_expires_at TIMESTAMPTZ,
+    error_code TEXT,
     error_message TEXT,
-    retry_count INT DEFAULT 0,
-    max_retries INT DEFAULT 3,
+    retry_count INT NOT NULL DEFAULT 0 CHECK (retry_count >= 0),
+    max_retries INT NOT NULL DEFAULT 3 CHECK (max_retries >= 0),
     started_at TIMESTAMPTZ,
     completed_at TIMESTAMPTZ,
     created_by UUID,
@@ -75,6 +82,8 @@ CREATE TABLE IF NOT EXISTS public.production_jobs (
 );
 
 CREATE INDEX IF NOT EXISTS idx_prod_jobs_status ON public.production_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_prod_jobs_queue_claim ON public.production_jobs(status, created_at, lease_expires_at)
+    WHERE status IN ('pending', 'queued', 'processing', 'rendering', 'uploading');
 CREATE INDEX IF NOT EXISTS idx_prod_jobs_engine ON public.production_jobs(selected_engine);
 CREATE INDEX IF NOT EXISTS idx_prod_jobs_product ON public.production_jobs(product_slug);
 

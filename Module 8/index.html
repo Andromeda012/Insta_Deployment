@@ -346,9 +346,11 @@
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
+    .status-pending { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
     .status-queued { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.3); }
     .status-processing { background: rgba(245, 158, 11, 0.15); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.3); }
     .status-rendering { background: rgba(212, 175, 55, 0.18); color: #FBBF24; border: 1px solid rgba(212, 175, 55, 0.4); }
+    .status-uploading { background: rgba(139, 92, 246, 0.18); color: #C084FC; border: 1px solid rgba(139, 92, 246, 0.4); }
     .status-encoding { background: rgba(168, 85, 247, 0.15); color: #C084FC; border: 1px solid rgba(168, 85, 247, 0.3); }
     .status-quality_check { background: rgba(45, 212, 191, 0.15); color: #2DD4BF; border: 1px solid rgba(45, 212, 191, 0.3); }
     .status-completed { background: rgba(16, 185, 129, 0.15); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.3); }
@@ -1028,12 +1030,14 @@
           <h2 class="box-title"><span>⚙️</span> Prodüksiyon İş &amp; Kuyruk Yöneticisi</h2>
           <p class="box-desc">Tüm render, dönüştürme ve AI görevlerinin yaşam döngüsü durumu.</p>
         </div>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <select id="jobsStatusFilter" class="media-select" onchange="filterJobsTable()">
             <option value="ALL">Tüm Durumlar</option>
+            <option value="pending">Bekliyor (Pending)</option>
             <option value="queued">Kuyrukta (Queued)</option>
             <option value="processing">İşleniyor (Processing)</option>
             <option value="rendering">Render Aşaması (Rendering)</option>
+            <option value="uploading">Storage'a Yükleniyor (Uploading)</option>
             <option value="encoding">Kodlanıyor (Encoding)</option>
             <option value="completed">Tamamlandı (Completed)</option>
             <option value="failed">Hatalı (Failed)</option>
@@ -1049,19 +1053,20 @@
           <thead>
             <tr>
               <th>Görev ID</th>
-              <th>Hedef Ürün / Koleksiyon</th>
+              <th>Hedef / Model Girdisi</th>
               <th>Üretim Türü</th>
-              <th>Motor</th>
+              <th>Motor / Worker</th>
               <th>Durum</th>
               <th>İlerleme</th>
-              <th>Yeniden Deneme</th>
+              <th>Render Çıktısı</th>
+              <th>Deneme</th>
               <th>Tarih</th>
               <th>İşlemler</th>
             </tr>
           </thead>
           <tbody id="jobsTableBody">
             <tr>
-              <td colspan="9" style="text-align:center; padding:36px; color:var(--text-muted);">
+              <td colspan="10" style="text-align:center; padding:36px; color:var(--text-muted);">
                 Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
               </td>
             </tr>
@@ -1083,8 +1088,8 @@
           
           <div class="form-group">
             <label>1. Hedef Ürün / Koleksiyon (Modül 7)</label>
-            <select id="jobTargetSelect" class="form-control" required onchange="handleJobTargetChange(this.value)">
-              <option value="">Hedef Seçiniz...</option>
+            <select id="jobTargetSelect" class="form-control" onchange="handleJobTargetChange(this.value)">
+              <option value="">Hedef Seçiniz (Benchmark için boş bırakılabilir)...</option>
             </select>
           </div>
 
@@ -1094,6 +1099,7 @@
               <option value="image_enhance">Görsel İyileştirme (AI Image Enhancement)</option>
               <option value="background_removal">Arka Plan Ayrıştırma (Background Processing)</option>
               <option value="blender_render">Blender 3D Sahne Render (Headless Cycles)</option>
+              <option value="benchmark_test">Blender Headless Benchmark Test (Küp Sahnesi)</option>
               <option value="cinematic_video">Sinematik Video (Cinematic Camera Track)</option>
               <option value="3d_reconstruction">Fotoğraftan 3D Rekonstrüksiyon (Multi-View)</option>
               <option value="multi_format_transcode">Çoklu Format Dağıtımı (9:16 / 16:9 / 1:1)</option>
@@ -2272,7 +2278,7 @@
       if (!jobs || jobs.length === 0) {
         tbody.innerHTML = `
           <tr>
-            <td colspan="9" style="text-align:center; padding:36px; color:var(--text-muted);">
+            <td colspan="10" style="text-align:center; padding:36px; color:var(--text-muted);">
               Aktif veya tamamlanmış prodüksiyon görevi bulunmuyor.
             </td>
           </tr>
@@ -2280,36 +2286,62 @@
         return;
       }
 
-      tbody.innerHTML = jobs.map(j => `
+      tbody.innerHTML = jobs.map(j => {
+        const previewUrl = j.output_public_url || (j.output_render_path ? `https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/${j.output_render_path}` : '');
+        return `
         <tr>
-          <td><code style="font-family:var(--font-mono); color:var(--accent-gold);">${j.id}</code></td>
-          <td><strong>${j.product_slug || j.collection_id || 'Genel Sahne'}</strong></td>
-          <td><span class="mini-chip">${j.production_type}</span></td>
-          <td>${j.selected_engine}</td>
-          <td><span class="status-badge status-${j.status}">${j.status}</span></td>
+          <td><code style="font-family:var(--font-mono); color:var(--accent-gold);">${escapeHtml(j.id)}</code></td>
+          <td>
+            <strong>${escapeHtml(j.product_slug || j.collection_id || (j.production_type === 'benchmark_test' ? 'Benchmark Küp Sahnesi' : 'Genel Sahne'))}</strong>
+            ${j.input_model_path ? `<div style="font-size:10px; color:var(--text-dim); font-family:var(--font-mono);">${escapeHtml(j.input_model_path)}</div>` : ''}
+          </td>
+          <td><span class="mini-chip">${escapeHtml(j.production_type)}</span></td>
+          <td>
+            <div>${escapeHtml(j.selected_engine)}</div>
+            ${j.worker_id ? `<small style="color:var(--text-dim); font-family:var(--font-mono); font-size:10px;">${escapeHtml(j.worker_id)}</small>` : ''}
+          </td>
+          <td>
+            <span class="status-badge status-${escapeHtml(j.status)}">${escapeHtml(j.status)}</span>
+            ${j.status === 'failed' && j.error_message
+              ? `<div style="color:#F87171; font-size:10.5px; max-width:210px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:4px;" title="${escapeHtml(j.error_message)}">⚠️ ${escapeHtml(j.error_message)}</div>`
+              : ''}
+          </td>
           <td>
             <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${j.progress_percent || 0}%;"></div></div>
             <small>${j.progress_percent || 0}%</small>
           </td>
-          <td>${j.retry_count || 0} / ${j.max_retries || 3}</td>
+          <td>
+            ${previewUrl ? `
+              <div style="display:flex; align-items:center; gap:8px;">
+                <a href="${escapeHtml(previewUrl)}" target="_blank" title="Tam Boyut Gör">
+                  <img src="${escapeHtml(previewUrl)}" alt="Render Çıktısı" style="width:42px; height:42px; border-radius:6px; object-fit:cover; border:1px solid rgba(212,175,55,0.4);">
+                </a>
+                <a href="${escapeHtml(previewUrl)}" target="_blank" download class="btn-ghost" style="padding:3px 7px; font-size:10.5px;">⬇️ İndir</a>
+              </div>
+            ` : '<span style="color:var(--text-dim); font-size:11px;">—</span>'}
+          </td>
+          <td>${j.retry_count || 0} / ${j.max_retries ?? 3}</td>
           <td>${j.created_at ? j.created_at.slice(0, 16).replace('T', ' ') : '-'}</td>
           <td style="white-space:nowrap;">
-            <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="viewJobDetail('${j.id}')">Detay</button>
-            ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries || 3)
-              ? `<button type="button" class="btn-emerald" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="retryJobAction('${j.id}')">Yeniden Dene</button>`
+            <button type="button" class="btn-ghost" style="padding:4px 8px; font-size:11px;" onclick="viewJobDetail('${escapeHtml(j.id)}')">Detay</button>
+            ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries ?? 3)
+              ? `<button type="button" class="btn-emerald" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="retryJobAction('${escapeHtml(j.id)}')">Yeniden Dene</button>`
               : ''}
-            ${['queued', 'processing'].includes(j.status)
-              ? `<button type="button" class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="cancelJobAction('${j.id}')">İptal</button>`
+            ${['pending', 'queued', 'processing', 'rendering', 'uploading'].includes(j.status)
+              ? `<button type="button" class="btn-danger" style="padding:4px 8px; font-size:11px; margin-left:4px;" onclick="cancelJobAction('${escapeHtml(j.id)}')">İptal</button>`
               : ''}
           </td>
         </tr>
-      `).join('');
+        `;
+      }).join('');
     }
 
     window.filterJobsTable = function() {
       const st = document.getElementById('jobsStatusFilter')?.value || 'ALL';
       let filtered = currentJobsList;
-      if (st !== 'ALL') filtered = filtered.filter(j => j.status === st);
+      if (st !== 'ALL') {
+        filtered = filtered.filter(j => j.status === st);
+      }
       renderJobsTable(filtered);
     };
 
@@ -2333,51 +2365,74 @@
         const body = document.getElementById('dtJobBody');
         document.getElementById('dtJobTitle').textContent = `Görev Detayı: ${j.id}`;
 
+        const primaryPreviewUrl = j.output_public_url ||
+          outputs[0]?.public_url ||
+          (j.output_render_path ? `https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/${j.output_render_path}` : '');
+
         body.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:16px;">
             <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.3); padding:12px 16px; border-radius:10px; border:1px solid var(--studio-border);">
               <div>
-                <span class="status-badge status-${j.status}">${j.status}</span>
-                <strong style="margin-left:10px; font-size:14px; color:#fff;">${j.title || j.id}</strong>
+                <span class="status-badge status-${escapeHtml(j.status)}">${escapeHtml(j.status)}</span>
+                <strong style="margin-left:10px; font-size:14px; color:#fff;">${escapeHtml(j.title || j.id)}</strong>
               </div>
               <div style="font-size:12px; color:var(--text-muted);">
-                İlerleme: <strong>${j.progress_percent || 0}%</strong> • Yeniden Deneme: <strong>${j.retry_count || 0}/${j.max_retries || 3}</strong>
+                İlerleme: <strong>${j.progress_percent || 0}%</strong> • Yeniden Deneme: <strong>${j.retry_count || 0}/${j.max_retries ?? 3}</strong>
               </div>
             </div>
 
             <!-- Structured Error Alert if Failed -->
-            ${j.status === 'failed' && j.error_message ? `
+            ${j.error_message ? `
               <div style="background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.3); border-radius:10px; padding:12px 16px; color:#F87171; font-size:12px;">
-                <strong>⚠️ Hata Kaydı:</strong> ${j.error_message}
-                ${j.error_details ? `<pre style="margin-top:6px; font-family:var(--font-mono); font-size:11px; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; overflow-x:auto;">${JSON.stringify(j.error_details, null, 2)}</pre>` : ''}
+                <strong>⚠️ Hata / Kurtarma Kaydı (${escapeHtml(j.error_code || 'ERROR')}):</strong> ${escapeHtml(j.error_message)}
+                ${j.error_details ? `<pre style="margin-top:6px; font-family:var(--font-mono); font-size:11px; background:rgba(0,0,0,0.3); padding:8px; border-radius:6px; overflow-x:auto;">${escapeHtml(JSON.stringify(j.error_details, null, 2))}</pre>` : ''}
+              </div>
+            ` : ''}
+
+            <!-- Completed Render Visual Preview & Download -->
+            ${primaryPreviewUrl ? `
+              <div style="background:#090D14; border:1px solid rgba(212,175,55,0.35); border-radius:12px; padding:14px; display:flex; flex-direction:column; align-items:center; gap:12px;">
+                <div style="width:100%; display:flex; justify-content:space-between; align-items:center;">
+                  <strong style="font-size:12.5px; color:var(--accent-gold);">🖼️ Render Çıktısı Önizlemesi (Supabase Storage)</strong>
+                  <a href="${escapeHtml(primaryPreviewUrl)}" target="_blank" download class="btn-emerald" style="padding:5px 12px; font-size:11.5px;">⬇️ Render Çıktısını İndir / Aç</a>
+                </div>
+                <img src="${escapeHtml(primaryPreviewUrl)}" alt="Render Output" style="max-width:100%; max-height:320px; border-radius:8px; object-fit:contain; border:1px solid var(--studio-border);">
+                <code style="font-size:11px; color:var(--text-dim); word-break:break-all;">Storage Path: ${escapeHtml(j.output_render_path || outputs[0]?.storage_path || '-')}</code>
               </div>
             ` : ''}
 
             <!-- Technical details -->
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; font-size:12.5px;">
-              <div><strong>Üretim Türü:</strong> <span class="mini-chip">${j.production_type}</span></div>
-              <div><strong>Seçili Motor:</strong> ${j.selected_engine}</div>
-              <div><strong>Hedef Ürün:</strong> ${j.product_slug || j.collection_id || 'Genel'}</div>
-              <div><strong>Oluşturulma:</strong> ${j.created_at || '-'}</div>
-              <div><strong>Başlangıç:</strong> ${j.started_at || '-'}</div>
-              <div><strong>Bitiş:</strong> ${j.completed_at || '-'}</div>
+              <div><strong>Görev ID (job_id):</strong> <code>${escapeHtml(j.job_id || j.id)}</code></div>
+              <div><strong>Üretim Türü:</strong> <span class="mini-chip">${escapeHtml(j.production_type)}</span></div>
+              <div><strong>Seçili Motor:</strong> ${escapeHtml(j.selected_engine)}</div>
+              <div><strong>Worker ID:</strong> <code>${escapeHtml(j.worker_id || '-')}</code></div>
+              <div><strong>Girdi Model Yolu:</strong> <code>${escapeHtml(j.input_model_path || '-')}</code></div>
+              <div><strong>Çıktı Render Yolu:</strong> <code>${escapeHtml(j.output_render_path || '-')}</code></div>
+              <div><strong>Hedef Ürün:</strong> ${escapeHtml(j.product_slug || j.collection_id || 'Genel / Benchmark')}</div>
+              <div><strong>Lease Bitiş:</strong> ${escapeHtml(j.lease_expires_at || '-')}</div>
+              <div><strong>Oluşturulma:</strong> ${escapeHtml(j.created_at || '-')}</div>
+              <div><strong>Başlangıç:</strong> ${escapeHtml(j.started_at || '-')}</div>
+              <div><strong>Bitiş:</strong> ${escapeHtml(j.completed_at || '-')}</div>
             </div>
 
             <!-- Parameters JSON -->
             <div>
-              <strong style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Yapılandırma Parametreleri:</strong>
-              <pre style="background:#090D14; border:1px solid var(--studio-border); border-radius:8px; padding:10px; font-family:var(--font-mono); font-size:11px; color:#A7F3D0; overflow-x:auto;">${JSON.stringify(j.config_params || {}, null, 2)}</pre>
+              <strong style="font-size:12px; color:var(--text-muted); display:block; margin-bottom:4px;">Render Ayarları (render_settings / config_params):</strong>
+              <pre style="background:#090D14; border:1px solid var(--studio-border); border-radius:8px; padding:10px; font-family:var(--font-mono); font-size:11px; color:#A7F3D0; overflow-x:auto;">${escapeHtml(JSON.stringify(j.render_settings || j.config_params || {}, null, 2))}</pre>
             </div>
 
             <!-- Outputs Gallery -->
             ${outputs.length ? `
               <div>
                 <h4 style="font-size:13px; font-weight:700; color:var(--accent-forest); margin-bottom:8px;">Üretilen Çıktılar (${outputs.length})</h4>
-                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap:10px;">
+                <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap:10px;">
                   ${outputs.map(out => `
                     <div style="background:rgba(0,0,0,0.3); border:1px solid var(--studio-border); border-radius:8px; padding:10px; font-size:11.5px;">
-                      <strong>${out.output_type}</strong>
-                      <div style="color:var(--text-dim); font-size:10px;">${out.resolution_label || 'Standart'} • ${out.file_format}</div>
+                      <strong>${escapeHtml(out.output_type)}</strong>
+                      <div style="color:var(--text-dim); font-size:10px; margin-top:2px;">${escapeHtml(out.resolution_label || 'Standart')} • ${escapeHtml(out.file_format)}</div>
+                      ${out.storage_path ? `<div style="font-family:var(--font-mono); font-size:10px; color:var(--accent-gold); margin-top:4px; word-break:break-all;">${escapeHtml(out.storage_path)}</div>` : ''}
+                      ${out.public_url ? `<div style="margin-top:6px;"><a href="${escapeHtml(out.public_url)}" target="_blank" style="color:var(--accent-cyan); font-size:11px;">🔗 Dosyayı Aç</a></div>` : ''}
                     </div>
                   `).join('')}
                 </div>
@@ -2392,8 +2447,8 @@
                   <div class="event-item">
                     <span class="event-time">${ev.created_at ? ev.created_at.slice(11, 19) : ''}</span>
                     <div>
-                      <div class="event-label">${ev.event_type}</div>
-                      <div class="event-desc">${JSON.stringify(ev.event_details || {})}</div>
+                      <div class="event-label">${escapeHtml(ev.event_type)}</div>
+                      <div class="event-desc">${escapeHtml(JSON.stringify(ev.event_details || {}))}</div>
                     </div>
                   </div>
                 `).join('') : '<span style="color:var(--text-dim); font-size:11px;">Henüz kaydedilmiş olay bulunmuyor.</span>'}
@@ -2401,11 +2456,11 @@
             </div>
 
             <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:14px;">
-              ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries || 3) ? `
-                <button type="button" class="btn-emerald" onclick="retryJobAction('${j.id}')">✦ Görevi Yeniden Dene</button>
+              ${['failed', 'cancelled'].includes(j.status) && (j.retry_count || 0) < (j.max_retries ?? 3) ? `
+                <button type="button" class="btn-emerald" onclick="retryJobAction('${escapeHtml(j.id)}')">✦ Görevi Yeniden Dene</button>
               ` : ''}
-              ${['queued', 'processing'].includes(j.status) ? `
-                <button type="button" class="btn-danger" onclick="cancelJobAction('${j.id}')">Görevi İptal Et</button>
+              ${['pending', 'queued', 'processing', 'rendering', 'uploading'].includes(j.status) ? `
+                <button type="button" class="btn-danger" onclick="cancelJobAction('${escapeHtml(j.id)}')">Görevi İptal Et</button>
               ` : ''}
             </div>
           </div>
@@ -2427,7 +2482,7 @@
     window.handleJobTypeChange = function(type) {
       const engSel = document.getElementById('jobEngineSelect');
       if (!engSel) return;
-      if (type === 'blender_render' || type === 'cinematic_video') engSel.value = 'blender_headless';
+      if (type === 'blender_render' || type === 'benchmark_test' || type === 'cinematic_video') engSel.value = 'blender_headless';
       else if (type === '3d_reconstruction') engSel.value = 'ai_3d_recon';
       else if (type === 'multi_format_transcode') engSel.value = 'ffmpeg_transcoder';
       else engSel.value = 'ai_enhancer';
@@ -2446,17 +2501,32 @@
       const sceneTpl = document.getElementById('jobSceneTemplateSelect')?.value;
       const resLabel = document.getElementById('jobResolutionSelect')?.value;
 
+      if (jobType !== 'benchmark_test' && !targetSlug) {
+        alert('Lütfen bir hedef ürün veya koleksiyon seçin (Benchmark testi dışındaki görevler için zorunludur).');
+        return;
+      }
+
       const idempotencyKey = `job-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+      const isBenchmark = jobType === 'benchmark_test';
       const payload = {
-        product_slug: targetSlug,
+        product_slug: isBenchmark ? null : (targetSlug || null),
         production_type: jobType,
         selected_engine: engine,
+        status: 'pending',
+        input_model_path: isBenchmark ? 'benchmark://cube' : null,
         source_asset_id: sourceAssetId || null,
         idempotency_key: idempotencyKey,
-        parameters: {
+        render_settings: {
+          mode: isBenchmark ? 'benchmark' : 'product',
           sceneTemplateId: sceneTpl,
           resolution: resLabel,
-          samples: 128
+          samples: isBenchmark ? 16 : 64
+        },
+        parameters: {
+          mode: isBenchmark ? 'benchmark' : 'product',
+          sceneTemplateId: sceneTpl,
+          resolution: resLabel,
+          samples: isBenchmark ? 16 : 64
         }
       };
 
