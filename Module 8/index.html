@@ -1271,32 +1271,312 @@
     </div>
   </div>
 
-  <!-- SCRIPTS -->
-  <script type="module">
-    import {
-      fetchStudioOverview,
-      fetchStudioMedia,
-      fetchMediaDetail,
-      uploadStudioMedia,
-      fetchStudioJobs,
-      fetchJobDetail,
-      submitStudioJob,
-      cancelStudioJob,
-      retryStudioJob,
-      fetchSceneTemplates,
-      fetchStudioEngines,
-      fetchCatalogProducts
-    } from './js/studio-api.js';
+  <!-- SCRIPTS (Self-contained & CleanURLs/File-Protocol Resilient) -->
+  <script>
+    // ── 0. IMMEDIATE TAB & MODAL NAVIGATION (Guaranteed Synchronous Registration) ──
+    window.switchStudioTab = function(tabKey) {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabKey);
+      });
+      document.querySelectorAll('.studio-panel').forEach(panel => {
+        panel.classList.toggle('active', panel.id === `panel-${tabKey}`);
+      });
+    };
 
-    import {
-      studioRegistry,
-      BlenderHeadlessEngine,
-      AIImageEnhanceEngine,
-      VideoTranscodeEngine,
-      AI3DReconEngine
-    } from './js/studio-engine.js';
+    window.closeModal = function(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.remove('active');
+    };
 
-    import { ModelViewerEngine } from './js/model-viewer.js';
+    window.openModal = function(modalId) {
+      const el = document.getElementById(modalId);
+      if (el) el.classList.add('active');
+    };
+
+    // ── 1. STUDIO API CLIENT BRIDGE ──
+    async function fetchStudioOverview() {
+      const res = await fetch('/api/module8?action=overview', { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchCatalogProducts(filters = {}) {
+      const params = new URLSearchParams();
+      if (filters.category && filters.category !== 'ALL') params.set('category', filters.category);
+      if (filters.collection && filters.collection !== 'ALL') params.set('collection', filters.collection);
+      if (filters.slug) params.set('slug', filters.slug);
+      const qs = params.toString() ? `&${params.toString()}` : '';
+      const res = await fetch(`/api/module8?action=catalog-ref${qs}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchStudioMedia(filters = {}) {
+      const params = new URLSearchParams();
+      if (filters.product_slug) params.set('product_slug', filters.product_slug);
+      if (filters.collection_id) params.set('collection_id', filters.collection_id);
+      if (filters.asset_type && filters.asset_type !== 'ALL') params.set('asset_type', filters.asset_type);
+      if (filters.search) params.set('search', filters.search);
+      const qs = params.toString() ? `&${params.toString()}` : '';
+      const res = await fetch(`/api/module8?action=media${qs}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchMediaDetail(assetId) {
+      const res = await fetch(`/api/module8?action=media&id=${encodeURIComponent(assetId)}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function uploadStudioMedia(payload) {
+      const res = await fetch('/api/module8?action=upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      return res.json();
+    }
+
+    async function fetchStudioJobs(filters = {}) {
+      const params = new URLSearchParams();
+      if (filters.status && filters.status !== 'ALL') params.set('status', filters.status);
+      if (filters.product_slug) params.set('product_slug', filters.product_slug);
+      if (filters.collection_id) params.set('collection_id', filters.collection_id);
+      if (filters.selected_engine) params.set('selected_engine', filters.selected_engine);
+      const qs = params.toString() ? `&${params.toString()}` : '';
+      const res = await fetch(`/api/module8?action=jobs${qs}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchJobDetail(jobId) {
+      const res = await fetch(`/api/module8?action=job-detail&id=${encodeURIComponent(jobId)}`, { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function submitStudioJob(jobPayload) {
+      const res = await fetch('/api/module8?action=jobs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(jobPayload)
+      });
+      return res.json();
+    }
+
+    async function cancelStudioJob(jobId) {
+      const res = await fetch('/api/module8?action=job-cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: jobId })
+      });
+      return res.json();
+    }
+
+    async function retryStudioJob(jobId) {
+      const res = await fetch('/api/module8?action=job-retry', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: jobId })
+      });
+      return res.json();
+    }
+
+    async function fetchSceneTemplates() {
+      const res = await fetch('/api/module8?action=scene-templates', { cache: 'no-store' });
+      return res.json();
+    }
+
+    async function fetchStudioEngines() {
+      const res = await fetch('/api/module8?action=engines', { cache: 'no-store' });
+      return res.json();
+    }
+
+    // ── 2. PRODUCTION ENGINE REGISTRY ──
+    const studioRegistry = {
+      get(engineId) {
+        return {
+          id: engineId,
+          async submitJob(payload) {
+            return submitStudioJob({
+              production_type: engineId === 'blender_headless' ? 'blender_render' : 'image_enhance',
+              selected_engine: engineId,
+              product_slug: payload.product_slug,
+              collection_id: payload.collection_id,
+              config_params: payload.params || {}
+            });
+          }
+        };
+      }
+    };
+
+    // ── 3. 3D WEBGL MODEL VIEWER ENGINE ──
+    class ModelViewerEngine {
+      constructor(containerElement, options = {}) {
+        this.container = containerElement;
+        this.options = options;
+        this.scene = null;
+        this.camera = null;
+        this.renderer = null;
+        this.controls = null;
+        this.currentModel = null;
+        this.animFrameId = null;
+        this.isAutoRotating = false;
+        this.isWireframe = false;
+        this.initialCameraPosition = null;
+        this.initialTarget = null;
+        this._onResize = this._handleResize.bind(this);
+      }
+
+      init() {
+        if (!window.THREE) throw new Error('Three.js kütüphanesi yüklenemedi.');
+        const width = this.container.clientWidth || 800;
+        const height = this.container.clientHeight || 500;
+        this.scene = new window.THREE.Scene();
+        this.scene.background = new window.THREE.Color(0x0C1017);
+        this.camera = new window.THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+        this.camera.position.set(2.5, 2.0, 3.5);
+        this.renderer = new window.THREE.WebGLRenderer({ antialias: true, alpha: false });
+        this.renderer.setSize(width, height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.toneMapping = window.THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.outputEncoding = window.THREE.sRGBEncoding;
+        this.container.innerHTML = '';
+        this.container.appendChild(this.renderer.domElement);
+        if (window.THREE.OrbitControls) {
+          this.controls = new window.THREE.OrbitControls(this.camera, this.renderer.domElement);
+          this.controls.enableDamping = true;
+          this.controls.dampingFactor = 0.05;
+          this.controls.maxPolarAngle = Math.PI / 2 + 0.05;
+          this.controls.minDistance = 0.5;
+          this.controls.maxDistance = 20;
+        }
+        const ambient = new window.THREE.AmbientLight(0xffffff, 0.55);
+        this.scene.add(ambient);
+        const keyLight = new window.THREE.DirectionalLight(0xfff8ee, 1.2);
+        keyLight.position.set(4, 6, 4);
+        this.scene.add(keyLight);
+        const fillLight = new window.THREE.DirectionalLight(0xdbeafe, 0.6);
+        fillLight.position.set(-4, 3, -2);
+        this.scene.add(fillLight);
+        const rimLight = new window.THREE.DirectionalLight(0xffffff, 0.8);
+        rimLight.position.set(0, 5, -5);
+        this.scene.add(rimLight);
+        const grid = new window.THREE.GridHelper(10, 20, 0xD4AF37, 0x1E293B);
+        grid.position.y = -0.001;
+        this.scene.add(grid);
+        window.addEventListener('resize', this._onResize);
+        this._animate();
+      }
+
+      async loadModel(url, onProgress = null) {
+        if (!window.THREE.GLTFLoader) throw new Error('GLTFLoader eklentisi bulunamadı.');
+        if (this.currentModel) {
+          this.scene.remove(this.currentModel);
+          this._disposeObject(this.currentModel);
+          this.currentModel = null;
+        }
+        const loader = new window.THREE.GLTFLoader();
+        return new Promise((resolve, reject) => {
+          loader.load(
+            url,
+            (gltf) => {
+              this.currentModel = gltf.scene;
+              const box = new window.THREE.Box3().setFromObject(this.currentModel);
+              const size = box.getSize(new window.THREE.Vector3());
+              const center = box.getCenter(new window.THREE.Vector3());
+              this.currentModel.position.x -= center.x;
+              this.currentModel.position.y -= box.min.y;
+              this.currentModel.position.z -= center.z;
+              this.scene.add(this.currentModel);
+              const maxDim = Math.max(size.x, size.y, size.z);
+              const fov = this.camera.fov * (Math.PI / 180);
+              let cameraZ = Math.max(Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.6, 2.0);
+              this.camera.position.set(cameraZ * 0.7, cameraZ * 0.5, cameraZ);
+              this.camera.lookAt(0, size.y / 2, 0);
+              if (this.controls) {
+                this.controls.target.set(0, size.y / 2, 0);
+                this.controls.update();
+                this.initialCameraPosition = this.camera.position.clone();
+                this.initialTarget = this.controls.target.clone();
+              }
+              resolve({ success: true });
+            },
+            (xhr) => {
+              if (xhr.lengthComputable && onProgress) {
+                onProgress(Math.round((xhr.loaded / xhr.total) * 100));
+              }
+            },
+            (error) => reject(new Error(`3D Model yüklenirken hata oluştu: ${error.message || 'Dosya okunamadı'}`))
+          );
+        });
+      }
+
+      toggleAutoRotate() {
+        this.isAutoRotating = !this.isAutoRotating;
+        if (this.controls) {
+          this.controls.autoRotate = this.isAutoRotating;
+          this.controls.autoRotateSpeed = 2.0;
+        }
+        return this.isAutoRotating;
+      }
+
+      toggleWireframe() {
+        this.isWireframe = !this.isWireframe;
+        if (this.currentModel) {
+          this.currentModel.traverse((node) => {
+            if (node.isMesh && node.material) {
+              if (Array.isArray(node.material)) node.material.forEach(m => m.wireframe = this.isWireframe);
+              else node.material.wireframe = this.isWireframe;
+            }
+          });
+        }
+        return this.isWireframe;
+      }
+
+      resetCamera() {
+        if (this.controls && this.initialCameraPosition && this.initialTarget) {
+          this.camera.position.copy(this.initialCameraPosition);
+          this.controls.target.copy(this.initialTarget);
+          this.controls.update();
+        }
+      }
+
+      _handleResize() {
+        if (!this.container || !this.renderer || !this.camera) return;
+        const width = this.container.clientWidth;
+        const height = this.container.clientHeight;
+        if (!width || !height) return;
+        this.camera.aspect = width / height;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(width, height);
+      }
+
+      _animate() {
+        this.animFrameId = requestAnimationFrame(this._animate.bind(this));
+        if (this.controls) this.controls.update();
+        if (this.renderer && this.scene && this.camera) this.renderer.render(this.scene, this.camera);
+      }
+
+      _disposeObject(obj) {
+        obj.traverse((node) => {
+          if (node.geometry) node.geometry.dispose();
+          if (node.material) {
+            if (Array.isArray(node.material)) node.material.forEach(m => m.dispose());
+            else node.material.dispose();
+          }
+        });
+      }
+
+      dispose() {
+        if (this.animFrameId) cancelAnimationFrame(this.animFrameId);
+        window.removeEventListener('resize', this._onResize);
+        if (this.currentModel) this._disposeObject(this.currentModel);
+        if (this.controls) this.controls.dispose();
+        if (this.renderer) {
+          this.renderer.dispose();
+          if (this.renderer.domElement && this.renderer.domElement.parentNode) {
+            this.renderer.domElement.parentNode.removeChild(this.renderer.domElement);
+          }
+        }
+      }
+    }
 
     // State
     let activeModelViewer = null;
@@ -1309,16 +1589,6 @@
     let selectedUploadFileMime = null;
     let selectedUploadFileSize = 0;
 
-    // Window Navigation Switcher
-    window.switchStudioTab = function(tabKey) {
-      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabKey);
-      });
-      document.querySelectorAll('.studio-panel').forEach(panel => {
-        panel.classList.toggle('active', panel.id === `panel-${tabKey}`);
-      });
-    };
-
     function escapeHtml(str) {
       if (!str) return '';
       return String(str)
@@ -1328,16 +1598,6 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
     }
-
-    window.closeModal = function(modalId) {
-      const el = document.getElementById(modalId);
-      if (el) el.classList.remove('active');
-    };
-
-    window.openModal = function(modalId) {
-      const el = document.getElementById(modalId);
-      if (el) el.classList.add('active');
-    };
 
     // ── 3D MODEL VIEWER CONTROLLER ──
     window.open3DViewer = async function(modelUrl, title = '3D Model') {
@@ -1624,6 +1884,20 @@
       switchStudioTab('manager');
     };
 
+    const DEFAULT_STUDIO_ENGINES = [
+      { id: 'blender_headless', name: 'Blender 4.x Headless Engine', description: 'Cycles CPU/GPU Fotorealistik 3D Sahne & Video Render Motoru', status: 'active' },
+      { id: 'ai_enhancer', name: 'AI Image & Lighting Studio', description: 'PBR Ahşap/Membran Doku Koruma & Stüdyo Işık Dengeleme', status: 'active' },
+      { id: 'ai_3d_recon', name: 'Multi-View 3D Reconstructor', description: 'Çok Açılı Katalog Fotoğraflarından GLB/OBJ 3D Model Üretimi', status: 'ready' },
+      { id: 'ffmpeg_transcoder', name: 'FFmpeg Multi-Format Transcoder', description: '9:16 Reels, 16:9 4K, 4:5 Post ve 1:1 Kare Varyant Dağıtımı', status: 'active' }
+    ];
+
+    const DEFAULT_STUDIO_TEMPLATES = [
+      { id: 'vienna_luxury_salon', scene_slug: 'vienna_luxury_salon', name: 'Vienna Luxury Salon', lighting_preset: 'Warm Architectural Golden Hour (3800K)', render_engine: 'cycles', camera_presets: ['35mm Orbit', 'Slow Push-In', 'Macro Detail'] },
+      { id: 'verona_sunlit_villa', scene_slug: 'verona_sunlit_villa', name: 'Verona Sunlit Villa', lighting_preset: 'Mediterranean Daylight Studio (5600K)', render_engine: 'cycles', camera_presets: ['50mm Hero Angle', 'Wide Architectural', 'Low-Angle Track'] },
+      { id: 'siena_modern_atelier', scene_slug: 'siena_modern_atelier', name: 'Siena Modern Atelier', lighting_preset: 'Soft Diffused Gallery Box (4800K)', render_engine: 'cycles', camera_presets: ['85mm Portrait', 'Top-Down Isometric', 'Turntable 360°'] },
+      { id: 'kopenhag_nordic_sanctuary', scene_slug: 'kopenhag_nordic_sanctuary', name: 'Kopenhag Nordic Sanctuary', lighting_preset: 'Nordic Overcast Morning Light (6000K)', render_engine: 'cycles', camera_presets: ['24mm Interior', 'Dolly Pan Left-to-Right'] }
+    ];
+
     // Load Studio Dashboard Data
     async function loadStudioData() {
       try {
@@ -1648,8 +1922,9 @@
 
         // 2. Engines Matrix
         const enginesWrap = document.getElementById('overviewEnginesList');
-        if (enginesRes?.engines && enginesWrap) {
-          enginesWrap.innerHTML = enginesRes.engines.map(eng => `
+        const enginesList = (enginesRes?.engines && enginesRes.engines.length) ? enginesRes.engines : DEFAULT_STUDIO_ENGINES;
+        if (enginesWrap) {
+          enginesWrap.innerHTML = enginesList.map(eng => `
             <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:10px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
               <div>
                 <strong style="font-size:13px; color:#fff; display:block;">${eng.name}</strong>
@@ -1662,8 +1937,8 @@
 
         // 3. Scene Templates Grid
         const tplGrid = document.getElementById('sceneTemplatesGrid');
-        const templates = templatesRes?.scene_templates || [];
-        if (tplGrid && templates.length > 0) {
+        const templates = (templatesRes?.scene_templates && templatesRes.scene_templates.length) ? templatesRes.scene_templates : DEFAULT_STUDIO_TEMPLATES;
+        if (tplGrid) {
           tplGrid.innerHTML = templates.map(t => `
             <div class="template-card">
               <div class="template-img-frame">
@@ -1689,9 +1964,9 @@
         // 4. Catalog References
         if (catalogRes?.products) {
           currentCatalog = catalogRes;
-          populateCatalogSelectors();
-          renderCatalogExplorer();
         }
+        populateCatalogSelectors();
+        renderCatalogExplorer();
 
         // 5. Media Library & 3D Studio
         currentMediaList = mediaRes?.media_assets || [];
@@ -2277,8 +2552,21 @@
       }
     };
 
-    // Auto-init on load
-    document.addEventListener('DOMContentLoaded', loadStudioData);
+    // Auto-init on load & attach resilient tab listeners
+    function initStudioPortal() {
+      document.querySelectorAll('.nav-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.tab) window.switchStudioTab(btn.dataset.tab);
+        });
+      });
+      loadStudioData();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initStudioPortal);
+    } else {
+      initStudioPortal();
+    }
   </script>
 </body>
 </html>
