@@ -4158,6 +4158,36 @@ async function handleCatalogRef(req, res) {
 }
 
 // ── 7. MAIN API DISPATCHER ───────────────────────────────────────────────────
+async function handleUploadPlatformVideo(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  const { platform, file_base64, preview_base64, project_id = 'vproj_cin_default_showcase' } = req.body || {};
+  if (!platform || !file_base64) return res.status(400).json({ ok: false, error: 'platform and file_base64 required' });
+
+  const videoBuf = Buffer.from(file_base64, 'base64');
+  const videoStoragePath = `studio/videos/${project_id}/${platform}/${project_id}_${platform}_preview.mp4`;
+  const upVideo = await uploadBufferToStorageMedia(videoStoragePath, videoBuf, 'video/mp4', 'true');
+
+  if (preview_base64) {
+    const prevBuf = Buffer.from(preview_base64, 'base64');
+    const prevStoragePath = `studio/videos/${project_id}/${platform}/preview_frame.jpg`;
+    await uploadBufferToStorageMedia(prevStoragePath, prevBuf, 'image/jpeg', 'true');
+  }
+
+  await withStoreLock(async () => {
+    const store = await readStudioStore();
+    const video = (store.studio_videos || []).find(v => v.project_id === project_id && v.platform === platform);
+    if (video) {
+      video.render_status = 'completed';
+      video.file_size = videoBuf.length;
+      video.file_size_bytes = videoBuf.length;
+      video.public_url = upVideo.public_url;
+      await writeStudioStore(store);
+    }
+  });
+
+  return res.status(200).json({ ok: true, success: true, public_url: upVideo.public_url, bytes: videoBuf.length });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -4172,6 +4202,8 @@ export default async function handler(req, res) {
         return await handleMedia(req, res);
       case 'upload':
         return await handleUpload(req, res);
+      case 'upload-platform-video':
+        return await handleUploadPlatformVideo(req, res);
       case 'jobs':
       case 'job-create':
         return await handleJobs(req, res);
