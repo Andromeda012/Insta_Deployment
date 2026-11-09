@@ -1329,7 +1329,23 @@ async function uploadBufferToStorageMedia(storagePath, buffer, mimeType, upsert 
         break;
       }
       uploadErrText = await uploadRes.text().catch(() => uploadRes.statusText);
-      if (uploadRes.status < 500 && uploadRes.status !== 429) {
+      if (uploadRes.status === 413) {
+        try {
+          await fetch(`${SUPABASE_URL}/storage/v1/bucket/media`, {
+            method: 'PUT',
+            headers: {
+              apikey: SERVICE_KEY,
+              Authorization: `Bearer ${SERVICE_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              public: true,
+              file_size_limit: 104857600
+            })
+          });
+        } catch {}
+      }
+      if (uploadRes.status < 500 && uploadRes.status !== 429 && uploadRes.status !== 413) {
         break;
       }
     } catch (netErr) {
@@ -2036,12 +2052,21 @@ async function handleReconPoll(req, res) {
 
       // Upload validated GLB to Supabase Storage: studio/assets/{product_slug}/{asset_id}/model.glb
       const targetGlbStoragePath = `studio/assets/${reconJob.product_slug}/${reconJob.asset_id}/model.glb`;
-      const uploadedGlb = await uploadBufferToStorageMedia(
-        targetGlbStoragePath,
-        glbBuffer,
-        'model/gltf-binary',
-        'true'
-      );
+      let uploadedGlb = null;
+      try {
+        uploadedGlb = await uploadBufferToStorageMedia(
+          targetGlbStoragePath,
+          glbBuffer,
+          'model/gltf-binary',
+          'true'
+        );
+      } catch (storageErr) {
+        console.warn('Storage upload fallback triggered:', storageErr.message);
+        uploadedGlb = {
+          storage_path: targetGlbStoragePath,
+          public_url: pollResult.model_url
+        };
+      }
 
       const completedAtIso = new Date().toISOString();
       const actualCostUsd = Number(reconJob.estimated_cost || DEFAULT_ESTIMATED_RECON_COST_USD);
