@@ -611,7 +611,13 @@ export function buildSampleValidGlbBuffer(metadata = {}) {
 export class TripoH31Client {
   constructor(options = {}) {
     this.baseUrl = String(options.baseUrl || process.env.TRIPO_API_BASE_URL || TRIPO_API_BASE_URL).replace(/\/+$/, '');
-    this.apiKey = String(options.apiKey !== undefined ? options.apiKey : (process.env.TRIPO_API_KEY || '')).trim();
+    this.apiKey = String(options.apiKey !== undefined ? options.apiKey : (
+      process.env.TRIPO_API_KEY ||
+      process.env.TRIPO3D_API_KEY ||
+      process.env.TRIPO_KEY ||
+      process.env.NEXT_PUBLIC_TRIPO_API_KEY ||
+      ''
+    )).trim();
     this.timeoutMs = Number(options.timeoutMs || process.env.TRIPO_API_TIMEOUT_MS || 30000);
     this.fetchImpl = options.fetchImpl || globalThis.fetch;
   }

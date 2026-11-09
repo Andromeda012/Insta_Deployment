@@ -988,6 +988,18 @@
           <span class="mini-chip" id="reconApiKeyBadge" style="background:rgba(16,185,129,0.15); color:#34D399; border-color:rgba(16,185,129,0.3);">Tripo H3.1 Hazır</span>
         </div>
 
+        <!-- INLINE TRIPO KEY ENTRY IF NOT IN ENV -->
+        <div id="reconKeyEntryRow" style="display:none; background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:8px; padding:10px 14px; margin-bottom:14px; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;">
+          <div>
+            <strong style="color:#FDE68A; font-size:12px;">🔑 Tripo API Anahtarı Tanımlayın:</strong>
+            <div style="font-size:11px; color:var(--text-muted);">Vercel ortam değişkeni henüz aktifleşmediyse anahtarınızı doğrudan buraya girip kaydedebilirsiniz.</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <input type="password" id="inputManualTripoKey" placeholder="Tripo API Key..." style="background:#090D14; border:1px solid #334155; color:#fff; border-radius:6px; padding:5px 8px; font-size:11.5px; width:220px;">
+            <button type="button" class="btn-gold" style="padding:5px 12px; font-size:11px;" onclick="saveManualTripoKey()">Kaydet &amp; Aktifleştir</button>
+          </div>
+        </div>
+
         <form id="reconStudioForm" onsubmit="return false;">
           <!-- 1. Product Selection & Name -->
           <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:14px;">
@@ -2285,20 +2297,31 @@
       return res.json();
     }
 
+    function getTripoAuthHeaders() {
+      const key = (typeof localStorage !== 'undefined' ? localStorage.getItem('tripo_api_key') : '') || '';
+      return key ? { 'x-tripo-key': key } : {};
+    }
+
     async function fetchReconCostEstimate() {
-      const res = await fetch('/api/module8?action=recon-cost-estimate', { cache: 'no-store' });
+      const res = await fetch('/api/module8?action=recon-cost-estimate', {
+        cache: 'no-store',
+        headers: getTripoAuthHeaders()
+      });
       return res.json();
     }
 
     async function fetchReconJobs() {
-      const res = await fetch('/api/module8?action=recon-jobs', { cache: 'no-store' });
+      const res = await fetch('/api/module8?action=recon-jobs', {
+        cache: 'no-store',
+        headers: getTripoAuthHeaders()
+      });
       return res.json();
     }
 
     async function prepareReconImage(payload) {
       const res = await fetch('/api/module8?action=recon-prepare', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getTripoAuthHeaders() },
         body: JSON.stringify(payload)
       });
       return res.json();
@@ -2307,21 +2330,24 @@
     async function startReconGeneration(payload) {
       const res = await fetch('/api/module8?action=recon-start', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getTripoAuthHeaders() },
         body: JSON.stringify(payload)
       });
       return res.json();
     }
 
     async function pollReconTask(jobId) {
-      const res = await fetch(`/api/module8?action=recon-poll&job_id=${encodeURIComponent(jobId)}`, { cache: 'no-store' });
+      const res = await fetch(`/api/module8?action=recon-poll&job_id=${encodeURIComponent(jobId)}`, {
+        cache: 'no-store',
+        headers: getTripoAuthHeaders()
+      });
       return res.json();
     }
 
     async function sendReconAssetToBlender(payload) {
       const res = await fetch('/api/module8?action=recon-to-blender-job', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...getTripoAuthHeaders() },
         body: JSON.stringify(payload)
       });
       return res.json();
@@ -3254,8 +3280,15 @@
           if (estLbl) estLbl.textContent = `$${Number(ce.estimated_cost_usd || 0.30).toFixed(2)} USD`;
           if (maxLbl) maxLbl.textContent = `$${Number(ce.max_job_cost_limit_usd || 1.00).toFixed(2)} USD`;
           if (remLbl) remLbl.textContent = `$${Number(ce.remaining_budget_usd || 25.00).toFixed(2)} USD`;
+          const hasKey = Boolean(ce.has_tripo_api_key || (typeof localStorage !== 'undefined' && localStorage.getItem('tripo_api_key')));
+          const keyRow = document.getElementById('reconKeyEntryRow');
           if (keyBadge) {
-            keyBadge.textContent = ce.has_tripo_api_key ? 'Tripo H3.1 API Anahtarı Tanımlı' : 'Tripo H3.1 (API Anahtarı Bekleniyor)';
+            keyBadge.textContent = hasKey ? '✓ Tripo H3.1 API Anahtarı Tanımlı' : 'Tripo H3.1 (API Anahtarı Bekleniyor)';
+            keyBadge.style.color = hasKey ? '#34D399' : '#F59E0B';
+            keyBadge.style.borderColor = hasKey ? 'rgba(16,185,129,0.3)' : 'rgba(245,158,11,0.3)';
+          }
+          if (keyRow) {
+            keyRow.style.display = hasKey ? 'none' : 'flex';
           }
         }
 
@@ -3270,6 +3303,33 @@
         render3DStudioModels(currentMediaList, currentReconJobsList, currentThreeDAssetsList);
       } catch (e) {
         console.warn('refreshReconStudioData warning:', e);
+      }
+    };
+
+    window.saveManualTripoKey = async function() {
+      const input = document.getElementById('inputManualTripoKey');
+      const key = (input ? input.value : '').trim();
+      if (!key || key.length < 8) {
+        alert('Lütfen geçerli bir Tripo API anahtarı girin.');
+        return;
+      }
+      try {
+        const res = await fetch('/api/module8?action=recon-save-key', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tripo_api_key: key })
+        }).then(r => r.json());
+        localStorage.setItem('tripo_api_key', key);
+        if (res.ok) {
+          alert('✓ Tripo API anahtarı başarıyla sunucuya ve tarayıcınıza kaydedildi!');
+        } else {
+          alert('Anahtar tarayıcı oturumunuza kaydedildi: ' + (res.error || ''));
+        }
+        refreshReconStudioData();
+      } catch (err) {
+        localStorage.setItem('tripo_api_key', key);
+        alert('✓ Tripo API anahtarı tarayıcıya kaydedildi.');
+        refreshReconStudioData();
       }
     };
 

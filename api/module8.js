@@ -1350,6 +1350,39 @@ async function uploadBufferToStorageMedia(storagePath, buffer, mimeType, upsert 
   };
 }
 
+function resolveTripoApiKey(req = {}, store = {}) {
+  const fromEnv = process.env.TRIPO_API_KEY ||
+    process.env.TRIPO3D_API_KEY ||
+    process.env.TRIPO_KEY ||
+    process.env.NEXT_PUBLIC_TRIPO_API_KEY ||
+    '';
+  if (fromEnv && fromEnv.trim().length >= 8 && !fromEnv.includes('YOUR_')) return fromEnv.trim();
+
+  const fromHeader = req.headers?.['x-tripo-key'] || req.headers?.['x-tripo-api-key'] || '';
+  if (fromHeader && fromHeader.trim().length >= 8) return fromHeader.trim();
+
+  const fromBody = req.body?.tripo_api_key || req.body?.tripoKey || '';
+  if (fromBody && typeof fromBody === 'string' && fromBody.trim().length >= 8) return fromBody.trim();
+
+  if (store.tripo_api_key && typeof store.tripo_api_key === 'string' && store.tripo_api_key.trim().length >= 8) {
+    return store.tripo_api_key.trim();
+  }
+
+  return '';
+}
+
+async function handleReconSaveKey(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  const key = String(req.body?.tripo_api_key || req.body?.apiKey || '').trim();
+  if (key.length < 8) return res.status(400).json({ ok: false, error: 'Geçersiz Tripo API anahtarı (en az 8 karakter).' });
+  return await withStoreLock(async () => {
+    const store = await readStudioStore();
+    store.tripo_api_key = key;
+    await writeStudioStore(store);
+    return res.status(200).json({ ok: true, success: true, saved: true, message: 'Tripo API anahtarı başarıyla kaydedildi.' });
+  });
+}
+
 // Action: Cost Estimation & Tripo H3.1 Configuration Summary (Zero API calls)
 async function handleReconCostEstimate(req, res) {
   const store = await readStudioStore();
@@ -1357,7 +1390,8 @@ async function handleReconCostEstimate(req, res) {
   const maxJobCostLimitUsd = Number(process.env.TRIPO_MAX_JOB_COST_USD || DEFAULT_MAX_JOB_COST_LIMIT_USD);
   const totalBudgetLimitUsd = Number(process.env.TRIPO_TOTAL_BUDGET_USD || DEFAULT_TOTAL_BUDGET_LIMIT_USD);
   const estimatedCostUsd = Number(req.query?.estimated_cost ?? req.body?.estimated_cost ?? DEFAULT_ESTIMATED_RECON_COST_USD);
-  const hasTripoApiKey = Boolean((process.env.TRIPO_API_KEY || '').trim().length >= 8);
+  const resolvedKey = resolveTripoApiKey(req, store);
+  const hasTripoApiKey = Boolean(resolvedKey.length >= 8);
 
   const summary = {
     provider: 'tripo3d',
@@ -1737,8 +1771,9 @@ async function handleReconStart(req, res) {
       });
     }
 
+    const resolvedTripoKey = resolveTripoApiKey(req, store);
     const tripoClient = new TripoH31Client({
-      apiKey: process.env.TRIPO_API_KEY,
+      apiKey: resolvedTripoKey,
       baseUrl: process.env.TRIPO_API_BASE_URL || TRIPO_BASE_URL,
       fetchImpl: req.tripoFetchImpl || globalThis.fetch
     });
@@ -1927,8 +1962,9 @@ async function handleReconPoll(req, res) {
       });
     }
 
+    const resolvedTripoKey = resolveTripoApiKey(req, store);
     const tripoClient = new TripoH31Client({
-      apiKey: process.env.TRIPO_API_KEY,
+      apiKey: resolvedTripoKey,
       baseUrl: process.env.TRIPO_API_BASE_URL || TRIPO_BASE_URL,
       fetchImpl: req.tripoFetchImpl || globalThis.fetch
     });
@@ -4132,6 +4168,9 @@ export default async function handler(req, res) {
       case 'recon-cost-estimate':
       case 'recon-config':
         return await handleReconCostEstimate(req, res);
+      case 'recon-save-key':
+      case 'save-tripo-key':
+        return await handleReconSaveKey(req, res);
       case 'recon-prepare':
         return await handleReconPrepare(req, res);
       case 'recon-start':
