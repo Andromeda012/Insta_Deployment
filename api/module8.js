@@ -3610,7 +3610,7 @@ async function handleVideoProduce(req, res) {
         cinematic_project_id: sourceCinematic.cinematic_id,
         source_cinematic_project: sourceCinematic.cinematic_id,
         source_scene_id: sourceCinematic.scene_id || linkedScene?.scene_id || null,
-        render_status: 'completed',
+        render_status: body.queue_for_worker === true ? 'pending' : 'completed',
         storage_path: storagePaths.video_storage_path,
         video_storage_path: storagePaths.video_storage_path,
         public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${storagePaths.video_storage_path}`,
