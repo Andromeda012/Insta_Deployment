@@ -1943,7 +1943,7 @@ async function handleReconPoll(req, res) {
       });
     }
 
-    if (reconJob.status === 'failed' || reconJob.status === 'cancelled') {
+    if ((reconJob.status === 'failed' || reconJob.status === 'cancelled') && !req.query?.force_poll && !req.body?.force_poll) {
       const safeView = { ...reconJob };
       delete safeView.source_base64_cache;
       return res.status(200).json({

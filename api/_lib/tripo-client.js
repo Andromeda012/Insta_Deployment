@@ -843,12 +843,27 @@ export class TripoH31Client {
 
     // Extract temporary model URL from Tripo response schema variations
     const output = taskData.output || taskData.result || {};
-    const modelUrl =
+    let modelUrl =
+      output.pbr_model_url ||
+      output.model_url ||
       (typeof output.pbr_model === 'string' ? output.pbr_model : output.pbr_model?.url) ||
       (typeof output.model === 'string' ? output.model : output.model?.url) ||
       (typeof output.base_model === 'string' ? output.base_model : output.base_model?.url) ||
       taskData.model_url ||
+      taskData.pbr_model_url ||
       null;
+
+    if (!modelUrl && typeof output === 'object') {
+      for (const [k, v] of Object.entries(output)) {
+        if (typeof v === 'string' && (v.includes('.glb') || v.startsWith('http'))) {
+          modelUrl = v;
+          break;
+        } else if (v && typeof v === 'object' && typeof v.url === 'string') {
+          modelUrl = v.url;
+          break;
+        }
+      }
+    }
 
     // Extract actual consumed credits if reported by Tripo API
     const consumedCredits =
