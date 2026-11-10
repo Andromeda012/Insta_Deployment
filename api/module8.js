@@ -70,6 +70,15 @@ import {
   validateMediaTransferSafety,
   deduplicateTransferredMedia
 } from './_lib/module8-distribution-bridge.js';
+import {
+  AUTONOMOUS_STAGES,
+  PRODUCT_CATEGORIES,
+  SCENE_PROFILES,
+  classifyProduct,
+  selectSceneProfile,
+  evaluateQualityControl,
+  createAutonomousRunRecord
+} from './_lib/autonomous-pipeline.js';
 
 // ── TIMING-SAFE WORKER AUTHENTICATION ─────────────────────────────────────────
 function verifyWorkerAuth(req) {
@@ -4188,6 +4197,66 @@ async function handleUploadPlatformVideo(req, res) {
   return res.status(200).json({ ok: true, success: true, public_url: upVideo.public_url, bytes: videoBuf.length });
 }
 
+// ── 8. AUTONOMOUS 3D PRODUCTION PIPELINE HANDLERS ────────────────────────────
+async function handleAutonomousProfiles(req, res) {
+  return res.status(200).json({
+    ok: true,
+    success: true,
+    categories: PRODUCT_CATEGORIES,
+    scene_profiles: SCENE_PROFILES,
+    stages: AUTONOMOUS_STAGES
+  });
+}
+
+async function handleAutonomousStart(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  const body = req.body || {};
+  const classification = classifyProduct(body);
+  const sceneProfile = selectSceneProfile(classification, body.scene_profile_id);
+
+  const runRecord = createAutonomousRunRecord({
+    product_slug: body.product_slug || 'furniture_item',
+    product_name: body.product_name || 'Mobilya Ürünü',
+    source_model_path: body.source_model_path || null,
+    source_image_path: body.source_image_path || null,
+    category: classification,
+    scene_profile: sceneProfile,
+    user_preferences: body.user_preferences || {}
+  });
+
+  await withStoreLock(async () => {
+    const store = await readStudioStore();
+    store.autonomous_runs = store.autonomous_runs || [];
+    store.autonomous_runs.unshift(runRecord);
+    await writeStudioStore(store);
+  });
+
+  return res.status(201).json({
+    ok: true,
+    success: true,
+    run: runRecord,
+    category: classification,
+    scene_profile: sceneProfile
+  });
+}
+
+async function handleAutonomousStatus(req, res) {
+  const runId = String(req.query?.run_id || req.body?.run_id || '').trim();
+  const store = await readStudioStore();
+  const runs = store.autonomous_runs || [];
+  const run = runs.find(r => r.run_id === runId || r.id === runId);
+  if (!run) {
+    return res.status(404).json({ ok: false, error: `Autonomous run bulunamadı: ${runId}` });
+  }
+  return res.status(200).json({ ok: true, success: true, run });
+}
+
+async function handleAutonomousList(req, res) {
+  const store = await readStudioStore();
+  const runs = store.autonomous_runs || [];
+  return res.status(200).json({ ok: true, success: true, total: runs.length, runs });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -4196,6 +4265,17 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
+      case 'autonomous-profiles':
+        return await handleAutonomousProfiles(req, res);
+      case 'autonomous-start':
+      case 'autonomous-create':
+        return await handleAutonomousStart(req, res);
+      case 'autonomous-status':
+      case 'autonomous-poll':
+        return await handleAutonomousStatus(req, res);
+      case 'autonomous-list':
+      case 'autonomous-runs':
+        return await handleAutonomousList(req, res);
       case 'overview':
         return await handleOverview(req, res);
       case 'media':
