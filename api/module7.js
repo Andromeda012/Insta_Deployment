@@ -89,7 +89,7 @@ async function writeExtendedCatalogStore(store) {
 }
 
 // ── 1. ÜRÜN CRUD (MEVCUT SÖZLEŞME %100 KORUNDU + 3 ÜRÜN TÜRÜ DESTEĞİ) ─────────
-const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|parca|part)-\d+$/i;
+const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|yatak-basligi|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|parca|part)-\d+$/i;
 const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
 
 async function products(req, res) {
