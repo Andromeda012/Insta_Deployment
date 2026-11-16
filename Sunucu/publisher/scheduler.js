@@ -299,16 +299,15 @@ export async function checkAndEnqueueSlot({
     return { status: 'skipped', reason: 'TIME_NOT_MATCHED', expected: slotTime, current: timeStr };
   }
 
-  // Bugün bu slot için bu platformda zaten bir görev oluşturulmuş mu?
+  // Bugün bu platform için zaten planlanmış görev(ler) var mı?
   const slotCode = slotTime.replace(':', '');
   const dayStartIso = getIstanbulSlotIso(dateStr, '00:00');
   const dayEndIso = getIstanbulSlotIso(dateStr, '23:59');
 
-  const { data: existingSlots, error: checkError } = await supabase
+  const { data: existingDayTasks, error: checkError } = await supabase
     .from('social_publish_queue')
-    .select('id, idempotency_key, status, scheduled_for')
+    .select('id, idempotency_key, slot_label, status, scheduled_for')
     .eq('platform', platform)
-    .eq('slot_label', slotTime)
     .gte('scheduled_for', dayStartIso)
     .lte('scheduled_for', dayEndIso);
 
@@ -317,13 +316,15 @@ export async function checkAndEnqueueSlot({
     return { status: 'error', error: checkError.message };
   }
 
-  if (Array.isArray(existingSlots) && existingSlots.length > 0) {
-    // Bugün zaten bu slot için görev açılmış, mükerrer oluşturma!
+  const hasExactSlot = Array.isArray(existingDayTasks) && existingDayTasks.some(t => t.slot_label === slotTime);
+  const hasCampaignDayPlan = Array.isArray(existingDayTasks) && existingDayTasks.some(t => /_(IG|FB)_/i.test(t.slot_label || ''));
+  if (hasExactSlot || hasCampaignDayPlan) {
+    // Bugün zaten bu slot veya günlük 3'lü kampanya planı kuyrukta mevcut, mükerrer oluşturma!
     return {
       status: 'skipped',
       reason: 'ALREADY_QUEUED_TODAY',
-      existingId: existingSlots[0].id,
-      idempotencyKey: existingSlots[0].idempotency_key
+      existingId: existingDayTasks[0].id,
+      idempotencyKey: existingDayTasks[0].idempotency_key
     };
   }
 

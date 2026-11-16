@@ -35,7 +35,8 @@ import httpClient from './http-client.cjs';
 
 const { fetchWithTimeout } = httpClient;
 
-import { startAutonomousScheduler } from './scheduler.js';
+import { startAutonomousScheduler, fetchProductsCatalog, fetchSiteSetting } from './scheduler.js';
+import { buildCatalogEntities, produceCollectionThreePostCampaign } from './collection-format-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -166,7 +167,26 @@ async function prepareYouTubeVideoBuffer(mediaUrl, taskId) {
 
 // ── PLATFORM YAYIN MOTORU ───────────────────────────────────────────────────
 async function executePublish(task) {
-  const { task_id, platform, content_type, media_url, caption, hashtags, target_link } = task;
+  let { task_id, platform, content_type, media_url, caption, hashtags, target_link } = task;
+
+  if (typeof media_url === 'string' && media_url.startsWith('auto_render_3post:')) {
+    const [, targetSlug, postKey] = media_url.split(':');
+    console.log(`[Otonom 3'lü Kampanya Render] ${targetSlug} -> ${postKey} hazırlanıyor...`);
+    await heartbeatLockExtension(task_id, 240);
+    const [prods, extStore] = await Promise.all([
+      fetchProductsCatalog(supabase),
+      fetchSiteSetting(supabase, 'module7_extended_catalog')
+    ]);
+    const entities = buildCatalogEntities(prods || [], extStore || {}, {});
+    const entity = entities.find(e => e.slug === targetSlug);
+    if (!entity) throw new Error(`Katalogda "${targetSlug}" koleksiyonu bulunamadı.`);
+    const campaign = await produceCollectionThreePostCampaign({ supabase, entity, log: console.log });
+    const chosenPost = campaign[postKey] || campaign.post02;
+    media_url = chosenPost.mediaUrlWithCover || chosenPost.mediaUrl || chosenPost.videoUrl;
+    if (!caption) caption = chosenPost.caption;
+    if (!hashtags) hashtags = chosenPost.hashtags;
+  }
+
   const fullCaption = [caption, hashtags].filter(Boolean).join('\n\n');
 
   console.log(`[Görev Başladı] Platform: ${platform} | Tür: ${content_type} | ID: ${task_id}`);
@@ -293,7 +313,15 @@ async function executePublish(task) {
         };
       }
 
-      const isVideo = content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url);
+      let cleanMediaUrl = String(media_url || '').trim();
+      let reelCoverUrl = '';
+      if (cleanMediaUrl.includes('#cover=')) {
+        const [vPart, cPart] = cleanMediaUrl.split('#cover=');
+        cleanMediaUrl = vPart;
+        try { reelCoverUrl = decodeURIComponent(cPart || ''); } catch (_) { reelCoverUrl = cPart || ''; }
+      }
+
+      const isVideo = content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(cleanMediaUrl);
       
       // Token URL yerine POST body içinde taşınır
       const containerParams = new URLSearchParams();
@@ -301,15 +329,18 @@ async function executePublish(task) {
 
       if (content_type === 'REELS') {
         containerParams.set('media_type', 'REELS');
-        containerParams.set('video_url', media_url);
+        containerParams.set('video_url', cleanMediaUrl);
+        if (reelCoverUrl && /^https:\/\//i.test(reelCoverUrl)) {
+          containerParams.set('cover_url', reelCoverUrl);
+        }
         containerParams.set('share_to_feed', 'true');
         containerParams.set('caption', fullCaption);
       } else if (content_type === 'STORIES') {
         containerParams.set('media_type', 'STORIES');
-        if (isVideo) containerParams.set('video_url', media_url);
-        else containerParams.set('image_url', media_url);
+        if (isVideo) containerParams.set('video_url', cleanMediaUrl);
+        else containerParams.set('image_url', cleanMediaUrl);
       } else {
-        containerParams.set('image_url', media_url);
+        containerParams.set('image_url', cleanMediaUrl);
         containerParams.set('caption', fullCaption);
       }
 
@@ -439,11 +470,12 @@ async function executePublish(task) {
         return { status: 'published', platformPostId: stData.post_id || upData.id, rawResponse: stData };
       }
 
-      if (content_type === 'FB_REELS' || content_type === 'VIDEO_REELS' || content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(media_url)) {
+      const cleanFbMediaUrl = String(media_url || '').split('#cover=')[0].trim();
+      if (content_type === 'FB_REELS' || content_type === 'VIDEO_REELS' || content_type === 'REELS' || /\.(mp4|mov)(\?.*)?$/i.test(cleanFbMediaUrl)) {
         const vidParams = new URLSearchParams({
-          file_url: media_url,
+          file_url: cleanFbMediaUrl,
           description: fullCaption,
-          title: String(caption || '').split(/\r?\n/)[0]?.slice(0, 90) || 'Nova Furniture',
+          title: String(caption || '').split(/\r?\n/)[0]?.slice(0, 90) || 'Global Mobilya',
           access_token: pageAccessToken
         });
         const vidRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/videos`, { method: 'POST', body: vidParams });

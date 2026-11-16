@@ -1,13 +1,19 @@
 /**
- * GLOBAL MOBİLYA — 1 HAFTALIK INSTAGRAM & FACEBOOK YAYIN PLANI (17 - 23 KASIM 2026)
+ * GLOBAL MOBİLYA — 7 GÜNLÜK 3'LÜ INSTAGRAM GRID & FACEBOOK YAYIN PLANI (17 - 23 KASIM 2026)
  * ============================================================================
- * Bu script, 17-23 Kasım 2026 tarihleri arasındaki 19 adet doğrulanmış
- * sosyal medya görevini Supabase 'social_publish_queue' tablosuna
- * deterministik ve idempotent olarak kaydeder.
+ * Her gün 1 koleksiyon için:
+ *  - 10:00 (Instagram Reels)    -> POST 03: DESIGN STORY (Sağ Kapak 3/3)
+ *  - 14:00 (Instagram Carousel) -> POST 02: PRODUCT BREAKDOWN (Orta Kapak 2/3 + Alt Ürünler)
+ *  - 15:30 (Facebook Katalog)   -> PHOTO_POST (Çoklu Katalog Albümü)
+ *  - 18:30 (Instagram Reels)    -> POST 01: COLLECTION REVEAL (Sol Kapak 1/3)
+ *
+ * Bu yayın sırası sayesinde her akşam 18:30'da Instagram profil ızgarasının en üst satırında
+ * soldan sağa [ Sol 1/3: POST 01 | Orta 2/3: POST 02 | Sağ 3/3: POST 03 ] dizilimi oluşur.
  * ============================================================================
  */
-// Load environment variables
-try { process.loadEnvFile('.env.local'); } catch (e) {}
+import Engine from '../Sunucu/publisher/collection-format-engine.js';
+
+try { process.loadEnvFile('.env.local'); } catch (_) {}
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/+$/, '');
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -34,259 +40,160 @@ async function supabaseRequest(path, options = {}) {
   return { ok: res.ok, status: res.status, data: json };
 }
 
-export const SEVEN_DAY_SCHEDULE = [
-  // ── GÜN 1: 17 KASIM 2026 (PAZARTESİ) — VİYANA YATAK ODASI KOLEKSİYONU ──────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '17_KASIM_IG_VIYANA_POST',
-    product_slug: 'viyana-yatak-odasi-rs83',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-1794005456481.png',
-    caption: 'Viyana Yatak Odası Koleksiyonu | Dingin ve Modern Yaşam Alanı\n\nSade hatların lüks detaylarla harmanlandığı Viyana Koleksiyonu; yatak başlığı, 6 kapılı dolap, komodin ve makyaj masası uyumuyla yatak odanıza ferah ve zarif bir atmosfer kazandırır.',
-    hashtags: '#GlobalMobilya #ViyanaKoleksiyonu #YatakOdası #ModernTasarım #İçMimar #MobilyaTasarımı',
-    target_link: 'https://globalmobilya.com/koleksiyon/viyana-yatak-odasi',
-    scheduled_for_istanbul: '2026-11-17T10:00:00+03:00',
-    idempotency_key: 'idemp-20261117-ig-viyana-post'
-  },
-  {
-    platform: 'instagram',
-    content_type: 'STORIES',
-    slot_label: '17_KASIM_IG_VIYANA_STORY',
-    product_slug: 'viyana-yatak-odasi-rs83',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-1794005456481.png',
-    caption: 'Viyana Yatak Odası Koleksiyonunu Keşfedin\n\nDetaylar ve modüler parçalar için profildeki linke göz atabilirsiniz.',
-    hashtags: '#GlobalMobilya #YatakOdası #StoryTasarım',
-    target_link: 'https://globalmobilya.com/koleksiyon/viyana-yatak-odasi',
-    scheduled_for_istanbul: '2026-11-17T14:00:00+03:00',
-    idempotency_key: 'idemp-20261117-ig-viyana-story'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '17_KASIM_FB_VIYANA_POST',
-    product_slug: 'viyana-yatak-odasi-rs83',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-1794005456481.png',
-    caption: 'Viyana Yatak Odası Koleksiyonu — Evinizde Çağdaş Bir Esinti\n\nEvinize dinginlik ve şıklık getiren Viyana Yatak Odası Takımı, geniş depolama hacmi ve zarif renk uyumuyla konforlu bir yaşam alanı sunuyor. Koleksiyonumuz hakkında detaylı bilgi almak için sayfamızdan bize ulaşabilirsiniz.',
-    hashtags: '#GlobalMobilya #ViyanaYatakOdası #EvDekorasyonu #ModernMobilya #KonforluYaşam',
-    target_link: 'https://globalmobilya.com/koleksiyon/viyana-yatak-odasi',
-    scheduled_for_istanbul: '2026-11-17T18:30:00+03:00',
-    idempotency_key: 'idemp-20261117-fb-viyana-post'
-  },
+async function uploadBufferToStorage(objectPath, buffer, contentType = 'image/jpeg') {
+  const res = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${objectPath}`, {
+    method: 'POST',
+    headers: {
+      apikey: SERVICE_KEY,
+      Authorization: `Bearer ${SERVICE_KEY}`,
+      'Content-Type': contentType,
+      'x-upsert': 'true'
+    },
+    body: buffer
+  });
+  if (!res.ok) throw new Error(`Storage upload failed (${objectPath}): HTTP ${res.status}`);
+  return `${SUPABASE_URL}/storage/v1/object/public/media/${objectPath}`;
+}
 
-  // ── GÜN 2: 18 KASIM 2026 (SALI) — BAHAR PORTMANTO ─────────────────────────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '18_KASIM_IG_BAHAR_POST',
-    product_slug: 'bahar-portmanto-i6el',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
-    caption: 'Bahar Portmanto | Antrenizde Düzen ve Şıklık\n\nAntrenizi düzenli ve davetkar kılan Bahar Portmanto; geniş askılık alanı, raflı ayakkabılık bölmesi ve aynalı kapak yapısıyla giriş alanınıza hem derinlik hem de fonksiyonellik katıyor.',
-    hashtags: '#GlobalMobilya #BaharPortmanto #AntreDekorasyonu #Portmanto #DüzenliEvler #DekorasyonÖnerileri',
-    target_link: 'https://globalmobilya.com/urun/bahar-portmanto',
-    scheduled_for_istanbul: '2026-11-18T11:00:00+03:00',
-    idempotency_key: 'idemp-20261118-ig-bahar-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '18_KASIM_FB_BAHAR_POST',
-    product_slug: 'bahar-portmanto-i6el',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
-    caption: 'Bahar Portmanto ile Karşılamada Şık Detaylar\n\nGiriş alanları evinizin ilk izlenimidir. Bahar Portmanto, fonksiyonel depolama çözümleri ve estetik görünümüyle antrenizi kusursuz bir şekilde tamamlar. Ceviz ve beyaz renk alternatifleriyle evinize uyum sağlar.',
-    hashtags: '#GlobalMobilya #PortmantoTasarımı #AntreMobilyası #EvModası #BaharKoleksiyonu',
-    target_link: 'https://globalmobilya.com/urun/bahar-portmanto',
-    scheduled_for_istanbul: '2026-11-18T17:00:00+03:00',
-    idempotency_key: 'idemp-20261118-fb-bahar-post'
-  },
-
-  // ── GÜN 3: 19 KASIM 2026 (ÇARŞAMBA) — VİYANA GARDIROP DETAYLARI ───────────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '19_KASIM_IG_VIYANA_DOLAP_POST',
-    product_slug: 'viyana-yatak-odasi-rs83-wardrobe-2',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-wardrobe-2-1794005461822.png',
-    caption: 'Viyana 6 Kapılı Dolap | Geniş İç Hacim & Akıllı Bölmeler\n\nKıyafetlerinize düzen getiren Viyana Gardırop; 6 kapaklı geniş gövdesi, raf düzeni ve frenli ray/menteşe donanımıyla günlük kullanımda sessiz ve ergonomik bir deneyim sunar.',
-    hashtags: '#GlobalMobilya #ViyanaGardırop #DolapTasarımı #GardıropDüzeni #YatakOdasıMobilyası #DepolamaÇözümleri',
-    target_link: 'https://globalmobilya.com/urun/viyana-dolap',
-    scheduled_for_istanbul: '2026-11-19T10:30:00+03:00',
-    idempotency_key: 'idemp-20261119-ig-viyana-dolap-post'
-  },
-  {
-    platform: 'instagram',
-    content_type: 'STORIES',
-    slot_label: '19_KASIM_IG_VIYANA_DOLAP_STORY',
-    product_slug: 'viyana-yatak-odasi-rs83-wardrobe-2',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-wardrobe-2-1794005461822.png',
-    caption: 'Viyana Gardırop Detayları\n\nGeniş hacim, modern kulp tasarımı ve fonksiyonel iç bölmeler. Tüm giysileriniz için ideal düzen.',
-    hashtags: '#GlobalMobilya #Gardırop #Storyİlham',
-    target_link: 'https://globalmobilya.com/urun/viyana-dolap',
-    scheduled_for_istanbul: '2026-11-19T15:30:00+03:00',
-    idempotency_key: 'idemp-20261119-ig-viyana-dolap-story'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '19_KASIM_FB_VIYANA_DOLAP_POST',
-    product_slug: 'viyana-yatak-odasi-rs83-wardrobe-2',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-wardrobe-2-1794005461822.png',
-    caption: 'Düzenli Bir Gardırop, Huzurlu Bir Yatak Odası\n\nViyana 6 Kapılı Dolap, fonksiyonel iç dizaynı ve estetik dış tasarımıyla tüm giysileriniz için ferah bir depolama alanı sağlıyor. Kaliteli malzeme yapısı ve zarif kapak tasarımıyla uzun yıllar konfor sunmak için tasarlandı.',
-    hashtags: '#GlobalMobilya #GardıropModelleri #YatakOdasıDekorasyonu #GenişDepolama #MobilyaFikirleri',
-    target_link: 'https://globalmobilya.com/urun/viyana-dolap',
-    scheduled_for_istanbul: '2026-11-19T19:00:00+03:00',
-    idempotency_key: 'idemp-20261119-fb-viyana-dolap-post'
-  },
-
-  // ── GÜN 4: 20 KASIM 2026 (PERŞEMBE) — RENK VE YÜZEY SEÇENEKLERİ ───────────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '20_KASIM_IG_RENK_YUZEY_POST',
-    product_slug: 'porto-portmanto-56jk',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
-    caption: 'Yaşam Alanınıza Özel Yüzey ve Doku Seçenekleri\n\nMobilyada doku ve renk uyumu, mekanın karakterini belirler. Ceviz, Beyaz ve Aytaşı yüzey alternatifleriyle Global Mobilya tasarımları, farklı dekorasyon stillerine kusursuz uyum sağlar.',
-    hashtags: '#GlobalMobilya #RenkSeçenekleri #YüzeyTasarımı #MobilyaMalzeme #İçMekan #TasarımDetayları',
-    target_link: 'https://globalmobilya.com/renkler-ve-yuzeyler',
-    scheduled_for_istanbul: '2026-11-20T11:30:00+03:00',
-    idempotency_key: 'idemp-20261120-ig-renk-yuzey-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '20_KASIM_FB_RENK_YUZEY_POST',
-    product_slug: 'porto-portmanto-56jk',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
-    caption: 'Evinizin Işığına Göre Renk ve Yüzey Tercihleri\n\nMobilya seçiminde doğru renk seçimi odanın aydınlığını ve genişliğini doğrudan etkiler. Doğal ahşap sıcaklığı arayanlar için ceviz dokular, aydınlık ve ferahlık isteyenler için aytaşı ve mat beyaz seçeneklerimiz koleksiyonlarımızda sizleri bekliyor.',
-    hashtags: '#GlobalMobilya #RenkUyumu #EvDekorasyonRehberi #AhşapDoku #PortmantoModelleri',
-    target_link: 'https://globalmobilya.com/renkler-ve-yuzeyler',
-    scheduled_for_istanbul: '2026-11-20T17:30:00+03:00',
-    idempotency_key: 'idemp-20261120-fb-renk-yuzey-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'LINK_CARD',
-    slot_label: '20_KASIM_FB_KATALOG_LINK',
-    product_slug: 'bahar-portmanto-i6el',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
-    caption: 'Global Mobilya 2026 Koleksiyonlarını Keşfedin\n\nYeni sezon portmanto ve yatak odası koleksiyonlarımızı, detaylı ölçü tablolarını ve malzeme özelliklerini web sitemiz üzerinden inceleyebilirsiniz.',
-    hashtags: '#GlobalMobilya #Katalog #MobilyaAlışverişi #EvDekorasyonu',
-    target_link: 'https://globalmobilya.com/katalog',
-    scheduled_for_istanbul: '2026-11-20T20:30:00+03:00',
-    idempotency_key: 'idemp-20261120-fb-katalog-link'
-  },
-
-  // ── GÜN 5: 21 KASIM 2026 (CUMA) — PORTO PORTMANTO ─────────────────────────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '21_KASIM_IG_PORTO_POST',
-    product_slug: 'porto-portmanto-56jk',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
-    caption: 'Porto Portmanto | Aytaşı Tonlarının Dingin Şıklığı\n\nMinimalist çizgileri ve Aytaşı renginin dingin zarafetini giriş alanınıza taşıyan Porto Portmanto; yüksek ayak formu sayesinde robot süpürge kullanımına uygun, pratik ve modern bir tasarım sunar.',
-    hashtags: '#GlobalMobilya #PortoPortmanto #MinimalistTasarım #AytaşıRengi #AntreFikirleri #ModernMobilya',
-    target_link: 'https://globalmobilya.com/urun/porto-portmanto',
-    scheduled_for_istanbul: '2026-11-21T10:00:00+03:00',
-    idempotency_key: 'idemp-20261121-ig-porto-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '21_KASIM_FB_PORTO_POST',
-    product_slug: 'porto-portmanto-56jk',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
-    caption: 'Porto Portmanto — Minimalizmin ve Fonksiyonun Buluşması\n\nZarif aytaşı tonu ve modern kapak detaylarıyla Porto Portmanto, evinizin antre bölümünde sade ve sofistike bir atmosfer yaratıyor. Yüksek ayakları temizlik kolaylığı sağlarken, geniş iç rafları ayakkabı ve aksesuarlarınız için ideal alan sunar.',
-    hashtags: '#GlobalMobilya #PortoSerisi #AntreDekorasyonu #PratikMobilya #EvGirişi',
-    target_link: 'https://globalmobilya.com/urun/porto-portmanto',
-    scheduled_for_istanbul: '2026-11-21T18:00:00+03:00',
-    idempotency_key: 'idemp-20261121-fb-porto-post'
-  },
-
-  // ── GÜN 6: 22 KASIM 2026 (CUMARTESİ) — VİYANA MAKYAJ MASASI VE KOMODİN ────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '22_KASIM_IG_VIYANA_VANITY_POST',
-    product_slug: 'viyana-yatak-odasi-rs83-vanity-4',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-vanity-4-1794005465772.png',
-    caption: 'Viyana Makyaj Masası | Zarif ve Fonksiyonel Kişisel Alan\n\nGeniş aynası, mücevher ve kozmetik eşyalarınız için özel çekmece bölmeleriyle Viyana Makyaj Masası, güne başlarken ihtiyacınız olan konforu ve şıklığı bir arada sunar.',
-    hashtags: '#GlobalMobilya #ViyanaMakyajMasası #MakyajMasası #YatakOdasıDetayı #ZarifTasarım #KişiselBakımAlanı',
-    target_link: 'https://globalmobilya.com/urun/viyana-vanity',
-    scheduled_for_istanbul: '2026-11-22T11:00:00+03:00',
-    idempotency_key: 'idemp-20261122-ig-viyana-vanity-post'
-  },
-  {
-    platform: 'instagram',
-    content_type: 'STORIES',
-    slot_label: '22_KASIM_IG_VIYANA_VANITY_STORY',
-    product_slug: 'viyana-yatak-odasi-rs83-vanity-4',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-vanity-4-1794005465772.png',
-    caption: 'Viyana Makyaj Masası ile Tanışın\n\nAyna kalitesi, ergonomik çekmece düzeni ve şık ayak yapısı. Detaylar profilimizdeki linkte.',
-    hashtags: '#GlobalMobilya #MakyajMasası #Story',
-    target_link: 'https://globalmobilya.com/urun/viyana-vanity',
-    scheduled_for_istanbul: '2026-11-22T16:00:00+03:00',
-    idempotency_key: 'idemp-20261122-ig-viyana-vanity-story'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '22_KASIM_FB_VIYANA_VANITY_POST',
-    product_slug: 'viyana-yatak-odasi-rs83-vanity-4',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-vanity-4-1794005465772.png',
-    caption: 'Yatak Odanızda Özel Bir Köşe: Viyana Makyaj Masası\n\nEstetik aynası ve düzenli çekmeceleriyle Viyana Makyaj Masası, yatak odanızın en özel ve kullanışlı köşesi olmaya aday. Günlük rutininize zarafet katmak için tasarlandı.',
-    hashtags: '#GlobalMobilya #YatakOdasıTakımı #MakyajMasasıModelleri #KonforVeŞıklık #Haftasonuİlhamı',
-    target_link: 'https://globalmobilya.com/urun/viyana-vanity',
-    scheduled_for_istanbul: '2026-11-22T19:30:00+03:00',
-    idempotency_key: 'idemp-20261122-fb-viyana-vanity-post'
-  },
-
-  // ── GÜN 7: 23 KASIM 2026 (PAZAR) — EREN PORTMANTO VE MARKA TANITIMI ────────
-  {
-    platform: 'instagram',
-    content_type: 'POST',
-    slot_label: '23_KASIM_IG_EREN_POST',
-    product_slug: 'eren-portmanto-rzy4',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/eren-portmanto-rzy4-1793451458911.png',
-    caption: 'Eren Portmanto | Çağdaş Tasarım, Güvenilir Kalite\n\nKompakt boyutlarına rağmen sunduğu zengin depolama kapasitesiyle Eren Portmanto, küçük ve orta ölçekli antreler için mükemmel bir çözüm. Global Mobilya işçiliği ve kalitesiyle üretildi.',
-    hashtags: '#GlobalMobilya #ErenPortmanto #PortmantoModelleri #AntreTasarımı #KaliteliMobilya #EviniYenile',
-    target_link: 'https://globalmobilya.com/urun/eren-portmanto',
-    scheduled_for_istanbul: '2026-11-23T10:30:00+03:00',
-    idempotency_key: 'idemp-20261123-ig-eren-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '23_KASIM_FB_EREN_POST',
-    product_slug: 'eren-portmanto-rzy4',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/eren-portmanto-rzy4-1793451458911.png',
-    caption: 'Eren Portmanto ile Giriş Alanınızda Akılcı Çözümler\n\nPratik askılık alanı, ayakkabılık rafları ve aynasıyla Eren Portmanto, antrenizin ihtiyacı olan her şeyi tek bir kompakt gövdede buluşturuyor. Global Mobilya güvencesiyle eviniz için en iyisini seçin.',
-    hashtags: '#GlobalMobilya #ErenSerisi #PortmantoFikirleri #EvDekorasyonu #Pazarİlhamı',
-    target_link: 'https://globalmobilya.com/urun/eren-portmanto',
-    scheduled_for_istanbul: '2026-11-23T16:30:00+03:00',
-    idempotency_key: 'idemp-20261123-fb-eren-post'
-  },
-  {
-    platform: 'facebook',
-    content_type: 'PHOTO_POST',
-    slot_label: '23_KASIM_FB_MARKA_TANITIM_POST',
-    product_slug: 'viyana-yatak-odasi-rs83',
-    media_url: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana-yatak-odasi-rs83-1794005456481.png',
-    caption: 'Global Mobilya: Yaşam Alanlarınıza Değer Katan Tasarımlar\n\nYatak odalarından antrelere, evinizin her köşesinde şıklığı, fonksiyonelliği ve dayanıklılığı buluşturan tasarımlarımızla yanınızdayız. Haftalık koleksiyon rehberimizi inceleyerek evinize en uygun mobilyayı keşfedin.',
-    hashtags: '#GlobalMobilya #MobilyaKoleksiyonu #YaşamAlanı #EvTasarımı #KaliteliYaşam #HaftalıkÖzet',
-    target_link: 'https://globalmobilya.com/katalog',
-    scheduled_for_istanbul: '2026-11-23T20:00:00+03:00',
-    idempotency_key: 'idemp-20261123-fb-marka-tanitim-post'
-  }
+export const DAILY_COLLECTION_PLAN = [
+  { date: '2026-11-17', slug: 'bergamo-kahve-kosesi-61kf', label: '17_KASIM_BERGAMO' },
+  { date: '2026-11-18', slug: 'lahey-kahve-kosesi-7w0e', label: '18_KASIM_LAHEY' },
+  { date: '2026-11-19', slug: 'marsilya-kahve-kosesi-peyn', label: '19_KASIM_MARSILYA' },
+  { date: '2026-11-20', slug: 'palermo-kahve-kosesi-i5ve', label: '20_KASIM_PALERMO' },
+  { date: '2026-11-21', slug: 'toronto-kahve-kosesi-wxxh', label: '21_KASIM_TORONTO' },
+  { date: '2026-11-22', slug: 'troyes-kahve-kosesi-n9m6', label: '22_KASIM_TROYES' },
+  { date: '2026-11-23', slug: 'bohem-dolap-koleksiyonu-f1g7', label: '23_KASIM_BOHEM' }
 ];
 
 export async function populateSchedule() {
-  console.log(`[Populate] 7 Günlük Sosyal Medya Görevleri Hazırlanıyor (${SEVEN_DAY_SCHEDULE.length} Görev)...`);
+  console.log('[1/4] Katalog ve önbellek okunuyor...');
+  const [prodsRes, extRes, cacheRes] = await Promise.all([
+    supabaseRequest('/rest/v1/products?select=*&order=created_at.desc'),
+    supabaseRequest('/rest/v1/site_settings?key=eq.module7_extended_catalog&select=data'),
+    supabaseRequest('/rest/v1/site_settings?key=eq.module2_render_cache&select=data')
+  ]);
 
+  const products = Array.isArray(prodsRes.data) ? prodsRes.data : [];
+  const extStore = extRes.data?.[0]?.data || {};
+  const renderCache = cacheRes.data?.[0]?.data || {};
+  const entities = Engine.buildCatalogEntities(products, extStore, {});
+
+  // 1. Eski test ürünlerine ait bekleyen (pending) görevleri temizle
+  console.log('[2/4] Eski test kuyruk görevleri temizleniyor...');
+  await supabaseRequest('/rest/v1/social_publish_queue?status=eq.pending', { method: 'DELETE' });
+
+  const scheduleTasks = [];
+
+  for (const dayPlan of DAILY_COLLECTION_PLAN) {
+    const entity = entities.find(e => e.slug === dayPlan.slug);
+    if (!entity) {
+      console.warn(`Uyarı: ${dayPlan.slug} katalogda bulunamadı, atlanıyor.`);
+      continue;
+    }
+
+    // Önbellekte tam 3'lü kampanya var mı kontrol et
+    const sig = Engine.entitySignature(entity, 'three_post_campaign_v1');
+    const cacheKey = `${entity.slug}:three_post_v1:${sig}`;
+    let cachedCampaign = renderCache[cacheKey];
+
+    // Eğer henüz tam kampanya önbellekte yoksa bile Post 02 (Carousel + 3'lü Kapaklar) görsellerini hemen üret ve yükle
+    let post01MediaUrl;
+    let post02MediaUrl;
+    let post03MediaUrl;
+
+    if (cachedCampaign && cachedCampaign.post01 && cachedCampaign.post02 && cachedCampaign.post03) {
+      post01MediaUrl = cachedCampaign.post01.mediaUrlWithCover;
+      post02MediaUrl = cachedCampaign.post02.mediaUrl;
+      post03MediaUrl = cachedCampaign.post03.mediaUrlWithCover;
+      console.log(`✅ [Hazır Render] ${entity.title} (${dayPlan.date}) önbellekten alındı.`);
+    } else {
+      console.log(`🎨 [Katalog & Kapak Render] ${entity.title} (${dayPlan.date}) için 3'lü Grid Kapakları ve Post 02 Carousel üretiliyor...`);
+      const folder = `social-renders/${entity.slug}/grid3-${sig}`;
+      const triptych = await Engine.renderTriptychCovers(entity);
+      await uploadBufferToStorage(`${folder}/cover-post01-left-4x5.jpg`, triptych.left4x5);
+      await uploadBufferToStorage(`${folder}/cover-post02-center-4x5.jpg`, triptych.center4x5);
+      await uploadBufferToStorage(`${folder}/cover-post03-right-4x5.jpg`, triptych.right4x5);
+      const slides = await Engine.renderCollectionPost02Breakdown(entity, triptych);
+      const slideUrls = [];
+      for (let i = 0; i < slides.length; i++) {
+        slideUrls.push(await uploadBufferToStorage(`${folder}/post02-slide-${i + 1}.jpg`, slides[i]));
+      }
+      post02MediaUrl = JSON.stringify(slideUrls);
+      post01MediaUrl = `auto_render_3post:${entity.slug}:post01`;
+      post03MediaUrl = `auto_render_3post:${entity.slug}:post03`;
+    }
+
+    const hashtags = Engine.buildHashtags(entity, 'instagram');
+    const fbHashtags = Engine.buildHashtags(entity, 'facebook');
+    const cap01 = Engine.buildCollectionPostCaption(entity, 1, 'instagram');
+    const cap02 = Engine.buildCollectionPostCaption(entity, 2, 'instagram');
+    const cap03 = Engine.buildCollectionPostCaption(entity, 3, 'instagram');
+    const capFb = Engine.buildCollectionPostCaption(entity, 2, 'facebook');
+
+    // 1) 10:00 — POST 03: DESIGN STORY (Reels | Sağ Kapak 3/3)
+    scheduleTasks.push({
+      platform: 'instagram',
+      content_type: 'REELS',
+      slot_label: `${dayPlan.label}_IG_POST03_DESIGN_STORY`,
+      product_slug: entity.slug,
+      media_url: post03MediaUrl,
+      caption: cap03,
+      hashtags,
+      target_link: `https://globalkapakmobilya.com/koleksiyon/${entity.slug}`,
+      scheduled_for_istanbul: `${dayPlan.date}T10:00:00+03:00`,
+      idempotency_key: `idemp-${dayPlan.date.replace(/-/g, '')}-ig-${entity.slug}-post03`
+    });
+
+    // 2) 14:00 — POST 02: PRODUCT BREAKDOWN (Carousel | Orta Kapak 2/3)
+    scheduleTasks.push({
+      platform: 'instagram',
+      content_type: 'CAROUSEL',
+      slot_label: `${dayPlan.label}_IG_POST02_BREAKDOWN`,
+      product_slug: entity.slug,
+      media_url: post02MediaUrl,
+      caption: cap02,
+      hashtags,
+      target_link: `https://globalkapakmobilya.com/koleksiyon/${entity.slug}`,
+      scheduled_for_istanbul: `${dayPlan.date}T14:00:00+03:00`,
+      idempotency_key: `idemp-${dayPlan.date.replace(/-/g, '')}-ig-${entity.slug}-post02`
+    });
+
+    // 3) 15:30 — FACEBOOK KOLEKSİYON KATALOĞU (Çoklu Fotoğraf Albümü)
+    scheduleTasks.push({
+      platform: 'facebook',
+      content_type: 'PHOTO_POST',
+      slot_label: `${dayPlan.label}_FB_CATALOG_POST`,
+      product_slug: entity.slug,
+      media_url: post02MediaUrl,
+      caption: capFb,
+      hashtags: fbHashtags,
+      target_link: `https://globalkapakmobilya.com/koleksiyon/${entity.slug}`,
+      scheduled_for_istanbul: `${dayPlan.date}T15:30:00+03:00`,
+      idempotency_key: `idemp-${dayPlan.date.replace(/-/g, '')}-fb-${entity.slug}-catalog`
+    });
+
+    // 4) 18:30 — POST 01: COLLECTION REVEAL (Reels | Sol Kapak 1/3)
+    scheduleTasks.push({
+      platform: 'instagram',
+      content_type: 'REELS',
+      slot_label: `${dayPlan.label}_IG_POST01_REVEAL`,
+      product_slug: entity.slug,
+      media_url: post01MediaUrl,
+      caption: cap01,
+      hashtags,
+      target_link: `https://globalkapakmobilya.com/koleksiyon/${entity.slug}`,
+      scheduled_for_istanbul: `${dayPlan.date}T18:30:00+03:00`,
+      idempotency_key: `idemp-${dayPlan.date.replace(/-/g, '')}-ig-${entity.slug}-post01`
+    });
+  }
+
+  console.log(`[3/4] ${scheduleTasks.length} görev social_publish_queue tablosuna kaydediliyor...`);
   let insertedCount = 0;
-  let existingCount = 0;
+  const igPanelPosts = [];
+  const fbPanelPosts = [];
 
-  for (const item of SEVEN_DAY_SCHEDULE) {
+  for (const item of scheduleTasks) {
     const scheduledUtcIso = new Date(item.scheduled_for_istanbul).toISOString();
-
     const record = {
       platform: item.platform,
       content_type: item.content_type,
@@ -303,34 +210,61 @@ export async function populateSchedule() {
       max_retries: 3
     };
 
-    // Idempotent insertion via PostgREST
     const res = await supabaseRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key', {
       method: 'POST',
-      headers: {
-        Prefer: 'resolution=ignore-duplicates,return=representation'
-      },
+      headers: { Prefer: 'resolution=merge-duplicates,return=representation' },
       body: JSON.stringify(record)
     });
 
-    if (!res.ok) {
-      if (res.status === 409) {
-        existingCount++;
-        console.log(`[Already Exists / Duplicate Protected] ${item.idempotency_key}`);
-      } else {
-        console.error(`[Error] ${item.idempotency_key}:`, res.status, res.data);
-      }
-    } else if (Array.isArray(res.data) && res.data.length > 0) {
+    if (res.ok && Array.isArray(res.data) && res.data[0]) {
       insertedCount++;
-      console.log(`[Inserted] ${item.platform.toUpperCase()} (${item.slot_label}) -> ${scheduledUtcIso}`);
+      const row = res.data[0];
+      const panelEntry = {
+        id: row.id,
+        queue_task_id: row.id,
+        queue_idempotency_key: row.idempotency_key,
+        media_type: row.content_type,
+        content_type: row.content_type,
+        slot_type: row.slot_label,
+        title: item.slot_label,
+        caption: row.caption,
+        hashtags: row.hashtags,
+        media_url: row.media_url,
+        product_slug: row.product_slug,
+        scheduled_for: row.scheduled_for,
+        status: 'pending'
+      };
+      if (row.platform === 'instagram') igPanelPosts.push(panelEntry);
+      if (row.platform === 'facebook') fbPanelPosts.push(panelEntry);
     } else {
-      existingCount++;
-      console.log(`[Already Exists / Ignored] ${item.idempotency_key}`);
+      console.error(`Kuyruk kayıt hatası (${item.idempotency_key}):`, res.status, res.data);
     }
   }
 
-  console.log(`\n[Tamamlandı] Toplam: ${SEVEN_DAY_SCHEDULE.length} | Yeni Eklenen: ${insertedCount} | Önceden Mevcut: ${existingCount}`);
-  return { total: SEVEN_DAY_SCHEDULE.length, inserted: insertedCount, existing: existingCount };
+  console.log('[4/4] Modül 2 Instagram ve Facebook panel durumları senkronize ediliyor...');
+  const [igStateRes, fbStateRes] = await Promise.all([
+    supabaseRequest('/rest/v1/site_settings?key=eq.insta_bot_state&select=data'),
+    supabaseRequest('/rest/v1/site_settings?key=eq.fb_bot_state&select=data')
+  ]);
+
+  const igState = igStateRes.data?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
+  igState.scheduled_posts = igPanelPosts;
+  await supabaseRequest('/rest/v1/site_settings', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ key: 'insta_bot_state', data: igState, updated_at: new Date().toISOString() })
+  });
+
+  const fbState = fbStateRes.data?.[0]?.data || { config: {}, scheduled_posts: [], conversations: [] };
+  fbState.scheduled_posts = fbPanelPosts;
+  await supabaseRequest('/rest/v1/site_settings', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ key: 'fb_bot_state', data: fbState, updated_at: new Date().toISOString() })
+  });
+
+  console.log(`\n✅ TAMAMLANDI! Toplam ${insertedCount} görev (Instagram 3'lü Grid + Facebook Katalog) kuyruğa alındı.`);
+  return { total: scheduleTasks.length, inserted: insertedCount };
 }
 
-// Direct execution
 populateSchedule().catch(console.error);

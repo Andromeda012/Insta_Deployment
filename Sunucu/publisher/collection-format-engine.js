@@ -39,17 +39,20 @@ export const ENGINE_VERSION = 'cfe-1.0.0';
 // ── MARKA & ORTAM AYARLARI ───────────────────────────────────────────────────
 const env = (k, d) => (process.env[k] && String(process.env[k]).trim()) || d;
 export const BRAND = {
-  name: env('BRAND_NAME', 'NOVA FURNITURE'),
+  name: env('BRAND_NAME', 'GLOBAL MOBİLYA'),
   whatsapp: env('BRAND_WHATSAPP', '0505 015 1035'),
   whatsappLink: env('BRAND_WHATSAPP_LINK', 'https://wa.me/905050151035'),
   website: env('BRAND_WEBSITE', 'globalkapakmobilya.com'),
-  instagram: env('BRAND_INSTAGRAM', '@thenovafurniture'),
+  instagram: env('BRAND_INSTAGRAM', '@globalmobilya'),
   gold: '#C9A24B',
   dark: '#141414'
 };
 const SITE_BASE_URL = env('SITE_BASE_URL', 'https://globalkapakmobilya.com');
 function resolveFfmpegBinary() {
   if (process.env.FFMPEG_PATH && fs.existsSync(process.env.FFMPEG_PATH)) return process.env.FFMPEG_PATH;
+  const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  const localFfmpeg = path.join(currentDir, 'node_modules/ffmpeg-static/ffmpeg.exe');
+  if (fs.existsSync(localFfmpeg)) return localFfmpeg;
   const staticPath = 'C:/Users/User/.gemini/antigravity/brain/9efb0127-f0ed-4760-90e7-0c7d7461b346/scratch/render_lab/node_modules/ffmpeg-static/ffmpeg.exe';
   if (fs.existsSync(staticPath)) return staticPath;
   return env('FFMPEG_PATH', 'ffmpeg');
@@ -72,6 +75,16 @@ const VH = 1920;
 
 const MUSIC_KEYS = ['luxury_piano', 'modern_lofi', 'cinematic_strings', 'warm_acoustic', 'upbeat_interior'];
 const PIECE_ROLE_LABELS = {
+  '6_kapili_dolap': '6 Kapılı Dolap',
+  '5_kapili_dolap': '5 Kapılı Dolap',
+  '4_kapili_dolap': '4 Kapılı Dolap',
+  '3_kapili_dolap': '3 Kapılı Dolap',
+  yatak_basligi: 'Yatak Başlığı',
+  komodin: 'Komodin',
+  sifonyer: 'Şifonyer',
+  kucuk_kahve_kosesi: 'Küçük Kahve Köşesi',
+  orta_kahve_kosesi: 'Orta Kahve Köşesi',
+  buyuk_kahve_kosesi: 'Büyük Kahve Köşesi',
   main_bed: 'Karyola', bed: 'Karyola', wardrobe: 'Gardırop', dresser: 'Şifonyer',
   nightstand: 'Komodin', vanity: 'Makyaj Masası', mirror: 'Ayna', tv_unit: 'TV Ünitesi',
   table: 'Masa', chair: 'Sandalye', sofa: 'Koltuk', console: 'Konsol', part: 'Parça'
@@ -146,8 +159,14 @@ export function excerptQuote(text, maxLen) {
   return out;
 }
 
-/** "Genişlik: 240 cm | Yükseklik: 210 cm" gibi ölçüleri satırlara böler. */
+/** "Genişlik: 240 cm | Yükseklik: 210 cm" veya "80 / 200 / 45" gibi ölçüleri satırlara böler. */
 export function detailLines(dimensions, max = 3) {
+  const raw = clean(dimensions || '');
+  if (!raw) return [];
+  const slashMatch = raw.match(/^(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*(?:cm)?$/i);
+  if (slashMatch) {
+    return [`Genişlik: ${slashMatch[1]} cm  •  Yükseklik: ${slashMatch[2]} cm  •  Derinlik: ${slashMatch[3]} cm`];
+  }
   return String(dimensions || '')
     .split(/\r?\n|\||;|•/)
     .map(s => clean(s.replace(/^[-–•▫️\s]+/, '')))
@@ -175,7 +194,7 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
   const bySlug = new Map((products || []).filter(p => p && p.slug).map(p => [p.slug, p]));
   const colBySlug = new Map(collections.filter(c => c && c.slug).map(c => [c.slug, c]));
 
-  const PIECE_SLUG_REGEX = /-(?:vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+  const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|yatak-basligi|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|parca|part)-\d+$/i;
   const PIECE_SKU_REGEX = /-P\d+$/i;
 
   const pieceSlugs = new Set(links.map(l => l.product_slug).filter(Boolean));
@@ -271,12 +290,21 @@ export function buildCatalogEntities(products = [], extStore = {}, transformSett
       pieces = pieces.map((pc, i) => {
         const row = (pc.slug && bySlug.get(pc.slug)) || {};
         const role = pc.piece_role || pc.role_in_collection || 'part';
+        const roleLbl = PIECE_ROLE_LABELS[role] || '';
+        const rawTitle = clean(pc.title || row.title || roleLbl || `Parça ${i + 1}`);
+        const baseShort = clean(base.title).replace(/\s*(koleksiyonu|yatak\s*odası|kahve\s*köşesi|dolap)\s*/gi, '').trim();
+        let displayTitle = rawTitle;
+        if (roleLbl && (rawTitle.toLowerCase() === base.title.toLowerCase() || !rawTitle.toLowerCase().includes(roleLbl.split(' ')[0].toLowerCase()))) {
+          displayTitle = baseShort ? `${baseShort} — ${roleLbl}` : roleLbl;
+        }
         const rawDims = clean(pc.dimensions || pc.olculer || row.body || '');
         const finalDims = rawDims || DEFAULT_PIECE_DIMS[role] || '';
         return {
           slug: pc.slug || `${slug}-parca-${i + 1}`,
           role,
-          title: clean(pc.title || row.title || PIECE_ROLE_LABELS[role] || `Parça ${i + 1}`),
+          roleLabel: roleLbl || 'Alt Ürün',
+          title: displayTitle,
+          rawTitle,
           dimensions: finalDims,
           imageUrl: absoluteUrl(pc.ana_resim || pc.image_url || row.ana_resim),
           presentation: pc.presentation_mode || 'carousel_and_video'
@@ -416,7 +444,7 @@ async function pieceSlide(entity, piece, index, total, extraLines = []) {
   body += textEl({ x: 60, y: 1010 + tSize + 14, text: title, size: tSize, font: TITLE_FONT, weight: 700, fill: BRAND.dark });
   let y = 1010 + tSize + 14 + 58;
   for (const d of details) {
-    for (const ln of wrapText(d, 52, 2)) { body += textEl({ x: 62, y, text: ln, size: 30, fill: '#555' }); y += 42; }
+    for (const ln of wrapText(d, 64, 2)) { body += textEl({ x: 62, y, text: ln, size: 28, fill: '#475569', weight: 600 }); y += 40; }
   }
   body += `<rect x="60" y="${H - 72}" width="${W - 120}" height="1.5" fill="${BRAND.gold}" fill-opacity="0.7"/>`;
   body += textEl({ x: 60, y: H - 34, text: trUpper(entity.title), size: 22, weight: 600, fill: '#333', spacing: 6 });
@@ -886,14 +914,8 @@ async function renderScene({ basePath, motion, overlays, duration, out }) {
     args.push('-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', o.path);
     const st = Math.max(0, o.start).toFixed(2);
     const d = (o.dur || 0.7).toFixed(2);
-    if (o.effect === 'wipe') {
-      // Soldan sağa "yazılma" efekti: yumuşak kenarlı alfa maskesi
-      const speed = ((o.w || VW) + 80) / Math.max(0.3, o.dur || 1.2);
-      filter += `[${idx}:v]format=rgba,geq=r='r(X,Y)':g='g(X,Y)':b='b(X,Y)':a='alpha(X,Y)*clip(((T-${st})*${speed.toFixed(1)}-X)/80,0,1)'[o${idx}];`;
-    } else {
-      filter += `[${idx}:v]format=rgba,fade=t=in:st=${st}:d=${d}:alpha=1[o${idx}];`;
-    }
-    const rise = o.rise || 0;
+    filter += `[${idx}:v]format=rgba,fade=t=in:st=${st}:d=${d}:alpha=1[o${idx}];`;
+    const rise = o.rise || (o.effect === 'wipe' ? 16 : 0);
     const yExpr = rise ? `'${o.y}+${rise}*min(1,max(0,1-(t-${st})/${d}))'` : `${o.y}`;
     filter += `[${last}][o${idx}]overlay=x=${o.x}:y=${yExpr}:eval=frame[v${idx}];`;
     last = `v${idx}`;
@@ -991,10 +1013,23 @@ async function resolveMusic(dir, prefs, log) {
 /**
  * 1080x1920 sinematik dikey video üretir. {path, duration, hasMusic, musicKey, scenes} döner.
  */
-export async function renderVerticalVideo(entity, { log = () => {}, workDir } = {}) {
+export async function renderVerticalVideo(entity, { log = () => {}, workDir, introCoverBuffer9x16 = null } = {}) {
   const sharp = await getSharp();
   const dir = workDir || fs.mkdtempSync(path.join(os.tmpdir(), 'nova-video-'));
   const scenes = [];
+  if (introCoverBuffer9x16) {
+    const coverPath = path.join(dir, 'cover_intro_9x16.jpg');
+    fs.writeFileSync(coverPath, introCoverBuffer9x16);
+    const outCover = path.join(dir, 'scene_0_cover.mp4');
+    await renderScene({
+      basePath: coverPath,
+      motion: { type: 'zoom', z0: 1.0, z1: 1.02, ax0: 0.5, ax1: 0.5, ay: 0.5 },
+      overlays: [],
+      duration: 2.2,
+      out: outCover
+    });
+    scenes.push({ path: outCover, duration: 2.2, label: 'triptych_cover' });
+  }
   const camera = entity.prefs?.camera || 'slow_push_in';
   const isCol = entity.kind === 'collection';
   const heroUrl = isCol ? entity.heroUrl : (entity.sourceImageUrl || entity.heroUrl);
@@ -1150,7 +1185,7 @@ export async function renderVerticalVideo(entity, { log = () => {}, workDir } = 
     : `[${a}:a]aresample=48000[aout]`;
   const finalPath = path.join(dir, 'final.mp4');
   args.push('-filter_complex', fc, '-map', '[vout]', '-map', '[aout]', '-t', total.toFixed(3),
-    '-c:v', 'libx264', '-preset', 'medium', '-profile:v', 'high', '-level', '4.1', '-crf', '21', '-maxrate', '5M', '-bufsize', '10M',
+    '-c:v', 'libx264', '-preset', 'veryfast', '-profile:v', 'high', '-level', '4.1', '-crf', '21', '-maxrate', '5M', '-bufsize', '10M',
     '-pix_fmt', 'yuv420p', '-r', String(FPS), '-g', String(FPS * 2),
     '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', finalPath);
   await runFfmpeg(args, { label: 'video birleştirme', timeoutMs: 420000 });
@@ -1262,8 +1297,19 @@ const inflight = new Map();
 
 async function readCache(supabase) {
   try {
-    const { data } = await supabase.from('site_settings').select('data').eq('key', RENDER_CACHE_KEY).maybeSingle();
-    return (data && data.data) || {};
+    if (supabase && typeof supabase.from === 'function') {
+      const { data } = await supabase.from('site_settings').select('data').eq('key', RENDER_CACHE_KEY).maybeSingle();
+      return (data && data.data) || {};
+    }
+    const sbUrl = env('SUPABASE_URL', '').replace(/\/$/, '');
+    const sbKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
+    if (!sbUrl || !sbKey) return {};
+    const res = await fetch(`${sbUrl}/rest/v1/site_settings?key=eq.${RENDER_CACHE_KEY}&select=data&limit=1`, {
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}` }
+    });
+    if (!res.ok) return {};
+    const rows = await res.json();
+    return (rows && rows[0] && rows[0].data) || {};
   } catch (_) { return {}; }
 }
 async function writeCacheEntry(supabase, key, value) {
@@ -1272,15 +1318,38 @@ async function writeCacheEntry(supabase, key, value) {
     cache[key] = { ...value, created_at: new Date().toISOString() };
     const keys = Object.keys(cache).sort((a, b) => String(cache[b].created_at).localeCompare(String(cache[a].created_at)));
     for (const k of keys.slice(300)) delete cache[k];
-    await supabase.from('site_settings').upsert({ key: RENDER_CACHE_KEY, data: cache, updated_at: new Date().toISOString() });
+    if (supabase && typeof supabase.from === 'function') {
+      await supabase.from('site_settings').upsert({ key: RENDER_CACHE_KEY, data: cache, updated_at: new Date().toISOString() });
+      return;
+    }
+    const sbUrl = env('SUPABASE_URL', '').replace(/\/$/, '');
+    const sbKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
+    if (!sbUrl || !sbKey) return;
+    await fetch(`${sbUrl}/rest/v1/site_settings`, {
+      method: 'POST',
+      headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({ key: RENDER_CACHE_KEY, data: cache, updated_at: new Date().toISOString() })
+    });
   } catch (_) {}
 }
 
 async function uploadFile(supabase, objectPath, buffer, contentType) {
-  const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(objectPath, buffer, { contentType, upsert: true, cacheControl: '31536000' });
-  if (error) throw new Error(`Storage yükleme hatası (${objectPath}): ${error.message}`);
-  const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
-  return data.publicUrl;
+  if (supabase && supabase.storage && typeof supabase.storage.from === 'function') {
+    const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(objectPath, buffer, { contentType, upsert: true, cacheControl: '31536000' });
+    if (error) throw new Error(`Storage yükleme hatası (${objectPath}): ${error.message}`);
+    const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
+    return data.publicUrl;
+  }
+  const sbUrl = env('SUPABASE_URL', '').replace(/\/$/, '');
+  const sbKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
+  if (!sbUrl || !sbKey) throw new Error('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY eksik.');
+  const res = await fetch(`${sbUrl}/storage/v1/object/${MEDIA_BUCKET}/${objectPath}`, {
+    method: 'POST',
+    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': contentType, 'x-upsert': 'true' },
+    body: buffer
+  });
+  if (!res.ok) throw new Error(`Storage yükleme hatası (${objectPath}): HTTP ${res.status}`);
+  return `${sbUrl}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
 }
 
 /**
@@ -1360,9 +1429,604 @@ export async function prepareFormatPayload({ supabase, platform, slotFormat, ent
   };
 }
 
+// ── 5) 3'LÜ INSTAGRAM KOLEKSİYON KAMPANYA SİSTEMİ (REVEAL / BREAKDOWN / STORY) ─
+export function splitCollectionNameIntoThree(rawName) {
+  const cleaned = trUpper(
+    String(rawName || '')
+      .replace(/\b(koleksiyonu|koleksiyon|yatak\s*odası|yatak\s*odasi|genç\s*odası|genc\s*odasi|dolap\s*koleksiyonları|dolap\s*koleksiyonlari|kahve\s*köşesi\s*koleksiyonları|kahve\s*kosesi\s*koleksiyonlari|kahve\s*köşesi|kahve\s*kosesi|dolap|takımı|takimi|serisi|모bilya)\b/gi, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+  ) || trUpper(clean(rawName || 'KOLEKSİYON'));
+
+  const word = cleaned.split(' ')[0] || cleaned;
+  const vowels = 'AEIİOÖUÜ';
+  const isVowel = ch => vowels.includes(ch);
+
+  const syllables = [];
+  let i = 0;
+  const n = word.length;
+  while (i < n) {
+    let v = i;
+    while (v < n && !isVowel(word[v])) v++;
+    if (v >= n) {
+      if (syllables.length > 0) syllables[syllables.length - 1] += word.slice(i);
+      else syllables.push(word.slice(i));
+      break;
+    }
+    let nextV = v + 1;
+    while (nextV < n && !isVowel(word[nextV])) nextV++;
+    if (nextV >= n) {
+      syllables.push(word.slice(i));
+      break;
+    }
+    const consonantsBetween = nextV - v - 1;
+    let splitIdx;
+    if (consonantsBetween === 0) splitIdx = v + 1;
+    else if (consonantsBetween === 1) splitIdx = v + 1;
+    else splitIdx = v + 2;
+    syllables.push(word.slice(i, splitIdx));
+    i = splitIdx;
+  }
+
+  let parts;
+  if (syllables.length === 3) {
+    parts = syllables;
+  } else if (syllables.length > 3) {
+    const c1 = Math.ceil(syllables.length / 3);
+    const c2 = Math.ceil((syllables.length - c1) / 2);
+    parts = [
+      syllables.slice(0, c1).join(''),
+      syllables.slice(c1, c1 + c2).join(''),
+      syllables.slice(c1 + c2).join('')
+    ];
+  } else {
+    const len = word.length;
+    if (len >= 3) {
+      const p1 = Math.ceil(len / 3);
+      const p2 = Math.ceil((len - p1) / 2);
+      parts = [word.slice(0, p1), word.slice(p1, p1 + p2), word.slice(p1 + p2)];
+    } else {
+      parts = [word, '•', ''];
+    }
+  }
+  return {
+    cleanName: word,
+    parts,
+    formatted: `${parts[0]} - ${parts[1]} - ${parts[2]}`
+  };
+}
+
+/**
+ * Koleksiyon ana fotoğrafını 3240x1350 panoramik şerit olarak kesintisiz tonlar,
+ * ardından Sol (1/3 - Post 01 Reveal), Orta (2/3 - Post 02 Breakdown) ve Sağ (3/3 - Post 03 Design Story)
+ * kapak görsellerini hem 1080x1350 (4:5 Grid) hem de 1080x1920 (9:16 Reels Merkez 4:5 Korumalı) olarak üretir.
+ */
+export async function renderTriptychCovers(entity) {
+  const sharp = await getSharp();
+  if (!entity.heroUrl) throw new Error(`"${entity.title}" koleksiyonunun ana tanıtım görseli eksik.`);
+  const heroBuf = await loadImage(entity.heroUrl);
+  const W3 = CAROUSEL_W * 3; // 3240
+  const H = CAROUSEL_H;      // 1350
+
+  // 1. 3240x1350 tek parça kesintisiz panoramik zemin ve tek seferde karartma
+  const wide = await sharp(heroBuf).rotate().resize(W3, H, { fit: 'cover', position: 'centre' }).toBuffer();
+  const topGrad = gradientRect(W3, 280, 0, [[0, '#000', 0.58], [1, '#000', 0]]);
+  const botGrad = gradientRect(W3, H, 620, [[0, '#000', 0], [0.5, '#000', 0.52], [1, '#000', 0.88]]);
+  const scrim = svgDoc(W3, H, topGrad.body + botGrad.body, topGrad.defs + botGrad.defs);
+  const gradedWide = await sharp(wide).composite([{ input: scrim }]).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toBuffer();
+
+  const splitInfo = splitCollectionNameIntoThree(entity.title);
+  const roleLabels = ['01 • COLLECTION REVEAL', '02 • PRODUCT BREAKDOWN', '03 • DESIGN STORY'];
+  const fullTitleUpper = trUpper(entity.title);
+  const catUpper = trUpper(entity.category || 'KOLEKSİYON');
+
+  const tiles4x5 = [];
+  const tiles9x16 = [];
+
+  // 9:16 Reels kapakları için bulanık arka plan
+  const blurredBg9x16 = await sharp(heroBuf)
+    .rotate()
+    .resize(VW, VH, { fit: 'cover', position: 'centre' })
+    .blur(35)
+    .modulate({ brightness: 0.35 })
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  for (let idx = 0; idx < 3; idx++) {
+    const rawSlice = await sharp(gradedWide)
+      .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H })
+      .toBuffer();
+
+    const syllable = splitInfo.parts[idx] || '';
+    const sylText = idx === 0 ? `${syllable}-` : idx === 1 ? `-${syllable}-` : `-${syllable}`;
+    const roleTag = roleLabels[idx];
+
+    let body = '';
+    // Üst bilgi
+    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 7, opacity: 0.92, shadow: true });
+    body += textEl({ x: CAROUSEL_W - 64, y: 88, text: roleTag, size: 20, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
+    body += `<rect x="64" y="108" width="${CAROUSEL_W - 128}" height="1.5" fill="${BRAND.gold}" fill-opacity="0.45"/>`;
+
+    // Kategori ve Tam Koleksiyon Adı (Üst-Orta)
+    body += textEl({ x: CAROUSEL_W / 2, y: H - 380, text: catUpper, size: 26, weight: 600, fill: BRAND.gold, anchor: 'middle', spacing: 8, shadow: true });
+
+    // Dev 3'lü Grid Hece Yazısı (BER - GA - MO)
+    const sylSize = syllable.length > 4 ? 140 : 172;
+    body += textEl({
+      x: CAROUSEL_W / 2,
+      y: H - 210,
+      text: sylText,
+      size: sylSize,
+      font: TITLE_FONT,
+      weight: 800,
+      fill: '#ffffff',
+      anchor: 'middle',
+      spacing: 6,
+      shadow: true
+    });
+
+    // Alt Tam Koleksiyon Adı ve Panoramik Çizgi
+    body += `<rect x="0" y="${H - 140}" width="${CAROUSEL_W}" height="3" fill="${BRAND.gold}" fill-opacity="0.85"/>`;
+    body += textEl({ x: CAROUSEL_W / 2, y: H - 82, text: fullTitleUpper, size: 28, weight: 700, fill: '#f8fafc', anchor: 'middle', spacing: 6, shadow: true });
+    body += textEl({
+      x: CAROUSEL_W / 2,
+      y: H - 42,
+      text: `${splitInfo.formatted}  •  BÖLÜM ${idx + 1}/3`,
+      size: 20,
+      weight: 600,
+      fill: BRAND.gold,
+      anchor: 'middle',
+      spacing: 5,
+      shadow: true
+    });
+
+    const tile4x5 = await sharp(rawSlice)
+      .composite([{ input: svgDoc(CAROUSEL_W, H, body, SHADOW_DEF) }])
+      .jpeg({ quality: 94, chromaSubsampling: '4:4:4' })
+      .toBuffer();
+
+    tiles4x5.push(tile4x5);
+
+    // 9:16 Reels kapağı: 1080x1350 karoyu tam dikey merkeze (top: 285) yerleştirir
+    // Instagram profil ızgarası 9:16 Reels kapaklarının tam merkez 1080x1350 (y=285..1635) bölgesini kırpar!
+    const tile9x16 = await sharp(blurredBg9x16)
+      .composite([{ input: tile4x5, top: Math.round((VH - H) / 2), left: 0 }])
+      .jpeg({ quality: 94, chromaSubsampling: '4:4:4' })
+      .toBuffer();
+
+    tiles9x16.push(tile9x16);
+  }
+
+  return {
+    splitInfo,
+    left4x5: tiles4x5[0],
+    center4x5: tiles4x5[1],
+    right4x5: tiles4x5[2],
+    left9x16: tiles9x16[0],
+    center9x16: tiles9x16[1],
+    right9x16: tiles9x16[2]
+  };
+}
+
+/**
+ * POST 02 — PRODUCT BREAKDOWN (Instagram Carousel | Merkez 2/3 Kapak)
+ * Slayt 1: Merkez 2/3 Triptych Kapak (Örn: -GA-)
+ * Slayt 2: Koleksiyon Genel Sunum & Parça Özeti
+ * Slayt 3..N: Her bir alt ürünün kendi doğrulanmış fotoğrafı, türü/adı ve doğrulanmış ölçüleri
+ * Son Slayt: Koleksiyon Genel Özellikleri & İletişim Kartı
+ */
+export async function renderCollectionPost02Breakdown(entity, triptych = null) {
+  const sharp = await getSharp();
+  const covers = triptych || await renderTriptychCovers(entity);
+  const slides = [];
+
+  // Slayt 1: Merkez 2/3 Triptych Kapak (Instagram 3'lü Grid'in tam orta karesi)
+  slides.push(covers.center4x5);
+
+  const pieces = (entity.pieces || []).filter(p => p.imageUrl && p.presentation !== 'video_only' && p.presentation !== 'hidden');
+  const heroBuf = await loadImage(entity.heroUrl);
+
+  // Slayt 2: Koleksiyon Tanıtım & İçerik Özeti Slaytı
+  {
+    const W = CAROUSEL_W, H = CAROUSEL_H;
+    const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
+    const grad = gradientRect(W, H, 350, [[0, '#000', 0.15], [0.5, '#000', 0.68], [1, '#000', 0.92]]);
+    const topG = gradientRect(W, 240, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
+    let body = topG.body + grad.body;
+    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 7, shadow: true });
+    body += textEl({ x: W - 64, y: 88, text: `DİJİTAL KATALOG • ${pieces.length} ALT ÜRÜN`, size: 22, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
+    body += textEl({ x: 64, y: 780, text: trUpper(entity.category || 'KOLEKSİYON'), size: 26, weight: 700, fill: BRAND.gold, spacing: 7, shadow: true });
+    body += textEl({ x: 64, y: 848, text: trUpper(entity.title), size: 58, font: TITLE_FONT, weight: 700, fill: '#fff', spacing: 3, shadow: true });
+    body += `<rect x="64" y="876" width="110" height="3" fill="${BRAND.gold}"/>`;
+
+    let py = 930;
+    body += textEl({ x: 64, y: py, text: 'KOLEKSİYON İÇERİĞİ:', size: 24, weight: 700, fill: BRAND.gold, spacing: 4 });
+    py += 42;
+    for (const pc of pieces.slice(0, 6)) {
+      const rawD = clean(pc.dimensions || '');
+      const mSlash = rawD.match(/^(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*(?:cm)?$/i);
+      const compactD = mSlash ? `${mSlash[1]} × ${mSlash[2]} × ${mSlash[3]} cm` : (detailLines(rawD, 1)[0] || '');
+      const rowTxt = `• ${pc.title}${compactD ? '  —  ' + compactD : ''}`;
+      for (const ln of wrapText(rowTxt, 68, 1)) {
+        body += textEl({ x: 68, y: py, text: ln, size: 26, weight: 600, fill: '#f1f5f9', shadow: true });
+        py += 38;
+      }
+    }
+    body += textEl({ x: W - 64, y: H - 52, text: 'ÜRÜNLER İÇİN KAYDIRIN  →', size: 22, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4 });
+    const introSlide = await sharp(baseImg).composite([{ input: svgDoc(W, H, body, topG.defs + grad.defs + SHADOW_DEF) }]).jpeg({ quality: 93, chromaSubsampling: '4:4:4' }).toBuffer();
+    slides.push(introSlide);
+  }
+
+  // Slayt 3..N: Alt Ürün Katalog Kartları (maksimum 7 parça slaytı -> toplam max 10 slayt)
+  const maxPieceSlides = Math.min(pieces.length, 7);
+  for (let i = 0; i < maxPieceSlides; i++) {
+    slides.push(await pieceSlide(entity, pieces[i], i + 1, maxPieceSlides));
+  }
+
+  // Son Slayt: Koleksiyon Genel Özellikleri & İletişim Özeti (eğer 10 slayt sınırını aşmıyorsa)
+  if (slides.length < 10 && entity.features && entity.features.length > 0) {
+    const W = CAROUSEL_W, H = CAROUSEL_H;
+    const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).blur(18).modulate({ brightness: 0.35 }).toBuffer();
+    let body = '';
+    body += textEl({ x: 64, y: 92, text: BRAND.name, size: 24, weight: 700, spacing: 7 });
+    body += `<rect x="64" y="220" width="${W - 128}" height="${H - 420}" rx="22" fill="rgba(15,23,42,0.86)" stroke="${BRAND.gold}" stroke-width="2" stroke-opacity="0.65"/>`;
+    body += textEl({ x: W / 2, y: 310, text: 'GENEL ÖZELLİKLER & KALİTE STANDARTLARI', size: 26, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 5 });
+    body += textEl({ x: W / 2, y: 370, text: trUpper(entity.title), size: 46, font: TITLE_FONT, weight: 700, fill: '#fff', anchor: 'middle', spacing: 3 });
+    body += `<rect x="${W / 2 - 70}" y="400" width="140" height="3" fill="${BRAND.gold}"/>`;
+
+    let fy = 480;
+    for (const feat of entity.features.slice(0, 5)) {
+      for (const ln of wrapText(`✦  ${feat}`, 44, 2)) {
+        body += textEl({ x: 110, y: fy, text: ln, size: 32, weight: 600, fill: '#f8fafc' });
+        fy += 48;
+      }
+      fy += 18;
+    }
+
+    body += textEl({ x: W / 2, y: H - 120, text: `WhatsApp Sipariş & Bilgi: ${BRAND.whatsapp}`, size: 30, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 3 });
+    body += textEl({ x: W / 2, y: H - 72, text: BRAND.website, size: 24, weight: 600, fill: '#cbd5e1', anchor: 'middle', spacing: 4 });
+    const summarySlide = await sharp(baseImg).composite([{ input: svgDoc(W, H, body, SHADOW_DEF) }]).jpeg({ quality: 93, chromaSubsampling: '4:4:4' }).toBuffer();
+    slides.push(summarySlide);
+  }
+
+  return slides.slice(0, 10);
+}
+
+/**
+ * POST 01 — COLLECTION REVEAL (Instagram Reels | Sol 1/3 Kapak)
+ * Amaç: Koleksiyonun tamamını sinematik, prestijli ve çarpıcı bir akışla tanıtmak.
+ */
+export async function renderCollectionPost01Reveal(entity, triptych = null, { log = () => {} } = {}) {
+  const covers = triptych || await renderTriptychCovers(entity);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post01-reveal-'));
+  const baseVideo = await renderVerticalVideo(entity, { log, workDir: dir, introCoverBuffer9x16: covers.left9x16 });
+  return {
+    ...baseVideo,
+    coverBuffer9x16: covers.left9x16,
+    coverBuffer4x5: covers.left4x5,
+    postIndex: 1,
+    role: 'COLLECTION_REVEAL'
+  };
+}
+
+/**
+ * POST 03 — DESIGN STORY (Instagram Reels | Sağ 3/3 Kapak)
+ * Amaç: Koleksiyonun tasarım felsefesini, malzeme/doku uyumunu ve yaşam alanı atmosferini anlatmak.
+ */
+export async function renderCollectionPost03DesignStory(entity, triptych = null, { log = () => {} } = {}) {
+  const sharp = await getSharp();
+  const covers = triptych || await renderTriptychCovers(entity);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post03-story-'));
+  const scenes = [];
+  const heroBuf = await loadImage(entity.heroUrl);
+
+  // Sahne 0: Sağ 3/3 Triptych Kapağı (2.2 sn)
+  {
+    const coverPath = path.join(dir, 'cover_right_9x16.jpg');
+    fs.writeFileSync(coverPath, covers.right9x16);
+    const outCover = path.join(dir, 'story_scene_0_cover.mp4');
+    await renderScene({
+      basePath: coverPath,
+      motion: { type: 'zoom', z0: 1.0, z1: 1.02, ax0: 0.5, ax1: 0.5, ay: 0.5 },
+      overlays: [],
+      duration: 2.2,
+      out: outCover
+    });
+    scenes.push({ path: outCover, duration: 2.2, label: 'story_cover_right' });
+  }
+
+  // Sahne 1: Tasarım Hikayesi & Mimari Felsefe (11 sn)
+  {
+    const heroBase = await prepareHeroBase(dir, heroBuf);
+    const grad = gradientRect(VW, VH, 680, [[0, '#000', 0.1], [0.45, '#000', 0.65], [1, '#000', 0.92]]);
+    const topG = gradientRect(VW, 300, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
+    const shade = await fullFramePng(
+      dir,
+      'st1_shade',
+      grad.body + topG.body +
+        textEl({ x: 70, y: 120, text: `${BRAND.name}  •  DESIGN STORY`, size: 28, weight: 700, fill: BRAND.gold, spacing: 7 }),
+      grad.defs + topG.defs
+    );
+    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.6, effect: 'fade' }];
+
+    const name = trUpper(entity.title);
+    const n = await textPng(dir, 'st1_name', { lines: wrapText(name, 18, 2), size: 84, font: TITLE_FONT, weight: 700, spacing: 4, lineHeight: 1.08 });
+    overlays.push({ ...n, x: 64, y: 1020, start: 0.6, dur: 1.0, effect: 'wipe' });
+
+    const quote = entity.promoQuote || entity.shortDescription || `${entity.title} ile yaşam alanınızda zamansız mimari estetik.`;
+    const qLines = wrapText(quote, 36, 6);
+    let qy = 1020 + n.h + 45;
+    for (let i = 0; i < qLines.length; i++) {
+      const qp = await textPng(dir, `st1_q${i}`, { lines: [qLines[i]], size: 44, font: TITLE_FONT, italic: true, fill: '#f1f5f9' });
+      overlays.push({ ...qp, x: 66, y: Math.round(qy + i * 60), start: 1.4 + i * 0.85, dur: 0.8, effect: 'wipe' });
+    }
+    const out = path.join(dir, 'story_scene_1.mp4');
+    await renderScene({ basePath: heroBase, motion: { type: 'pan' }, overlays, duration: 11, out });
+    scenes.push({ path: out, duration: 11, label: 'design_philosophy' });
+  }
+
+  // Sahne 2: Doku, Yüzey ve Mimari Detay Yakın Planları (9 sn)
+  {
+    const base = await preparePieceBase(dir, 'story_detail_bg', heroBuf, 'cover');
+    const grad = gradientRect(VW, VH, 700, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
+    const shade = await fullFramePng(dir, 'st2_shade', grad.body, grad.defs);
+    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.5, effect: 'fade' }];
+
+    const header = await textPng(dir, 'st2_hdr', { lines: ['MİMARİ DOKU & YÜZEY UYUMU'], size: 34, weight: 700, fill: BRAND.gold, spacing: 6 });
+    overlays.push({ ...header, x: 66, y: 1120, start: 0.5, dur: 0.7, effect: 'fade', rise: 20 });
+
+    const feats = (entity.features && entity.features.length)
+      ? entity.features.slice(0, 4)
+      : ['Özel Tasarım Yüzey ve Kapak İşçiliği', 'Mekana Derinlik Katan Mimari Çizgiler', 'Fonksiyonel ve Estetik Modül Uyumu'];
+
+    let fy = 1200;
+    for (let k = 0; k < feats.length; k++) {
+      const fl = await textPng(dir, `st2_f${k}`, { lines: wrapText(`✦  ${feats[k]}`, 38, 2), size: 40, weight: 600, fill: '#ffffff' });
+      overlays.push({ ...fl, x: 66, y: Math.round(fy), start: 1.1 + k * 0.9, dur: 0.7, effect: 'fade', rise: 18 });
+      fy += fl.h + 24;
+    }
+
+    const out = path.join(dir, 'story_scene_2.mp4');
+    await renderScene({ basePath: base, motion: cameraMotion('macro_detail', 1), overlays, duration: 9, out });
+    scenes.push({ path: out, duration: 9, label: 'surface_harmony' });
+  }
+
+  // Sahne 3: Kapanış (5 sn)
+  {
+    const bg = path.join(dir, 'story_outro_bg.jpg');
+    await sharp(heroBuf).rotate().resize(VW * 2, VH * 2, { fit: 'cover' }).blur(40).modulate({ brightness: 0.32 }).jpeg({ quality: 88 }).toFile(bg);
+    const overlays = [];
+    const b = await textPng(dir, 'sto_brand', { lines: [BRAND.name], size: 76, font: TITLE_FONT, weight: 700, spacing: 8 });
+    overlays.push({ ...b, x: 70, y: 700, start: 0.3, dur: 0.9, effect: 'wipe' });
+    const bar = await fullFramePng(dir, 'sto_bar', `<rect x="76" y="840" width="140" height="4" fill="${BRAND.gold}"/>`);
+    overlays.push({ path: bar, x: 0, y: 0, start: 1.0, dur: 0.5, effect: 'fade' });
+    const l1 = await textPng(dir, 'sto_l1', { lines: [trUpper(entity.title)], size: 46, weight: 700, fill: '#f8fafc' });
+    overlays.push({ ...l1, x: 72, y: 890, start: 1.3, dur: 0.6, effect: 'fade', rise: 18 });
+    const l2 = await textPng(dir, 'sto_l2', { lines: [`WhatsApp  ${BRAND.whatsapp}`], size: 52, weight: 700, fill: BRAND.gold });
+    overlays.push({ ...l2, x: 72, y: 970, start: 1.8, dur: 0.6, effect: 'fade', rise: 18 });
+    const out = path.join(dir, 'story_scene_3.mp4');
+    await renderScene({ basePath: bg, motion: { type: 'zoom', z0: 1.0, z1: 1.06, ax0: 0.5, ax1: 0.5, ay: 0.5 }, overlays, duration: 5, out });
+    scenes.push({ path: out, duration: 5, label: 'story_outro' });
+  }
+
+  const total = scenes.reduce((s, x) => s + x.duration, 0) - XFADE * (scenes.length - 1);
+  const music = await resolveMusic(dir, entity.prefs, log);
+  const args = [];
+  scenes.forEach(s => args.push('-i', s.path));
+  if (music) args.push('-stream_loop', '-1', '-i', music.path);
+  else args.push('-f', 'lavfi', '-t', total.toFixed(3), '-i', 'anullsrc=r=48000:cl=stereo');
+
+  let fc = '';
+  let prev = '0:v';
+  let offset = 0;
+  for (let i = 1; i < scenes.length; i++) {
+    offset += scenes[i - 1].duration - XFADE;
+    fc += `[${prev}][${i}:v]xfade=transition=fade:duration=${XFADE}:offset=${offset.toFixed(3)}[x${i}];`;
+    prev = `x${i}`;
+  }
+  fc += `[${prev}]format=yuv420p[vout];`;
+  const a = scenes.length;
+  const fadeOutSt = Math.max(0, total - 3).toFixed(3);
+  fc += music
+    ? `[${a}:a]atrim=0:${total.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=1.5,afade=t=out:st=${fadeOutSt}:d=3,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[aout]`
+    : `[${a}:a]aresample=48000[aout]`;
+
+  const finalPath = path.join(dir, 'post03_design_story.mp4');
+  args.push('-filter_complex', fc, '-map', '[vout]', '-map', '[aout]', '-t', total.toFixed(3),
+    '-c:v', 'libx264', '-preset', 'veryfast', '-profile:v', 'high', '-level', '4.1', '-crf', '21', '-maxrate', '5M', '-bufsize', '10M',
+    '-pix_fmt', 'yuv420p', '-r', String(FPS), '-g', String(FPS * 2),
+    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', finalPath);
+  await runFfmpeg(args, { label: 'post03 video birleştirme', timeoutMs: 360000 });
+
+  return {
+    path: finalPath,
+    duration: Number(total.toFixed(2)),
+    hasMusic: !!music,
+    musicKey: music?.key || null,
+    workDir: dir,
+    coverBuffer9x16: covers.right9x16,
+    coverBuffer4x5: covers.right4x5,
+    postIndex: 3,
+    role: 'DESIGN_STORY'
+  };
+}
+
+/**
+ * 3 Gönderinin her biri için tekrarsız, amacına özel açıklama metni (Caption) üretir:
+ * - Post 01 (COLLECTION REVEAL): Koleksiyonu tanıtır ve ilk izlenimi oluşturur.
+ * - Post 02 (PRODUCT BREAKDOWN): Alt ürünleri ve doğrulanmış ölçülerini katalog düzeninde listeler.
+ * - Post 03 (DESIGN STORY): Tasarım hikayesini, malzeme/doku uyumunu ve yaşam alanı atmosferini anlatır.
+ */
+export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'instagram') {
+  const name = trUpper(entity.title);
+  const cat = entity.category ? ` | ${entity.category}` : '';
+  const splitInfo = splitCollectionNameIntoThree(entity.title);
+  const story = clean(entity.promoQuote || entity.shortDescription || '');
+  const cta = `📩 Fiyat ve sipariş bilgisi için DM'den ulaşabilir veya WhatsApp hattımızdan yazabilirsiniz: ${BRAND.whatsapp}`;
+
+  if (postIndex === 1) {
+    // POST 01 — COLLECTION REVEAL
+    const lines = [
+      `✨ ${name} — KOLEKSİYON TANITIMI (01/03 | ${splitInfo.parts[0]}-)`,
+      '',
+      story || `${entity.title}, çağdaş çizgileri ve özenli işçiliğiyle yaşam alanınıza prestijli bir kimlik kazandırıyor.`,
+      '',
+      `🏛️ Bu koleksiyonda toplam ${(entity.pieces || []).length} farklı modül seçeneği yer almaktadır. Tüm alt ürünleri ve ölçü detaylarını incelemek için profilimizdeki katalog gönderisine göz atabilirsiniz.`,
+      '',
+      cta
+    ];
+    return lines.join('\n');
+  }
+
+  if (postIndex === 2) {
+    // POST 02 — PRODUCT BREAKDOWN
+    const lines = [
+      `📐 ${name} — DİJİTAL ÜRÜN KATALOĞU (02/03 | -${splitInfo.parts[1]}-)`,
+      '',
+      `${entity.title} içerisinde yer alan tüm modüller ve doğrulanmış ölçü bilgileri:`,
+      ''
+    ];
+    for (const p of (entity.pieces || [])) {
+      const d = detailLines(p.dimensions, 1)[0] || p.dimensions || '';
+      lines.push(`▫️ ${p.title}${d ? ' — ' + d : ''}`);
+    }
+    if (entity.features && entity.features.length) {
+      lines.push('', 'Öne Çıkan Yapısal Özellikler:');
+      for (const f of entity.features.slice(0, 4)) {
+        lines.push(`• ${f}`);
+      }
+    }
+    lines.push('', cta);
+    return lines.join('\n');
+  }
+
+  // POST 03 — DESIGN STORY
+  const lines = [
+    `🕯️ ${name} — TASARIM HİKAYESİ & ATMOSFER (03/03 | -${splitInfo.parts[2]})`,
+    '',
+    story || `Mekanda dinginlik, doku uyumu ve fonksiyonel estetik bir arada.`,
+    ''
+  ];
+  if (entity.features && entity.features.length) {
+    lines.push('Mimari & Tasarım Detayları:');
+    for (const f of entity.features.slice(0, 4)) {
+      lines.push(`✦ ${f}`);
+    }
+    lines.push('');
+  }
+  lines.push(cta);
+  return lines.join('\n');
+}
+
+/**
+ * Bir koleksiyon için 3'lü Instagram Kampanya Paketinin tamamını (Post 01 Reveal Reels, Post 02 Breakdown Carousel, Post 03 Design Story Reels)
+ * üretir, Supabase Storage'a yükler ve önbelleğe kaydeder.
+ */
+export async function produceCollectionThreePostCampaign({ supabase, entity, log = console.log }) {
+  const sig = entitySignature(entity, 'three_post_campaign_v1');
+  const cacheKey = `${entity.slug}:three_post_v1:${sig}`;
+  const cache = await readCache(supabase);
+  if (cache[cacheKey] && cache[cacheKey].post01 && cache[cacheKey].post02 && cache[cacheKey].post03) {
+    return { ...cache[cacheKey], cached: true };
+  }
+
+  const folder = `${RENDER_FOLDER}/${entity.slug}/grid3-${sig}`;
+  log(`[3'lü Koleksiyon Motoru] "${entity.title}" (${entity.slug}) için 3'lü Grid Kampanyası hazırlanıyor...`);
+
+  // 1. Triptych Kapakları (BER - GA - MO) üret ve yükle
+  const triptych = await renderTriptychCovers(entity);
+  const coverLeft4x5Url = await uploadFile(supabase, `${folder}/cover-post01-left-4x5.jpg`, triptych.left4x5, 'image/jpeg');
+  const coverCenter4x5Url = await uploadFile(supabase, `${folder}/cover-post02-center-4x5.jpg`, triptych.center4x5, 'image/jpeg');
+  const coverRight4x5Url = await uploadFile(supabase, `${folder}/cover-post03-right-4x5.jpg`, triptych.right4x5, 'image/jpeg');
+  const coverLeft9x16Url = await uploadFile(supabase, `${folder}/cover-post01-left-9x16.jpg`, triptych.left9x16, 'image/jpeg');
+  const coverRight9x16Url = await uploadFile(supabase, `${folder}/cover-post03-right-9x16.jpg`, triptych.right9x16, 'image/jpeg');
+
+  // 2. POST 02 — PRODUCT BREAKDOWN (Carousel)
+  const breakdownSlides = await renderCollectionPost02Breakdown(entity, triptych);
+  const post02SlideUrls = [];
+  for (let i = 0; i < breakdownSlides.length; i++) {
+    const sUrl = await uploadFile(supabase, `${folder}/post02-slide-${i + 1}.jpg`, breakdownSlides[i], 'image/jpeg');
+    post02SlideUrls.push(sUrl);
+  }
+
+  // 3. POST 01 — COLLECTION REVEAL (Reels)
+  const post01Video = await renderCollectionPost01Reveal(entity, triptych, { log });
+  let post01VideoUrl = '';
+  try {
+    const vBuf = fs.readFileSync(post01Video.path);
+    post01VideoUrl = await uploadFile(supabase, `${folder}/post01-reveal.mp4`, vBuf, 'video/mp4');
+  } finally {
+    try { fs.rmSync(post01Video.workDir, { recursive: true, force: true }); } catch (_) {}
+  }
+
+  // 4. POST 03 — DESIGN STORY (Reels)
+  const post03Video = await renderCollectionPost03DesignStory(entity, triptych, { log });
+  let post03VideoUrl = '';
+  try {
+    const vBuf = fs.readFileSync(post03Video.path);
+    post03VideoUrl = await uploadFile(supabase, `${folder}/post03-design-story.mp4`, vBuf, 'video/mp4');
+  } finally {
+    try { fs.rmSync(post03Video.workDir, { recursive: true, force: true }); } catch (_) {}
+  }
+
+  const hashtags = buildHashtags(entity, 'instagram');
+  const result = {
+    slug: entity.slug,
+    title: entity.title,
+    category: entity.category,
+    splitInfo: triptych.splitInfo,
+    covers: {
+      left4x5: coverLeft4x5Url,
+      center4x5: coverCenter4x5Url,
+      right4x5: coverRight4x5Url,
+      left9x16: coverLeft9x16Url,
+      right9x16: coverRight9x16Url
+    },
+    post01: {
+      postIndex: 1,
+      role: 'COLLECTION_REVEAL',
+      contentType: 'REELS',
+      videoUrl: post01VideoUrl,
+      coverUrl: coverLeft9x16Url,
+      mediaUrlWithCover: `${post01VideoUrl}#cover=${encodeURIComponent(coverLeft9x16Url)}`,
+      duration: post01Video.duration,
+      caption: buildCollectionPostCaption(entity, 1, 'instagram'),
+      hashtags
+    },
+    post02: {
+      postIndex: 2,
+      role: 'PRODUCT_BREAKDOWN',
+      contentType: 'CAROUSEL',
+      slideUrls: post02SlideUrls,
+      mediaUrl: JSON.stringify(post02SlideUrls),
+      coverUrl: coverCenter4x5Url,
+      slideCount: post02SlideUrls.length,
+      caption: buildCollectionPostCaption(entity, 2, 'instagram'),
+      hashtags
+    },
+    post03: {
+      postIndex: 3,
+      role: 'DESIGN_STORY',
+      contentType: 'REELS',
+      videoUrl: post03VideoUrl,
+      coverUrl: coverRight9x16Url,
+      mediaUrlWithCover: `${post03VideoUrl}#cover=${encodeURIComponent(coverRight9x16Url)}`,
+      duration: post03Video.duration,
+      caption: buildCollectionPostCaption(entity, 3, 'instagram'),
+      hashtags
+    }
+  };
+
+  await writeCacheEntry(supabase, cacheKey, result);
+  log(`[3'lü Koleksiyon Motoru] "${entity.title}" tamamlandı: Post01 (${post01Video.duration}s Reels), Post02 (${post02SlideUrls.length} Slayt Carousel), Post03 (${post03Video.duration}s Reels).`);
+  return { ...result, cached: false };
+}
+
 export default {
   ENGINE_VERSION, BRAND, buildCatalogEntities, entitySignature, renderCarousel, renderVerticalVideo,
   buildCaption, buildHashtags, polishIntroWithGemini, produceMedia, prepareFormatPayload,
   wrapText, excerptQuote, detailLines, splitSentences,
-  CAMPAIGN_THEMES, resolveCampaignTheme, campaignCoverSlide, campaignBridgeSlide, renderCampaignCarousel, buildCampaignCaption
+  CAMPAIGN_THEMES, resolveCampaignTheme, campaignCoverSlide, campaignBridgeSlide, renderCampaignCarousel, buildCampaignCaption,
+  splitCollectionNameIntoThree, renderTriptychCovers, renderCollectionPost01Reveal, renderCollectionPost02Breakdown,
+  renderCollectionPost03DesignStory, buildCollectionPostCaption, produceCollectionThreePostCampaign
 };
