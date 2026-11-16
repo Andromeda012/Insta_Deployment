@@ -992,6 +992,36 @@
     async function uploadImageIfNeeded(slugPrefix, imgDataOrUrl) {
       if (!imgDataOrUrl) return '';
       if (imgDataOrUrl.startsWith('data:image')) {
+        const blobRes = await fetch(imgDataOrUrl);
+        const blob = await blobRes.blob();
+        const maxBytes = 50 * 1024 * 1024; // 50 MB
+        if (blob.size > maxBytes) {
+          throw new Error('Görsel boyutu en fazla 50 MB olabilir.');
+        }
+
+        // Doğrudan Supabase Storage İmzalı Yükleme (50 MB'a kadar destekler, Vercel 4.5 MB limitine takılmaz)
+        const signRes = await module7Api('/api/module7?action=media', {
+          method: 'POST',
+          body: JSON.stringify({
+            mode: 'sign',
+            slug: slugPrefix,
+            mime_type: blob.type || 'image/jpeg',
+            file_size: blob.size
+          })
+        });
+
+        if (signRes && signRes.signed_upload_url) {
+          const putRes = await fetch(signRes.signed_upload_url, {
+            method: 'PUT',
+            headers: { 'Content-Type': blob.type || 'image/jpeg' },
+            body: blob
+          });
+          if (!putRes.ok) {
+            throw new Error('Görsel depolama alanına yüklenemedi.');
+          }
+          return signRes.public_url;
+        }
+
         const uploaded = await module7Api('/api/module7?action=media', {
           method: 'POST',
           body: JSON.stringify({ slug: slugPrefix, data_url: imgDataOrUrl })
@@ -1085,7 +1115,7 @@
         // Genel Özellikler tamamen yapay zeka tarafından ana tanıtım görseline bakılarak üretilir
         let ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
         if (ozellikler.length === 0) {
-          const aiGen = await generateAiFeatures(true, ana_resim || rawMainImg);
+          const aiGen = await generateAiFeatures(true, rawMainImg || ana_resim);
           if (Array.isArray(aiGen) && aiGen.length) {
             ozellikler = aiGen;
           }

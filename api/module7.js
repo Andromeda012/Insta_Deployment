@@ -28,8 +28,8 @@ const VALID_SOURCE_TYPES = new Set([
   'real', 'original', 'ai_generated', 'ai_banana', 'cad_render'
 ]);
 
-const MAX_BODY_BYTES = 1024 * 1024;
-const MAX_IMAGE_BYTES = 3 * 1024 * 1024;
+const MAX_BODY_BYTES = 25 * 1024 * 1024;
+const MAX_IMAGE_BYTES = 50 * 1024 * 1024;
 const SETTINGS_KEY = 'product_transform_settings';
 const AI_STUDIO_KEY = 'ai_studio_profiles';
 const EXTENDED_CATALOG_KEY = 'module7_extended_catalog';
@@ -546,15 +546,49 @@ async function media(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
   await authenticateRoles(req, ['admin', 'product_manager']);
-  const { slug, data_url } = req.body || {};
+  const { slug, data_url, mode, mime_type, file_size } = req.body || {};
   if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz ürün kodu.' });
-  if (typeof data_url !== 'string') return res.status(400).json({ ok: false, error: 'Görsel verisi eksik.' });
-  const match = data_url.match(/^data:(image\/(?:png|jpeg|webp));base64,([A-Za-z0-9+/=]+)$/);
-  if (!match) return res.status(400).json({ ok: false, error: 'Yalnızca PNG, JPEG veya WebP görselleri kabul edilir.' });
-  const mime = match[1];
-  const bytes = Buffer.from(match[2], 'base64');
-  if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) return res.status(413).json({ ok: false, error: 'Görsel en fazla 3 MB olabilir.' });
   if (!SUPABASE_URL || !SERVICE_KEY) throw error('Storage server configuration is incomplete.', 503);
+
+  // Yüksek boyutlu görseller (50 MB'a kadar) için doğrudan imzalı yükleme URL'si üretimi (Vercel 4.5 MB limitini aşar)
+  if (mode === 'sign') {
+    const rawMime = String(mime_type || 'image/jpeg').toLowerCase().trim();
+    const sizeNum = Number(file_size || 0);
+    if (sizeNum > MAX_IMAGE_BYTES) {
+      return res.status(413).json({ ok: false, error: 'Görsel en fazla 50 MB olabilir.' });
+    }
+    const ext = rawMime.includes('webp') ? 'webp' : rawMime.includes('png') ? 'png' : 'jpg';
+    const path = `products/${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+    const signRes = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/media/${path}`, {
+      method: 'POST',
+      headers: {
+        apikey: SERVICE_KEY,
+        Authorization: `Bearer ${SERVICE_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    if (!signRes.ok) {
+      const err = new Error((await signRes.text()) || 'İmzalı yükleme adresi oluşturulamadı.');
+      err.status = signRes.status >= 500 ? 502 : 400;
+      throw err;
+    }
+    const signData = await signRes.json();
+    return res.status(200).json({
+      ok: true,
+      path,
+      signed_upload_url: `${SUPABASE_URL}/storage/v1${signData.url}`,
+      token: signData.token,
+      public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${path}`
+    });
+  }
+
+  if (typeof data_url !== 'string') return res.status(400).json({ ok: false, error: 'Görsel verisi eksik.' });
+  const match = data_url.match(/^data:(image\/(?:png|jpeg|jpg|webp|avif));base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match) return res.status(400).json({ ok: false, error: 'Yalnızca PNG, JPEG veya WebP görselleri kabul edilir.' });
+  const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
+  const bytes = Buffer.from(match[2], 'base64');
+  if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) return res.status(413).json({ ok: false, error: 'Görsel en fazla 50 MB olabilir.' });
   const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png';
   const path = `products/${slug}-${Date.now()}.${ext}`;
   const response = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${path}`, {
