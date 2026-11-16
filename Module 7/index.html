@@ -332,22 +332,15 @@
         </small>
       </div>
 
-      <div class="form-group">
-        <label id="lblMainDimensions">Genel Ölçü / Teknik Not (Zorunlu): <span style="color:#f87171;">*</span></label>
-        <input type="text" id="prod_dimensions" class="form-control" required placeholder="Örn: 240x210x60 cm">
-      </div>
-
-      <div class="form-group">
+      <div class="form-group" style="background:rgba(56,189,248,0.05); border:1px solid rgba(56,189,248,0.25); border-radius:10px; padding:10px 12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <label style="margin-bottom:0;">Öne Çıkan Doğrulanmış Özellikler (Zorunlu): <span style="color:#f87171;">*</span></label>
-          <button type="button" class="btn btn-outline" id="btnAiFeatures" style="padding:4px 10px; font-size:11px; border-color:#d4af37; color:#fde68a;" onclick="generateAiFeatures()">
-            ✨ Gemini AI ile Yazdır
-          </button>
+          <label style="margin-bottom:0; color:#38bdf8;">🤖 Genel Özellikler (Yapay Zeka Ana Görselden Otomatik Üretir)</label>
+          <span id="aiFeaturesStatusBadge" style="font-size:10.5px; color:#34d399; font-weight:700;">✨ Otomatik Aktif</span>
         </div>
-        <textarea id="prod_features" class="form-control" required style="min-height:80px; font-size:12px;" placeholder="Her satıra doğrulanmış bir ürün özelliği yazın veya Gemini AI ile oluşturup kontrol edin...&#10;1. Sınıf 18mm MDF Gövde&#10;CNC Membran Kapak İşçiliği"></textarea>
-        <small style="color:var(--text-muted); font-size:10.5px; display:block; margin-top:4px;">
-          💡 Gönderi açıklamalarında ve katalog detay slaytlarında yer alır. Kayıttan önce mutlaka doldurulmalıdır.
-        </small>
+        <div id="aiFeaturesPreviewBox" style="font-size:11.5px; color:var(--text-muted); line-height:1.5; background:rgba(15,23,42,0.55); border:1px dashed rgba(148,163,184,0.25); border-radius:8px; padding:8px 10px;">
+          Ana tanıtım fotoğrafı seçildiğinde ve kayıt sırasında yapay zeka görseli inceleyerek ürünün genel özelliklerini otomatik oluşturur.
+        </div>
+        <input type="hidden" id="prod_features" value="">
       </div>
 
       <div style="display:flex; gap:10px; margin-top:16px;">
@@ -464,42 +457,95 @@
       return String(str || '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
 
-    async function generateAiFeatures(silent = false) {
-      const btn = document.getElementById('btnAiFeatures');
+    function renderAiFeaturesPreview(features = []) {
+      const box = document.getElementById('aiFeaturesPreviewBox');
+      const hidden = document.getElementById('prod_features');
+      const clean = (Array.isArray(features) ? features : []).map(s => String(s || '').trim()).filter(Boolean);
+      if (hidden) hidden.value = clean.join('\n');
+      if (!box) return;
+      if (!clean.length) {
+        box.innerHTML = 'Ana tanıtım fotoğrafı seçildiğinde ve kayıt sırasında yapay zeka görseli inceleyerek ürünün genel özelliklerini otomatik oluşturur.';
+        return;
+      }
+      box.innerHTML = clean.map(f => `<div style="color:#f8fafc; font-weight:600; padding:2px 0;">✨ ${escapeHtml(f)}</div>`).join('');
+    }
+
+    function createVisionThumbnailDataUrl(srcDataUrl, maxDim = 960) {
+      return new Promise(resolve => {
+        if (!srcDataUrl || !srcDataUrl.startsWith('data:image')) return resolve(srcDataUrl || '');
+        const img = new Image();
+        img.onload = function() {
+          try {
+            let w = img.width || 800;
+            let h = img.height || 800;
+            if (w > maxDim || h > maxDim) {
+              if (w >= h) {
+                h = Math.round((h * maxDim) / w);
+                w = maxDim;
+              } else {
+                w = Math.round((w * maxDim) / h);
+                h = maxDim;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = w;
+            canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', 0.8));
+          } catch (_) {
+            resolve(srcDataUrl);
+          }
+        };
+        img.onerror = function() {
+          resolve(srcDataUrl);
+        };
+        img.src = srcDataUrl;
+      });
+    }
+
+    async function generateAiFeatures(silent = true, explicitImageUrl = '') {
+      const badge = document.getElementById('aiFeaturesStatusBadge');
       const title = (document.getElementById('prod_title')?.value || '').trim();
       const kategori = document.getElementById('prod_main_category')?.value || 'Yatak Odası';
       const promo = (document.getElementById('prod_promo_quote')?.value || '').trim();
+      const rawImg = explicitImageUrl || currentImageBase64 || '';
 
-      if (!title && !silent) {
-        showCustomToast('Lütfen önce koleksiyon veya ürün adını girin.', 'warning');
-        return null;
-      }
-
-      if (btn && !silent) {
-        btn.disabled = true;
-        btn.innerHTML = '⏳ Gemini Yazıyor...';
+      if (badge) {
+        badge.textContent = '⏳ Görsel İnceleniyor...';
+        badge.style.color = '#fde68a';
       }
 
       try {
+        const visionImage = rawImg.startsWith('data:image')
+          ? await createVisionThumbnailDataUrl(rawImg, 960)
+          : rawImg;
+
         const res = await module7Api('/api/module7?action=generate-features', {
           method: 'POST',
-          body: JSON.stringify({ title, kategori, promo_quote: promo })
+          body: JSON.stringify({
+            title,
+            kategori,
+            promo_quote: promo,
+            image_data: visionImage.startsWith('data:image') ? visionImage : undefined,
+            image_url: !visionImage.startsWith('data:image') ? visionImage : undefined
+          })
         });
         if (res.ok && Array.isArray(res.features) && res.features.length) {
-          const textarea = document.getElementById('prod_features');
-          if (textarea) {
-            textarea.value = res.features.join('\n');
+          renderAiFeaturesPreview(res.features);
+          if (badge) {
+            badge.textContent = '✅ Görselden Üretildi';
+            badge.style.color = '#34d399';
           }
-          if (!silent) showCustomToast('✨ Öne çıkan özellikler Gemini AI tarafından hazırlandı!', 'success');
+          if (!silent) showCustomToast('✨ Genel özellikler ana görsel incelenerek yapay zeka tarafından üretildi!', 'success');
           return res.features;
         }
       } catch (err) {
         if (!silent) showCustomToast(`Gemini özelliği oluşturulamadı: ${err.message}`, 'warning');
-      } finally {
-        if (btn && !silent) {
-          btn.disabled = false;
-          btn.innerHTML = '✨ Gemini AI ile Yazdır';
-        }
+      }
+      if (badge) {
+        badge.textContent = '✨ Otomatik Aktif';
+        badge.style.color = '#34d399';
       }
       return null;
     }
@@ -921,6 +967,8 @@
         showImagePreview(currentImageBase64);
         const urlInput = document.getElementById('prod_image_url');
         if (urlInput) urlInput.value = '';
+        // Ana tanıtım fotoğrafı seçildiğinde yapay zeka görseli inceleyip genel özellikleri otomatik üretir
+        generateAiFeatures(true, currentImageBase64);
       };
       reader.readAsDataURL(file);
     }
@@ -930,6 +978,7 @@
       if (val) {
         currentImageBase64 = val;
         showImagePreview(val);
+        generateAiFeatures(true, val);
       }
     }
 
@@ -963,7 +1012,6 @@
       const promoQuote = (document.getElementById('prod_promo_quote')?.value || '').trim();
       const rawColors = (document.getElementById('prod_colors')?.value || '').trim();
       const rawFeatures = (document.getElementById('prod_features')?.value || '').trim();
-      const rawDimensions = document.getElementById('prod_dimensions').value.trim();
       const editSlug = document.getElementById('edit_slug').value.trim();
 
       // 1. ZORUNLU ALAN VE GÖRSEL DOĞRULAMASI (EKSİK VERİ İLE KESİNLİKLE KAYIT YAPILMAZ)
@@ -994,19 +1042,6 @@
       if (!promoQuote) {
         showCustomToast('⚠️ Lütfen Özel Tanıtım Cümlesi & Tasarım Hikayesi alanını doldurun (Zorunludur).', 'warning');
         document.getElementById('prod_promo_quote')?.focus();
-        return;
-      }
-
-      if (!rawDimensions) {
-        showCustomToast('⚠️ Lütfen Genel Ölçü / Teknik Not alanını doldurun (Zorunludur).', 'warning');
-        document.getElementById('prod_dimensions')?.focus();
-        return;
-      }
-
-      const ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
-      if (ozellikler.length === 0) {
-        showCustomToast('⚠️ Lütfen Öne Çıkan Doğrulanmış Özellikler alanına en az 1 özellik girin veya "Gemini AI ile Yazdır" butonunu kullanın (Zorunludur).', 'warning');
-        document.getElementById('prod_features')?.focus();
         return;
       }
 
@@ -1041,11 +1076,20 @@
       }
 
       btn.disabled = true;
-      btn.textContent = '⏳ Fotoğraflar ve Ürün Bilgileri Kaydediliyor...';
+      btn.textContent = '⏳ Görsel Analiz Ediliyor ve Ürün Kaydediliyor...';
 
       try {
         const slug = editSlug || slugify(title) + '-' + Math.random().toString(36).substring(2, 6);
         const ana_resim = await uploadImageIfNeeded(slug, rawMainImg);
+
+        // Genel Özellikler tamamen yapay zeka tarafından ana tanıtım görseline bakılarak üretilir
+        let ozellikler = rawFeatures ? rawFeatures.split('\n').map(s => s.trim()).filter(Boolean) : [];
+        if (ozellikler.length === 0) {
+          const aiGen = await generateAiFeatures(true, ana_resim || rawMainImg);
+          if (Array.isArray(aiGen) && aiGen.length) {
+            ozellikler = aiGen;
+          }
+        }
 
         const renkler = rawColors ? rawColors.split(',').map(s => s.trim()).filter(Boolean) : [];
         const materials = materialsInput ? materialsInput.split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -1077,7 +1121,7 @@
           ana_resim,
           renkler,
           ozellikler,
-          body: rawDimensions ? `${rawDimensions}${promoQuote ? '\n\n' + promoQuote : ''}` : (promoQuote || ''),
+          body: promoQuote || '',
           product_type: currentEntityCreationType,
           design_story: promoQuote || shortDesc,
           promo_quote: promoQuote,
@@ -1122,8 +1166,8 @@
         document.getElementById('prod_promo_quote').value = candidateQuote;
       }
       if (document.getElementById('prod_colors')) document.getElementById('prod_colors').value = Array.isArray(item.renkler) ? item.renkler.join(', ') : '';
-      document.getElementById('prod_features').value = Array.isArray(item.ozellikler) ? item.ozellikler.join('\n') : '';
-      document.getElementById('prod_dimensions').value = item.olculer || '';
+      renderAiFeaturesPreview(Array.isArray(item.ozellikler) ? item.ozellikler : []);
+      if (document.getElementById('prod_dimensions')) document.getElementById('prod_dimensions').value = item.olculer || '';
 
       if (item.ana_resim) {
         currentImageBase64 = item.ana_resim;
@@ -1198,8 +1242,8 @@
       if (document.getElementById('prod_short_desc')) document.getElementById('prod_short_desc').value = '';
       if (document.getElementById('prod_promo_quote')) document.getElementById('prod_promo_quote').value = '';
       if (document.getElementById('prod_colors')) document.getElementById('prod_colors').value = '';
-      document.getElementById('prod_features').value = '';
-      document.getElementById('prod_dimensions').value = '';
+      renderAiFeaturesPreview([]);
+      if (document.getElementById('prod_dimensions')) document.getElementById('prod_dimensions').value = '';
       const urlInput = document.getElementById('prod_image_url');
       if (urlInput) urlInput.value = '';
       document.getElementById('fileInput').value = '';

@@ -184,9 +184,18 @@ async function products(req, res) {
   for (const field of ['renkler', 'ozellikler']) {
     if (body[field] != null && !Array.isArray(body[field])) return res.status(400).json({ ok: false, error: `${field} bir dizi olmalıdır.` });
   }
-  if (!Array.isArray(body.ozellikler) || body.ozellikler.filter(x => String(x || '').trim()).length === 0) {
-    return res.status(400).json({ ok: false, error: 'En az 1 doğrulanmış ürün özelliği girilmesi zorunludur.' });
+  let cleanedFeatures = Array.isArray(body.ozellikler)
+    ? body.ozellikler.map(x => String(x || '').trim()).filter(Boolean)
+    : [];
+  if (cleanedFeatures.length === 0) {
+    cleanedFeatures = await analyzeMainImageAndGenerateFeatures({
+      imageInput: body.ana_resim,
+      title: body.title,
+      kategori: body.kategori,
+      promoQuote: body.promo_quote || body.design_story || body.kisa_aciklama || ''
+    });
   }
+  body.ozellikler = cleanedFeatures;
 
   // Koleksiyon ise alt ürünlerin (collection_pieces) adı, ölçüsü ve görseli zorunludur
   if (body.product_type === 'collection') {
@@ -1114,39 +1123,75 @@ async function showroom(req, res) {
   }
 }
 
-// ── GEMINI AI İLE ÖZELLİK LİSTESİ OLUŞTURMA ─────────────────────────────────
-async function generateFeatures(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
-  const body = req.body || {};
-  const title = String(body.title || '').trim();
-  const kategori = String(body.kategori || '').trim();
-  const promoQuote = String(body.promo_quote || '').trim();
+// ── GEMINI VISION AI İLE ANA TANITIM GÖRSELİNDEN GENEL ÖZELLİK ÜRETİMİ ───────
+async function extractInlineImagePart(imageInput) {
+  const raw = String(imageInput || '').trim();
+  if (!raw) return null;
+  try {
+    const dataMatch = raw.match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/);
+    if (dataMatch) {
+      return {
+        inline_data: {
+          mime_type: dataMatch[1],
+          data: dataMatch[2]
+        }
+      };
+    }
+    const resolvedUrl = raw.startsWith('http://') || raw.startsWith('https://')
+      ? raw
+      : `https://globalmobilyaweb.vercel.app${raw.startsWith('/') ? '' : '/'}${raw}`;
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 8000);
+    const imgResp = await fetch(resolvedUrl, { signal: ctrl.signal });
+    clearTimeout(timer);
+    if (!imgResp.ok) return null;
+    const contentType = (imgResp.headers.get('content-type') || 'image/jpeg').split(';')[0].trim();
+    const ab = await imgResp.arrayBuffer();
+    const base64Data = Buffer.from(ab).toString('base64');
+    if (!base64Data) return null;
+    return {
+      inline_data: {
+        mime_type: contentType.startsWith('image/') ? contentType : 'image/jpeg',
+        data: base64Data
+      }
+    };
+  } catch (_) {
+    return null;
+  }
+}
 
+async function analyzeMainImageAndGenerateFeatures({ imageInput, title, kategori, promoQuote }) {
   const geminiKey = process.env.GEMINI_API_KEY || '';
   if (geminiKey) {
     try {
+      const inlineImagePart = await extractInlineImagePart(imageInput);
       const prompt = `Sen Global Mobilya markasının baş mimar ve mobilya tasarımcısısın.
-Aşağıda bilgileri verilen lüks mobilya ürünü/koleksiyonu için sosyal medya açıklamalarında yer alacak 3 veya 4 adet vurucu, zarif ve üst kalite ürün özelliği maddesi yaz.
+${inlineImagePart ? 'Ekteki ana tanıtım görselini (mobilya/koleksiyon fotoğrafını) dikkatlice incele ve görselde gördüğün tasarım dili, kapak/yüzey formu, renk ve doku uyumu, kulp/ayak/ayna detayları ve modül yapısına bakarak' : 'Aşağıdaki mobilya bilgilerine dayanarak'} 3 veya 4 adet genel ürün özelliği maddesi üret.
 
 Kurallar:
-- Her satırda tek bir özellik olsun (Örn: 1. Sınıf E1 Masif Ahşap ve CNC Gövde).
+- Doğrudan ana tanıtım görselinde görünen estetik, mimari ve fonksiyonel genel özelliklere odaklan.
+- Her satırda tek bir genel özellik olsun (Örn: Zarif dikey derz işlemeli modern kapak tasarımı).
 - Madde işareti (*, -, •), numara veya emoji KOYMA. Sadece satır satır metin yaz.
 - Toplam tam 3 veya 4 satır olsun.
-- Asla ölçü, abartılı fiyat veya garanti uydurma. Mobilya işçiliği ve malzeme kalitesine odaklan.
+- Asla hayali ölçü (cm/mm) veya fiyat uydurma.
 
-Ürün Adı: ${title || 'Lüks Koleksiyon'}
+Ürün/Koleksiyon Adı: ${title || 'Global Mobilya Tasarımı'}
 Kategori: ${kategori || 'Mobilya'}
-Tanıtım Cümlesi / Hikayesi: ${promoQuote || 'Zarafet ve konforun buluştuğu modern tasarım'}`;
+${promoQuote ? `Tanıtım Cümlesi / Hikayesi: ${promoQuote}` : ''}`;
+
+      const parts = [];
+      if (inlineImagePart) parts.push(inlineImagePart);
+      parts.push({ text: prompt });
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiKey}`;
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 12000);
+      const t = setTimeout(() => ctrl.abort(), 14000);
       const resp = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: 250, temperature: 0.6 }
+          contents: [{ parts }],
+          generationConfig: { maxOutputTokens: 250, temperature: 0.5 }
         }),
         signal: ctrl.signal
       });
@@ -1156,7 +1201,7 @@ Tanıtım Cümlesi / Hikayesi: ${promoQuote || 'Zarafet ve konforun buluştuğu 
         const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
         const lines = text.split('\n').map(s => s.replace(/^[\s*\-•\d.]+/g, '').trim()).filter(Boolean).slice(0, 4);
         if (lines.length >= 2) {
-          return res.status(200).json({ ok: true, features: lines });
+          return lines;
         }
       }
     } catch (_) {}
@@ -1237,8 +1282,24 @@ Tanıtım Cümlesi / Hikayesi: ${promoQuote || 'Zarafet ve konforun buluştuğu 
       'Çizilmeye ve Neme Dayanıklı Membran Yüzey'
     ]
   };
-  const chosen = fallbacks[kategori] || fallbacks['Yatak Odası'];
-  return res.status(200).json({ ok: true, features: chosen });
+  return fallbacks[kategori] || fallbacks['Yatak Odası'];
+}
+
+async function generateFeatures(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method Not Allowed' });
+  const body = req.body || {};
+  const title = String(body.title || '').trim();
+  const kategori = String(body.kategori || '').trim();
+  const promoQuote = String(body.promo_quote || '').trim();
+  const imageInput = String(body.image_data || body.image_url || body.ana_resim || '').trim();
+
+  const features = await analyzeMainImageAndGenerateFeatures({
+    imageInput,
+    title,
+    kategori,
+    promoQuote
+  });
+  return res.status(200).json({ ok: true, features });
 }
 
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
