@@ -1,0 +1,32 @@
+{
+  "id": "preset_luxury_showroom_props",
+  "name": "Luxury Showroom Accent Props",
+  "description": "High-end showroom staging with brass candleholders, potted plant, area rug, and framed wall art.",
+  "target_categories": ["sofa", "armchair", "wardrobe", "bed", "bedroom_set"],
+  "props": [
+    {
+      "asset_id": "prop_test_wool_area_rug_01",
+      "anchor": "floor_center",
+      "relative_offset": [0.0, 0.0, 0.001],
+      "rotation_euler_deg": [0, 0, 0]
+    },
+    {
+      "asset_id": "brass_candleholders_4k",
+      "anchor": "beside_furniture_right",
+      "relative_offset": [1.4, -0.2, 0.0],
+      "rotation_euler_deg": [0, 0, -25]
+    },
+    {
+      "asset_id": "potted_plant_01_4k",
+      "anchor": "corner_left",
+      "relative_offset": [-1.6, 0.8, 0.0],
+      "rotation_euler_deg": [0, 0, 45]
+    },
+    {
+      "asset_id": "fancy_picture_frame_01_8k",
+      "anchor": "wall_above_furniture",
+      "relative_offset": [0.0, 1.8, 1.8],
+      "rotation_euler_deg": [0, 0, 0]
+    }
+  ]
+}

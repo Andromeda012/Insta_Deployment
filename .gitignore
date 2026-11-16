@@ -94,3 +94,11 @@ pnpm-debug.log*
 # Environment files: only committed templates are allowed
 .env*
 !.env.example
+
+# Large binary 3D models and local backup snapshots
+*.glb
+*.blend
+backups/
+
+# VPS backup
+Sunucu/vps_backup/

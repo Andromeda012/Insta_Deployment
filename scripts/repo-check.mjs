@@ -9,6 +9,7 @@ let jsCount = 0;
 let migrationCount = 0;
 
 for (const file of tracked) {
+  if (!fs.existsSync(file)) continue;
   const base = path.basename(file);
   if (base === '.env' || (base.startsWith('.env.') && base !== '.env.example')) failures.push(`Gerçek ortam dosyası Git tarafından izleniyor: ${file}`);
   if (file.endsWith('.json')) {

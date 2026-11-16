@@ -39,7 +39,12 @@ class RenderWorkerDaemon {
 
     this.apiBaseUrl = String(rawApiUrl || '').trim().replace(/\/+$/, '');
     this.workerKey = String(config.workerKey !== undefined ? config.workerKey : (process.env.RENDER_WORKER_KEY || '')).trim();
-    this.pollIntervalMs = Number(config.pollIntervalMs || process.env.POLL_INTERVAL_MS || 10000);
+    this.basePollIntervalMs = Number(config.pollIntervalMs || process.env.POLL_INTERVAL_MS || 10000);
+    this.maxPollIntervalMs = Number(config.maxPollIntervalMs || process.env.MAX_POLL_INTERVAL_MS || 60000);
+    this.currentPollIntervalMs = this.basePollIntervalMs;
+    this.consecutiveEmptyPolls = 0;
+    this.pollIntervalMs = this.basePollIntervalMs;
+    this.sleepTimer = null;
     this.maxLoadAvg = Number(config.maxLoadAvg || process.env.MAX_LOAD_AVG || 1.5); // Conservative for 1 vCPU VPS
     this.minFreeMemMb = Number(config.minFreeMemMb || process.env.MIN_FREE_MEM_MB || 350); // Protect publisher RAM
     this.tempDir = config.tempDir || os.tmpdir();
@@ -129,9 +134,10 @@ class RenderWorkerDaemon {
 
   /**
    * Validates the job's scene & 3D asset input.
+   * Remote assets (.glb, .blend, etc.) from Supabase Storage or URLs are auto-downloaded to tempDir.
    * Benchmark cube scene is NEVER used as a fallback for real product jobs.
    */
-  resolveAndValidateSceneInput(job) {
+  async resolveAndValidateSceneInput(job) {
     if (!job || typeof job !== 'object') {
       throw new Error('UNSUPPORTED_SCENE_INPUT: Job payload is missing or invalid.');
     }
@@ -163,7 +169,7 @@ class RenderWorkerDaemon {
           'UNSUPPORTED_SCENE_INPUT: Benchmark mode cannot be used to fabricate renders for real catalog products or collections.'
         );
       }
-      return { mode: 'benchmark', modelPath: '' };
+      return { mode: 'benchmark', modelPath: '', isDownloaded: false };
     }
 
     // Real production job: must have a validated 3D model input (.glb, .gltf, .obj, .fbx, .blend)
@@ -181,6 +187,43 @@ class RenderWorkerDaemon {
       );
     }
 
+    // Auto-download remote 3D models (HTTP/HTTPS or Supabase Storage paths)
+    const isRemoteUrl = candidatePath.startsWith('http://') || candidatePath.startsWith('https://');
+    const isStoragePath = candidatePath.startsWith('studio/') || candidatePath.startsWith('media/studio/');
+    if (isRemoteUrl || isStoragePath) {
+      let downloadUrl = candidatePath;
+      if (isStoragePath) {
+        const cleanPath = candidatePath.replace(/^media\//, '');
+        downloadUrl = `${this.apiBaseUrl}/storage/v1/object/public/media/${cleanPath}`;
+      }
+
+      let ext = path.extname(new URL(downloadUrl).pathname).toLowerCase();
+      if (!ext || !ALLOWED_MODEL_EXTENSIONS.has(ext)) {
+        ext = '.glb';
+      }
+
+      const tempFileName = `remote_model_${crypto.randomUUID()}${ext}`;
+      const tempFilePath = validateSafeFilePath(path.join(this.tempDir, tempFileName), this.tempDir);
+
+      try {
+        const fetchRes = await fetch(downloadUrl, { signal: AbortSignal.timeout(60000) });
+        if (!fetchRes.ok) {
+          throw new Error(`HTTP ${fetchRes.status} ${fetchRes.statusText}`);
+        }
+        const arrayBuf = await fetchRes.arrayBuffer();
+        if (!arrayBuf || arrayBuf.byteLength === 0) {
+          throw new Error('Downloaded asset buffer is empty.');
+        }
+        fs.writeFileSync(tempFilePath, Buffer.from(arrayBuf));
+      } catch (dlErr) {
+        throw new Error(
+          `UNSUPPORTED_SCENE_INPUT: Failed to download 3D model asset from remote source: ${dlErr.message}`
+        );
+      }
+
+      return { mode: 'product', modelPath: tempFilePath, isDownloaded: true };
+    }
+
     const safeModelPath = validateSafeFilePath(candidatePath, params.allowed_model_dir || null);
     const ext = path.extname(safeModelPath).toLowerCase();
     if (!ALLOWED_MODEL_EXTENSIONS.has(ext)) {
@@ -195,7 +238,7 @@ class RenderWorkerDaemon {
       );
     }
 
-    return { mode: 'product', modelPath: safeModelPath };
+    return { mode: 'product', modelPath: safeModelPath, isDownloaded: false };
   }
 
   /**
@@ -250,11 +293,16 @@ class RenderWorkerDaemon {
       ? validateSafeFilePath(path.join(this.tempDir, `preview_${fileUuid}.jpg`), this.tempDir)
       : null;
 
+    let downloadedModelPath = null;
+
     try {
       // 1. Validate scene input first (rejects missing/unsupported 3D inputs immediately)
       let sceneSpec;
       try {
-        sceneSpec = this.resolveAndValidateSceneInput(job);
+        sceneSpec = await this.resolveAndValidateSceneInput(job);
+        if (sceneSpec?.isDownloaded && sceneSpec.modelPath) {
+          downloadedModelPath = sceneSpec.modelPath;
+        }
       } catch (sceneErr) {
         await this.client.failJob(job.id, 'unsupported_input', sceneErr.message, {
           reason: 'UNSUPPORTED_SCENE_INPUT',
@@ -440,6 +488,9 @@ class RenderWorkerDaemon {
       return false;
     } finally {
       this.activeJobId = null;
+      if (downloadedModelPath && fs.existsSync(downloadedModelPath)) {
+        try { fs.unlinkSync(downloadedModelPath); } catch {}
+      }
       if (fs.existsSync(outputPath)) {
         try { fs.unlinkSync(outputPath); } catch {}
       }
@@ -450,7 +501,7 @@ class RenderWorkerDaemon {
   }
 
   /**
-   * Run Once (Single polling cycle)
+   * Run Once (Single polling cycle with dynamic backoff)
    */
   async runCycle() {
     if (this.activeJobId || !this.isHostHealthy()) {
@@ -460,11 +511,20 @@ class RenderWorkerDaemon {
     try {
       const claimRes = await this.client.claimNextJob();
       if (claimRes?.ok && claimRes.job) {
+        // Reset dynamic backoff immediately on active job claim
+        this.consecutiveEmptyPolls = 0;
+        this.currentPollIntervalMs = Math.min(5000, this.basePollIntervalMs);
         await this.processJob(claimRes.job);
         return claimRes.job;
+      } else {
+        // Queue empty: incrementally back off (10s -> 15s -> 20s -> ... up to maxPollIntervalMs)
+        this.consecutiveEmptyPolls++;
+        const backoffStep = Math.min(this.consecutiveEmptyPolls * 5000, this.maxPollIntervalMs - this.basePollIntervalMs);
+        this.currentPollIntervalMs = Math.min(this.maxPollIntervalMs, this.basePollIntervalMs + backoffStep);
       }
     } catch (err) {
       console.warn(`[WORKER] Poll error:`, sanitizeSecret(err.message, this.workerKey));
+      this.currentPollIntervalMs = Math.max(15000, this.currentPollIntervalMs);
     }
     return null;
   }
@@ -479,12 +539,19 @@ class RenderWorkerDaemon {
 
     while (this.isRunning) {
       await this.runCycle();
-      await new Promise(r => setTimeout(r, this.pollIntervalMs));
+      if (!this.isRunning) break;
+      await new Promise(r => {
+        this.sleepTimer = setTimeout(r, this.currentPollIntervalMs);
+      });
     }
   }
 
   stop() {
     this.isRunning = false;
+    if (this.sleepTimer) {
+      clearTimeout(this.sleepTimer);
+      this.sleepTimer = null;
+    }
     console.log(`[WORKER DAEMON] Stopping gracefully...`);
   }
 }

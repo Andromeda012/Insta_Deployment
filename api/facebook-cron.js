@@ -9,7 +9,7 @@
 //    ve gerçek planlanan yayın saati (scheduled_for) ile ekler.
 // 4. Görevler 'pending' olarak bırakılır; Meta yayınını VPS worker gerçekleştirir.
 // ============================================================================
-import GeminiBananaEngine from '../gemini-banana-engine.js';
+import GeminiBananaEngine from '../Module 2/gemini-banana-engine.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';

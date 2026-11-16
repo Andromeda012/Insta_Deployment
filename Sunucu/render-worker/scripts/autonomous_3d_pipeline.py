@@ -29,6 +29,16 @@ try:
 except (AttributeError, Exception):
     pass
 
+# Integrate Asset Library Importer
+_script_dir = os.path.dirname(os.path.abspath(__file__))
+if _script_dir not in sys.path:
+    sys.path.insert(0, _script_dir)
+
+try:
+    from asset_importer import AssetLibraryManager
+except ImportError:
+    AssetLibraryManager = None
+
 
 def hex_to_rgba(hex_str, alpha=1.0):
     if not hex_str or not isinstance(hex_str, str):
@@ -59,10 +69,10 @@ def run_pipeline(config):
 
     log("Pipeline başlatıldı...")
 
-    model_path = config.get("model_path")
+    model_path = config.get("model_path") or config.get("glb_path")
     output_dir = config.get("output_dir", os.getcwd())
     product_name = config.get("product_name", "Mobilya Modeli")
-    generate_videos = config.get("generate_videos", True)
+    generate_videos = config.get("generate_videos", config.get("generate_video", True))
 
     os.makedirs(output_dir, exist_ok=True)
 
@@ -79,9 +89,16 @@ def run_pipeline(config):
     # Reset factory scene
     bpy.ops.wm.read_factory_settings(use_empty=True)
     scene = bpy.context.scene
-    scene.render.engine = 'BLENDER_EEVEE'
+    try:
+        scene.render.engine = 'BLENDER_EEVEE_NEXT'
+    except (TypeError, ValueError):
+        try:
+            scene.render.engine = 'BLENDER_EEVEE'
+        except Exception:
+            scene.render.engine = 'CYCLES'
     if hasattr(scene, 'eevee'):
-        scene.eevee.taa_render_samples = 16
+        if hasattr(scene.eevee, 'taa_render_samples'):
+            scene.eevee.taa_render_samples = 16
 
     # Import GLB
     log(f"GLB İçe Aktarılıyor: {model_path} ({file_size_bytes} bayt)")
@@ -260,6 +277,45 @@ def run_pipeline(config):
         "duration_sec": round(time.time() - stage_start, 2)
     }
 
+    # ── STAGE 4.5: DECORATION & ASSET LIBRARY PROPS ───────────────────────────
+    decor_preset = config.get("decor_preset")
+    decor_results = []
+    if decor_preset and AssetLibraryManager:
+        stage_start_decor = time.time()
+        log(f"Aşama 4.5: 3D Asset Library Dekorasyon Seti Uygulanıyor: {decor_preset}...")
+        try:
+            lib_manager = AssetLibraryManager()
+            main_bounds = {
+                "width": raw_width,
+                "depth": raw_depth,
+                "height": raw_height,
+                "center_x": center_x,
+                "center_y": center_y,
+                "center_z": center_z,
+                "min_x": -raw_width / 2.0,
+                "max_x": raw_width / 2.0,
+                "min_y": -raw_depth / 2.0,
+                "max_y": raw_depth / 2.0,
+                "min_z": 0.0,
+                "max_z": raw_height
+            }
+            decor_results = lib_manager.apply_decoration_preset(decor_preset, main_furniture_bounds=main_bounds)
+            report["stages"]["DECORATION_STAGING"] = {
+                "status": "passed",
+                "preset": decor_preset,
+                "props_staged": len(decor_results),
+                "staged_items": [d if isinstance(d, str) else d.get("asset_id") for d in decor_results],
+                "duration_sec": round(time.time() - stage_start_decor, 2)
+            }
+            log(f"Dekorasyon Tamamlandı: {len(decor_results)} adet varlık sahneye yerleştirildi: {decor_results}")
+        except Exception as e:
+            log(f"Dekorasyon seti yerleştirilirken uyarı: {e}")
+            report["stages"]["DECORATION_STAGING"] = {
+                "status": "warning",
+                "preset": decor_preset,
+                "error": str(e)
+            }
+
     # ── STAGE 5: LIGHTING SETUP ───────────────────────────────────────────────
     stage_start = time.time()
     log("Aşama 5: Kategoriye Uyarlanabilir Işıklandırma...")
@@ -362,6 +418,13 @@ def run_pipeline(config):
         "preview_file_valid": preview_bytes > 10000
     }
     report["outputs"]["preview_hero"] = preview_path
+
+    # Save complete assembled .blend scene file
+    blend_path = os.path.join(output_dir, "wardrobe_studio_assembled.blend")
+    bpy.ops.wm.save_as_mainfile(filepath=blend_path)
+    log(f"Blender Sahne Dosyası Kaydedildi: {blend_path}")
+    report["outputs"]["blend_scene"] = blend_path
+
     report["stages"]["PREVIEW_RENDER"] = {
         "status": "passed",
         "preview_path": preview_path,

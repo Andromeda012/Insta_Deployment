@@ -722,6 +722,45 @@
     .event-desc {
       color: var(--text-muted);
     }
+
+    /* ── PASSIVE TABS & PRESENTATION STUDIO CARDS ── */
+    .nav-tab-btn.passive-tab {
+      opacity: 0.42;
+      cursor: not-allowed;
+      background: rgba(15, 23, 42, 0.35);
+      border-style: dashed;
+      pointer-events: none;
+    }
+    .passive-pill {
+      font-size: 9.5px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 99px;
+      background: rgba(148, 163, 184, 0.16);
+      color: #94A3B8;
+      text-transform: uppercase;
+    }
+    .pres-item-card {
+      background: var(--studio-surface-card);
+      border: 1px solid var(--studio-border);
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 16px;
+      display: grid;
+      grid-template-columns: 290px 1fr 220px;
+      gap: 20px;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    .pres-item-card:hover {
+      border-color: rgba(212, 175, 55, 0.45);
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
+    }
+    @media (max-width: 1150px) {
+      .pres-item-card {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -731,52 +770,94 @@
     <div class="brand-wrap">
       <div class="brand-logo-badge">🎬</div>
       <div class="header-titles">
-        <h1>CREATIVE PRODUCTION STUDIO <span style="font-size:12px; color:var(--accent-gold); font-weight:700; border:1px solid rgba(212,175,55,0.4); padding:2px 8px; border-radius:20px;">MODÜL 8 (FAZ 2)</span></h1>
-        <p>Modül 7 Katalog Tabanlı Medya Yönetimi, Güvenli Depolama &amp; Render İş Emri Altyapısı</p>
+        <h1>CREATIVE PRODUCTION STUDIO <span style="font-size:12px; color:var(--accent-gold); font-weight:700; border:1px solid rgba(212,175,55,0.4); padding:2px 8px; border-radius:20px;">MODÜL 8 • SUNUM &amp; TEMA MERKEZİ</span></h1>
+        <p>Modül 7'deki Koleksiyon ve Ürünlerin Sosyal Medya Sunum Teması, Fon Müziği ve Modül 1/2 Dağıtım Yönetimi</p>
       </div>
     </div>
 
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
       <div class="header-status-pill">
         <span class="status-dot"></span>
-        <span>Studio Motorları &amp; Depolama Aktif (media)</span>
+        <span>Modül 7 → Modül 8 → Modül 1 &amp; 2 Hattı Aktif</span>
       </div>
-      <button type="button" class="btn-gold" onclick="openCreateJobModal()">
-        ✦ Yeni Prodüksiyon Görevi Oluştur
+      <button type="button" class="btn-gold" onclick="loadPresentationStudioData()">
+        🔄 Ürün &amp; Sunum Listesini Yenile
       </button>
     </div>
   </header>
 
   <!-- INTERNAL NAVIGATION -->
   <nav class="studio-nav" id="studioNav" aria-label="Stüdyo Gezintisi">
-    <button type="button" class="nav-tab-btn active" data-tab="overview" onclick="switchStudioTab('overview')">
-      <span>📊</span> Genel Bakış (Overview)
-    </button>
-    <button type="button" class="nav-tab-btn" data-tab="media" onclick="switchStudioTab('media')">
-      <span>🖼️</span> Medya Kütüphanesi
+    <!-- AKTİF MENÜLER -->
+    <button type="button" class="nav-tab-btn active" data-tab="presentation" onclick="switchStudioTab('presentation')">
+      <span>🎵</span> Ürün Sunum, Tema &amp; Müzik Stüdyosu
     </button>
     <button type="button" class="nav-tab-btn" data-tab="catalog" onclick="switchStudioTab('catalog')">
       <span>🛋️</span> Modül 7 Katalog &amp; Parçalar
     </button>
-    <button type="button" class="nav-tab-btn" data-tab="ai-image" onclick="switchStudioTab('ai-image')">
-      <span>✨</span> AI Görsel Stüdyosu
+    <button type="button" class="nav-tab-btn" data-tab="media" onclick="switchStudioTab('media')">
+      <span>🖼️</span> Medya Kütüphanesi
     </button>
-    <button type="button" class="nav-tab-btn" data-tab="three-d" onclick="switchStudioTab('three-d')">
-      <span>📐</span> 3D Model &amp; Varlıklar
+
+    <!-- PASİF / BEKLEMEDE BIRAKILAN 3D VE İŞ MOTORU MENÜLERİ (SİLİNMEDİ, ÇALIŞMAZ) -->
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="overview" disabled title="Geçici olarak pasif durumda">
+      <span>📊</span> Genel Bakış <span class="passive-pill">Pasif</span>
     </button>
-    <button type="button" class="nav-tab-btn" data-tab="cinematic" onclick="switchStudioTab('cinematic')">
-      <span>🎬</span> Sinematik Sahne &amp; Blender
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="ai-image" disabled title="Görsel üretim devre dışı — Pasif">
+      <span>✨</span> AI Görsel Stüdyosu <span class="passive-pill">Pasif</span>
     </button>
-    <button type="button" class="nav-tab-btn" data-tab="video" onclick="switchStudioTab('video')">
-      <span>🎥</span> Video Prodüksiyon
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="three-d" disabled title="3D modelleme uzmanı sürecinde — Pasif">
+      <span>📐</span> 3D Model &amp; Varlıklar <span class="passive-pill">Pasif</span>
     </button>
-    <button type="button" class="nav-tab-btn" data-tab="manager" onclick="switchStudioTab('manager')">
-      <span>⚙️</span> İş Yöneticisi (Jobs)
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="cinematic" disabled title="3D sahne üretimi beklemede — Pasif">
+      <span>🎬</span> Sinematik Sahne &amp; Blender <span class="passive-pill">Pasif</span>
+    </button>
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="video" disabled title="3D video motoru beklemede — Pasif">
+      <span>🎥</span> Video Prodüksiyon <span class="passive-pill">Pasif</span>
+    </button>
+    <button type="button" class="nav-tab-btn passive-tab" data-tab="manager" disabled title="Render iş kuyruğu beklemede — Pasif">
+      <span>⚙️</span> İş Yöneticisi (Jobs) <span class="passive-pill">Pasif</span>
     </button>
   </nav>
 
-  <!-- TAB 1: OVERVIEW -->
-  <section class="studio-panel active" id="panel-overview">
+  <!-- YENİ ANA PANEL: ÜRÜN SUNUM, TEMA & MÜZİK STÜDYOSU -->
+  <section class="studio-panel active" id="panel-presentation">
+    <div class="content-box">
+      <div class="box-header">
+        <div>
+          <h2 class="box-title"><span>🎵</span> Sosyal Medya Ürün Sunum, Tema &amp; Müzik Stüdyosu</h2>
+          <p class="box-desc">Modül 7'ye eklenen tüm koleksiyon ve bağımsız ürünlerin sosyal medyada hangi tema, atmosfer, kamera hareketi ve müzikle sunulacağını buradan teker teker ayarlayın ve Modül 1 / Modül 2'ye dağıtın.</p>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+          <input type="text" id="presSearchInput" class="media-input" placeholder="🔍 Koleksiyon, ürün veya SKU ara..." oninput="renderPresentationStudioList()">
+          <select id="presTypeFilter" class="media-select" onchange="renderPresentationStudioList()">
+            <option value="ALL">Tüm Kayıtlar (Koleksiyon + Bağımsız)</option>
+            <option value="collection">🏛️ Yalnızca Koleksiyonlar (3 Gönderili Grid)</option>
+            <option value="independent">🪑 Yalnızca Bağımsız Ürünler (2 Sayfalı)</option>
+          </select>
+          <select id="presCategoryFilter" class="media-select" onchange="renderPresentationStudioList()">
+            <option value="ALL">Tüm Kategoriler</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="presentationStudioSummaryBar" style="display:flex; justify-content:space-between; align-items:center; background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.28); border-radius:10px; padding:10px 16px; margin-bottom:18px; font-size:12px; color:#FDE68A; flex-wrap:wrap; gap:10px;">
+        <span>📦 <strong>Akış:</strong> Modül 7 (Ürün &amp; Görsel Girişi) ➔ <strong>Modül 8 (Tema, Müzik &amp; Sunum Kurulumu)</strong> ➔ Modül 1 &amp; Modül 2 (Public Yayın)</span>
+        <span id="presTotalCountBadge" style="font-weight:800; color:#fff;">Yükleniyor...</span>
+      </div>
+
+      <div id="presentationStudioContainer">
+        <div class="empty-state">
+          <div class="empty-state-icon">🎵</div>
+          <h3 class="empty-state-title">Ürün ve Koleksiyon Listesi Yükleniyor...</h3>
+          <p class="empty-state-desc">Modül 7 kataloğundaki ürünler ve kayıtlı sunum/müzik ayarları getiriliyor.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TAB 1: OVERVIEW (PASİF) -->
+  <section class="studio-panel" id="panel-overview">
     <div class="stats-row">
       <div class="stat-card">
         <div class="stat-card-label">Toplam Medya Varlığı <span>🖼️</span></div>
@@ -3532,13 +3613,61 @@
           document.getElementById('stCompletedJobs').textContent = ov.completed_jobs_count || 0;
           document.getElementById('stTotalModels').textContent = ov.three_d_models_count || 0;
           document.getElementById('stTotalCost').textContent = '$' + (Number(ov.total_production_cost_usd || 0)).toFixed(2);
+
+          const recentWrap = document.getElementById('overviewRecentJobsWrap');
+          if (recentWrap && Array.isArray(ov.recent_activity) && ov.recent_activity.length > 0) {
+            recentWrap.innerHTML = `
+              <div style="display:flex; flex-direction:column; gap:10px;">
+                ${ov.recent_activity.slice(0, 6).map(j => {
+                  const previewUrl = j.output_public_url || '';
+                  return `
+                    <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:8px; padding:10px 14px; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                      <div style="display:flex; align-items:center; gap:12px; min-width:0;">
+                        ${previewUrl ? `
+                          <img src="${escapeHtml(previewUrl)}" alt="Output" style="width:38px; height:38px; border-radius:6px; object-fit:cover; border:1px solid rgba(212,175,55,0.4); flex-shrink:0;">
+                        ` : `
+                          <div style="width:38px; height:38px; border-radius:6px; background:rgba(255,255,255,0.05); display:flex; align-items:center; justify-content:center; font-size:16px; flex-shrink:0;">⚙️</div>
+                        `}
+                        <div style="min-width:0;">
+                          <div style="font-size:12.5px; font-weight:600; color:#fff; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                            ${escapeHtml(j.title || j.product_slug || j.id)}
+                          </div>
+                          <div style="font-size:11px; color:var(--text-muted); display:flex; gap:8px; align-items:center; margin-top:2px;">
+                            <span style="font-family:var(--font-mono); font-size:10px;">${escapeHtml(j.selected_engine || j.production_type)}</span>
+                            <span>•</span>
+                            <span>%${j.progress_percent || 0}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <div style="display:flex; align-items:center; gap:8px; flex-shrink:0;">
+                        <span class="status-badge status-${escapeHtml(j.status)}" style="font-size:10px;">${escapeHtml(j.status)}</span>
+                        ${previewUrl ? `<a href="${escapeHtml(previewUrl)}" target="_blank" class="btn-ghost" style="padding:4px 8px; font-size:10px;">Görüntüle</a>` : ''}
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `;
+          }
         }
 
         // 2. Engines Matrix
         const enginesWrap = document.getElementById('overviewEnginesList');
         const enginesList = (enginesRes?.engines && enginesRes.engines.length) ? enginesRes.engines : DEFAULT_STUDIO_ENGINES;
         if (enginesWrap) {
-          enginesWrap.innerHTML = enginesList.map(eng => `
+          const workerInfo = overviewRes?.overview?.worker_status || { status: 'idle', active_workers_count: 0 };
+          const workerStatusHtml = `
+            <div style="background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.25); border-radius:10px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between; margin-bottom:4px;">
+              <div>
+                <strong style="font-size:13px; color:var(--accent-gold); display:block;">⚡ Render Worker Daemon</strong>
+                <span style="font-size:11px; color:var(--text-muted);">Aktif Worker: ${workerInfo.active_workers_count} | PostgREST Atomic Queue</span>
+              </div>
+              <span class="status-badge ${workerInfo.status === 'processing' ? 'status-processing' : 'status-completed'}" style="font-size:10.5px; text-transform:uppercase;">
+                ${workerInfo.status}
+              </span>
+            </div>
+          `;
+          enginesWrap.innerHTML = workerStatusHtml + enginesList.map(eng => `
             <div style="background:var(--studio-surface-card); border:1px solid var(--studio-border); border-radius:10px; padding:12px 14px; display:flex; align-items:center; justify-content:space-between;">
               <div>
                 <strong style="font-size:13px; color:#fff; display:block;">${eng.name}</strong>
@@ -5833,29 +5962,342 @@
       }
     };
 
+    // ═════════════════════════════════════════════════════════════════════════
+    // MODÜL 8 — YENİ ANA PANEL: ÜRÜN SUNUM, TEMA & MÜZİK STÜDYOSU
+    // ═════════════════════════════════════════════════════════════════════════
+    let presUnifiedItems = [];
+
+    const PRES_THEME_OPTIONS = [
+      { value: 'Lüks', label: '🏛️ Lüks Mimari Showroom' },
+      { value: 'Minimal', label: '❄️ İskandinav Minimal & Ferah' },
+      { value: 'Sıcak', label: '🕯️ Sıcak Modern Yaşam Alanı' },
+      { value: 'Klasik', label: '👑 Klasik & Zamansız Zarafet' },
+      { value: 'Modern', label: '✨ Dinamik & Modern Tasarım' },
+      { value: 'Doğal', label: '🌿 Doğal Ahşap & Dinginlik' }
+    ];
+
+    const PRES_MUSIC_OPTIONS = [
+      { value: 'luxury_piano', label: '🎹 Piyano & Lüks Mimari' },
+      { value: 'cinematic_strings', label: '🎻 Sinematik Yaylılar & Kurumsal' },
+      { value: 'warm_acoustic', label: '🎸 Akustik Sıcak Ev & Yaşam' },
+      { value: 'modern_lofi', label: '🎧 Modern Minimalist Lo-Fi' },
+      { value: 'upbeat_interior', label: '✨ Dinamik Modern Tasarım Ritmi' },
+      { value: 'custom', label: '🔗 Özel MP3 Bağlantısı' }
+    ];
+
+    const PRES_CAMERA_OPTIONS = [
+      { value: 'slow_push_in', label: '🎥 Slow Push-In (Yavaş İleri Yaklaşma)' },
+      { value: 'lateral_tracking', label: '↔️ Slow Horizontal Pan (Yatay Kaydırma)' },
+      { value: 'macro_detail', label: '🔍 Smooth Digital Zoom & Detay Odaklı' },
+      { value: 'dolly_in', label: '🎬 Wide Dolly-In (Geniş Açı Yaklaşma)' }
+    ];
+
+    const PRES_TONE_OPTIONS = [
+      { value: 'Premium', label: '💎 Premium & Kurumsal' },
+      { value: 'Hikâye anlatımı odaklı', label: '📜 Hikâye & Atmosfer Odaklı' },
+      { value: 'Sade', label: '📐 Sade & Net Dijital Katalog' },
+      { value: 'Modern', label: '⚡ Modern & Dinamik' }
+    ];
+
+    function splitTitleForThreeGridPreview(rawTitle) {
+      const cleaned = String(rawTitle || 'KOLEKSİYON')
+        .replace(/\b(yatak\s+odası|genç\s+odası|dolap\s+koleksiyonları|dolap\s+koleksiyonu|kahve\s+köşesi\s+koleksiyonları|kahve\s+köşesi|koleksiyonu|koleksiyon|takımı|takimi)\b/gi, '')
+        .trim();
+      const firstWord = (cleaned || 'NOVA').toLocaleUpperCase('tr-TR').split(/\s+/)[0];
+      const vowels = 'AEIİOÖUÜ';
+      const syllables = [];
+      let i = 0;
+      const n = firstWord.length;
+      while (i < n) {
+        let vIdx = -1;
+        for (let j = i; j < n; j++) {
+          if (vowels.includes(firstWord[j])) { vIdx = j; break; }
+        }
+        if (vIdx === -1) {
+          if (syllables.length) syllables[syllables.length - 1] += firstWord.slice(i);
+          else syllables.push(firstWord.slice(i));
+          break;
+        }
+        let nextV = -1;
+        for (let k = vIdx + 1; k < n; k++) {
+          if (vowels.includes(firstWord[k])) { nextV = k; break; }
+        }
+        if (nextV === -1) { syllables.push(firstWord.slice(i)); break; }
+        const cons = nextV - vIdx - 1;
+        const splitPos = cons <= 1 ? vIdx + 1 : vIdx + 2;
+        syllables.push(firstWord.slice(i, splitPos));
+        i = splitPos;
+      }
+      if (syllables.length === 3) return syllables.join(' - ');
+      if (syllables.length > 3) return [syllables[0], syllables.slice(1, -1).join(''), syllables[syllables.length - 1]].join(' - ');
+      if (firstWord.length >= 3) {
+        const c1 = Math.ceil(firstWord.length / 3);
+        const c2 = Math.ceil((firstWord.length - c1) / 2);
+        return [firstWord.slice(0, c1), firstWord.slice(c1, c1 + c2), firstWord.slice(c1 + c2)].join(' - ');
+      }
+      return `${firstWord} - • - NOVA`;
+    }
+
+    window.togglePresCustomMusicInput = function(slug) {
+      const sel = document.getElementById(`presMusic_${slug}`);
+      const box = document.getElementById(`presCustomMusicWrap_${slug}`);
+      if (sel && box) {
+        box.style.display = sel.value === 'custom' ? 'block' : 'none';
+      }
+    };
+
+    window.loadPresentationStudioData = async function() {
+      try {
+        const [catalogRes, mediaRes] = await Promise.all([
+          fetchCatalogProducts().catch(() => null),
+          fetchStudioMedia().catch(() => null)
+        ]);
+
+        if (catalogRes) {
+          currentCatalog = catalogRes;
+          populateCatalogSelectors();
+          renderCatalogExplorer();
+        }
+        if (mediaRes?.media_assets) {
+          currentMediaList = mediaRes.media_assets;
+          renderMediaLibrary(currentMediaList);
+        }
+
+        const cols = Array.isArray(catalogRes?.collections) ? catalogRes.collections : [];
+        const prods = Array.isArray(catalogRes?.products) ? catalogRes.products : [];
+
+        presUnifiedItems = [
+          ...cols.map(c => ({
+            isCollection: true,
+            slug: c.slug,
+            sku: c.sku || c.slug.toUpperCase(),
+            title: c.title,
+            category: c.category || 'Yatak Odası',
+            image: c.hero_image || '',
+            design_story: c.design_story || c.short_description || '',
+            parts: Array.isArray(c.parts) ? c.parts : [],
+            prefs: c.marketing_preferences || {}
+          })),
+          ...prods.map(p => ({
+            isCollection: false,
+            slug: p.slug,
+            sku: p.sku || p.slug.toUpperCase(),
+            title: p.title,
+            category: p.category || 'Portmanto',
+            image: p.thumbnail || p.ana_resim || '',
+            design_story: p.design_story || '',
+            parts: [],
+            prefs: p.marketing_preferences || {}
+          }))
+        ];
+
+        const catFilter = document.getElementById('presCategoryFilter');
+        if (catFilter) {
+          const allCats = Array.from(new Set(presUnifiedItems.map(x => x.category).filter(Boolean)));
+          const prevVal = catFilter.value || 'ALL';
+          catFilter.innerHTML = '<option value="ALL">Tüm Kategoriler</option>' +
+            allCats.map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+          if (allCats.includes(prevVal)) catFilter.value = prevVal;
+        }
+
+        renderPresentationStudioList();
+      } catch (err) {
+        console.error('[Module 8 Presentation Studio] Yükleme hatası:', err);
+      }
+    };
+
+    window.renderPresentationStudioList = function() {
+      const container = document.getElementById('presentationStudioContainer');
+      const countBadge = document.getElementById('presTotalCountBadge');
+      if (!container) return;
+
+      const q = (document.getElementById('presSearchInput')?.value || '').toLowerCase().trim();
+      const typeFilter = document.getElementById('presTypeFilter')?.value || 'ALL';
+      const catFilter = document.getElementById('presCategoryFilter')?.value || 'ALL';
+
+      const filtered = presUnifiedItems.filter(item => {
+        const matchesQ = !q ||
+          (item.title && item.title.toLowerCase().includes(q)) ||
+          (item.sku && item.sku.toLowerCase().includes(q)) ||
+          (item.category && item.category.toLowerCase().includes(q));
+        const matchesType = typeFilter === 'ALL' ||
+          (typeFilter === 'collection' && item.isCollection) ||
+          (typeFilter === 'independent' && !item.isCollection);
+        const matchesCat = catFilter === 'ALL' || item.category === catFilter;
+        return matchesQ && matchesType && matchesCat;
+      });
+
+      const colCount = presUnifiedItems.filter(x => x.isCollection).length;
+      const indCount = presUnifiedItems.filter(x => !x.isCollection).length;
+      if (countBadge) {
+        countBadge.textContent = `Toplam ${presUnifiedItems.length} Kayıt (${colCount} Koleksiyon • ${indCount} Bağımsız Ürün)`;
+      }
+
+      if (!filtered.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-state-icon">🛋️</div>
+            <h3 class="empty-state-title">Ürün veya Koleksiyon Bulunamadı</h3>
+            <p class="empty-state-desc">Modül 7 üzerinden eklediğiniz koleksiyonlar ve bağımsız ürünler burada listelenir.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(item => {
+        const p = item.prefs || {};
+        const curTheme = p.atmosphere || p.theme || 'Lüks';
+        const curMusic = p.music_preference || 'luxury_piano';
+        const curCustomUrl = p.custom_music_url || '';
+        const curCamera = p.camera || 'slow_push_in';
+        const curTone = p.marketing_tone || 'Premium';
+        const isDistributed = Boolean(p.distributed_to_modules);
+        const gridPreview = item.isCollection ? splitTitleForThreeGridPreview(item.title) : '';
+
+        return `
+          <div class="pres-item-card" id="presCard_${escapeHtml(item.slug)}">
+            <!-- SOL: ÜRÜN / KOLEKSİYON KİMLİĞİ & FORMAT ÖZETİ -->
+            <div style="display:flex; gap:14px; align-items:flex-start;">
+              <img src="${escapeHtml(item.image || 'https://globalmobilyaweb.vercel.app/resim/logo.png')}"
+                   onerror="this.src='https://globalmobilyaweb.vercel.app/resim/logo.png'"
+                   alt="${escapeHtml(item.title)}"
+                   style="width:82px; height:82px; border-radius:10px; object-fit:cover; border:1px solid rgba(212,175,55,0.35); flex-shrink:0; background:#090D14;">
+              <div style="min-width:0;">
+                <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap; margin-bottom:4px;">
+                  <span class="mini-chip" style="color:var(--accent-gold); border-color:rgba(212,175,55,0.4); font-family:var(--font-mono);">${escapeHtml(item.sku)}</span>
+                  <span class="mini-chip" style="background:${item.isCollection ? 'rgba(212,175,55,0.18)' : 'rgba(16,185,129,0.18)'}; color:${item.isCollection ? '#FDE68A' : '#34D399'};">
+                    ${item.isCollection ? `🏛️ KOLEKSİYON (${item.parts.length} ALT ÜRÜN)` : '🪑 BAĞIMSIZ ÜRÜN'}
+                  </span>
+                </div>
+                <strong style="font-size:15px; color:#fff; display:block; margin-bottom:3px;">${escapeHtml(item.title)}</strong>
+                <div style="font-size:11.5px; color:var(--accent-amber); font-weight:600; margin-bottom:6px;">${escapeHtml(item.category)}</div>
+                <div style="font-size:11px; color:var(--text-muted); line-height:1.4;">
+                  ${item.isCollection
+                    ? `🧩 <strong>3 Gönderili Grid:</strong> <code style="color:#FDE68A;">${escapeHtml(gridPreview)}</code><br><small>Post 01 Reveal • Post 02 Breakdown • Post 03 Story</small>`
+                    : `📄 <strong>2 Sayfalı Sunum:</strong><br><small>1. Sayfa: Görsel + İsim • 2. Sayfa: Detaylar</small>`
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- ORTA: SOSYAL MEDYA TEMA, MÜZİK, KAMERA VE ANLATIM AYARLARI -->
+            <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px; background:rgba(0,0,0,0.28); border:1px solid var(--studio-border); border-radius:12px; padding:14px;">
+              <div>
+                <label style="display:block; font-size:10.5px; font-weight:700; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase;">🎨 Sosyal Medya Sunum Teması</label>
+                <select id="presTheme_${escapeHtml(item.slug)}" class="media-select" style="width:100%;">
+                  ${PRES_THEME_OPTIONS.map(opt => `<option value="${escapeHtml(opt.value)}" ${curTheme === opt.value ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-size:10.5px; font-weight:700; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase;">🎵 Sosyal Medya Fon Müziği</label>
+                <select id="presMusic_${escapeHtml(item.slug)}" class="media-select" style="width:100%;" onchange="togglePresCustomMusicInput('${escapeHtml(item.slug)}')">
+                  ${PRES_MUSIC_OPTIONS.map(opt => `<option value="${escapeHtml(opt.value)}" ${curMusic === opt.value ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-size:10.5px; font-weight:700; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase;">🎥 Video Kamera &amp; Geçiş Hareketi</label>
+                <select id="presCamera_${escapeHtml(item.slug)}" class="media-select" style="width:100%;">
+                  ${PRES_CAMERA_OPTIONS.map(opt => `<option value="${escapeHtml(opt.value)}" ${curCamera === opt.value ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+                </select>
+              </div>
+              <div>
+                <label style="display:block; font-size:10.5px; font-weight:700; color:var(--text-muted); margin-bottom:4px; text-transform:uppercase;">✍️ Anlatım &amp; Metin Tonu</label>
+                <select id="presTone_${escapeHtml(item.slug)}" class="media-select" style="width:100%;">
+                  ${PRES_TONE_OPTIONS.map(opt => `<option value="${escapeHtml(opt.value)}" ${curTone === opt.value ? 'selected' : ''}>${escapeHtml(opt.label)}</option>`).join('')}
+                </select>
+              </div>
+              <div id="presCustomMusicWrap_${escapeHtml(item.slug)}" style="grid-column: 1 / -1; display:${curMusic === 'custom' ? 'block' : 'none'};">
+                <label style="display:block; font-size:10.5px; font-weight:700; color:var(--accent-gold); margin-bottom:4px;">🔗 Özel MP3 Müzik Bağlantısı (URL):</label>
+                <input type="text" id="presCustomMusicUrl_${escapeHtml(item.slug)}" class="media-input" style="width:100%;" placeholder="https://.../muzik.mp3" value="${escapeHtml(curCustomUrl)}">
+              </div>
+            </div>
+
+            <!-- SAĞ: KAYDET VE MODÜL 1 & 2'YE DAĞIT -->
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div id="presStatusBadge_${escapeHtml(item.slug)}" style="text-align:center; font-size:11px; font-weight:700; padding:4px 8px; border-radius:6px; background:${isDistributed ? 'rgba(16,185,129,0.15)' : 'rgba(212,175,55,0.12)'}; color:${isDistributed ? '#34D399' : '#FDE68A'}; border:1px solid ${isDistributed ? 'rgba(16,185,129,0.35)' : 'rgba(212,175,55,0.3)'};">
+                ${isDistributed ? '✅ Modül 1 & 2 Dağıtımında Aktif' : '⚙️ Sunum Ayarı Hazır'}
+              </div>
+              <button type="button" class="btn-gold" style="width:100%; justify-content:center;" id="btnSavePres_${escapeHtml(item.slug)}" onclick="saveProductPresentationConfig('${escapeHtml(item.slug)}', ${item.isCollection}, false)">
+                💾 Tema &amp; Müziği Kaydet
+              </button>
+              <button type="button" class="btn-emerald" style="width:100%; justify-content:center;" id="btnDistPres_${escapeHtml(item.slug)}" onclick="saveProductPresentationConfig('${escapeHtml(item.slug)}', ${item.isCollection}, true)">
+                🚀 Modül 1 &amp; 2'ye Dağıt
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    };
+
+    window.saveProductPresentationConfig = async function(slug, isCollection, distributeNow = false) {
+      const theme = document.getElementById(`presTheme_${slug}`)?.value || 'Lüks';
+      const music = document.getElementById(`presMusic_${slug}`)?.value || 'luxury_piano';
+      const customUrl = (document.getElementById(`presCustomMusicUrl_${slug}`)?.value || '').trim();
+      const camera = document.getElementById(`presCamera_${slug}`)?.value || 'slow_push_in';
+      const tone = document.getElementById(`presTone_${slug}`)?.value || 'Premium';
+
+      if (music === 'custom' && !customUrl) {
+        alert('Özel MP3 bağlantısı seçildi; lütfen geçerli bir MP3 URL adresi girin.');
+        return;
+      }
+
+      const btn = document.getElementById(distributeNow ? `btnDistPres_${slug}` : `btnSavePres_${slug}`);
+      const badge = document.getElementById(`presStatusBadge_${slug}`);
+      const origText = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = distributeNow ? '⏳ Dağıtılıyor...' : '⏳ Kaydediliyor...';
+      }
+
+      try {
+        const res = await fetch('/api/module8?action=catalog-ref', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slug,
+            is_collection: isCollection,
+            atmosphere: theme,
+            theme,
+            music_preference: music,
+            custom_music_url: customUrl,
+            camera,
+            marketing_tone: tone,
+            distribute_to_modules: distributeNow
+          })
+        }).then(r => r.json());
+
+        if (!res.ok) throw new Error(res.error || 'Sunum ayarı kaydedilemedi.');
+
+        const targetItem = presUnifiedItems.find(x => x.slug === slug);
+        if (targetItem) {
+          targetItem.prefs = res.marketing_preferences || {};
+        }
+
+        if (badge) {
+          badge.style.background = 'rgba(16,185,129,0.15)';
+          badge.style.color = '#34D399';
+          badge.style.borderColor = 'rgba(16,185,129,0.35)';
+          badge.textContent = distributeNow ? '✅ Modül 1 & 2\'ye Dağıtıldı!' : '✅ Tema & Müzik Kaydedildi!';
+        }
+      } catch (err) {
+        alert('Hata: ' + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origText;
+        }
+      }
+    };
+
     function initStudioPortal() {
       document.querySelectorAll('.nav-tab-btn').forEach(btn => {
         btn.addEventListener('click', () => {
+          if (btn.disabled || btn.classList.contains('passive-tab')) return;
           if (btn.dataset.tab) window.switchStudioTab(btn.dataset.tab);
-          if (btn.dataset.tab === 'cinematic') {
-            setTimeout(() => {
-              window.loadSceneBuilderBootstrap();
-              window.loadCinematicStudioBootstrap();
-            }, 60);
-          }
-          if (btn.dataset.tab === 'video') {
-            setTimeout(() => {
-              window.loadVideoStudioBootstrap();
-            }, 60);
-          }
         });
       });
-      loadStudioData();
-      setTimeout(() => {
-        window.loadSceneBuilderBootstrap();
-        window.loadCinematicStudioBootstrap();
-        window.loadVideoStudioBootstrap();
-      }, 200);
+      // Yalnızca aktif olan Ürün Sunum/Tema/Müzik ve Katalog verilerini yükle (3D ve Blender arka plan işleri pasif)
+      window.loadPresentationStudioData();
     }
 
     if (document.readyState === 'loading') {

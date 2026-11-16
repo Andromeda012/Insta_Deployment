@@ -278,6 +278,61 @@ export async function fetchMediaDistributions(targetModule = '', platform = '') 
   return res.json();
 }
 
+// ── SPRINT 02 RELATIONAL OUTPUTS, AUDIT EVENTS & COSTS ───────────────────────
+export async function fetchStudioOutputs(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.job_id) params.set('job_id', filters.job_id);
+  if (filters.output_type) params.set('output_type', filters.output_type);
+  if (filters.review_status) params.set('review_status', filters.review_status);
+  if (filters.limit) params.set('limit', String(filters.limit));
+  const qs = params.toString() ? `&${params.toString()}` : '';
+  const res = await fetch(`/api/module8?action=outputs${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function approveStudioOutput(outputId, payload = {}) {
+  const res = await fetch('/api/module8?action=outputs', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: outputId, ...payload })
+  });
+  return res.json();
+}
+
+export async function fetchStudioEvents(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.job_id) params.set('job_id', filters.job_id);
+  if (filters.event_type) params.set('event_type', filters.event_type);
+  if (filters.limit) params.set('limit', String(filters.limit));
+  const qs = params.toString() ? `&${params.toString()}` : '';
+  const res = await fetch(`/api/module8?action=events${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function fetchStudioCosts(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.job_id) params.set('job_id', filters.job_id);
+  const qs = params.toString() ? `&${params.toString()}` : '';
+  const res = await fetch(`/api/module8?action=costs${qs}`, { cache: 'no-store' });
+  return res.json();
+}
+
+export async function updateStudioMedia(assetId, payload = {}) {
+  const res = await fetch('/api/module8?action=media', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: assetId, ...payload })
+  });
+  return res.json();
+}
+
+export async function deleteStudioMedia(assetId) {
+  const res = await fetch(`/api/module8?action=media&id=${encodeURIComponent(assetId)}`, {
+    method: 'DELETE'
+  });
+  return res.json();
+}
+
 // Aliases for unified SDK compatibility
 export const fetchOverview = fetchStudioOverview;
 export const fetchJobs = fetchStudioJobs;
@@ -286,3 +341,4 @@ export const cancelJob = cancelStudioJob;
 export const retryJob = retryStudioJob;
 export const fetchCatalogRef = fetchCatalogProducts;
 export const uploadMedia = uploadStudioMedia;
+export const fetchOutputs = fetchStudioOutputs;

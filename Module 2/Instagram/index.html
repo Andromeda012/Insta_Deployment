@@ -557,10 +557,10 @@
       </div>
 
       <div class="slots-grid">
-        <!-- SLOT 1: GÖNDERİ -->
+        <!-- POST 01: COLLECTION REVEAL -->
         <div class="slot-card" id="slotCardPost">
           <div class="slot-header">
-            <span class="slot-type-badge badge-post">📸 6'lı Koleksiyon Carousel'i (1080x1080)</span>
+            <span class="slot-type-badge badge-reels">🎬 POST 01 — COLLECTION REVEAL (Reels)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotPostActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -571,14 +571,14 @@
             <input type="time" class="form-control" id="timeSlotPost" value="10:00" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Sabah kuşağı: Geniş görsel ikiye bölünür (1. Slayt: Koleksiyon İsmi, 2. Slayt: Özel Tanıtım Cümlesi). Ardından 3-6. slaytlarda parçalar görsel + isim + ölçü detaylarıyla sunulur.
+            Sol Kapak (1/3 • Örn: Vİ): Koleksiyonun tamamını sinematik, premium ve görsel açıdan çarpıcı bir reklam filmiyle tanıtır. Ürün sayısına (1-3, 4-6, 7-10, 10+) göre otomatik adapte olur.
           </div>
         </div>
 
-        <!-- SLOT 2: STORY -->
+        <!-- POST 02: PRODUCT BREAKDOWN -->
         <div class="slot-card" id="slotCardStory">
           <div class="slot-header">
-            <span class="slot-type-badge badge-story">📱 40-50s Sinematik Story (1080x1920)</span>
+            <span class="slot-type-badge badge-post">📸 POST 02 — PRODUCT BREAKDOWN (Carousel)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotStoryActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -589,14 +589,14 @@
             <input type="time" class="form-control" id="timeSlotStory" value="14:30" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Öğle kuşağı: Hafif müzikle geniş hero görselin soldan sağa akışı ve efektli tanıtım cümlesi; ardından parçalara yumuşak zoom ve detay bilgileri sunulur (~40-50 sn).
+            Orta Kapak (2/3 • Örn: YA): Bireysel ürünleri düzenli ve bilgilendirici bir dijital katalog formatında (Senaryo A–E slayt adaptasyonu ile) sunar.
           </div>
         </div>
 
-        <!-- SLOT 3: REELS -->
+        <!-- POST 03: DESIGN STORY -->
         <div class="slot-card" id="slotCardReels">
           <div class="slot-header">
-            <span class="slot-type-badge badge-reels">🎬 40-50s Sinematik Reels Videosu (9:16)</span>
+            <span class="slot-type-badge badge-story">🎬 POST 03 — DESIGN STORY (Reels)</span>
             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
               <input type="checkbox" id="chkSlotReelsActive" checked onchange="updateSlotVisuals()">
               <span style="font-size:12px; color:#cbd5e1; font-weight:700;">Aktif</span>
@@ -607,7 +607,7 @@
             <input type="time" class="form-control" id="timeSlotReels" value="19:30" style="width:100%; font-size:14px; font-weight:700;">
           </div>
           <div style="font-size:11.5px; color:#94A3B8; line-height:1.4;">
-            Akşam kuşağı: Story akışının dikey Reels video paylaşımı (pan, parça zoom geçişleri, kurumsal akustik müzik ve tanıtım hikayesi).
+            Sağ Kapak (3/3 • Örn: NA): Koleksiyonun tasarım felsefesini, estetik kimliğini, renk/malzeme uyumunu ve yaşam alanı atmosferini anlatan iç mimari hikaye.
           </div>
         </div>
       </div>
@@ -842,7 +842,7 @@
     // =========================================================================
     // KOLEKSİYON VE BAĞIMSIZ ÜRÜN DERLEYİCİ (PARÇALARI KOLEKSİYONDA BİRLEŞTİRİR)
     // =========================================================================
-    const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+    const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|parca|part)-\d+$/i;
     const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
 
     function buildCleanEntities(rawProds = []) {
@@ -979,44 +979,101 @@
           summaryEl.textContent = `⭐ Bugün Özel Kampanya Günü (${upcomingItems.length} İçerik)`;
         }
       } else {
-        // 🔄 STANDART KATALOG AKIŞI (YALNIZCA BUGÜNÜN 3 KUŞAĞI, ASLA YARINA SARKMAZ)
+        // 🔄 STANDART KATALOG AKIŞI (KOLEKSİYONLAR 3 KOORDİNELİ GÖNDERİ KAMPANYASI, BAĞIMSIZ ÜRÜNLER 2 SAYFALI SUNUM)
         const activeEntity = cleanEntities[0];
         const isCollection = activeEntity.product_type === 'collection';
         const pieceCount = activeEntity.collection_pieces?.length || 0;
+        const cat = activeEntity.kategori || 'Yatak Odası';
+        const gridPlan = isCollection && window.PanoramicCarouselEngine?.buildCollectionThreePostGridPlan
+          ? window.PanoramicCarouselEngine.buildCollectionThreePostGridPlan(activeEntity, activeEntity.collection_pieces)
+          : null;
+        const nameSplit = gridPlan?.titleSplit || { parts: ['Vİ', 'YA', 'NA'], formatted: 'Vİ - YA - NA' };
+        const post02SlideCount = gridPlan?.gridPosts?.[1]?.slideCount || (pieceCount + 2);
 
-        if (postActive) {
-          upcomingItems.push({
-            product: activeEntity,
-            formatTitle: isCollection ? "📸 6'lı Carousel (Başlık + Tanıtım Cümlesi + 4 Parça)" : "📸 2'li Carousel / Standart Gönderi",
-            badgeClass: "badge-post",
-            slotTime: postTime,
-            title: `1. ${activeEntity.title}`,
-            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', isCollection ? '🖼️ 6 Görselli Akış' : '✨ Otomatik İkili Sunum']
-          });
-        }
-        if (storyActive) {
-          upcomingItems.push({
-            product: activeEntity,
-            formatTitle: isCollection ? "📱 40-50s Sinematik Koleksiyon Story" : "📱 9:16 Dikey Story",
-            badgeClass: "badge-story",
-            slotTime: storyTime,
-            title: `2. ${activeEntity.title}`,
-            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎞️ 40-50s Pan & Zoom', '🎻 Kurumsal Müzik']
-          });
-        }
-        if (reelsActive) {
-          upcomingItems.push({
-            product: activeEntity,
-            formatTitle: isCollection ? "🎬 40-50s Sinematik Koleksiyon Reels" : "🎬 15-30s Reels Videosu",
-            badgeClass: "badge-reels",
-            slotTime: reelsTime,
-            title: `3. ${activeEntity.title}`,
-            planPills: [isCollection ? `🏛️ Koleksiyon (${pieceCount} Parça)` : '🪑 Bağımsız Ürün', '🎞️ 40-50s Pan & Zoom', '🎻 Kurumsal Müzik']
-          });
+        if (isCollection) {
+          if (postActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: `🎬 POST 01 — COLLECTION REVEAL (Reels • Sol Kapak: "${nameSplit.parts[0]}")`,
+              badgeClass: "badge-reels",
+              slotTime: postTime,
+              title: `Post 01: ${activeEntity.title} — Koleksiyon Tanıtım Filmi`,
+              planPills: [
+                `🧩 Sol 1/3 Kapak: "${nameSplit.parts[0]}"`,
+                `🏛️ ${cat} (${pieceCount} Ürün)`,
+                '🎞️ 4 Aşamalı Sinematik Akış (Açılış → Ana Sahne → Detay Vurgusu → Kapanış)'
+              ]
+            });
+          }
+          if (storyActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: `📸 POST 02 — PRODUCT BREAKDOWN (Carousel • Orta Kapak: "${nameSplit.parts[1]}")`,
+              badgeClass: "badge-post",
+              slotTime: storyTime,
+              title: `Post 02: ${activeEntity.title} — Dijital Ürün Kataloğu (${post02SlideCount} Slayt)`,
+              planPills: [
+                `🧩 Orta 2/3 Kapak: "${nameSplit.parts[1]}"`,
+                `🗂️ ${post02SlideCount} Slaytlı Katalog (${gridPlan?.collectionAnalysis?.recommendedScenario || 'SCENARIO_C'})`,
+                '📐 Her Alt Ürün İçin Doğrulanmış İsim, Görsel & Ölçü Kartı'
+              ]
+            });
+          }
+          if (reelsActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: `🎬 POST 03 — DESIGN STORY (Reels • Sağ Kapak: "${nameSplit.parts[2]}")`,
+              badgeClass: "badge-story",
+              slotTime: reelsTime,
+              title: `Post 03: ${activeEntity.title} — Tasarım Felsefesi & Yaşam Alanı Hikayesi`,
+              planPills: [
+                `🧩 Sağ 3/3 Kapak: "${nameSplit.parts[2]}"`,
+                '✨ 5 Aşamalı İç Mimari & Atmosfer Hikayesi',
+                '🎨 Renk, Form, Malzeme ve Yaşam Tarzı Yorumu'
+              ]
+            });
+          }
+        } else {
+          if (postActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: "📸 2 Sayfalı Bağımsız Ürün Gönderisi",
+              badgeClass: "badge-post",
+              slotTime: postTime,
+              title: `1. ${activeEntity.title}`,
+              planPills: [
+                `🪑 Bağımsız Ürün (${cat})`,
+                '📄 1. Sayfa: Ürün Görseli + İsmi',
+                '📋 2. Sayfa: Teknik Detaylar & Ölçüler'
+              ]
+            });
+          }
+          if (storyActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: "📱 9:16 Dikey Ürün Story",
+              badgeClass: "badge-story",
+              slotTime: storyTime,
+              title: `2. ${activeEntity.title}`,
+              planPills: [`🪑 Bağımsız Ürün (${cat})`, '🎞️ Doğrudan Görsel Akışı', '🎻 Kurumsal Müzik']
+            });
+          }
+          if (reelsActive) {
+            upcomingItems.push({
+              product: activeEntity,
+              formatTitle: "🎬 15-30s Ürün Reels Videosu",
+              badgeClass: "badge-reels",
+              slotTime: reelsTime,
+              title: `3. ${activeEntity.title}`,
+              planPills: [`🪑 Bağımsız Ürün (${cat})`, '🎞️ Doğrudan Görsel Akışı', '🎻 Kurumsal Müzik']
+            });
+          }
         }
 
         if (summaryEl) {
-          summaryEl.textContent = `📅 Bugünün Yayın Akışı (${upcomingItems.length} İçerik Paketi)`;
+          summaryEl.textContent = isCollection
+            ? `📅 3 Gönderili Koleksiyon Kampanyası (${nameSplit.formatted} • ${upcomingItems.length} Gönderi)`
+            : `📅 Bugünün Yayın Akışı (${upcomingItems.length} İçerik Paketi)`;
         }
       }
 

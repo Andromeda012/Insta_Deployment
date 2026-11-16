@@ -1,0 +1,26 @@
+{
+  "id": "preset_nordic_living_props",
+  "name": "Nordic Living Natural Props",
+  "description": "Natural daylight styling with potted plant, tabletop vase, and wool rug.",
+  "target_categories": ["dining_table", "dining_chair", "coffee_table", "armchair"],
+  "props": [
+    {
+      "asset_id": "prop_test_wool_area_rug_01",
+      "anchor": "floor_center",
+      "relative_offset": [0.0, 0.0, 0.001],
+      "rotation_euler_deg": [0, 0, 0]
+    },
+    {
+      "asset_id": "ceramic_vase_01_8k",
+      "anchor": "tabletop_center",
+      "relative_offset": [0.0, 0.0, 0.76],
+      "rotation_euler_deg": [0, 0, 15]
+    },
+    {
+      "asset_id": "potted_plant_02_4k",
+      "anchor": "corner_right",
+      "relative_offset": [1.5, 0.5, 0.0],
+      "rotation_euler_deg": [0, 0, -30]
+    }
+  ]
+}

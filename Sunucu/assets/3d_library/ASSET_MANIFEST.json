@@ -1,0 +1,1410 @@
+{
+  "$schema": "https://globalmobilya.internal/schemas/3d_asset_manifest_v1.json",
+  "version": "1.1.0",
+  "library_name": "Global Mobilya Central 3D Asset & Material Library",
+  "updated_at": "2026-11-10T18:35:00.000Z",
+  "description": "Centralized, production-validated 3D props, PBR materials, and decoration presets with commercial CC0 license compliance.",
+  "governance": {
+    "commercial_use_strict_enforcement": true,
+    "disallowed_licenses": [
+      "CC-BY-NC",
+      "CC-BY-NC-SA",
+      "Editorial-Only",
+      "Non-Commercial",
+      "Unknown-Scraped"
+    ],
+    "allowed_licenses": [
+      "CC0",
+      "CC-BY",
+      "Public-Domain",
+      "Royalty-Free-Commercial",
+      "Custom-Purchased",
+      "Proprietary-Internal"
+    ]
+  },
+  "categories": {
+    "plants": {
+      "collection_name": "Decor_Plants",
+      "default_anchor": "beside_furniture",
+      "description": "Botanical and potted plant models"
+    },
+    "vases": {
+      "collection_name": "Decor_Vases",
+      "default_anchor": "tabletop",
+      "description": "Ceramic, brass and stone vases"
+    },
+    "candle_holders": {
+      "collection_name": "Decor_Lighting",
+      "default_anchor": "tabletop",
+      "description": "Candle holders and small flame accents"
+    },
+    "wall_art": {
+      "collection_name": "Decor_WallArt",
+      "default_anchor": "wall_above_furniture",
+      "description": "Picture frames and canvas art"
+    },
+    "furniture": {
+      "collection_name": "Decor_Furniture",
+      "default_anchor": "beside_furniture",
+      "description": "Armchairs, accent chairs, and sofas"
+    },
+    "rugs": {
+      "collection_name": "Decor_Textiles",
+      "default_anchor": "floor_center",
+      "description": "Area rugs and floor coverings"
+    },
+    "pbr_material": {
+      "collection_name": null,
+      "default_anchor": null,
+      "description": "PBR textures (Wood, Marble, Metal, Fabric, Leather, Concrete)"
+    }
+  },
+  "assets": [
+    {
+      "id": "brass_candleholders_4k",
+      "name": "Brass Candleholders 4K",
+      "category": "candle_holders",
+      "format": "blend",
+      "file_path": "models/lamps/Candleholders/brass_candleholders_4k.blend",
+      "objects": [
+        "brass_candleholder_03",
+        "brass_candleholder_02",
+        "brass_candleholder_01"
+      ],
+      "materials": [
+        "brass_candleholders_flame",
+        "brass_candleholders_candles",
+        "brass_candleholders_03",
+        "brass_candleholders_02",
+        "brass_candleholders_01"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "potted_plant_01_4k",
+      "name": "Potted Plant 01 4K",
+      "category": "plants",
+      "format": "blend",
+      "file_path": "models/plants/Potted Plant 1/potted_plant_01_4k.blend",
+      "objects": [
+        "potted_plant_01_stem",
+        "potted_plant_01_pot",
+        "potted_plant_01_pebbles",
+        "potted_plant_01_leaves"
+      ],
+      "materials": [
+        "potted_plant_01_pot",
+        "potted_plant_01_leaves",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "2.93+"
+    },
+    {
+      "id": "potted_plant_02_4k",
+      "name": "Potted Plant 02 4K",
+      "category": "plants",
+      "format": "blend",
+      "file_path": "models/plants/Potted Plant 2/potted_plant_02_4k.blend",
+      "objects": [
+        "potted_plant_02_pot",
+        "potted_plant_02_leaves",
+        "potted_plant_02_dirt"
+      ],
+      "materials": [
+        "potted_plant_02_pot",
+        "potted_plant_02_leaves",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "2.93+"
+    },
+    {
+      "id": "potted_plant_04_8k",
+      "name": "Potted Plant 04 8K",
+      "category": "plants",
+      "format": "blend",
+      "file_path": "models/plants/Potted Plant 3/potted_plant_04_8k.blend",
+      "objects": [
+        "potted_plant_04_pot",
+        "potted_plant_04_plant",
+        "potted_plant_04_ground",
+        "potted_plant_04_dirt"
+      ],
+      "materials": [
+        "potted_plant_04"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "prop_test_wool_area_rug_01",
+      "name": "Prop Test Wool Area Rug 01",
+      "category": "rugs",
+      "format": "glb",
+      "file_path": "models/rugs/prop_test_wool_area_rug_01.glb",
+      "objects": [
+        "TestRug"
+      ],
+      "materials": [],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "floor_center",
+      "requires_blender_version": "2.93+"
+    },
+    {
+      "id": "ArmChair_01_4k",
+      "name": "Armchair 01 4K",
+      "category": "furniture",
+      "format": "blend",
+      "file_path": "models/small_furniture/Chair 1/ArmChair_01_4k.blend",
+      "objects": [
+        "ArmChair_01"
+      ],
+      "materials": [
+        "Armchair_01"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "2.93+"
+    },
+    {
+      "id": "modern_arm_chair_01_4k",
+      "name": "Modern Arm Chair 01 4K",
+      "category": "furniture",
+      "format": "blend",
+      "file_path": "models/small_furniture/Chair 2/modern_arm_chair_01_4k.blend",
+      "objects": [
+        "modern_arm_chair_01"
+      ],
+      "materials": [
+        "modern_arm_chair_01_pillow",
+        "modern_arm_chair_01_legs",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "Sofa_01_4k",
+      "name": "Sofa 01 4K",
+      "category": "furniture",
+      "format": "blend",
+      "file_path": "models/small_furniture/Sofa 1/Sofa_01_4k.blend",
+      "objects": [
+        "Sofa_01"
+      ],
+      "materials": [
+        "Sofa_01"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "beside_furniture",
+      "requires_blender_version": "2.93+"
+    },
+    {
+      "id": "ceramic_vase_01_8k",
+      "name": "Ceramic Vase 01 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 1/ceramic_vase_01_8k.blend",
+      "objects": [
+        "ceramic_vase_01"
+      ],
+      "materials": [
+        "Dots Stroke",
+        "ceramic_vase_01"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "ceramic_vase_02_8k",
+      "name": "Ceramic Vase 02 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 2/ceramic_vase_02_8k.blend",
+      "objects": [
+        "ceramic_vase_02"
+      ],
+      "materials": [
+        "ceramic_vase_02"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "ceramic_vase_03_8k",
+      "name": "Ceramic Vase 03 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 3/ceramic_vase_03_8k.blend",
+      "objects": [
+        "ceramic_vase_03"
+      ],
+      "materials": [
+        "ceramic_vase_03"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "ceramic_vase_04_8k",
+      "name": "Ceramic Vase 04 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 4/ceramic_vase_04_8k.blend",
+      "objects": [
+        "ceramic_vase_04"
+      ],
+      "materials": [
+        "ceramic_vase_04"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "brass_vase_03_8k",
+      "name": "Brass Vase 03 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 5/brass_vase_03_8k.blend",
+      "objects": [
+        "brass_vase_03"
+      ],
+      "materials": [
+        "brass_vase_03"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "antique_ceramic_vase_01_8k",
+      "name": "Antique Ceramic Vase 01 8K",
+      "category": "vases",
+      "format": "blend",
+      "file_path": "models/vases/Vase 6/antique_ceramic_vase_01_8k.blend",
+      "objects": [
+        "antique_ceramic_vase_01"
+      ],
+      "materials": [
+        "antique_ceramic_vase_01"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "tabletop",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "fancy_picture_frame_01_8k",
+      "name": "Fancy Picture Frame 01 8K",
+      "category": "wall_art",
+      "format": "blend",
+      "file_path": "models/wall_art/Wall Art 1/fancy_picture_frame_01_8k.blend",
+      "objects": [
+        "fancy_picture_frame_01_canvas",
+        "fancy_picture_frame_01"
+      ],
+      "materials": [
+        "fancy_picture_frame_01_canvas",
+        "fancy_picture_frame_01",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "wall_above_furniture",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "standing_picture_frame_01_8k",
+      "name": "Standing Picture Frame 01 8K",
+      "category": "wall_art",
+      "format": "blend",
+      "file_path": "models/wall_art/Wall Art 2/standing_picture_frame_01_8k.blend",
+      "objects": [
+        "standing_picture_frame_01"
+      ],
+      "materials": [
+        "standing_picture_frame_01_glass",
+        "standing_picture_frame_01_artwork",
+        "standing_picture_frame_01",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "wall_above_furniture",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "standing_picture_frame_02_8k",
+      "name": "Standing Picture Frame 02 8K",
+      "category": "wall_art",
+      "format": "blend",
+      "file_path": "models/wall_art/Wall Art 3/standing_picture_frame_02_8k.blend",
+      "objects": [
+        "standing_picture_frame_02"
+      ],
+      "materials": [
+        "standing_picture_frame_02_glass",
+        "standing_picture_frame_02_artwork",
+        "standing_picture_frame_02",
+        "Dots Stroke"
+      ],
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven (Public Domain)"
+      },
+      "license": "CC0",
+      "default_anchor": "wall_above_furniture",
+      "requires_blender_version": "4.5+"
+    },
+    {
+      "id": "prop_test_potted_plant_01",
+      "name": "Architectural Ceramic Potted Plant (Test Mock)",
+      "category": "plants",
+      "format": "glb",
+      "file_path": "models/plants/prop_test_potted_plant_01.glb",
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Internal Test Mock"
+      }
+    },
+    {
+      "id": "prop_test_ceramic_vase_01",
+      "name": "Minimalist Fluted Ceramic Vase (Test Mock)",
+      "category": "vases",
+      "format": "glb",
+      "file_path": "models/vases/prop_test_ceramic_vase_01.glb",
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Internal Test Mock"
+      }
+    },
+    {
+      "id": "prop_test_abstract_canvas_01",
+      "name": "Textured Minimalist Canvas Art (Test Mock)",
+      "category": "wall_art",
+      "format": "glb",
+      "file_path": "models/wall_art/prop_test_abstract_canvas_01.glb",
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Internal Test Mock"
+      }
+    },
+    {
+      "id": "prop_test_floor_lamp_01",
+      "name": "Modern Brass Arch Floor Lamp (Test Mock)",
+      "category": "lamps",
+      "format": "glb",
+      "file_path": "models/lamps/prop_test_floor_lamp_01.glb",
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Internal Test Mock"
+      }
+    },
+    {
+      "id": "mat_fabric_boucle",
+      "name": "Boucle (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Boucle",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "wool_boucle_spec_ior_2k.png",
+        "Base Color": "wool_boucle_diff_2k.jpg",
+        "Height / Displacement": "wool_boucle_disp_2k.png",
+        "Metallic": "wool_boucle_metal_2k.exr",
+        "Normal (OpenGL)": "wool_boucle_nor_gl_2k.exr",
+        "Roughness": "wool_boucle_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_corduroy",
+      "name": "Corduroy (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Corduroy",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "ribbed_corduroy_spec_ior_2k.png",
+        "Base Color": "ribbed_corduroy_diff_2k.jpg",
+        "Height / Displacement": "ribbed_corduroy_disp_2k.png",
+        "Metallic": "ribbed_corduroy_metal_2k.exr",
+        "Normal (OpenGL)": "ribbed_corduroy_nor_gl_2k.exr",
+        "Roughness": "ribbed_corduroy_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_cotton",
+      "name": "Cotton (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Cotton",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "cotton_jersey_spec_ior_2k.png",
+        "Base Color": "cotton_jersey_diff_2k.jpg",
+        "Height / Displacement": "cotton_jersey_disp_2k.png",
+        "Metallic": "cotton_jersey_metal_2k.exr",
+        "Normal (OpenGL)": "cotton_jersey_nor_gl_2k.exr",
+        "Roughness": "cotton_jersey_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_linen",
+      "name": "Linen (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Linen",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "rough_linen_spec_ior_2k.png",
+        "Base Color": "rough_linen_diff_2k.jpg",
+        "Height / Displacement": "rough_linen_disp_2k.png",
+        "Alpha / Opacity": "rough_linen_mask_2k.png",
+        "Metallic": "rough_linen_metal_2k.exr",
+        "Normal (OpenGL)": "rough_linen_nor_gl_2k.exr",
+        "Roughness": "rough_linen_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_polyester",
+      "name": "Polyester (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Polyester",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "denim_fabric_05_spec_ior_2k.png",
+        "Base Color": "denim_fabric_05_diff_2k.jpg",
+        "Height / Displacement": "denim_fabric_05_disp_2k.png",
+        "Metallic": "denim_fabric_05_metal_2k.exr",
+        "Normal (OpenGL)": "denim_fabric_05_nor_gl_2k.exr",
+        "Roughness": "denim_fabric_05_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_suede",
+      "name": "Suede (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Suede",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "scuba_suede_spec_ior_2k.png",
+        "Base Color": "scuba_suede_diff_2k.jpg",
+        "Height / Displacement": "scuba_suede_disp_2k.png",
+        "Metallic": "scuba_suede_metal_2k.exr",
+        "Normal (OpenGL)": "scuba_suede_nor_gl_2k.exr",
+        "Roughness": "scuba_suede_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_fabric_velvet",
+      "name": "Velvet (Fabric)",
+      "category": "pbr_material",
+      "material_category": "fabric",
+      "directory": "textures/pbr/fabric/Velvet",
+      "maps": {
+        "Advanced (Anisotropy / Spec IOR)": "velour_velvet_spec_ior_2k.png",
+        "Base Color": "velour_velvet_diff_2k.jpg",
+        "Height / Displacement": "velour_velvet_disp_2k.png",
+        "Metallic": "velour_velvet_metal_2k.exr",
+        "Normal (OpenGL)": "velour_velvet_nor_gl_2k.exr",
+        "Roughness": "velour_velvet_rough_2k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_leather_aniline_leather",
+      "name": "Aniline Leather (Leather)",
+      "category": "pbr_material",
+      "material_category": "leather",
+      "directory": "textures/pbr/leather/Aniline Leather",
+      "maps": {
+        "Base Color": "fabric_leather_02_diff_2k.jpg",
+        "Height / Displacement": "fabric_leather_02_disp_2k.png",
+        "Normal (OpenGL)": "fabric_leather_02_nor_gl_2k.exr",
+        "Roughness": "fabric_leather_02_rough_2k.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_leather_natural_leather",
+      "name": "Natural Leather (Leather)",
+      "category": "pbr_material",
+      "material_category": "leather",
+      "directory": "textures/pbr/leather/Natural Leather",
+      "maps": {
+        "Base Color": "Leather030_2K-JPG_Color.jpg",
+        "Height / Displacement": "Leather030_2K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Leather030_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Leather030_2K-JPG_NormalGL.jpg",
+        "Roughness": "Leather030_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_leather_nubuck",
+      "name": "Nubuck (Leather)",
+      "category": "pbr_material",
+      "material_category": "leather",
+      "directory": "textures/pbr/leather/Nubuck",
+      "maps": {
+        "Base Color": "Leather033A_2K-JPG_Color.jpg",
+        "Height / Displacement": "Leather033A_2K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Leather033A_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Leather033A_2K-JPG_NormalGL.jpg",
+        "Roughness": "Leather033A_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_beige_travertine",
+      "name": "Beige Travertine (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Beige Travertine",
+      "maps": {
+        "Ambient Occlusion": "Travertine009_4K-JPG_AmbientOcclusion.jpg",
+        "Base Color": "Travertine009_4K-JPG_Color.jpg",
+        "Height / Displacement": "Travertine009_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Travertine009_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Travertine009_4K-JPG_NormalGL.jpg",
+        "Roughness": "Travertine009_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_black_marble",
+      "name": "Black Marble (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Black Marble",
+      "maps": {
+        "Base Color": "Marble016_4K-JPG_Color.jpg",
+        "Height / Displacement": "Marble016_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Marble016_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Marble016_4K-JPG_NormalGL.jpg",
+        "Roughness": "Marble016_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_black_porcelain",
+      "name": "Black Porcelain (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Black Porcelain",
+      "maps": {
+        "Base Color": "Porcelain003_4K-JPG_Color.jpg",
+        "Height / Displacement": "Porcelain003_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Porcelain003_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Porcelain003_4K-JPG_NormalGL.jpg",
+        "Roughness": "Porcelain003_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_ceramic_tile",
+      "name": "Ceramic Tile (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Ceramic Tile",
+      "maps": {
+        "Base Color": "Tiles141_4K-JPG_Color.jpg",
+        "Height / Displacement": "Tiles141_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Tiles141_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Tiles141_4K-JPG_NormalGL.jpg",
+        "Roughness": "Tiles141_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_granite",
+      "name": "Granite (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Granite",
+      "maps": {
+        "Base Color": "Granite002A_4K-JPG_Color.jpg",
+        "Height / Displacement": "Granite002A_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Granite002A_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Granite002A_4K-JPG_NormalGL.jpg",
+        "Roughness": "Granite002A_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_porcelain",
+      "name": "Porcelain (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Porcelain",
+      "maps": {
+        "Base Color": "Porcelain001_4K-JPG_Color.jpg",
+        "Height / Displacement": "Porcelain001_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Porcelain001_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Porcelain001_4K-JPG_NormalGL.jpg",
+        "Roughness": "Porcelain001_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_slate",
+      "name": "Slate (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Slate",
+      "maps": {
+        "Base Color": "slate_floor_02_diff_4k.jpg",
+        "Height / Displacement": "slate_floor_02_disp_4k.png",
+        "Normal (OpenGL)": "slate_floor_02_nor_gl_4k.exr",
+        "Roughness": "slate_floor_02_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_terrazzo",
+      "name": "Terrazzo (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/Terrazzo",
+      "maps": {
+        "Base Color": "terrazzo_tiles_diff_4k.jpg",
+        "Height / Displacement": "terrazzo_tiles_disp_4k.png",
+        "Normal (OpenGL)": "terrazzo_tiles_nor_gl_4k.exr",
+        "Roughness": "terrazzo_tiles_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_marble_white_marble",
+      "name": "White Marble (Marble)",
+      "category": "pbr_material",
+      "material_category": "marble",
+      "directory": "textures/pbr/marble/White Marble",
+      "maps": {
+        "Base Color": "Marble014_4K-JPG_Color.jpg",
+        "Height / Displacement": "Marble014_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Marble014_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Marble014_4K-JPG_NormalGL.jpg",
+        "Roughness": "Marble014_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_antique_brass",
+      "name": "Antique Brass (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Antique Brass",
+      "maps": {
+        "Base Color": "Terrazzo004_2K-JPG_Color.jpg",
+        "Height / Displacement": "Terrazzo004_2K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Terrazzo004_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Terrazzo004_2K-JPG_NormalGL.jpg",
+        "Roughness": "Terrazzo004_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_bronze",
+      "name": "Bronze (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Bronze",
+      "maps": {
+        "Base Color": "Metal008_2K-JPG_Color.jpg",
+        "Height / Displacement": "Metal008_2K-JPG_Displacement.jpg",
+        "Metallic": "Metal008_2K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal008_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal008_2K-JPG_NormalGL.jpg",
+        "Roughness": "Metal008_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_brushed_aliminum",
+      "name": "Brushed Aliminum (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Brushed Aliminum",
+      "maps": {
+        "Base Color": "Metal032_2K-JPG_Color.jpg",
+        "Height / Displacement": "Metal032_2K-JPG_Displacement.jpg",
+        "Metallic": "Metal032_2K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal032_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal032_2K-JPG_NormalGL.jpg",
+        "Roughness": "Metal032_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_brushed_gold",
+      "name": "Brushed Gold (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Brushed Gold",
+      "maps": {
+        "Base Color": "Metal048A_4K-JPG_Color.jpg",
+        "Height / Displacement": "Metal048A_4K-JPG_Displacement.jpg",
+        "Metallic": "Metal048A_4K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal048A_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal048A_4K-JPG_NormalGL.jpg",
+        "Roughness": "Metal048A_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_chrome",
+      "name": "Chrome (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Chrome",
+      "maps": {
+        "Base Color": "Metal049A_4K-JPG_Color.jpg",
+        "Height / Displacement": "Metal049A_4K-JPG_Displacement.jpg",
+        "Metallic": "Metal049A_4K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal049A_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal049A_4K-JPG_NormalGL.jpg",
+        "Roughness": "Metal049A_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_copper",
+      "name": "Copper (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Copper",
+      "maps": {
+        "Base Color": "Metal057A_4K-JPG_Color.jpg",
+        "Height / Displacement": "Metal057A_4K-JPG_Displacement.jpg",
+        "Metallic": "Metal057A_4K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal057A_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal057A_4K-JPG_NormalGL.jpg",
+        "Roughness": "Metal057A_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_iron",
+      "name": "Iron (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Iron",
+      "maps": {
+        "Base Color": "Metal055A_2K-JPG_Color.jpg",
+        "Height / Displacement": "Metal055A_2K-JPG_Displacement.jpg",
+        "Metallic": "Metal055A_2K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal055A_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal055A_2K-JPG_NormalGL.jpg",
+        "Roughness": "Metal055A_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_matte_black_metal",
+      "name": "Matte Black Metal (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Matte Black Metal",
+      "maps": {
+        "Base Color": "Metal029_2K-JPG_Color.jpg",
+        "Height / Displacement": "Metal029_2K-JPG_Displacement.jpg",
+        "Metallic": "Metal029_2K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal029_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal029_2K-JPG_NormalGL.jpg",
+        "Roughness": "Metal029_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_metal_stainless_steel",
+      "name": "Stainless Steel (Metal)",
+      "category": "pbr_material",
+      "material_category": "metal",
+      "directory": "textures/pbr/metal/Stainless Steel",
+      "maps": {
+        "Base Color": "Metal009_2K-JPG_Color.jpg",
+        "Height / Displacement": "Metal009_2K-JPG_Displacement.jpg",
+        "Metallic": "Metal009_2K-JPG_Metalness.jpg",
+        "Normal (DirectX)": "Metal009_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Metal009_2K-JPG_NormalGL.jpg",
+        "Roughness": "Metal009_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_Rugs & Woven_shaggy_carpet",
+      "name": "Shaggy Carpet (Rugs & woven)",
+      "category": "pbr_material",
+      "material_category": "Rugs & Woven",
+      "directory": "textures/pbr/Rugs & Woven/Shaggy Carpet",
+      "maps": {
+        "Base Color": "Carpet001_2K-JPG_Color.jpg",
+        "Height / Displacement": "Carpet001_2K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Carpet001_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Carpet001_2K-JPG_NormalGL.jpg",
+        "Roughness": "Carpet001_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_Rugs & Woven_wool_carpet",
+      "name": "Wool Carpet (Rugs & woven)",
+      "category": "pbr_material",
+      "material_category": "Rugs & Woven",
+      "directory": "textures/pbr/Rugs & Woven/Wool Carpet",
+      "maps": {
+        "Ambient Occlusion": "Carpet016_2K-JPG_AmbientOcclusion.jpg",
+        "Base Color": "Carpet016_2K-JPG_Color.jpg",
+        "Height / Displacement": "Carpet016_2K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Carpet016_2K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Carpet016_2K-JPG_NormalGL.jpg",
+        "Roughness": "Carpet016_2K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_Walls & Concretes_limewash_plaster",
+      "name": "Limewash Plaster (Walls & concretes)",
+      "category": "pbr_material",
+      "material_category": "Walls & Concretes",
+      "directory": "textures/pbr/Walls & Concretes/Limewash Plaster",
+      "maps": {
+        "Base Color": "Concrete046_4K-JPG_Color.jpg",
+        "Height / Displacement": "Concrete046_4K-JPG_Displacement.jpg",
+        "Normal (DirectX)": "Concrete046_4K-JPG_NormalDX.jpg",
+        "Normal (OpenGL)": "Concrete046_4K-JPG_NormalGL.jpg",
+        "Roughness": "Concrete046_4K-JPG_Roughness.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "ambientCG"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_Walls & Concretes_smooth_concrete",
+      "name": "Smooth Concrete (Walls & concretes)",
+      "category": "pbr_material",
+      "material_category": "Walls & Concretes",
+      "directory": "textures/pbr/Walls & Concretes/Smooth Concrete",
+      "maps": {
+        "Base Color": "concrete_floor_worn_001_diff_4k.jpg",
+        "Height / Displacement": "concrete_floor_worn_001_disp_4k.png",
+        "Normal (OpenGL)": "concrete_floor_worn_001_nor_gl_4k.exr",
+        "Roughness": "concrete_floor_worn_001_rough_4k.jpg"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_Walls & Concretes_stucco",
+      "name": "Stucco (Walls & concretes)",
+      "category": "pbr_material",
+      "material_category": "Walls & Concretes",
+      "directory": "textures/pbr/Walls & Concretes/Stucco",
+      "maps": {
+        "Base Color": "white_stucco_diff_4k.jpg",
+        "Height / Displacement": "white_stucco_disp_4k.png",
+        "Normal (OpenGL)": "white_stucco_nor_gl_4k.exr",
+        "Roughness": "white_stucco_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_ash_wood",
+      "name": "Ash Wood (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Ash Wood",
+      "maps": {
+        "Ambient Occlusion": "ash_veneer_ao_4k.jpg",
+        "Base Color": "ash_veneer_diff_4k.jpg",
+        "Height / Displacement": "ash_veneer_disp_4k.png",
+        "Normal (OpenGL)": "ash_veneer_nor_gl_4k.exr",
+        "Roughness": "ash_veneer_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_dark_oak",
+      "name": "Dark Oak (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Dark Oak",
+      "maps": {
+        "Ambient Occlusion": "black_oak_veneer_ao_4k.jpg",
+        "Base Color": "black_oak_veneer_diff_4k.jpg",
+        "Height / Displacement": "black_oak_veneer_disp_4k.png",
+        "Normal (OpenGL)": "black_oak_veneer_nor_gl_4k.exr",
+        "Roughness": "black_oak_veneer_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_natural_oak",
+      "name": "Natural Oak (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Natural Oak",
+      "maps": {
+        "Ambient Occlusion": "oak_veneer_05_ao_4k.jpg",
+        "Base Color": "oak_veneer_05_diff_4k.jpg",
+        "Height / Displacement": "oak_veneer_05_disp_4k.png",
+        "Normal (OpenGL)": "oak_veneer_05_nor_gl_4k.exr",
+        "Roughness": "oak_veneer_05_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_pine_wood",
+      "name": "Pine Wood (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Pine Wood",
+      "maps": {
+        "Base Color": "coated_pine_diff_4k.jpg",
+        "Height / Displacement": "coated_pine_disp_4k.png",
+        "Normal (OpenGL)": "coated_pine_nor_gl_4k.exr",
+        "Roughness": "coated_pine_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_smoked_oak",
+      "name": "Smoked Oak (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Smoked Oak",
+      "maps": {
+        "Ambient Occlusion": "smoke_speckled_veneer_ao_4k.jpg",
+        "Base Color": "smoke_speckled_veneer_diff_4k.jpg",
+        "Height / Displacement": "smoke_speckled_veneer_disp_4k.png",
+        "Normal (OpenGL)": "smoke_speckled_veneer_nor_gl_4k.exr",
+        "Roughness": "smoke_speckled_veneer_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_walnut",
+      "name": "Walnut (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Walnut",
+      "maps": {
+        "Ambient Occlusion": "walnut_veneer_ao_4k.jpg",
+        "Base Color": "walnut_veneer_diff_4k.jpg",
+        "Height / Displacement": "walnut_veneer_disp_4k.png",
+        "Normal (OpenGL)": "walnut_veneer_nor_gl_4k.exr",
+        "Roughness": "walnut_veneer_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    },
+    {
+      "id": "mat_wood_whitewashed_wood",
+      "name": "Whitewashed Wood (Wood)",
+      "category": "pbr_material",
+      "material_category": "wood",
+      "directory": "textures/pbr/wood/Whitewashed Wood",
+      "maps": {
+        "Ambient Occlusion": "oak_veneer_03_ao_4k.jpg",
+        "Base Color": "oak_veneer_03_diff_4k.jpg",
+        "Height / Displacement": "oak_veneer_03_disp_4k.png",
+        "Normal (OpenGL)": "oak_veneer_03_nor_gl_4k.exr",
+        "Roughness": "oak_veneer_03_rough_4k.exr"
+      },
+      "licensing": {
+        "license_type": "CC0",
+        "commercial_use_allowed": true,
+        "attribution_required": false,
+        "source": "Poly Haven"
+      },
+      "license": "CC0",
+      "commercial_use_approved": true
+    }
+  ]
+}

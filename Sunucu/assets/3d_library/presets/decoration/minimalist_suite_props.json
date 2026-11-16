@@ -1,0 +1,20 @@
+{
+  "id": "preset_minimalist_suite_props",
+  "name": "Minimalist Suite Clean Props",
+  "description": "Ultra-clean modern staging with single statement art piece and tabletop accent.",
+  "target_categories": ["tv_unit", "coffee_table", "sofa"],
+  "props": [
+    {
+      "asset_id": "standing_picture_frame_01_8k",
+      "anchor": "wall_above_furniture",
+      "relative_offset": [0.0, 1.6, 1.6],
+      "rotation_euler_deg": [0, 0, 0]
+    },
+    {
+      "asset_id": "ceramic_vase_02_8k",
+      "anchor": "tabletop_side",
+      "relative_offset": [0.6, 0.0, 0.45],
+      "rotation_euler_deg": [0, 0, 0]
+    }
+  ]
+}

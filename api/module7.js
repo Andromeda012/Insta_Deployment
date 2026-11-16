@@ -89,7 +89,7 @@ async function writeExtendedCatalogStore(store) {
 }
 
 // ── 1. ÜRÜN CRUD (MEVCUT SÖZLEŞME %100 KORUNDU + 3 ÜRÜN TÜRÜ DESTEĞİ) ─────────
-const PIECE_SLUG_REGEX = /-(?:main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|parca|part)-\d+$/i;
 const PIECE_SKU_REGEX = /-(?:P\d+|parca|piece)$/i;
 
 async function products(req, res) {
@@ -172,11 +172,41 @@ async function products(req, res) {
   if (!validProduct(body) || !validSlug(body.slug) || typeof body.title !== 'string' || !body.title.trim() || body.title.length > 240) {
     return res.status(400).json({ ok: false, error: 'Ürün verisi geçersiz veya desteklenmeyen alan içeriyor.' });
   }
-  if (body.sku != null && (typeof body.sku !== 'string' || body.sku.length > 100)) {
-    return res.status(400).json({ ok: false, error: 'Ürün SKU değeri geçersiz.' });
+  if (!body.sku || typeof body.sku !== 'string' || !body.sku.trim() || body.sku.length > 100) {
+    return res.status(400).json({ ok: false, error: 'Katalog Kodu (SKU) alanı zorunludur.' });
+  }
+  if (!body.kategori || typeof body.kategori !== 'string' || !body.kategori.trim()) {
+    return res.status(400).json({ ok: false, error: 'Ana Kategori seçimi zorunludur.' });
+  }
+  if (!body.ana_resim || typeof body.ana_resim !== 'string' || !body.ana_resim.trim()) {
+    return res.status(400).json({ ok: false, error: 'Ana tanıtım fotoğrafı zorunludur.' });
   }
   for (const field of ['renkler', 'ozellikler']) {
     if (body[field] != null && !Array.isArray(body[field])) return res.status(400).json({ ok: false, error: `${field} bir dizi olmalıdır.` });
+  }
+  if (!Array.isArray(body.ozellikler) || body.ozellikler.filter(x => String(x || '').trim()).length === 0) {
+    return res.status(400).json({ ok: false, error: 'En az 1 doğrulanmış ürün özelliği girilmesi zorunludur.' });
+  }
+
+  // Koleksiyon ise alt ürünlerin (collection_pieces) adı, ölçüsü ve görseli zorunludur
+  if (body.product_type === 'collection') {
+    const pieces = Array.isArray(body.collection_pieces) ? body.collection_pieces : [];
+    if (pieces.length === 0) {
+      return res.status(400).json({ ok: false, error: 'Koleksiyon kaydı için en az 1 alt ürün eklenmesi zorunludur.' });
+    }
+    for (let idx = 0; idx < pieces.length; idx++) {
+      const p = pieces[idx] || {};
+      const rowNum = idx + 1;
+      if (!p.title || !String(p.title).trim()) {
+        return res.status(400).json({ ok: false, error: `Alt Ürün #${rowNum} için ürün adı zorunludur.` });
+      }
+      if (!p.dimensions || !String(p.dimensions).trim()) {
+        return res.status(400).json({ ok: false, error: `Alt Ürün #${rowNum} ("${p.title}") için doğrulanmış ölçü bilgisi zorunludur.` });
+      }
+      if (!p.ana_resim || !String(p.ana_resim).trim()) {
+        return res.status(400).json({ ok: false, error: `Alt Ürün #${rowNum} ("${p.title}") için alt ürün fotoğrafı yüklenmesi zorunludur.` });
+      }
+    }
   }
 
   const now = new Date().toISOString();
@@ -1135,34 +1165,76 @@ Tanıtım Cümlesi / Hikayesi: ${promoQuote || 'Zarafet ve konforun buluştuğu 
   // Akıllı kategori bazlı fallback özellikleri
   const fallbacks = {
     'Yatak Odası': [
-      '1. Sınıf E1 Kalite Dayanıklı Gövde Yapısı',
-      'Özel Dokuma Lüks Döşemelik Başlık Kumaşı',
+      '1. Sınıf E1 Kalite Dayanıklı MDF Gövde Yapısı',
+      'CNC Membran Kapak ve Frenli Menteşe Sistemi',
       'Geniş Hacimli Fonksiyonel Depolama Alanı',
       'Yüksek Ayaklı Kolay Temizlenebilir Modern Tasarım'
     ],
-    'Salon & Oturma Odası': [
-      '1. Sınıf Fırınlanmış Gürgen İskelet Konstrüksiyonu',
-      '35 DNS HR Yüksek Mukavemetli Konforlu Sünger',
-      'Leke Tutmaz ve Kolay Silinebilir Dokuma Kumaş',
-      'Özel Tasarım Metal ve Ahşap Ayak Detayları'
+    'Genç Odası': [
+      '1. Sınıf E1 Kalite Sağlığa Zararsız MDF Gövde',
+      'Çizilmeye Dayanıklı CNC Membran Yüzey',
+      'Ergonomik Çalışma ve Depolama Çözümleri',
+      'Sessiz Frenli Ray ve Menteşe Donanımı'
     ],
-    'Yemek Odası': [
-      '1. Sınıf MDF Üzeri Doğal Ahşap Kaplama',
-      'Çizilmeye Karşı Ekstra Dayanıklı Mat Yüzey',
-      'Açılabilir Fonksiyonel Masa Mekanizması',
-      'Ergonomik Sırt Destekli Sandalye Tasarımı'
+    'Dolap Koleksiyonları': [
+      '1. Sınıf 18mm MDF Gövde ve CNC Membran Kapaklar',
+      'Geniş Askılık ve Fonksiyonel Raf Düzeni',
+      'Sessiz Kapanan Frenli Menteşe ve Ray Sistemi',
+      'Uzun Ömürlü Çizilmeye Dayanıklı Yüzey Teknolojisi'
     ],
-    'Antre & Portmanto': [
-      '1. Sınıf Çevre Dostu MDF Gövde İşçiliği',
-      'Geniş ve Düzenleyici Ayakkabılık Bölmeleri',
-      'Bronz Rodajlı Ayna ve Gizli Askılık Bölümü',
-      'Modern Minimalist Kulp ve Yüzey Detayları'
+    'Kahve Köşesi Koleksiyonları': [
+      '1. Sınıf MDF Gövde ve Özel CNC Membran Kapaklar',
+      'Kahve Makinesi ve Ekipmanlar İçin İdeal Tezgah Alanı',
+      'Fonksiyonel Kupa Askılığı ve Depolama Bölmeleri',
+      'Modern Mimari Çizgiler ve Dayanıklı Yüzey'
     ],
-    'Makyaj Masası & Dresuar': [
-      'Özel Formlu CNC İşlemeli Gövde ve Çekmeceler',
-      'Dekoratif Bronz Rodajlı Flotal Ayna Tasarımı',
-      'Geniş Bölmeli Takı ve Kozmetik Düzenleyici',
-      'Zarif İnce Hatlı Statik Boyalı Metal Ayaklar'
+    'Şifonyer': [
+      '1. Sınıf MDF Gövde ve CNC Membran Çekmece Kapakları',
+      'Tam Açılır Frenli Teleskopik Ray Sistemi',
+      'Geniş İç Hacimli Çoklu Çekmece Düzeni',
+      'Robot Süpürgeye Uygun Yüksek Ayak Tasarımı'
+    ],
+    '3 Kapılı Dolap': [
+      '1. Sınıf MDF Gövde ve 3 Kapılı CNC Membran Tasarım',
+      'Fonksiyonel Askılık ve Raf Bölmeleri',
+      'Sessiz Frenli Menteşe Donanımı',
+      'Çizilmeye Dayanıklı İthal Membran Yüzey'
+    ],
+    '4 Kapılı Dolap': [
+      '1. Sınıf MDF Gövde ve 4 Kapılı Geniş Tasarım',
+      'Zengin İç Raf ve Askılık Organizasyonu',
+      'Sessiz Frenli Menteşe ve Çekmece Rayları',
+      'Çizilmeye Dayanıklı Premium Membran Yüzey'
+    ],
+    '5 Kapılı Dolap': [
+      '1. Sınıf MDF Gövde ve 5 Kapılı Geniş Depolama Hacmi',
+      'Çok Bölmeli Askılık, Yüklük ve Raf Sistemi',
+      'Sessiz Frenli Menteşe ve Ray Donanımı',
+      'Çizilmeye Dayanıklı CNC Membran Kapaklar'
+    ],
+    '6 Kapılı Dolap': [
+      '1. Sınıf MDF Gövde ve 6 Kapılı Maksimum Depolama Alanı',
+      'Özel Tasarım İç Organizasyon ve Geniş Askılık Bölmeleri',
+      'Sessiz Frenli Menteşe ve Tam Açılır Ray Sistemi',
+      'Çizilmeye Dayanıklı 1. Sınıf CNC Membran Yüzey'
+    ],
+    'Modüler Dolap': [
+      'Mekana Göre Özelleştirilebilir Modüler MDF Gövde',
+      'CNC Membran Kapak ve Zengin İç Donanım Seçenekleri',
+      'Sessiz Frenli Menteşe ve Ray Mekanizması',
+      'Her Ölçüye Uyumlu Fonksiyonel Mimari Tasarım'
+    ],
+    'Portmanto': [
+      '1. Sınıf MDF Gövde ve CNC Membran Kapaklar',
+      'Geniş ve Düzenleyici Ayakkabılık & Askılık Bölmeleri',
+      'Sessiz Frenli Menteşe ve Ray Donanımı',
+      'Robot Süpürgeye Uygun Ergonomik Yüksek Ayak Tasarımı'
+    ],
+    'Kahve Köşesi': [
+      '1. Sınıf MDF Gövde ve CNC Membran Kapak İşçiliği',
+      'Kahve Ekipmanları İçin Ergonomik Tezgah ve Raf Alanı',
+      'Sessiz Frenli Kapak ve Çekmece Donanımı',
+      'Çizilmeye ve Neme Dayanıklı Membran Yüzey'
     ]
   };
   const chosen = fallbacks[kategori] || fallbacks['Yatak Odası'];

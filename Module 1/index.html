@@ -2012,7 +2012,7 @@ async function loadAllProducts() {
     } catch (_) {}
 
     // Otomatik Koleksiyon ve Parça Tespiti (Slug Prefix ve Hiyerarşik Eşleme + extCatalog desteği + Parça Deseni Koruması)
-    const PIECE_SLUG_REGEX = /-(?:vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|komodin|parca|part)-\d+$/i;
+    const PIECE_SLUG_REGEX = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|vanity|main-bed|wardrobe|nightstand|dresser|mirror|bed|dolap|parca|part)-\d+$/i;
     const PIECE_SKU_REGEX = /-P\d+$/i;
 
     const childToParentMap = new Map();
