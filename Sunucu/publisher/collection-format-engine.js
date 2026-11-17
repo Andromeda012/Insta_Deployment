@@ -29,7 +29,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { spawn } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 
 const requireFallback = createRequire(import.meta.url);
@@ -39,15 +39,15 @@ export const ENGINE_VERSION = 'cfe-1.0.0';
 // ── MARKA & ORTAM AYARLARI ───────────────────────────────────────────────────
 const env = (k, d) => (process.env[k] && String(process.env[k]).trim()) || d;
 export const BRAND = {
-  name: env('BRAND_NAME', 'GLOBAL MOBİLYA'),
+  name: env('BRAND_NAME', 'NOVA FURNITURE'),
   whatsapp: env('BRAND_WHATSAPP', '0505 015 1035'),
   whatsappLink: env('BRAND_WHATSAPP_LINK', 'https://wa.me/905050151035'),
-  website: env('BRAND_WEBSITE', 'globalkapakmobilya.com'),
-  instagram: env('BRAND_INSTAGRAM', '@globalmobilya'),
+  website: env('BRAND_WEBSITE', 'thenovafurniture.com'),
+  instagram: env('BRAND_INSTAGRAM', '@thenovafurniture'),
   gold: '#C9A24B',
   dark: '#141414'
 };
-const SITE_BASE_URL = env('SITE_BASE_URL', 'https://globalkapakmobilya.com');
+const SITE_BASE_URL = env('SITE_BASE_URL', 'https://thenovafurniture.com');
 function resolveFfmpegBinary() {
   if (process.env.FFMPEG_PATH && fs.existsSync(process.env.FFMPEG_PATH)) return process.env.FFMPEG_PATH;
   const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
@@ -67,7 +67,7 @@ const TITLE_FONT = "'Playfair Display','Noto Serif','DejaVu Serif',Georgia,serif
 const BODY_FONT = "'Montserrat','Noto Sans','DejaVu Sans',Arial,sans-serif";
 
 const FPS = 30;
-const XFADE = 0.8;
+const XFADE = 1.0;
 const CAROUSEL_W = 1080;
 const CAROUSEL_H = 1350;
 const VW = 1080;
@@ -612,7 +612,7 @@ export const CAMPAIGN_THEMES = {
       key: 'brand_corporate',
       label: 'Marka & Kurumsal Tanıtım',
       icon: '👑',
-      badgeText: '👑 GLOBAL MOBİLYA ARCHITECTURAL ATELIER',
+      badgeText: '👑 NOVA FURNITURE ARCHITECTURAL ATELIER',
       accentColor: '#d4af37',
       goldColor: '#fde68a',
       darkColor: '#090d16',
@@ -957,56 +957,49 @@ async function preparePieceBase(dir, name, imgBuf, mode = 'contain') {
 
 function cameraMotion(camera, i) {
   switch (camera) {
-    case 'dolly_in': return { type: 'zoom', z0: 1.0, z1: 1.18, ax0: 0.5, ax1: 0.5, ay: 0.36 };
-    case 'lateral_tracking': return { type: 'zoom', z0: 1.1, z1: 1.12, ax0: i % 2 ? 0.62 : 0.38, ax1: i % 2 ? 0.38 : 0.62, ay: 0.36 };
-    case 'macro_detail': return { type: 'zoom', z0: 1.05, z1: 1.28, ax0: 0.5, ax1: 0.55, ay: 0.4 };
+    case 'dolly_in': return { type: 'zoom', z0: 1.0, z1: 1.045, ax0: 0.5, ax1: 0.5, ay: 0.4 };
+    case 'lateral_tracking': return { type: 'zoom', z0: 1.02, z1: 1.04, ax0: i % 2 ? 0.56 : 0.44, ax1: i % 2 ? 0.44 : 0.56, ay: 0.4 };
+    case 'macro_detail': return { type: 'zoom', z0: 1.02, z1: 1.055, ax0: 0.5, ax1: 0.52, ay: 0.4 };
     case 'slow_push_in':
-    default: return { type: 'zoom', z0: 1.0, z1: 1.1, ax0: 0.5, ax1: 0.5, ay: 0.36 };
+    default: return { type: 'zoom', z0: 1.0, z1: 1.04, ax0: 0.5, ax1: 0.5, ay: 0.4 };
   }
 }
 
 async function resolveMusic(dir, prefs, log) {
-  const key = MUSIC_KEYS.includes(prefs?.music_preference) ? prefs.music_preference : 'luxury_piano';
-  
-  // 1. Önce yerel bundled müzik kütüphanesini kontrol et (en hızlı ve güvenilir)
-  const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
-  const localCandidates = [
-    path.join(currentDir, 'assets/music', `${key}.mp3`),
-    path.join(currentDir, 'assets/music', 'luxury_piano.mp3'),
-    path.join(currentDir, '../assets/music', `${key}.mp3`),
-    'C:/Users/User/Desktop/Müzikler/Blue Hour Stereo.mp3'
-  ];
-  for (const lp of localCandidates) {
-    if (fs.existsSync(lp)) {
-      try {
-        const dest = path.join(dir, 'music.mp3');
-        fs.copyFileSync(lp, dest);
-        log(`[Müzik] Yerel kütüphaneden yüklendi: ${path.basename(lp)} (${key})`);
-        return { path: dest, url: lp, key };
-      } catch (_) {}
+  // 1. Kullanıcı Modül 8'den özel bir müzik bağlantısı tanımladıysa onu yükle
+  if (prefs?.music_preference === 'custom' && /^https:\/\//i.test(prefs?.custom_music_url || '')) {
+    try {
+      const buf = await fetchBuffer(prefs.custom_music_url, 30000);
+      const p = path.join(dir, 'custom_music.mp3');
+      fs.writeFileSync(p, buf);
+      log(`[Müzik] Özel URL üzerinden yüklendi: ${prefs.custom_music_url}`);
+      return { path: p, url: prefs.custom_music_url, key: 'custom' };
+    } catch (err) {
+      log(`[Müzik UYARI] Özel müzik alınamadı: ${err.message}`);
     }
   }
 
-  // 2. Supabase Storage üzerinden kontrol et
-  const base = env('MUSIC_LIBRARY_BASE_URL', `${env('SUPABASE_URL', 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/$/, '')}/storage/v1/object/public/${MEDIA_BUCKET}/music`);
-  const candidates = [];
-  if (prefs?.music_preference === 'custom' && /^https:\/\//i.test(prefs?.custom_music_url || '')) candidates.push(prefs.custom_music_url);
-  if (base && !base.startsWith('/')) {
-    candidates.push(`${base}/${key}.mp3`);
-    if (key !== 'luxury_piano') candidates.push(`${base}/luxury_piano.mp3`);
-  }
-  for (const url of candidates) {
-    try {
-      const buf = await fetchBuffer(url, 30000);
-      const p = path.join(dir, 'music' + (path.extname(new URL(url).pathname) || '.mp3'));
-      fs.writeFileSync(p, buf);
-      log(`[Müzik] Supabase Storage üzerinden yüklendi: ${url}`);
-      return { path: p, url, key };
-    } catch (err) {
-      log(`[Müzik] ${url} alınamadı: ${err.message}`);
+  // 2. Kullanıcı talebi: Telif riski olmayan hafif doğal oda/ortam ambiansı (nature ambience)
+  try {
+    const ambientPath = path.join(dir, 'nature_ambient.mp3');
+    const FFMPEG_BIN = resolveFfmpegBinary();
+    // 48kHz stereo, yumuşak pembe gürültü + sıcak oda akustiği filtresi (huzurlu iç mekan esintisi)
+    const res = spawnSync(FFMPEG_BIN, [
+      '-hide_banner', '-loglevel', 'error', '-y',
+      '-f', 'lavfi', '-i', 'anoisesrc=c=pink:r=48000:a=0.012,lowpass=f=340,highpass=f=75,volume=0.35',
+      '-t', '60',
+      '-c:a', 'libmp3lame', '-b:a', '128k',
+      ambientPath
+    ]);
+    if (res.status === 0 && fs.existsSync(ambientPath)) {
+      log('[Ses] Hafif doğal mimari ambians sesi oluşturuldu (telifsiz).');
+      return { path: ambientPath, url: null, key: 'nature_ambient' };
     }
+  } catch (err) {
+    log(`[Ses UYARI] Doğa ambiansı üretilemedi: ${err.message}`);
   }
-  log('[Müzik UYARI] Müzik dosyası bulunamadı; video sessiz fon ile üretildi.');
+
+  log('[Ses] Sessiz fon ile devam ediliyor.');
   return null;
 }
 
@@ -1199,6 +1192,7 @@ const CATEGORY_TAGS = {
   'oturma': ['#oturmaodası', '#koltuktakimi', '#salondekorasyonu', '#livingroom'],
   'genç': ['#gençodası', '#gencodasitakimi'],
   'mutfak': ['#mutfakdolabı', '#mutfaktasarimi'],
+  'kahve': ['#kahveköşesi', '#kahvekosesi', '#coffeebar', '#coffeecorner'],
   'tv': ['#tvünitesi', '#salondekorasyonu']
 };
 function slugTag(s) {
@@ -1206,7 +1200,7 @@ function slugTag(s) {
 }
 export function buildHashtags(entity, platform) {
   const cat = String(entity.category || '').toLocaleLowerCase('tr-TR');
-  const tags = [slugTag(BRAND.name), '#globalmobilya'];
+  const tags = [slugTag(BRAND.name), '#novafurniture', '#novahome'];
   if (entity.kind === 'collection') tags.push(slugTag(entity.title) + 'koleksiyonu');
   else tags.push(slugTag(entity.title));
   for (const [k, list] of Object.entries(CATEGORY_TAGS)) if (cat.includes(k)) tags.push(...list);
@@ -1492,7 +1486,7 @@ export function splitCollectionNameIntoThree(rawName) {
   return {
     cleanName: word,
     parts,
-    formatted: `${parts[0]} - ${parts[1]} - ${parts[2]}`
+    formatted: `${parts[0]} • ${parts[1]} • ${parts[2]}`
   };
 }
 
@@ -1508,10 +1502,10 @@ export async function renderTriptychCovers(entity) {
   const W3 = CAROUSEL_W * 3; // 3240
   const H = CAROUSEL_H;      // 1350
 
-  // 1. 3240x1350 tek parça kesintisiz panoramik zemin ve tek seferde karartma
+  // 1. 3240x1350 tek parça kesintisiz panoramik zemin ve üst/alt dengeli karartma
   const wide = await sharp(heroBuf).rotate().resize(W3, H, { fit: 'cover', position: 'centre' }).toBuffer();
-  const topGrad = gradientRect(W3, 280, 0, [[0, '#000', 0.58], [1, '#000', 0]]);
-  const botGrad = gradientRect(W3, H, 620, [[0, '#000', 0], [0.5, '#000', 0.52], [1, '#000', 0.88]]);
+  const topGrad = gradientRect(W3, 260, 0, [[0, '#000', 0.65], [1, '#000', 0]]);
+  const botGrad = gradientRect(W3, H, 580, [[0, '#000', 0], [0.45, '#000', 0.45], [1, '#000', 0.85]]);
   const scrim = svgDoc(W3, H, topGrad.body + botGrad.body, topGrad.defs + botGrad.defs);
   const gradedWide = await sharp(wide).composite([{ input: scrim }]).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toBuffer();
 
@@ -1537,44 +1531,40 @@ export async function renderTriptychCovers(entity) {
       .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H })
       .toBuffer();
 
-    const syllable = splitInfo.parts[idx] || '';
-    const sylText = idx === 0 ? `${syllable}-` : idx === 1 ? `-${syllable}-` : `-${syllable}`;
+    const syllable = (splitInfo.parts[idx] || '').trim();
     const roleTag = roleLabels[idx];
+    const fontSize = syllable.length <= 2 ? 520 : syllable.length === 3 ? 420 : 330;
 
     let body = '';
-    // Üst bilgi
-    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 7, opacity: 0.92, shadow: true });
+    // 1. DEV ŞEFFAF FİLİGRAN TİPOGRAFİ (Görseli boğmayan dev mimari harfler, çizgisiz/tiresiz)
+    body += `<text x="${CAROUSEL_W / 2}" y="${H / 2 + 130}"
+      text-anchor="middle"
+      font-family="${TITLE_FONT}"
+      font-size="${fontSize}"
+      font-weight="800"
+      letter-spacing="16"
+      fill="#ffffff"
+      fill-opacity="0.15"
+      stroke="#ffffff"
+      stroke-width="2.5"
+      stroke-opacity="0.22">${syllable}</text>`;
+
+    // 2. ÜST MARKA & BÖLÜM BİLGİSİ (HER ZAMAN NOVA FURNITURE)
+    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 8, opacity: 0.95, shadow: true });
     body += textEl({ x: CAROUSEL_W - 64, y: 88, text: roleTag, size: 20, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
-    body += `<rect x="64" y="108" width="${CAROUSEL_W - 128}" height="1.5" fill="${BRAND.gold}" fill-opacity="0.45"/>`;
+    body += `<rect x="64" y="108" width="${CAROUSEL_W - 128}" height="1.5" fill="${BRAND.gold}" fill-opacity="0.5"/>`;
 
-    // Kategori ve Tam Koleksiyon Adı (Üst-Orta)
-    body += textEl({ x: CAROUSEL_W / 2, y: H - 380, text: catUpper, size: 26, weight: 600, fill: BRAND.gold, anchor: 'middle', spacing: 8, shadow: true });
-
-    // Dev 3'lü Grid Hece Yazısı (BER - GA - MO)
-    const sylSize = syllable.length > 4 ? 140 : 172;
+    // 3. ALT BİLGİ VE EDİTÖRYAL BAŞLIK
+    body += textEl({ x: CAROUSEL_W / 2, y: H - 126, text: catUpper, size: 22, weight: 600, fill: BRAND.gold, anchor: 'middle', spacing: 7, shadow: true });
+    body += textEl({ x: CAROUSEL_W / 2, y: H - 74, text: fullTitleUpper, size: 36, font: TITLE_FONT, weight: 700, fill: '#ffffff', anchor: 'middle', spacing: 4, shadow: true });
+    body += `<rect x="${CAROUSEL_W / 2 - 50}" y="${H - 52}" width="100" height="2" fill="${BRAND.gold}" fill-opacity="0.85"/>`;
     body += textEl({
       x: CAROUSEL_W / 2,
-      y: H - 210,
-      text: sylText,
-      size: sylSize,
-      font: TITLE_FONT,
-      weight: 800,
-      fill: '#ffffff',
-      anchor: 'middle',
-      spacing: 6,
-      shadow: true
-    });
-
-    // Alt Tam Koleksiyon Adı ve Panoramik Çizgi
-    body += `<rect x="0" y="${H - 140}" width="${CAROUSEL_W}" height="3" fill="${BRAND.gold}" fill-opacity="0.85"/>`;
-    body += textEl({ x: CAROUSEL_W / 2, y: H - 82, text: fullTitleUpper, size: 28, weight: 700, fill: '#f8fafc', anchor: 'middle', spacing: 6, shadow: true });
-    body += textEl({
-      x: CAROUSEL_W / 2,
-      y: H - 42,
-      text: `${splitInfo.formatted}  •  BÖLÜM ${idx + 1}/3`,
-      size: 20,
+      y: H - 26,
+      text: `${splitInfo.formatted}  |  BÖLÜM ${idx + 1}/3`,
+      size: 18,
       weight: 600,
-      fill: BRAND.gold,
+      fill: '#e2e8f0',
       anchor: 'middle',
       spacing: 5,
       shadow: true
@@ -1735,7 +1725,7 @@ export async function renderCollectionPost03DesignStory(entity, triptych = null,
     scenes.push({ path: outCover, duration: 2.2, label: 'story_cover_right' });
   }
 
-  // Sahne 1: Tasarım Hikayesi & Mimari Felsefe (11 sn)
+  // Sahne 1: Tasarım Hikayesi & Mimari Felsefe (7 sn) — Asil ve Yavaş Pan
   {
     const heroBase = await prepareHeroBase(dir, heroBuf);
     const grad = gradientRect(VW, VH, 680, [[0, '#000', 0.1], [0.45, '#000', 0.65], [1, '#000', 0.92]]);
@@ -1750,48 +1740,95 @@ export async function renderCollectionPost03DesignStory(entity, triptych = null,
     const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.6, effect: 'fade' }];
 
     const name = trUpper(entity.title);
-    const n = await textPng(dir, 'st1_name', { lines: wrapText(name, 18, 2), size: 84, font: TITLE_FONT, weight: 700, spacing: 4, lineHeight: 1.08 });
-    overlays.push({ ...n, x: 64, y: 1020, start: 0.6, dur: 1.0, effect: 'wipe' });
+    const n = await textPng(dir, 'st1_name', { lines: wrapText(name, 18, 2), size: 80, font: TITLE_FONT, weight: 700, spacing: 4, lineHeight: 1.08 });
+    overlays.push({ ...n, x: 64, y: 1040, start: 0.6, dur: 1.0, effect: 'wipe' });
 
     const quote = entity.promoQuote || entity.shortDescription || `${entity.title} ile yaşam alanınızda zamansız mimari estetik.`;
-    const qLines = wrapText(quote, 36, 6);
-    let qy = 1020 + n.h + 45;
+    const qLines = wrapText(quote, 38, 4);
+    let qy = 1040 + n.h + 40;
     for (let i = 0; i < qLines.length; i++) {
-      const qp = await textPng(dir, `st1_q${i}`, { lines: [qLines[i]], size: 44, font: TITLE_FONT, italic: true, fill: '#f1f5f9' });
-      overlays.push({ ...qp, x: 66, y: Math.round(qy + i * 60), start: 1.4 + i * 0.85, dur: 0.8, effect: 'wipe' });
+      const qp = await textPng(dir, `st1_q${i}`, { lines: [qLines[i]], size: 42, font: TITLE_FONT, italic: true, fill: '#f1f5f9' });
+      overlays.push({ ...qp, x: 66, y: Math.round(qy + i * 56), start: 1.4 + i * 0.75, dur: 0.8, effect: 'wipe' });
     }
     const out = path.join(dir, 'story_scene_1.mp4');
-    await renderScene({ basePath: heroBase, motion: { type: 'pan' }, overlays, duration: 11, out });
-    scenes.push({ path: out, duration: 11, label: 'design_philosophy' });
+    await renderScene({ basePath: heroBase, motion: { type: 'pan' }, overlays, duration: 7, out });
+    scenes.push({ path: out, duration: 7, label: 'design_philosophy' });
   }
 
-  // Sahne 2: Doku, Yüzey ve Mimari Detay Yakın Planları (9 sn)
+  // Sahne 2: Üst Vitrin, Aydınlatma ve Raf Mimarisi Yakın Planı (5 sn)
   {
-    const base = await preparePieceBase(dir, 'story_detail_bg', heroBuf, 'cover');
-    const grad = gradientRect(VW, VH, 700, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
+    const meta = await sharp(heroBuf).metadata();
+    const topH = Math.round(meta.height * 0.58);
+    const topW = Math.round(meta.width * 0.76);
+    const topCropBuf = await sharp(heroBuf)
+      .extract({ left: Math.round(meta.width * 0.12), top: Math.round(meta.height * 0.04), width: topW, height: topH })
+      .resize(VW, VH, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 93 })
+      .toBuffer();
+
+    const topCropPath = path.join(dir, 'story_macro_top.jpg');
+    fs.writeFileSync(topCropPath, topCropBuf);
+
+    const grad = gradientRect(VW, VH, 750, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
     const shade = await fullFramePng(dir, 'st2_shade', grad.body, grad.defs);
     const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.5, effect: 'fade' }];
 
-    const header = await textPng(dir, 'st2_hdr', { lines: ['MİMARİ DOKU & YÜZEY UYUMU'], size: 34, weight: 700, fill: BRAND.gold, spacing: 6 });
-    overlays.push({ ...header, x: 66, y: 1120, start: 0.5, dur: 0.7, effect: 'fade', rise: 20 });
+    const header = await textPng(dir, 'st2_hdr', { lines: ['IŞIKLI CAM VİTRİN & RAF MİMARİSİ'], size: 32, weight: 700, fill: BRAND.gold, spacing: 6 });
+    overlays.push({ ...header, x: 66, y: 1240, start: 0.5, dur: 0.7, effect: 'fade', rise: 18 });
 
-    const feats = (entity.features && entity.features.length)
-      ? entity.features.slice(0, 4)
-      : ['Özel Tasarım Yüzey ve Kapak İşçiliği', 'Mekana Derinlik Katan Mimari Çizgiler', 'Fonksiyonel ve Estetik Modül Uyumu'];
+    const desc = await textPng(dir, 'st2_desc', { lines: wrapText('✦ Mekana derinlik ve sıcaklık katan entegre vitrin aydınlatması.', 40, 2), size: 38, weight: 600, fill: '#ffffff' });
+    overlays.push({ ...desc, x: 66, y: 1320, start: 1.1, dur: 0.7, effect: 'fade', rise: 16 });
 
-    let fy = 1200;
-    for (let k = 0; k < feats.length; k++) {
-      const fl = await textPng(dir, `st2_f${k}`, { lines: wrapText(`✦  ${feats[k]}`, 38, 2), size: 40, weight: 600, fill: '#ffffff' });
-      overlays.push({ ...fl, x: 66, y: Math.round(fy), start: 1.1 + k * 0.9, dur: 0.7, effect: 'fade', rise: 18 });
-      fy += fl.h + 24;
-    }
-
-    const out = path.join(dir, 'story_scene_2.mp4');
-    await renderScene({ basePath: base, motion: cameraMotion('macro_detail', 1), overlays, duration: 9, out });
-    scenes.push({ path: out, duration: 9, label: 'surface_harmony' });
+    const out = path.join(dir, 'story_scene_2_macro.mp4');
+    await renderScene({
+      basePath: topCropPath,
+      motion: { type: 'zoom', z0: 1.0, z1: 1.04, ax0: 0.5, ax1: 0.5, ay: 0.4 },
+      overlays,
+      duration: 5,
+      out
+    });
+    scenes.push({ path: out, duration: 5, label: 'macro_upper_vitrine' });
   }
 
-  // Sahne 3: Kapanış (5 sn)
+  // Sahne 3: Tezgah, Kapaklar & CNC Gövde İşçiliği Yakın Planı (5 sn)
+  {
+    const meta = await sharp(heroBuf).metadata();
+    const botH = Math.round(meta.height * 0.55);
+    const botW = Math.round(meta.width * 0.78);
+    const botCropBuf = await sharp(heroBuf)
+      .extract({ left: Math.round(meta.width * 0.11), top: Math.round(meta.height * 0.42), width: botW, height: botH })
+      .resize(VW, VH, { fit: 'cover', position: 'centre' })
+      .jpeg({ quality: 93 })
+      .toBuffer();
+
+    const botCropPath = path.join(dir, 'story_macro_bot.jpg');
+    fs.writeFileSync(botCropPath, botCropBuf);
+
+    const grad = gradientRect(VW, VH, 750, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
+    const shade = await fullFramePng(dir, 'st3_shade', grad.body, grad.defs);
+    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.5, effect: 'fade' }];
+
+    const header = await textPng(dir, 'st3_hdr', { lines: ['KUSURSUZ KAPAK & GÖVDE İŞÇİLİĞİ'], size: 32, weight: 700, fill: BRAND.gold, spacing: 6 });
+    overlays.push({ ...header, x: 66, y: 1240, start: 0.5, dur: 0.7, effect: 'fade', rise: 18 });
+
+    const feats = (entity.features && entity.features.length)
+      ? entity.features[0]
+      : 'Özel tasarım fluted CNC kapak işçiliği ve 1. sınıf dayanıklı membran yüzey.';
+    const desc = await textPng(dir, 'st3_desc', { lines: wrapText(`✦ ${feats}`, 40, 2), size: 38, weight: 600, fill: '#ffffff' });
+    overlays.push({ ...desc, x: 66, y: 1320, start: 1.1, dur: 0.7, effect: 'fade', rise: 16 });
+
+    const out = path.join(dir, 'story_scene_3_macro.mp4');
+    await renderScene({
+      basePath: botCropPath,
+      motion: { type: 'zoom', z0: 1.0, z1: 1.045, ax0: 0.52, ax1: 0.48, ay: 0.4 },
+      overlays,
+      duration: 5,
+      out
+    });
+    scenes.push({ path: out, duration: 5, label: 'macro_lower_cabinets' });
+  }
+
+  // Sahne 4: Kapanış (4.5 sn)
   {
     const bg = path.join(dir, 'story_outro_bg.jpg');
     await sharp(heroBuf).rotate().resize(VW * 2, VH * 2, { fit: 'cover' }).blur(40).modulate({ brightness: 0.32 }).jpeg({ quality: 88 }).toFile(bg);
@@ -1804,9 +1841,9 @@ export async function renderCollectionPost03DesignStory(entity, triptych = null,
     overlays.push({ ...l1, x: 72, y: 890, start: 1.3, dur: 0.6, effect: 'fade', rise: 18 });
     const l2 = await textPng(dir, 'sto_l2', { lines: [`WhatsApp  ${BRAND.whatsapp}`], size: 52, weight: 700, fill: BRAND.gold });
     overlays.push({ ...l2, x: 72, y: 970, start: 1.8, dur: 0.6, effect: 'fade', rise: 18 });
-    const out = path.join(dir, 'story_scene_3.mp4');
-    await renderScene({ basePath: bg, motion: { type: 'zoom', z0: 1.0, z1: 1.06, ax0: 0.5, ax1: 0.5, ay: 0.5 }, overlays, duration: 5, out });
-    scenes.push({ path: out, duration: 5, label: 'story_outro' });
+    const out = path.join(dir, 'story_scene_4.mp4');
+    await renderScene({ basePath: bg, motion: { type: 'zoom', z0: 1.0, z1: 1.04, ax0: 0.5, ax1: 0.5, ay: 0.5 }, overlays, duration: 4.5, out });
+    scenes.push({ path: out, duration: 4.5, label: 'story_outro' });
   }
 
   const total = scenes.reduce((s, x) => s + x.duration, 0) - XFADE * (scenes.length - 1);
@@ -1867,7 +1904,7 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
   if (postIndex === 1) {
     // POST 01 — COLLECTION REVEAL
     const lines = [
-      `✨ ${name} — KOLEKSİYON TANITIMI (01/03 | ${splitInfo.parts[0]}-)`,
+      `✨ ${name} — KOLEKSİYON TANITIMI (Bölüm 1/3: ${splitInfo.parts[0]})`,
       '',
       story || `${entity.title}, çağdaş çizgileri ve özenli işçiliğiyle yaşam alanınıza prestijli bir kimlik kazandırıyor.`,
       '',
@@ -1881,7 +1918,7 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
   if (postIndex === 2) {
     // POST 02 — PRODUCT BREAKDOWN
     const lines = [
-      `📐 ${name} — DİJİTAL ÜRÜN KATALOĞU (02/03 | -${splitInfo.parts[1]}-)`,
+      `📐 ${name} — DİJİTAL ÜRÜN KATALOĞU (Bölüm 2/3: ${splitInfo.parts[1]})`,
       '',
       `${entity.title} içerisinde yer alan tüm modüller ve doğrulanmış ölçü bilgileri:`,
       ''
@@ -1902,7 +1939,7 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
 
   // POST 03 — DESIGN STORY
   const lines = [
-    `🕯️ ${name} — TASARIM HİKAYESİ & ATMOSFER (03/03 | -${splitInfo.parts[2]})`,
+    `🕯️ ${name} — TASARIM HİKAYESİ & ATMOSFER (Bölüm 3/3: ${splitInfo.parts[2]})`,
     '',
     story || `Mekanda dinginlik, doku uyumu ve fonksiyonel estetik bir arada.`,
     ''
@@ -1923,8 +1960,8 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
  * üretir, Supabase Storage'a yükler ve önbelleğe kaydeder.
  */
 export async function produceCollectionThreePostCampaign({ supabase, entity, log = console.log }) {
-  const sig = entitySignature(entity, 'three_post_campaign_v1');
-  const cacheKey = `${entity.slug}:three_post_v1:${sig}`;
+  const sig = entitySignature(entity, 'three_post_campaign_v2');
+  const cacheKey = `${entity.slug}:three_post_v2:${sig}`;
   const cache = await readCache(supabase);
   if (cache[cacheKey] && cache[cacheKey].post01 && cache[cacheKey].post02 && cache[cacheKey].post03) {
     return { ...cache[cacheKey], cached: true };

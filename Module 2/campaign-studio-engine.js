@@ -785,7 +785,7 @@ export function buildScenesForVideoPackage({
         camera_movement: creativeControls.scene_5_movement || 'lateral_tracking',
         lighting: profile.lighting,
         music_cue: `${profile.music_preference} — Kapanış`,
-        subtitle_text: `Global Mobilya • Detaylı Bilgi ve Teklif İçin Profildeki Bağlantıda`,
+        subtitle_text: `Nova Furniture • Detaylı Bilgi ve Teklif İçin Profildeki Bağlantıda`,
         voiceover_or_caption: `18-25 sn: Profesyonel marka kapanışı.`,
         source_media_url: heroUrl,
         generated_asset_url: heroUrl,
@@ -1236,7 +1236,7 @@ export function generateCampaignDeliverables({
         package_type: pkg.package_type,
         content_type: 'LINK_CARD',
         title: `${title} — Dijital Showroom & Teklif Bağlantı Gönderisi`,
-        caption: `🏛️ GLOBAL MOBİLYA | ${title.toLocaleUpperCase('tr-TR')}\n\n${primary.design_story || primary.short_description || 'Koleksiyonumuzun tüm parçalarını dijital showroom sayfasında inceleyin ve özel ölçü/fiyat teklifi alın.'}\n\n🌐 Dijital Showroom & Teklif Formu: ${showroomLink}\n📲 WhatsApp İletişim: 0 (505) 015 1035`,
+        caption: `🏛️ NOVA FURNITURE | ${title.toLocaleUpperCase('tr-TR')}\n\n${primary.design_story || primary.short_description || 'Koleksiyonumuzun tüm parçalarını dijital showroom sayfasında inceleyin ve özel ölçü/fiyat teklifi alın.'}\n\n🌐 Dijital Showroom & Teklif Formu: ${showroomLink}\n📲 WhatsApp İletişim: 0 (505) 015 1035`,
         hashtags: buildProductHashtags({ title, kategori: primary.category || primary.kategori }, 'facebook'),
         cta_text: 'Dijital Showroom\'da İncele ve Teklif Al',
         target_link: showroomLink,
@@ -1285,8 +1285,8 @@ export function generateCampaignDeliverables({
       const ytDesc = buildYouTubeShortsDescription({ primary, pieces, colors, features, materials, scenes, showroomLink });
       const ytTags = [
         'Shorts',
-        'Global Mobilya',
         'Nova Furniture',
+        'Luxury Furniture',
         title,
         primary.category || primary.kategori || 'Mobilya Koleksiyonu',
         ...pieces.map(p => p.title).filter(Boolean).slice(0, 5)
@@ -1339,7 +1339,7 @@ export function generateCampaignDeliverables({
         content_type: 'TIKTOK_VIDEO',
         title: `${title} — TikTok Koleksiyon Tanıtım Videosu (25 sn)`,
         caption: ttCaption,
-        hashtags: `#novafurniture #globalmobilya #mobilyatasarım #yatakodası #içmimari #keşfet`,
+        hashtags: `#novafurniture #novahome #mobilyatasarım #yatakodası #içmimari #keşfet`,
         cta_text: 'Koleksiyon detayları ve teklif formu profil bağlantısında.',
         target_link: showroomLink,
         aspect_ratio: '9:16',
@@ -1389,7 +1389,7 @@ function buildCollectionCaption({ primary, pieces = [], colors = [], features = 
 
   if (platform === 'facebook') {
     return [
-      `🏛️ GLOBAL MOBİLYA | ${title.toLocaleUpperCase('tr-TR')}`,
+      `🏛️ NOVA FURNITURE | ${title.toLocaleUpperCase('tr-TR')}`,
       story ? `\n${story}` : '',
       pieceLines,
       featureLines,

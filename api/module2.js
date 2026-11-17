@@ -1451,7 +1451,7 @@ async function handleCampaignAiCopy(req, res) {
   const geminiKey = process.env.GEMINI_API_KEY || '';
   if (geminiKey) {
     try {
-      const prompt = `Sen Türkiye'nin en seçkin lüks mobilya markası Global Mobilya'nın kreatif direktörüsün.
+      const prompt = `Sen Türkiye'nin en seçkin lüks mobilya markası Nova Furniture'ın kreatif direktörüsün.
 Aşağıdaki kampanya bilgileri için sosyal medya gönderisinde kullanılacak:
 1) Vurucu ve zarif bir KAMPANYA BAŞLIĞI (maksimum 45 karakter, büyük harf).
 2) Çarpıcı, zarif ve lüks bir TANITIM CÜMLESİ / METNİ (2-3 cümle, maksimum 220 karakter).
@@ -1604,7 +1604,7 @@ async function handleCampaignGenerate(req, res) {
       status: 'pending_review',
       scheduled_for: feedScheduledFor,
       caption: `✨ ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}\n\n📩 DM veya WhatsApp ile detaylı bilgi alabilirsiniz.`,
-      hashtags: '#GlobalMobilya #MobilyaKampanyası #LüksMobilya #İçMimar',
+      hashtags: '#NovaFurniture #MobilyaKampanyası #LüksMobilya #İçMimar',
       created_at: now
     };
     items.push(feedItem);
@@ -1623,7 +1623,7 @@ async function handleCampaignGenerate(req, res) {
       status: 'pending_review',
       scheduled_for: reelsScheduledFor,
       caption: `🎬 ${campaignTitle}\n${discountAmount ? '🔥 ' + discountAmount + '\n' : ''}${campaignIntro}`,
-      hashtags: '#Reels #GlobalMobilya #Tasarım #Mimari',
+      hashtags: '#Reels #NovaFurniture #Tasarım #Mimari',
       created_at: now
     };
     items.push(reelsItem);

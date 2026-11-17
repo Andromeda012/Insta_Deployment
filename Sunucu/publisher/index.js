@@ -475,7 +475,7 @@ async function executePublish(task) {
         const vidParams = new URLSearchParams({
           file_url: cleanFbMediaUrl,
           description: fullCaption,
-          title: String(caption || '').split(/\r?\n/)[0]?.slice(0, 90) || 'Global Mobilya',
+          title: String(caption || '').split(/\r?\n/)[0]?.slice(0, 90) || 'Nova Furniture',
           access_token: pageAccessToken
         });
         const vidRes = await fetchWithTimeout(`https://graph.facebook.com/v21.0/${pageId}/videos`, { method: 'POST', body: vidParams });

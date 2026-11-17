@@ -726,9 +726,9 @@
           scene: 4,
           stage: 'Closing',
           title: 'Koleksiyon İmza & Marka Kapanışı',
-          visualInstruction: 'Koleksiyon adı ve Global Mobilya kurumsal kimliği ile dengeli kapanış kadrajı.',
+          visualInstruction: 'Koleksiyon adı ve Nova Furniture kurumsal kimliği ile dengeli kapanış kadrajı.',
           headline: title,
-          subheadline: 'GLOBAL MOBİLYA',
+          subheadline: 'NOVA FURNITURE',
           media_url: leadImageUrl,
           animation: 'Gentle Pull-Back & Brand Lockup'
         }
@@ -786,7 +786,7 @@
       breakdownSlides.push({
         slideNumber: 5,
         role: 'collection_closing',
-        title: title + ' • GLOBAL MOBİLYA',
+        title: title + ' • NOVA FURNITURE',
         subtitle: 'Detaylı bilgi ve özel teklif için DM veya WhatsApp üzerinden ulaşabilirsiniz.',
         media_url: leadImageUrl,
         description: 'Koleksiyon ve marka kapanış slaytı'
@@ -810,7 +810,7 @@
         slideNumber: breakdownSlides.length + 1,
         role: 'collection_overview_closing',
         title: title + ' — Koleksiyon Genel Görünümü',
-        subtitle: 'GLOBAL MOBİLYA • Tüm Parçalar ve Detaylı Katalog İçin İletişime Geçin',
+        subtitle: 'NOVA FURNITURE • Tüm Parçalar ve Detaylı Katalog İçin İletişime Geçin',
         media_url: leadImageUrl,
         description: 'Tam koleksiyon genel görünümü ve kurumsal kapanış slaytı'
       });
@@ -854,7 +854,7 @@
         slideNumber: breakdownSlides.length + 1,
         role: 'collection_overview_closing',
         title: title + ' — Tam Koleksiyon Özeti (' + pCount + ' Ürün)',
-        subtitle: 'GLOBAL MOBİLYA',
+        subtitle: 'NOVA FURNITURE',
         media_url: leadImageUrl,
         description: 'Tam koleksiyon genel görünümü ve kapanış slaytı'
       });
@@ -950,9 +950,9 @@
           scene: 5,
           stage: 'Closing',
           title: 'Tasarım Hikayesi & Marka Bağlantısı',
-          visualInstruction: 'Tasarım hikayesini koleksiyon adına ve Global Mobilya kimliğine bağlayan final sahnesi.',
+          visualInstruction: 'Tasarım hikayesini koleksiyon adına ve Nova Furniture kimliğine bağlayan final sahnesi.',
           headline: title,
-          subheadline: 'GLOBAL MOBİLYA — Yaşam Alanlarınıza Değer Katar',
+          subheadline: 'NOVA FURNITURE — Yaşam Alanlarınıza Değer Katar',
           media_url: leadImageUrl,
           animation: 'Editorial Lockup & Gentle Fade'
         }
