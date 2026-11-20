@@ -1555,6 +1555,11 @@ export async function renderTriptychCovers(entity) {
           stroke-width="4"
           stroke-opacity="0.72"
           filter="url(#textGlow)">${cleanWord}</text>
+
+    <!-- Orta Gönderi İçin Editoryal Dijital Katalog Rehberi (Çerçeveyi ve ışığı bozmadan tek parçada işlenir) -->
+    <text x="${W3 / 2}" y="175" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="22" font-weight="800" letter-spacing="8" fill="#ffffff" filter="url(#textGlow)">${BRAND.name}</text>
+    <text x="${W3 / 2}" y="1120" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="20" font-weight="700" letter-spacing="6" fill="${BRAND.gold}" filter="url(#textGlow)">DİJİTAL KOLEKSİYON KATALOĞU</text>
+    <text x="${W3 / 2}" y="1165" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="18" font-weight="600" letter-spacing="4" fill="#ffffff" filter="url(#textGlow)">ÖLÇÜLER &amp; MODÜLLER İÇİN KAYDIRIN  →</text>
   </svg>`;
 
   const masterWide = await sharp(wide)
@@ -1574,6 +1579,9 @@ export async function renderTriptychCovers(entity) {
     .jpeg({ quality: 90 })
     .toBuffer();
 
+  // Reels profil ızgarasında dikey hizalamanın 4:5 Carousel ile birebir örtüşmesi için +12px offset
+  const reelGridTopOffset = Math.round((VH - H) / 2) + 12;
+
   // 2. Yazı ve dış çerçeve işlendikten sonra görseli kusursuz 3 eşit parçaya böl
   for (let idx = 0; idx < 3; idx++) {
     const tile4x5 = await sharp(masterWide)
@@ -1584,7 +1592,7 @@ export async function renderTriptychCovers(entity) {
     tiles4x5.push(tile4x5);
 
     const tile9x16 = await sharp(blurredBg9x16)
-      .composite([{ input: tile4x5, top: Math.round((VH - H) / 2), left: 0 }])
+      .composite([{ input: tile4x5, top: reelGridTopOffset, left: 0 }])
       .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
       .toBuffer();
 
@@ -1615,37 +1623,24 @@ export async function renderCollectionPost02Breakdown(entity, triptych = null) {
   const pieces = (entity.pieces || []).filter(p => p.imageUrl && p.presentation !== 'video_only' && p.presentation !== 'hidden');
   const heroBuf = await loadImage(entity.heroUrl);
 
-  // Slayt 1: Dijital Koleksiyon Kataloğu Editoryal Kapak Slaytı (Triptych Center Dilimi + Dergi Mizanpajı)
+  // Slayt 1: Dijital Koleksiyon Kataloğu Kapak Slaytı (Triptych Center Dilimi — Kesintisiz Altın Çerçeve ve Tipografi)
   {
-    const W = CAROUSEL_W, H = CAROUSEL_H;
-    let baseImg;
     if (triptych && triptych.center4x5) {
-      baseImg = triptych.center4x5;
+      slides.push(triptych.center4x5);
     } else {
-      baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
+      const W = CAROUSEL_W, H = CAROUSEL_H;
+      const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
+      const topG = gradientRect(W, 200, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
+      let body = topG.body;
+      body += textEl({ x: W / 2, y: 175, text: BRAND.name, size: 22, weight: 800, anchor: 'middle', spacing: 8, shadow: true });
+      body += textEl({ x: W / 2, y: 1120, text: 'DİJİTAL KOLEKSİYON KATALOĞU', size: 20, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 6, shadow: true });
+      body += textEl({ x: W / 2, y: 1165, text: 'ÖLÇÜLER & MODÜLLER İÇİN KAYDIRIN  →', size: 18, weight: 600, fill: '#ffffff', anchor: 'middle', spacing: 4, shadow: true });
+      const fallbackCover = await sharp(baseImg)
+        .composite([{ input: svgDoc(W, H, body, topG.defs + SHADOW_DEF) }])
+        .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+        .toBuffer();
+      slides.push(fallbackCover);
     }
-    const topG = gradientRect(W, 280, 0, [[0, '#000', 0.8], [0.6, '#000', 0.35], [1, '#000', 0]]);
-    const botG = gradientRect(W, 420, H - 420, [[0, '#000', 0], [0.3, '#000', 0.45], [0.7, '#000', 0.82], [1, '#000', 0.95]]);
-    
-    let body = topG.body + botG.body;
-    body += textEl({ x: 80, y: 175, text: BRAND.name, size: 24, weight: 800, spacing: 7, shadow: true });
-    body += textEl({ x: W - 80, y: 175, text: 'DİJİTAL KATALOG • 01', size: 20, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
-    body += `<line x1="80" y1="195" x2="${W - 80}" y2="195" stroke="${BRAND.gold}" stroke-width="1.5" stroke-opacity="0.6"/>`;
-
-    body += textEl({ x: W / 2, y: 1025, text: trUpper(entity.category ? `${entity.category} KOLEKSİYONU` : 'KOLEKSİYON DETAYLARI & ÖLÇÜLER'), size: 22, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 7, shadow: true });
-    body += textEl({ x: W / 2, y: 1068, text: `${pieces.length} Farklı Modül • Teknik Çizimler • İç Hacim`, size: 26, weight: 600, fill: '#f8fafc', anchor: 'middle', spacing: 3, shadow: true });
-
-    body += `<g transform="translate(${W / 2 - 240}, 1105)">
-      <rect x="0" y="0" width="480" height="52" rx="26" fill="rgba(201,162,75,0.22)" stroke="${BRAND.gold}" stroke-width="2"/>
-      <text x="240" y="33" text-anchor="middle" font-family="${FONT}" font-size="21" font-weight="700" letter-spacing="4" fill="#ffffff">KATALOĞU İNCELEMEK İÇİN KAYDIRIN  →</text>
-    </g>`;
-    body += textEl({ x: W / 2, y: 1195, text: BRAND.website, size: 18, weight: 500, fill: '#94a3b8', anchor: 'middle', spacing: 4, shadow: true });
-
-    const magazineCover = await sharp(baseImg)
-      .composite([{ input: svgDoc(W, H, body, topG.defs + botG.defs + SHADOW_DEF) }])
-      .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
-      .toBuffer();
-    slides.push(magazineCover);
   }
 
   // Slayt 3..N: Alt Ürün Katalog Kartları (maksimum 7 parça slaytı -> toplam max 10 slayt)
