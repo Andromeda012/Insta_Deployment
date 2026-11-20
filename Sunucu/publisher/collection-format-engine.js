@@ -1499,11 +1499,12 @@ export async function renderTriptychCovers(entity) {
   const sharp = await getSharp();
   if (!entity.heroUrl) throw new Error(`"${entity.title}" koleksiyonunun ana tanıtım görseli eksik.`);
   const heroBuf = await loadImage(entity.heroUrl);
-  const W3 = CAROUSEL_W * 3; // 3240
+  const GAP = 6;             // Instagram profil ızgarasındaki sütunlar arası siyah çizginin 1080 ölçeğindeki karşılığı (6px)
+  const W3 = CAROUSEL_W * 3 + GAP * 2; // 3252
   const H_GRID = 1440;       // Instagram 3:4 profil ızgara hücresi yüksekliği (1080x1440)
   const H_CAROUSEL = CAROUSEL_H; // 1350 (4:5 Carousel slayt yüksekliği)
 
-  // 1. 3240x1440 tek parça kesintisiz panoramik zemin (3 adet 1080x1440 3:4 ızgara hücresi)
+  // 1. 3252x1440 tek parça kesintisiz panoramik zemin (3 adet 1080x1440 3:4 ızgara hücresi + 2x 6px sütun ayracı)
   const wide = await sharp(heroBuf).rotate().resize(W3, H_GRID, { fit: 'cover', position: 'centre' }).toBuffer();
 
   const splitInfo = splitCollectionNameIntoThree(entity.title);
@@ -1511,7 +1512,7 @@ export async function renderTriptychCovers(entity) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // ÇERÇEVE: BÜYÜK FOTOĞRAFIN DIŞ KENARLARINA (Yazının etrafına değil)
-  // YAZI: Tek seferde tüm 3240x1440 görseli baştan sona kaplayan hafif şeffaf ama net koleksiyon ismi
+  // YAZI: Tek seferde tüm 3252x1440 görseli baştan sona kaplayan hafif şeffaf ama net koleksiyon ismi
   const m1 = 44;
   const m2 = 58;
   const masterSvg = `<svg width="${W3}" height="${H_GRID}" xmlns="http://www.w3.org/2000/svg">
@@ -1531,9 +1532,9 @@ export async function renderTriptychCovers(entity) {
     </defs>
     <rect width="${W3}" height="${H_GRID}" fill="url(#softVignette)"/>
     <rect x="${m1}" y="${m1}" width="${W3 - m1 * 2}" height="${H_GRID - m1 * 2}"
-          fill="none" stroke="${BRAND.gold}" stroke-width="3" stroke-opacity="0.85" filter="url(#frameShadow)"/>
+          fill="none" stroke="${BRAND.gold}" stroke-width="3.2" stroke-opacity="0.88" filter="url(#frameShadow)"/>
     <rect x="${m2}" y="${m2}" width="${W3 - m2 * 2}" height="${H_GRID - m2 * 2}"
-          fill="none" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.45"/>
+          fill="none" stroke="#ffffff" stroke-width="1.3" stroke-opacity="0.48"/>
     <line x1="${m1 - 12}" y1="${m1}" x2="${m1 + 48}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
     <line x1="${m1}" y1="${m1 - 12}" x2="${m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
     <line x1="${W3 - m1 - 48}" y1="${m1}" x2="${W3 - m1 + 12}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
@@ -1547,7 +1548,7 @@ export async function renderTriptychCovers(entity) {
           font-family="${TITLE_FONT}"
           font-size="560"
           font-weight="700"
-          textLength="2980"
+          textLength="2992"
           lengthAdjust="spacingAndGlyphs"
           fill="#ffffff"
           fill-opacity="0.36"
@@ -1583,23 +1584,33 @@ export async function renderTriptychCovers(entity) {
   const reelGridTopOffset = Math.round((VH - H_GRID) / 2); // 240
 
   // 4:5 Carousel (1080x1350) için Instagram'ın 3:4 profil ızgarasında uyguladığı 1440/1350 (1.06667x) yakınlaştırmayı
-  // sıfırlamak üzere ana 3240x1440 görselden 1152x1440 (tam 4:5) kesip 1080x1350'ye ölçekliyoruz
+  // sıfırlamak üzere ana 3252x1440 görselden 1152x1440 (tam 4:5) kesip 1080x1350'ye ölçekliyoruz
   const wCarouselExtract = Math.round(CAROUSEL_W * (H_GRID / H_CAROUSEL)); // 1152
   const halfExtra = Math.round((wCarouselExtract - CAROUSEL_W) / 2); // 36
+  const m1c = (m1 * H_CAROUSEL / H_GRID).toFixed(2);
+  const m2c = (m2 * H_CAROUSEL / H_GRID).toFixed(2);
+  const crispFrameBoostSvg = `<svg width="${CAROUSEL_W}" height="${H_CAROUSEL}" xmlns="http://www.w3.org/2000/svg">
+    <line x1="0" y1="${m1c}" x2="${CAROUSEL_W}" y2="${m1c}" stroke="${BRAND.gold}" stroke-width="2.6" stroke-opacity="0.42"/>
+    <line x1="0" y1="${(H_CAROUSEL - m1 * H_CAROUSEL / H_GRID).toFixed(2)}" x2="${CAROUSEL_W}" y2="${(H_CAROUSEL - m1 * H_CAROUSEL / H_GRID).toFixed(2)}" stroke="${BRAND.gold}" stroke-width="2.6" stroke-opacity="0.42"/>
+    <line x1="0" y1="${m2c}" x2="${CAROUSEL_W}" y2="${m2c}" stroke="#ffffff" stroke-width="1.1" stroke-opacity="0.22"/>
+    <line x1="0" y1="${(H_CAROUSEL - m2 * H_CAROUSEL / H_GRID).toFixed(2)}" x2="${CAROUSEL_W}" y2="${(H_CAROUSEL - m2 * H_CAROUSEL / H_GRID).toFixed(2)}" stroke="#ffffff" stroke-width="1.1" stroke-opacity="0.22"/>
+  </svg>`;
 
   // 2. Yazı ve dış çerçeve işlendikten sonra görseli kusursuz 3 parçaya böl
   for (let idx = 0; idx < 3; idx++) {
+    const colLeft = idx * (CAROUSEL_W + GAP);
     const panel3x4 = await sharp(masterWide)
-      .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H_GRID })
+      .extract({ left: colLeft, top: 0, width: CAROUSEL_W, height: H_GRID })
       .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
       .toBuffer();
 
     let tile4x5;
     if (idx === 1) {
-      // Orta parça (Carousel Slide 1): 1152x1440 -> 1080x1350 (Instagram 3:4 ızgarasında 0 yakınlaştırma ile x:1080..2160 görünür)
+      // Orta parça (Carousel Slide 1): 1152x1440 -> 1080x1350 + çerçeve renk/parlaklık dengelemesi
       tile4x5 = await sharp(masterWide)
-        .extract({ left: CAROUSEL_W - halfExtra, top: 0, width: wCarouselExtract, height: H_GRID })
-        .resize(CAROUSEL_W, H_CAROUSEL)
+        .extract({ left: colLeft - halfExtra, top: 0, width: wCarouselExtract, height: H_GRID })
+        .resize(CAROUSEL_W, H_CAROUSEL, { kernel: sharp.kernel.lanczos3 })
+        .composite([{ input: Buffer.from(crispFrameBoostSvg) }])
         .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
         .toBuffer();
     } else {
