@@ -1502,17 +1502,65 @@ export async function renderTriptychCovers(entity) {
   const W3 = CAROUSEL_W * 3; // 3240
   const H = CAROUSEL_H;      // 1350
 
-  // 1. 3240x1350 tek parça kesintisiz panoramik zemin ve üst/alt dengeli karartma
+  // 1. 3240x1350 tek parça kesintisiz panoramik zemin
   const wide = await sharp(heroBuf).rotate().resize(W3, H, { fit: 'cover', position: 'centre' }).toBuffer();
-  const topGrad = gradientRect(W3, 260, 0, [[0, '#000', 0.65], [1, '#000', 0]]);
-  const botGrad = gradientRect(W3, H, 580, [[0, '#000', 0], [0.45, '#000', 0.45], [1, '#000', 0.85]]);
-  const scrim = svgDoc(W3, H, topGrad.body + botGrad.body, topGrad.defs + botGrad.defs);
-  const gradedWide = await sharp(wide).composite([{ input: scrim }]).jpeg({ quality: 95, chromaSubsampling: '4:4:4' }).toBuffer();
 
   const splitInfo = splitCollectionNameIntoThree(entity.title);
-  const roleLabels = ['01 • COLLECTION REVEAL', '02 • PRODUCT BREAKDOWN', '03 • DESIGN STORY'];
-  const fullTitleUpper = trUpper(entity.title);
-  const catUpper = trUpper(entity.category || 'KOLEKSİYON');
+  const cleanWord = String(splitInfo.cleanWord || trUpper(entity.title).split(/\s+/)[0] || 'NOVA')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  // ÇERÇEVE: BÜYÜK FOTOĞRAFIN DIŞ KENARLARINA (Yazının etrafına değil)
+  // YAZI: Tek seferde tüm 3240x1350 görseli baştan sona kaplayan hafif şeffaf ama net koleksiyon ismi
+  const m1 = 44;
+  const m2 = 58;
+  const masterSvg = `<svg width="${W3}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="softVignette" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#000000" stop-opacity="0.32"/>
+        <stop offset="25%" stop-color="#000000" stop-opacity="0.08"/>
+        <stop offset="50%" stop-color="#000000" stop-opacity="0.22"/>
+        <stop offset="75%" stop-color="#000000" stop-opacity="0.08"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.38"/>
+      </linearGradient>
+      <filter id="textGlow" x="-10%" y="-10%" width="120%" height="120%">
+        <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.65"/>
+      </filter>
+      <filter id="frameShadow" x="-5%" y="-5%" width="110%" height="110%">
+        <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#000000" flood-opacity="0.7"/>
+      </filter>
+    </defs>
+    <rect width="${W3}" height="${H}" fill="url(#softVignette)"/>
+    <rect x="${m1}" y="${m1}" width="${W3 - m1 * 2}" height="${H - m1 * 2}"
+          fill="none" stroke="${BRAND.gold}" stroke-width="3" stroke-opacity="0.78" filter="url(#frameShadow)"/>
+    <rect x="${m2}" y="${m2}" width="${W3 - m2 * 2}" height="${H - m2 * 2}"
+          fill="none" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.42"/>
+    <line x1="${m1 - 12}" y1="${m1}" x2="${m1 + 48}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${m1}" y1="${m1 - 12}" x2="${m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${W3 - m1 - 48}" y1="${m1}" x2="${W3 - m1 + 12}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${W3 - m1}" y1="${m1 - 12}" x2="${W3 - m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${m1 - 12}" y1="${H - m1}" x2="${m1 + 48}" y2="${H - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${m1}" y1="${H - m1 - 48}" x2="${m1}" y2="${H - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${W3 - m1 - 48}" y1="${H - m1}" x2="${W3 - m1 + 12}" y2="${H - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <line x1="${W3 - m1}" y1="${H - m1 - 48}" x2="${W3 - m1}" y2="${H - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
+    <text x="${W3 / 2}" y="${H / 2 + 195}"
+          text-anchor="middle"
+          font-family="${TITLE_FONT}"
+          font-size="560"
+          font-weight="700"
+          textLength="2980"
+          lengthAdjust="spacingAndGlyphs"
+          fill="#ffffff"
+          fill-opacity="0.36"
+          stroke="#ffffff"
+          stroke-width="4"
+          stroke-opacity="0.72"
+          filter="url(#textGlow)">${cleanWord}</text>
+  </svg>`;
+
+  const masterWide = await sharp(wide)
+    .composite([{ input: Buffer.from(masterSvg) }])
+    .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+    .toBuffer();
 
   const tiles4x5 = [];
   const tiles9x16 = [];
@@ -1526,62 +1574,18 @@ export async function renderTriptychCovers(entity) {
     .jpeg({ quality: 90 })
     .toBuffer();
 
+  // 2. Yazı ve dış çerçeve işlendikten sonra görseli kusursuz 3 eşit parçaya böl
   for (let idx = 0; idx < 3; idx++) {
-    const rawSlice = await sharp(gradedWide)
+    const tile4x5 = await sharp(masterWide)
       .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H })
-      .toBuffer();
-
-    const syllable = (splitInfo.parts[idx] || '').trim();
-    const roleTag = roleLabels[idx];
-    const fontSize = syllable.length <= 2 ? 520 : syllable.length === 3 ? 420 : 330;
-
-    let body = '';
-    // 1. DEV ŞEFFAF FİLİGRAN TİPOGRAFİ (Görseli boğmayan dev mimari harfler, çizgisiz/tiresiz)
-    body += `<text x="${CAROUSEL_W / 2}" y="${H / 2 + 130}"
-      text-anchor="middle"
-      font-family="${TITLE_FONT}"
-      font-size="${fontSize}"
-      font-weight="800"
-      letter-spacing="16"
-      fill="#ffffff"
-      fill-opacity="0.15"
-      stroke="#ffffff"
-      stroke-width="2.5"
-      stroke-opacity="0.22">${syllable}</text>`;
-
-    // 2. ÜST MARKA & BÖLÜM BİLGİSİ (HER ZAMAN NOVA FURNITURE)
-    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 8, opacity: 0.95, shadow: true });
-    body += textEl({ x: CAROUSEL_W - 64, y: 88, text: roleTag, size: 20, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
-    body += `<rect x="64" y="108" width="${CAROUSEL_W - 128}" height="1.5" fill="${BRAND.gold}" fill-opacity="0.5"/>`;
-
-    // 3. ALT BİLGİ VE EDİTÖRYAL BAŞLIK
-    body += textEl({ x: CAROUSEL_W / 2, y: H - 126, text: catUpper, size: 22, weight: 600, fill: BRAND.gold, anchor: 'middle', spacing: 7, shadow: true });
-    body += textEl({ x: CAROUSEL_W / 2, y: H - 74, text: fullTitleUpper, size: 36, font: TITLE_FONT, weight: 700, fill: '#ffffff', anchor: 'middle', spacing: 4, shadow: true });
-    body += `<rect x="${CAROUSEL_W / 2 - 50}" y="${H - 52}" width="100" height="2" fill="${BRAND.gold}" fill-opacity="0.85"/>`;
-    body += textEl({
-      x: CAROUSEL_W / 2,
-      y: H - 26,
-      text: `${splitInfo.formatted}  |  BÖLÜM ${idx + 1}/3`,
-      size: 18,
-      weight: 600,
-      fill: '#e2e8f0',
-      anchor: 'middle',
-      spacing: 5,
-      shadow: true
-    });
-
-    const tile4x5 = await sharp(rawSlice)
-      .composite([{ input: svgDoc(CAROUSEL_W, H, body, SHADOW_DEF) }])
-      .jpeg({ quality: 94, chromaSubsampling: '4:4:4' })
+      .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
       .toBuffer();
 
     tiles4x5.push(tile4x5);
 
-    // 9:16 Reels kapağı: 1080x1350 karoyu tam dikey merkeze (top: 285) yerleştirir
-    // Instagram profil ızgarası 9:16 Reels kapaklarının tam merkez 1080x1350 (y=285..1635) bölgesini kırpar!
     const tile9x16 = await sharp(blurredBg9x16)
       .composite([{ input: tile4x5, top: Math.round((VH - H) / 2), left: 0 }])
-      .jpeg({ quality: 94, chromaSubsampling: '4:4:4' })
+      .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
       .toBuffer();
 
     tiles9x16.push(tile9x16);
@@ -1599,52 +1603,49 @@ export async function renderTriptychCovers(entity) {
 }
 
 /**
- * POST 02 — PRODUCT BREAKDOWN (Instagram Carousel | Merkez 2/3 Kapak)
- * Slayt 1: Merkez 2/3 Triptych Kapak (Örn: -GA-)
- * Slayt 2: Koleksiyon Genel Sunum & Parça Özeti
- * Slayt 3..N: Her bir alt ürünün kendi doğrulanmış fotoğrafı, türü/adı ve doğrulanmış ölçüleri
+ * POST 02 — PRODUCT BREAKDOWN (Instagram Carousel)
+ * Slayt 1: Koleksiyon Genel Sunum & Parça Özeti (Boş GA thumbnail sayfası konulmaz!)
+ * Slayt 2..N: Her bir alt ürünün kendi doğrulanmış fotoğrafı, türü/adı ve doğrulanmış ölçüleri
  * Son Slayt: Koleksiyon Genel Özellikleri & İletişim Kartı
  */
 export async function renderCollectionPost02Breakdown(entity, triptych = null) {
   const sharp = await getSharp();
-  const covers = triptych || await renderTriptychCovers(entity);
   const slides = [];
-
-  // Slayt 1: Merkez 2/3 Triptych Kapak (Instagram 3'lü Grid'in tam orta karesi)
-  slides.push(covers.center4x5);
 
   const pieces = (entity.pieces || []).filter(p => p.imageUrl && p.presentation !== 'video_only' && p.presentation !== 'hidden');
   const heroBuf = await loadImage(entity.heroUrl);
 
-  // Slayt 2: Koleksiyon Tanıtım & İçerik Özeti Slaytı
+  // Slayt 1: Dijital Koleksiyon Kataloğu Editoryal Kapak Slaytı (Triptych Center Dilimi + Dergi Mizanpajı)
   {
     const W = CAROUSEL_W, H = CAROUSEL_H;
-    const baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
-    const grad = gradientRect(W, H, 350, [[0, '#000', 0.15], [0.5, '#000', 0.68], [1, '#000', 0.92]]);
-    const topG = gradientRect(W, 240, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
-    let body = topG.body + grad.body;
-    body += textEl({ x: 64, y: 88, text: BRAND.name, size: 24, weight: 700, spacing: 7, shadow: true });
-    body += textEl({ x: W - 64, y: 88, text: `DİJİTAL KATALOG • ${pieces.length} ALT ÜRÜN`, size: 22, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
-    body += textEl({ x: 64, y: 780, text: trUpper(entity.category || 'KOLEKSİYON'), size: 26, weight: 700, fill: BRAND.gold, spacing: 7, shadow: true });
-    body += textEl({ x: 64, y: 848, text: trUpper(entity.title), size: 58, font: TITLE_FONT, weight: 700, fill: '#fff', spacing: 3, shadow: true });
-    body += `<rect x="64" y="876" width="110" height="3" fill="${BRAND.gold}"/>`;
-
-    let py = 930;
-    body += textEl({ x: 64, y: py, text: 'KOLEKSİYON İÇERİĞİ:', size: 24, weight: 700, fill: BRAND.gold, spacing: 4 });
-    py += 42;
-    for (const pc of pieces.slice(0, 6)) {
-      const rawD = clean(pc.dimensions || '');
-      const mSlash = rawD.match(/^(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*\/\s*(\d+(?:[.,]\d+)?)\s*(?:cm)?$/i);
-      const compactD = mSlash ? `${mSlash[1]} × ${mSlash[2]} × ${mSlash[3]} cm` : (detailLines(rawD, 1)[0] || '');
-      const rowTxt = `• ${pc.title}${compactD ? '  —  ' + compactD : ''}`;
-      for (const ln of wrapText(rowTxt, 68, 1)) {
-        body += textEl({ x: 68, y: py, text: ln, size: 26, weight: 600, fill: '#f1f5f9', shadow: true });
-        py += 38;
-      }
+    let baseImg;
+    if (triptych && triptych.center4x5) {
+      baseImg = triptych.center4x5;
+    } else {
+      baseImg = await sharp(heroBuf).rotate().resize(W, H, { fit: 'cover', position: 'centre' }).toBuffer();
     }
-    body += textEl({ x: W - 64, y: H - 52, text: 'ÜRÜNLER İÇİN KAYDIRIN  →', size: 22, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4 });
-    const introSlide = await sharp(baseImg).composite([{ input: svgDoc(W, H, body, topG.defs + grad.defs + SHADOW_DEF) }]).jpeg({ quality: 93, chromaSubsampling: '4:4:4' }).toBuffer();
-    slides.push(introSlide);
+    const topG = gradientRect(W, 280, 0, [[0, '#000', 0.8], [0.6, '#000', 0.35], [1, '#000', 0]]);
+    const botG = gradientRect(W, 420, H - 420, [[0, '#000', 0], [0.3, '#000', 0.45], [0.7, '#000', 0.82], [1, '#000', 0.95]]);
+    
+    let body = topG.body + botG.body;
+    body += textEl({ x: 80, y: 175, text: BRAND.name, size: 24, weight: 800, spacing: 7, shadow: true });
+    body += textEl({ x: W - 80, y: 175, text: 'DİJİTAL KATALOG • 01', size: 20, weight: 700, fill: BRAND.gold, anchor: 'end', spacing: 4, shadow: true });
+    body += `<line x1="80" y1="195" x2="${W - 80}" y2="195" stroke="${BRAND.gold}" stroke-width="1.5" stroke-opacity="0.6"/>`;
+
+    body += textEl({ x: W / 2, y: 1025, text: trUpper(entity.category ? `${entity.category} KOLEKSİYONU` : 'KOLEKSİYON DETAYLARI & ÖLÇÜLER'), size: 22, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 7, shadow: true });
+    body += textEl({ x: W / 2, y: 1068, text: `${pieces.length} Farklı Modül • Teknik Çizimler • İç Hacim`, size: 26, weight: 600, fill: '#f8fafc', anchor: 'middle', spacing: 3, shadow: true });
+
+    body += `<g transform="translate(${W / 2 - 240}, 1105)">
+      <rect x="0" y="0" width="480" height="52" rx="26" fill="rgba(201,162,75,0.22)" stroke="${BRAND.gold}" stroke-width="2"/>
+      <text x="240" y="33" text-anchor="middle" font-family="${FONT}" font-size="21" font-weight="700" letter-spacing="4" fill="#ffffff">KATALOĞU İNCELEMEK İÇİN KAYDIRIN  →</text>
+    </g>`;
+    body += textEl({ x: W / 2, y: 1195, text: BRAND.website, size: 18, weight: 500, fill: '#94a3b8', anchor: 'middle', spacing: 4, shadow: true });
+
+    const magazineCover = await sharp(baseImg)
+      .composite([{ input: svgDoc(W, H, body, topG.defs + botG.defs + SHADOW_DEF) }])
+      .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+      .toBuffer();
+    slides.push(magazineCover);
   }
 
   // Slayt 3..N: Alt Ürün Katalog Kartları (maksimum 7 parça slaytı -> toplam max 10 slayt)
