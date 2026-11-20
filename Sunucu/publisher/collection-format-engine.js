@@ -1500,27 +1500,27 @@ export async function renderTriptychCovers(entity) {
   if (!entity.heroUrl) throw new Error(`"${entity.title}" koleksiyonunun ana tanıtım görseli eksik.`);
   const heroBuf = await loadImage(entity.heroUrl);
   const W3 = CAROUSEL_W * 3; // 3240
-  const H = CAROUSEL_H;      // 1350
+  const H_GRID = 1440;       // Instagram 3:4 profil ızgara hücresi yüksekliği (1080x1440)
+  const H_CAROUSEL = CAROUSEL_H; // 1350 (4:5 Carousel slayt yüksekliği)
 
-  // 1. 3240x1350 tek parça kesintisiz panoramik zemin
-  const wide = await sharp(heroBuf).rotate().resize(W3, H, { fit: 'cover', position: 'centre' }).toBuffer();
+  // 1. 3240x1440 tek parça kesintisiz panoramik zemin (3 adet 1080x1440 3:4 ızgara hücresi)
+  const wide = await sharp(heroBuf).rotate().resize(W3, H_GRID, { fit: 'cover', position: 'centre' }).toBuffer();
 
   const splitInfo = splitCollectionNameIntoThree(entity.title);
   const cleanWord = String(splitInfo.cleanWord || trUpper(entity.title).split(/\s+/)[0] || 'NOVA')
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   // ÇERÇEVE: BÜYÜK FOTOĞRAFIN DIŞ KENARLARINA (Yazının etrafına değil)
-  // YAZI: Tek seferde tüm 3240x1350 görseli baştan sona kaplayan hafif şeffaf ama net koleksiyon ismi
+  // YAZI: Tek seferde tüm 3240x1440 görseli baştan sona kaplayan hafif şeffaf ama net koleksiyon ismi
   const m1 = 44;
   const m2 = 58;
-  const masterSvg = `<svg width="${W3}" height="${H}" xmlns="http://www.w3.org/2000/svg">
+  const masterSvg = `<svg width="${W3}" height="${H_GRID}" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="softVignette" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#000000" stop-opacity="0.32"/>
-        <stop offset="25%" stop-color="#000000" stop-opacity="0.08"/>
-        <stop offset="50%" stop-color="#000000" stop-opacity="0.22"/>
-        <stop offset="75%" stop-color="#000000" stop-opacity="0.08"/>
-        <stop offset="100%" stop-color="#000000" stop-opacity="0.38"/>
+        <stop offset="0%" stop-color="#000000" stop-opacity="0.30"/>
+        <stop offset="30%" stop-color="#000000" stop-opacity="0.05"/>
+        <stop offset="70%" stop-color="#000000" stop-opacity="0.05"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.35"/>
       </linearGradient>
       <filter id="textGlow" x="-10%" y="-10%" width="120%" height="120%">
         <feDropShadow dx="0" dy="6" stdDeviation="12" flood-color="#000000" flood-opacity="0.65"/>
@@ -1529,20 +1529,20 @@ export async function renderTriptychCovers(entity) {
         <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="#000000" flood-opacity="0.7"/>
       </filter>
     </defs>
-    <rect width="${W3}" height="${H}" fill="url(#softVignette)"/>
-    <rect x="${m1}" y="${m1}" width="${W3 - m1 * 2}" height="${H - m1 * 2}"
-          fill="none" stroke="${BRAND.gold}" stroke-width="3" stroke-opacity="0.78" filter="url(#frameShadow)"/>
-    <rect x="${m2}" y="${m2}" width="${W3 - m2 * 2}" height="${H - m2 * 2}"
-          fill="none" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.42"/>
-    <line x1="${m1 - 12}" y1="${m1}" x2="${m1 + 48}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${m1}" y1="${m1 - 12}" x2="${m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${W3 - m1 - 48}" y1="${m1}" x2="${W3 - m1 + 12}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${W3 - m1}" y1="${m1 - 12}" x2="${W3 - m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${m1 - 12}" y1="${H - m1}" x2="${m1 + 48}" y2="${H - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${m1}" y1="${H - m1 - 48}" x2="${m1}" y2="${H - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${W3 - m1 - 48}" y1="${H - m1}" x2="${W3 - m1 + 12}" y2="${H - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <line x1="${W3 - m1}" y1="${H - m1 - 48}" x2="${W3 - m1}" y2="${H - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.9"/>
-    <text x="${W3 / 2}" y="${H / 2 + 195}"
+    <rect width="${W3}" height="${H_GRID}" fill="url(#softVignette)"/>
+    <rect x="${m1}" y="${m1}" width="${W3 - m1 * 2}" height="${H_GRID - m1 * 2}"
+          fill="none" stroke="${BRAND.gold}" stroke-width="3" stroke-opacity="0.85" filter="url(#frameShadow)"/>
+    <rect x="${m2}" y="${m2}" width="${W3 - m2 * 2}" height="${H_GRID - m2 * 2}"
+          fill="none" stroke="#ffffff" stroke-width="1.2" stroke-opacity="0.45"/>
+    <line x1="${m1 - 12}" y1="${m1}" x2="${m1 + 48}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${m1}" y1="${m1 - 12}" x2="${m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${W3 - m1 - 48}" y1="${m1}" x2="${W3 - m1 + 12}" y2="${m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${W3 - m1}" y1="${m1 - 12}" x2="${W3 - m1}" y2="${m1 + 48}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${m1 - 12}" y1="${H_GRID - m1}" x2="${m1 + 48}" y2="${H_GRID - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${m1}" y1="${H_GRID - m1 - 48}" x2="${m1}" y2="${H_GRID - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${W3 - m1 - 48}" y1="${H_GRID - m1}" x2="${W3 - m1 + 12}" y2="${H_GRID - m1}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <line x1="${W3 - m1}" y1="${H_GRID - m1 - 48}" x2="${W3 - m1}" y2="${H_GRID - m1 + 12}" stroke="${BRAND.gold}" stroke-width="4.5" stroke-opacity="0.95"/>
+    <text x="${W3 / 2}" y="${H_GRID / 2 + 195}"
           text-anchor="middle"
           font-family="${TITLE_FONT}"
           font-size="560"
@@ -1557,9 +1557,9 @@ export async function renderTriptychCovers(entity) {
           filter="url(#textGlow)">${cleanWord}</text>
 
     <!-- Orta Gönderi İçin Editoryal Dijital Katalog Rehberi (Çerçeveyi ve ışığı bozmadan tek parçada işlenir) -->
-    <text x="${W3 / 2}" y="175" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="22" font-weight="800" letter-spacing="8" fill="#ffffff" filter="url(#textGlow)">${BRAND.name}</text>
-    <text x="${W3 / 2}" y="1120" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="20" font-weight="700" letter-spacing="6" fill="${BRAND.gold}" filter="url(#textGlow)">DİJİTAL KOLEKSİYON KATALOĞU</text>
-    <text x="${W3 / 2}" y="1165" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="18" font-weight="600" letter-spacing="4" fill="#ffffff" filter="url(#textGlow)">ÖLÇÜLER &amp; MODÜLLER İÇİN KAYDIRIN  →</text>
+    <text x="${W3 / 2}" y="185" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="22" font-weight="800" letter-spacing="8" fill="#ffffff" filter="url(#textGlow)">${BRAND.name}</text>
+    <text x="${W3 / 2}" y="1195" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="20" font-weight="700" letter-spacing="6" fill="${BRAND.gold}" filter="url(#textGlow)">DİJİTAL KOLEKSİYON KATALOĞU</text>
+    <text x="${W3 / 2}" y="1240" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="18" font-weight="600" letter-spacing="4" fill="#ffffff" filter="url(#textGlow)">ÖLÇÜLER &amp; MODÜLLER İÇİN KAYDIRIN  →</text>
   </svg>`;
 
   const masterWide = await sharp(wide)
@@ -1579,21 +1579,41 @@ export async function renderTriptychCovers(entity) {
     .jpeg({ quality: 90 })
     .toBuffer();
 
-  // Reels profil ızgarasında dikey hizalamanın 4:5 Carousel ile birebir örtüşmesi için +12px offset
-  const reelGridTopOffset = Math.round((VH - H) / 2) + 12;
+  // Reels 9:16 kapaklarında 1080x1440 (3:4) dilim tam merkeze (top = (1920 - 1440)/2 = 240) yerleştirilir
+  const reelGridTopOffset = Math.round((VH - H_GRID) / 2); // 240
 
-  // 2. Yazı ve dış çerçeve işlendikten sonra görseli kusursuz 3 eşit parçaya böl
+  // 4:5 Carousel (1080x1350) için Instagram'ın 3:4 profil ızgarasında uyguladığı 1440/1350 (1.06667x) yakınlaştırmayı
+  // sıfırlamak üzere ana 3240x1440 görselden 1152x1440 (tam 4:5) kesip 1080x1350'ye ölçekliyoruz
+  const wCarouselExtract = Math.round(CAROUSEL_W * (H_GRID / H_CAROUSEL)); // 1152
+  const halfExtra = Math.round((wCarouselExtract - CAROUSEL_W) / 2); // 36
+
+  // 2. Yazı ve dış çerçeve işlendikten sonra görseli kusursuz 3 parçaya böl
   for (let idx = 0; idx < 3; idx++) {
-    const tile4x5 = await sharp(masterWide)
-      .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H })
+    const panel3x4 = await sharp(masterWide)
+      .extract({ left: idx * CAROUSEL_W, top: 0, width: CAROUSEL_W, height: H_GRID })
       .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
       .toBuffer();
+
+    let tile4x5;
+    if (idx === 1) {
+      // Orta parça (Carousel Slide 1): 1152x1440 -> 1080x1350 (Instagram 3:4 ızgarasında 0 yakınlaştırma ile x:1080..2160 görünür)
+      tile4x5 = await sharp(masterWide)
+        .extract({ left: CAROUSEL_W - halfExtra, top: 0, width: wCarouselExtract, height: H_GRID })
+        .resize(CAROUSEL_W, H_CAROUSEL)
+        .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+        .toBuffer();
+    } else {
+      tile4x5 = await sharp(panel3x4)
+        .resize(CAROUSEL_W, H_CAROUSEL, { fit: 'cover', position: 'centre' })
+        .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
+        .toBuffer();
+    }
 
     tiles4x5.push(tile4x5);
 
     const tile9x16 = await sharp(blurredBg9x16)
-      .composite([{ input: tile4x5, top: reelGridTopOffset, left: 0 }])
-      .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
+      .composite([{ input: panel3x4, top: reelGridTopOffset, left: 0 }])
+      .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
       .toBuffer();
 
     tiles9x16.push(tile9x16);
