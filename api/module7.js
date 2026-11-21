@@ -1446,11 +1446,26 @@ async function handleTelemetryHealth(req, res) {
 
 async function handleProductAnalytics(req, res) {
   await authenticateRoles(req, ['admin', 'viewer', 'sales', 'social_media']);
-  const [posthog, crmStoreRows] = await Promise.all([
+  const [posthog, crmStoreRows, extStore, prodsRes, threeDRows, queueRows] = await Promise.all([
     fetchPostHogAnalyticsSummary(),
-    supabase('/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1', SERVICE_KEY).catch(() => [])
+    supabase('/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1', SERVICE_KEY).catch(() => []),
+    readExtendedCatalogStore(),
+    supabase('/rest/v1/products?select=slug,kategori', SERVICE_KEY || ANON_KEY).catch(() => []),
+    supabase('/rest/v1/three_d_assets?select=id', SERVICE_KEY || ANON_KEY).catch(() => []),
+    supabase('/rest/v1/social_publish_queue?select=status,platform,created_at&order=created_at.desc&limit=200', SERVICE_KEY || ANON_KEY).catch(() => [])
   ]);
+
   const crmStore = Array.isArray(crmStoreRows) && crmStoreRows[0]?.data ? crmStoreRows[0].data : { customers: [], quotes: [] };
+  const qRows = Array.isArray(queueRows) ? queueRows : [];
+  const socialByStatus = { published: 0, pending: 0, processing: 0, failed: 0 };
+  const socialByPlatform = { instagram: 0, facebook: 0, tiktok: 0, youtube: 0 };
+  for (const r of qRows) {
+    const st = String(r.status || '').toLowerCase();
+    if (socialByStatus[st] !== undefined) socialByStatus[st]++;
+    const pl = String(r.platform || '').toLowerCase();
+    if (socialByPlatform[pl] !== undefined) socialByPlatform[pl]++;
+  }
+
   return res.status(200).json({
     ok: true,
     checkedAt: new Date().toISOString(),
@@ -1458,7 +1473,18 @@ async function handleProductAnalytics(req, res) {
     crmSummary: {
       totalB2CCustomers: Array.isArray(crmStore.customers) ? crmStore.customers.length : 0,
       totalQuotes: Array.isArray(crmStore.quotes) ? crmStore.quotes.length : 0,
-      latestQuotes: (crmStore.quotes || []).slice(0, 8)
+      latestQuotes: (crmStore.quotes || []).slice(0, 8),
+      latestCustomers: (crmStore.customers || []).slice(0, 8)
+    },
+    catalogSummary: {
+      totalCollections: Array.isArray(extStore?.collections) ? extStore.collections.length : 0,
+      totalProducts: Array.isArray(prodsRes) ? prodsRes.length : 0,
+      total3DModels: Array.isArray(threeDRows) ? threeDRows.length : 0
+    },
+    socialSummary: {
+      totalSampled: qRows.length,
+      byStatus: socialByStatus,
+      byPlatform: socialByPlatform
     }
   });
 }

@@ -5,7 +5,7 @@
 // ============================================================================
 
 import crypto from 'node:crypto';
-import { headR2Object } from './r2-storage.js';
+import { headR2Object, listR2Objects } from './r2-storage.js';
 
 export const SENTRY_ORG_SLUG = (process.env.SENTRY_ORG_SLUG || 'global-kapak-mobilya').trim();
 export const SENTRY_API_BASE = (process.env.SENTRY_API_BASE || 'https://de.sentry.io/api/0').replace(/\/+$/, '');
@@ -386,7 +386,7 @@ export async function fetchPostHogAnalyticsSummary() {
 
 /**
  * ERP Modül 5 (Altyapı Sağlık Monitörü) için birleşik canlı telemetri fotoğrafı:
- * Sentry + Supabase PostgreSQL Kuyruk Derinliği + Cloudflare R2 + DigitalOcean Worker Heartbeat
+ * Clerk Production + Cloudflare R2 & Custom CDN + Supabase PostgreSQL + Sentry EU + PostHog EU + Vercel
  */
 export async function fetchInfraHealthSnapshot() {
   const startedAt = Date.now();
@@ -394,16 +394,71 @@ export async function fetchInfraHealthSnapshot() {
     apikey: SUPABASE_SERVICE_KEY,
     Authorization: `Bearer ${SUPABASE_SERVICE_KEY}`
   };
+  const clerkSecret = (process.env.CLERK_SECRET_KEY || '').trim();
+  const clerkOrgId = (process.env.CLERK_ORG_ID || 'org_3MQEn3zykDenqO7WuKDpWfKDInY').trim();
+  const rawCdnBase = (process.env.R2_PUBLIC_BASE_URL || '').trim().replace(/\/+$/, '');
+  const cdnBase = (rawCdnBase && !rawCdnBase.includes('.r2.cloudflarestorage.com'))
+    ? rawCdnBase
+    : 'https://cdn.globalkapakmobilya.com';
 
-  const [sentry, r2Probe, queueProbe, hbProbe] = await Promise.all([
+  const [sentry, posthog, clerkProbe, r2Probe, queueProbe, dbCountsProbe] = await Promise.all([
     fetchSentryTelemetrySummary(),
+    fetchPostHogAnalyticsSummary(),
+    (async () => {
+      const t = Date.now();
+      if (!clerkSecret) {
+        return { ok: false, configured: false, latencyMs: 0, orgId: clerkOrgId, orgName: 'Global Kapak Mobilya', memberCount: 0, webhookEndpoint: '/api/webhooks/clerk' };
+      }
+      try {
+        const [orgRes, memRes] = await Promise.all([
+          fetch(`https://api.clerk.com/v1/organizations/${clerkOrgId}`, { headers: { Authorization: `Bearer ${clerkSecret}` } }),
+          fetch(`https://api.clerk.com/v1/organizations/${clerkOrgId}/memberships?limit=50`, { headers: { Authorization: `Bearer ${clerkSecret}` } })
+        ]);
+        const orgData = orgRes.ok ? await orgRes.json().catch(() => null) : null;
+        const memData = memRes.ok ? await memRes.json().catch(() => null) : null;
+        const members = Array.isArray(memData?.data) ? memData.data : [];
+        const deptDist = { admin: 0, factory: 0, sales: 0, social_media: 0, viewer: 0 };
+        for (const m of members) {
+          const d = String(m?.public_user_data?.public_metadata?.department || m?.public_metadata?.department || (m?.role === 'org:admin' ? 'admin' : 'viewer')).toLowerCase();
+          if (deptDist[d] !== undefined) deptDist[d]++;
+        }
+        return {
+          ok: orgRes.ok,
+          configured: true,
+          latencyMs: Date.now() - t,
+          orgId: clerkOrgId,
+          orgName: orgData?.name || 'Global Kapak Mobilya',
+          memberCount: members.length,
+          departments: deptDist,
+          webhookEndpoint: '/api/webhooks/clerk',
+          domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com']
+        };
+      } catch (e) {
+        return { ok: false, configured: true, latencyMs: Date.now() - t, orgId: clerkOrgId, error: e.message };
+      }
+    })(),
     (async () => {
       const t = Date.now();
       try {
-        const hd = await headR2Object('healthcheck/r2-adapter-verify.txt');
-        return { ok: true, exists: hd.exists, latencyMs: Date.now() - t, bucket: 'globalkapak-medya' };
+        const [hd, cdnRes, prodObjs, musicObjs] = await Promise.all([
+          headR2Object('healthcheck/r2-adapter-verify.txt'),
+          fetch(`${cdnBase}/healthcheck/r2-adapter-verify.txt`, { method: 'HEAD' }).catch(() => null),
+          listR2Objects('products/', 200).catch(() => []),
+          listR2Objects('music-library/', 100).catch(() => [])
+        ]);
+        return {
+          ok: true,
+          exists: hd.exists,
+          cdnOk: Boolean(cdnRes && cdnRes.ok),
+          cdnStatus: cdnRes ? cdnRes.status : 0,
+          cdnDomain: cdnBase,
+          latencyMs: Date.now() - t,
+          bucket: 'globalkapak-medya',
+          productObjectCount: prodObjs.length,
+          musicObjectCount: musicObjs.length
+        };
       } catch (e) {
-        return { ok: false, latencyMs: Date.now() - t, error: e.message, bucket: 'globalkapak-medya' };
+        return { ok: false, cdnOk: false, cdnDomain: cdnBase, latencyMs: Date.now() - t, error: e.message, bucket: 'globalkapak-medya' };
       }
     })(),
     (async () => {
@@ -413,48 +468,77 @@ export async function fetchInfraHealthSnapshot() {
         const res = await fetch(`${SUPABASE_URL}/rest/v1/social_publish_queue?select=status,platform,updated_at&order=updated_at.desc&limit=100`, { headers: sbHeaders });
         const rows = res.ok ? await res.json().catch(() => []) : [];
         const counts = { pending: 0, processing: 0, published: 0, failed: 0 };
+        const platforms = { instagram: 0, facebook: 0, tiktok: 0, youtube: 0 };
         for (const r of (Array.isArray(rows) ? rows : [])) {
           const st = String(r.status || '').toLowerCase();
           if (counts[st] !== undefined) counts[st]++;
+          const pl = String(r.platform || '').toLowerCase();
+          if (platforms[pl] !== undefined) platforms[pl]++;
         }
-        return { ok: res.ok, latencyMs: Date.now() - t, counts, totalSampled: rows.length };
+        return { ok: res.ok, latencyMs: Date.now() - t, counts, platforms, totalSampled: rows.length };
       } catch (e) {
         return { ok: false, latencyMs: Date.now() - t, error: e.message, counts: {} };
       }
     })(),
     (async () => {
-      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return null;
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return { products: 0, collections: 0, crmCustomers: 0, threeDModels: 0 };
       try {
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.do_worker_heartbeat&select=data,updated_at&limit=1`, { headers: sbHeaders });
-        const rows = res.ok ? await res.json().catch(() => []) : [];
-        return rows?.[0]?.data ? { ...rows[0].data, updated_at: rows[0].updated_at } : null;
+        const [prodsRes, extRes, crmRes, tdRes] = await Promise.all([
+          fetch(`${SUPABASE_URL}/rest/v1/products?select=slug`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.module7_extended_catalog&select=data&limit=1`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/three_d_assets?select=id`, { headers: sbHeaders })
+        ]);
+        const prods = prodsRes.ok ? await prodsRes.json().catch(() => []) : [];
+        const ext = extRes.ok ? await extRes.json().catch(() => []) : [];
+        const crm = crmRes.ok ? await crmRes.json().catch(() => []) : [];
+        const td = tdRes.ok ? await tdRes.json().catch(() => []) : [];
+        return {
+          products: Array.isArray(prods) ? prods.length : 0,
+          collections: Array.isArray(ext?.[0]?.data?.collections) ? ext[0].data.collections.length : 0,
+          crmCustomers: Array.isArray(crm?.[0]?.data?.customers) ? crm[0].data.customers.length : 0,
+          crmQuotes: Array.isArray(crm?.[0]?.data?.quotes) ? crm[0].data.quotes.length : 0,
+          threeDModels: Array.isArray(td) ? td.length : 0
+        };
       } catch (_) {
-        return null;
+        return { products: 0, collections: 0, crmCustomers: 0, crmQuotes: 0, threeDModels: 0 };
       }
     })()
   ]);
-
-  const hbAgeSec = hbProbe?.timestamp
-    ? Math.max(0, Math.round((Date.now() - new Date(hbProbe.timestamp).getTime()) / 1000))
-    : null;
 
   return {
     ok: true,
     checkedAt: new Date().toISOString(),
     totalCheckMs: Date.now() - startedAt,
-    architecture: 'DigitalOcean Single-Server Orchestrator & Worker + Vercel Edge + Cloudflare R2 + Supabase PostgreSQL + Clerk',
+    architecture: 'Clerk Production + Supabase PostgreSQL + Cloudflare R2 CDN + Sentry EU + PostHog EU + Vercel Edge & Cron',
     services: {
-      sentry,
+      clerk: clerkProbe,
       cloudflareR2: r2Probe,
       supabaseQueue: queueProbe,
-      digitalOceanWorker: {
-        host: '104.248.20.228',
-        online: hbAgeSec !== null ? hbAgeSec < 300 : false,
-        lastHeartbeatAt: hbProbe?.timestamp || null,
-        ageSeconds: hbAgeSec,
-        workerId: hbProbe?.worker_id || 'do-nova-publisher',
-        lastCycleStatus: hbProbe?.status || 'idle',
-        details: hbProbe || null
+      supabaseDb: {
+        ok: queueProbe.ok,
+        latencyMs: queueProbe.latencyMs,
+        activeTables: 17,
+        storageDisabled: true,
+        authDisabled: true,
+        ...dbCountsProbe
+      },
+      sentry,
+      posthog: {
+        ok: posthog.ok,
+        latencyMs: posthog.latencyMs,
+        projectId: posthog.projectId,
+        host: posthog.host,
+        totalEvents30d: posthog.summary?.totalEvents30d || 0,
+        uniqueVisitors30d: posthog.summary?.uniqueVisitors30d || 0
+      },
+      vercel: {
+        ok: true,
+        region: process.env.VERCEL_REGION || 'fra1',
+        env: process.env.VERCEL_ENV || 'production',
+        domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com'],
+        serverlessFunctions: 12,
+        cronActive: true
       }
     }
   };
