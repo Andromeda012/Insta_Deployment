@@ -1109,10 +1109,12 @@
           : `${videoTitle}\n1. sınıf 18mm E1 MDF gövde ve CNC membran işçiliği.\n📲 WhatsApp: 0 505 015 1035`;
 
         let queuedJob = null;
-        if (sb?.auth) {
-          const { data: sessionData } = await sb.auth.getSession();
-          const token = sessionData?.session?.access_token;
-          if (token) {
+        let token = sessionStorage.getItem('gm_clerk_jwt') || '';
+        if (!token) {
+          try { token = JSON.parse(sessionStorage.getItem('gm_central_auth_v1') || localStorage.getItem('gm_central_auth_v1') || '{}').access_token || ''; } catch (_) {}
+        }
+        if (token) {
+          {
             const res = await fetch('/api/module2-enqueue', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },

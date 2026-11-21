@@ -4154,25 +4154,26 @@ function removeSelectedImage() {
 
 let module1CmsUser = null;
 function setCmsAuthError(message) { const el=document.getElementById('cmsAuthError'); if(el) el.textContent=message||''; }
-function showCmsAuthGate(message) {
-  const gate=document.getElementById('cmsAuthGate'); if(gate) gate.style.display='flex';
-  ['cmsDraftsButton','cmsSignOutButton','cmsUserBadge'].forEach(id=>{const el=document.getElementById(id);if(el)el.style.display='none';});
-  if(message) setCmsAuthError(message);
+function showCmsAuthGate() {
+  const gate=document.getElementById('cmsAuthGate'); if(gate) gate.style.display='none';
+  if(window.self===window.top) window.location.replace('/index.html');
 }
 function hideCmsAuthGate(user) {
   module1CmsUser=user; const gate=document.getElementById('cmsAuthGate'); if(gate)gate.style.display='none';
   const drafts=document.getElementById('cmsDraftsButton'); if(drafts)drafts.style.display='inline-flex';
   const out=document.getElementById('cmsSignOutButton'); if(out)out.style.display='inline-flex';
-  const badge=document.getElementById('cmsUserBadge'); if(badge){badge.textContent=user.email||'Yetkili kullanıcı';badge.style.display='inline';}
+  const badge=document.getElementById('cmsUserBadge'); if(badge){badge.textContent=user?.email||user?.username||'Yetkili kullanıcı';badge.style.display='inline';}
 }
 async function initializeModule1CmsAuth() {
-  if(!isSupabaseReady()) return false;
   window.module1SupabaseClient=supabaseClient;
   try {
-    const {data,error}=await supabaseClient.auth.getSession(); if(error) throw error;
-    const user=data?.session?.user; const meta=user?.app_metadata||{}; const roles=Array.isArray(meta.roles)?meta.roles:(meta.role?[meta.role]:[]);
-    if(user && roles.some(role=>['admin','content_manager'].includes(role))){
-      hideCmsAuthGate(user);
+    const rawProfile = sessionStorage.getItem('gm_clerk_profile');
+    const profile = rawProfile ? JSON.parse(rawProfile) : null;
+    const token = sessionStorage.getItem('gm_clerk_jwt') || (() => {
+      try { return JSON.parse(sessionStorage.getItem('gm_central_auth_v1') || localStorage.getItem('gm_central_auth_v1') || '{}').access_token || ''; } catch(_) { return ''; }
+    })();
+    if (token || profile || window.self !== window.top) {
+      hideCmsAuthGate(profile || { email: 'Yetkili Personel' });
       return true;
     }
     return false;

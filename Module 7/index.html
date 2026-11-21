@@ -551,53 +551,40 @@
       return null;
     }
 
-    function showModule7Login(message = '') {
-      let overlay = document.getElementById('module7-auth-overlay');
-      if (!overlay) {
-        overlay = document.createElement('div');
-        overlay.id = 'module7-auth-overlay';
-        overlay.innerHTML = `
-          <div class="module7-auth-card">
-            <div style="font-size:30px;margin-bottom:10px;">🔐</div>
-            <h2 style="margin:0 0 8px;color:#f8fafc;">Ürün Yönetimi Oturumu</h2>
-            <p style="margin:0 0 22px;color:#94a3b8;font-size:13px;line-height:1.6;">Devam etmek için yetkili Global Mobilya hesabınızla giriş yapın.</p>
-            <form id="module7-auth-form">
-              <label style="display:block;color:#cbd5e1;font-size:12px;margin:0 0 6px;">E-posta</label>
-              <input id="module7-auth-email" type="email" autocomplete="username" required placeholder="ornek@globalmobilya.com.tr" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
-              <label style="display:block;color:#cbd5e1;font-size:12px;margin:0 0 6px;">Şifre</label>
-              <input id="module7-auth-password" type="password" autocomplete="current-password" required placeholder="Şifreniz" style="width:100%;box-sizing:border-box;padding:12px;border-radius:9px;border:1px solid #334155;background:#0f172a;color:white;margin-bottom:14px;">
-              <label style="display:flex;gap:9px;align-items:flex-start;color:#cbd5e1;font-size:12px;margin:2px 0 14px;">
-                <input id="module7-auth-remember" type="checkbox" style="accent-color:#d4af37;margin-top:1px;">
-                <span>Bu cihazda oturumu açık tut</span>
-              </label>
-              <div id="module7-auth-error" style="color:#fca5a5;font-size:12px;min-height:18px;margin-bottom:10px;"></div>
-              <button type="submit" style="width:100%;padding:12px;border:0;border-radius:9px;background:#38bdf8;color:#082f49;font-weight:800;cursor:pointer;">Giriş Yap</button>
-            </form>
-          </div>`;
-        overlay.style.cssText = 'position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(2,6,23,.94);backdrop-filter:blur(12px);';
-        const style = document.createElement('style');
-        style.textContent = '.module7-auth-card{width:min(420px,100%);padding:30px;border:1px solid rgba(148,163,184,.22);border-radius:18px;background:#111b2e;box-shadow:0 25px 80px #0008;font-family:inherit}';
-        document.head.appendChild(style);
-        document.body.appendChild(overlay);
-        document.getElementById('module7-auth-form').addEventListener('submit', async (event) => {
-          event.preventDefault();
-          const button = event.currentTarget.querySelector('button[type="submit"]');
-          // Kimlik doğrulama yalnızca Clerk Production üzerinden yapılır.
-          window.location.href = '/index.html';
-        });
-      }
-      overlay.style.display = 'flex';
-      if (message) {
-        const errorBox = document.getElementById('module7-auth-error');
-        if (errorBox) errorBox.textContent = message;
+    async function getActiveClerkToken() {
+      try {
+        if (window.top && window.top.Clerk && window.top.Clerk.session) {
+          const t = await window.top.Clerk.session.getToken();
+          if (t) return t;
+        }
+      } catch (_) {}
+      try {
+        if (window.Clerk && window.Clerk.session) {
+          const t = await window.Clerk.session.getToken();
+          if (t) return t;
+        }
+      } catch (_) {}
+      const fromSession = sessionStorage.getItem('gm_clerk_jwt');
+      if (fromSession) return fromSession;
+      try {
+        const raw = sessionStorage.getItem('gm_central_auth_v1') || localStorage.getItem('gm_central_auth_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.access_token) return parsed.access_token;
+        }
+      } catch (_) {}
+      return null;
+    }
+
+    function showModule7Login() {
+      // Kimlik doğrulama yalnızca merkezi Clerk Production oturumu üzerinden yapılır.
+      if (window.self === window.top) {
+        window.location.replace('/index.html');
       }
     }
 
     async function module7Api(path, options = {}) {
-      if (sb) {
-        const { data } = await sb.auth.getSession();
-        accessToken = data.session?.access_token || null;
-      }
+      accessToken = (await getActiveClerkToken()) || accessToken;
       const headers = { ...(options.headers || {}) };
       if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
       if (options.body && !headers['Content-Type']) headers['Content-Type'] = 'application/json';
@@ -605,7 +592,7 @@
       const result = await response.json().catch(() => ({}));
       if (response.status === 401) {
         accessToken = null;
-        showModule7Login('Oturumunuz sona erdi. Lütfen yeniden giriş yapın.');
+        showModule7Login();
       }
       if (!response.ok || result.ok === false) throw new Error(result.error || 'İstek tamamlanamadı.');
       return result;
@@ -1274,16 +1261,10 @@
       initDefaultCollectionPieceRows();
       setEntityCreationType('collection');
       try {
-        if (!sb) throw new Error('Kimlik doğrulama başlatılamadı.');
-        const { data } = await sb.auth.getSession();
-        if (!data.session?.access_token) {
-          showModule7Login();
-          return;
-        }
-        accessToken = data.session.access_token;
+        accessToken = await getActiveClerkToken();
         await loadCatalogFromSupabase();
       } catch (err) {
-        showModule7Login(err.message);
+        console.error('Module 7 katalog yükleme hatası:', err);
       }
     });
   </script>

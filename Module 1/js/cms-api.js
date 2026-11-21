@@ -8,12 +8,21 @@
   }
 
   async function request(path = '', options = {}) {
-    const client = window.module1SupabaseClient;
     let accessToken = null;
-    if (client?.auth) {
+    try {
+      if (window.top?.Clerk?.session) {
+        accessToken = await window.top.Clerk.session.getToken();
+      } else if (window.Clerk?.session) {
+        accessToken = await window.Clerk.session.getToken();
+      }
+    } catch (_) {}
+    if (!accessToken) {
+      accessToken = sessionStorage.getItem('gm_clerk_jwt') || null;
+    }
+    if (!accessToken) {
       try {
-        const { data } = await client.auth.getSession();
-        accessToken = data?.session?.access_token || null;
+        const raw = sessionStorage.getItem('gm_central_auth_v1') || localStorage.getItem('gm_central_auth_v1');
+        if (raw) accessToken = JSON.parse(raw)?.access_token || null;
       } catch (_) {}
     }
 
