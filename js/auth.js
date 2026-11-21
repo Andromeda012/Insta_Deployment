@@ -317,8 +317,12 @@ export async function initializeCentralAuth() {
   }
 
   return new Promise(async (resolve) => {
+    let signInMounted = false;
     const evaluateCurrentUser = async () => {
       if (!clerk.user || !clerk.session) {
+        if (signInMounted && document.getElementById('gm-clerk-mount')) {
+          return false;
+        }
         overlay.innerHTML = `
           <div class="gm-clerk-shell">
             <div class="gm-clerk-mark">GM</div>
@@ -331,8 +335,9 @@ export async function initializeCentralAuth() {
         const mountNode = document.getElementById('gm-clerk-mount');
         if (mountNode) {
           clerk.mountSignIn(mountNode, {
-            routing: 'virtual'
+            routing: 'hash'
           });
+          signInMounted = true;
         }
         return false;
       }

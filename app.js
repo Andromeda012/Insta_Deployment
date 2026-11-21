@@ -122,7 +122,10 @@ function applyAuthenticatedUser(user) {
 
 // Navigation Controller
 export function navigateTo(route) {
-    if (!route || route === 'dashboard') {
+    if (!state.user || document.getElementById('gm-central-auth')) {
+        return;
+    }
+    if (!route || route === 'dashboard' || route.startsWith('/')) {
         route = getDefaultRoute();
     }
     if (!canAccessRoute(route)) {
@@ -626,18 +629,20 @@ async function initApp() {
         });
     }
 
-    // Hash change handler for browser navigation
+    // Hash change handler for browser navigation (Clerk giriş ekranı açıkken veya #/... rotalarında müdahale etme)
     window.addEventListener('hashchange', () => {
+        if (!state.user || document.getElementById('gm-central-auth')) return;
         const r = window.location.hash.replace('#', '');
-        if (r && r !== state.currentRoute) navigateTo(r);
+        if (!r || r.startsWith('/')) return;
+        if (r !== state.currentRoute) navigateTo(r);
     });
 
-    // Central authentication: one Supabase session protects the platform shell and its modules.
+    // Central authentication: Clerk Production Organization protects the platform shell and its modules.
     try {
         const user = await initializeCentralAuth();
         applyAuthenticatedUser(user);
         const hashRoute = window.location.hash ? window.location.hash.replace('#', '') : '';
-        const initialRoute = (!hashRoute || hashRoute === 'dashboard') ? getDefaultRoute() : hashRoute;
+        const initialRoute = (!hashRoute || hashRoute === 'dashboard' || hashRoute.startsWith('/')) ? getDefaultRoute() : hashRoute;
         navigateTo(initialRoute);
     } catch (error) {
         console.error('Central authentication initialization failed:', error);
