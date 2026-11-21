@@ -8,7 +8,7 @@ import {
   syncErpUserToSupabase,
   upsertCrmCustomerToSupabase
 } from './_lib/auth.js';
-import { createR2PresignedUrl, getR2PublicUrl, uploadBufferToR2 } from './_lib/r2-storage.js';
+import { createR2PresignedUrl, extractR2KeyFromUrl, getR2PublicUrl, uploadBufferToR2 } from './_lib/r2-storage.js';
 import { fetchInfraHealthSnapshot, fetchPostHogAnalyticsSummary } from './_lib/observability.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
@@ -1463,6 +1463,116 @@ async function handleProductAnalytics(req, res) {
   });
 }
 
+// ── 11. FAZ 6: B2C KURUMSAL VİTRİN & 3D SHOWROOM KÖPRÜSÜ (/api/b2c-public) ──
+function normalizePublicR2Url(rawUrl) {
+  const s = String(rawUrl || '').trim();
+  if (!s) return '';
+  const r2Key = extractR2KeyFromUrl(s);
+  if (r2Key) return getR2PublicUrl(r2Key);
+  return s;
+}
+
+async function handleB2CPublicCatalog(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+  const [prodsRes, extStore, studioRows, threeDRows] = await Promise.all([
+    supabase('/rest/v1/products?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => []),
+    readExtendedCatalogStore(),
+    supabase('/rest/v1/site_settings?key=eq.module8_studio_store&select=data&limit=1', SERVICE_KEY || ANON_KEY).catch(() => []),
+    supabase('/rest/v1/three_d_assets?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => [])
+  ]);
+
+  const rawProducts = Array.isArray(prodsRes) ? prodsRes : [];
+  const studioStore = Array.isArray(studioRows) && studioRows[0]?.data ? studioRows[0].data : {};
+  const all3DModels = [
+    ...(Array.isArray(threeDRows) ? threeDRows : []),
+    ...(Array.isArray(studioStore.three_d_assets) ? studioStore.three_d_assets : [])
+  ];
+
+  // Ürün/koleksiyon slug'ına göre Modül 8'deki .glb/.gltf 3D model eşleştirme haritası
+  const model3dBySlug = new Map();
+  for (const m of all3DModels) {
+    const url = normalizePublicR2Url(m.public_url || m.glb_url || m.storage_path || '');
+    if (!url || !/\.(glb|gltf|usdz)(\?|$)/i.test(url)) continue;
+    const keys = [m.product_slug, m.collection_id, m.collection_slug].filter(Boolean);
+    for (const k of keys) {
+      if (!model3dBySlug.has(k)) model3dBySlug.set(k, url);
+    }
+  }
+
+  const PIECE_SLUG_RE = /-(?:6-kapili-dolap|5-kapili-dolap|4-kapili-dolap|3-kapili-dolap|komodin|sifonyer|kucuk-kahve-kosesi|orta-kahve-kosesi|buyuk-kahve-kosesi|main-bed|wardrobe|nightstand|dresser|vanity|mirror|bed|dolap|parca|part)-\d+$/i;
+  const PIECE_SKU_RE = /-(?:P\d+|parca|piece)$/i;
+  const prodBySlug = new Map(rawProducts.map(p => [p.slug, p]));
+
+  // Koleksiyonları birleştir
+  const colMap = new Map();
+  for (const c of (extStore.collections || [])) {
+    if (!c?.slug || c.is_visible === false) continue;
+    const baseProd = prodBySlug.get(c.slug) || {};
+    const linkedPieces = (extStore.collection_products || [])
+      .filter(cp => cp.collection_id === c.slug || cp.collection_id === c.id)
+      .map(cp => {
+        const pcProd = prodBySlug.get(cp.product_slug) || {};
+        return {
+          slug: cp.product_slug,
+          name: pcProd.title || cp.title || cp.product_slug,
+          dimensions: cp.dimensions || pcProd.body || 'Özel Mimari Ölçü',
+          material: '1. Sınıf 18mm E1 MDF, CNC Membran Kapak',
+          image_url: normalizePublicR2Url(pcProd.ana_resim || cp.image_url || baseProd.ana_resim || ''),
+          model_3d_url: model3dBySlug.get(cp.product_slug) || null
+        };
+      });
+
+    colMap.set(c.slug, {
+      id: c.slug,
+      slug: c.slug,
+      name: c.title || c.name || baseProd.title || c.slug,
+      category: c.category || baseProd.kategori || 'Koleksiyon',
+      design_story: c.design_story || c.promo_quote || baseProd.kisa_aciklama || baseProd.body || '',
+      architecture_style: c.category ? `${c.category} Koleksiyonu` : 'Modern Mimari & CNC Zarafeti',
+      color_palette: Array.isArray(c.color_palette) && c.color_palette.length ? c.color_palette : (baseProd.renkler || ['Kaşmir', 'Doğal Meşe', 'Antrasit']),
+      features: Array.isArray(c.features) && c.features.length ? c.features : (baseProd.ozellikler || []),
+      hero_image_url: normalizePublicR2Url(c.hero_image || c.hero_image_url || baseProd.ana_resim || ''),
+      model_3d_url: model3dBySlug.get(c.slug) || null,
+      pieces: linkedPieces
+    });
+  }
+
+  // Bağımsız ürünler (koleksiyon kökleri ve koleksiyon alt parçaları hariç)
+  const independentProducts = rawProducts
+    .filter(p => {
+      if (!p?.slug || p.web_gorunur === false) return false;
+      if (colMap.has(p.slug)) return false;
+      if (PIECE_SLUG_RE.test(p.slug) || (p.sku && PIECE_SKU_RE.test(p.sku))) return false;
+      return true;
+    })
+    .map(p => ({
+      ...p,
+      id: p.slug,
+      title: p.title || p.baslik || p.slug,
+      ana_resim: normalizePublicR2Url(p.ana_resim),
+      model_3d_url: model3dBySlug.get(p.slug) || null
+    }));
+
+  return res.status(200).json({
+    ok: true,
+    generated_at: new Date().toISOString(),
+    storage_provider: 'cloudflare_r2',
+    brand: {
+      name: 'Nova Furniture',
+      whatsapp: '0505 015 1035',
+      website: 'thenovafurniture.com'
+    },
+    collections: Array.from(colMap.values()),
+    products: independentProducts,
+    total_3d_models: model3dBySlug.size
+  });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -1475,6 +1585,7 @@ export default async function handler(req, res) {
     if (action === 'crm-customers') return await handleCrmCustomers(req, res);
     if (action === 'telemetry-health') return await handleTelemetryHealth(req, res);
     if (action === 'product-analytics') return await handleProductAnalytics(req, res);
+    if (action === 'b2c-public') return await handleB2CPublicCatalog(req, res);
     if (action === 'products') return await products(req, res);
     if (action === 'settings') return await settings(req, res);
     if (action === 'ai-profiles' || action === 'marketing-profiles') return await aiProfiles(req, res);

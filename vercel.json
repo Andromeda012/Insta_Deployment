@@ -11,6 +11,7 @@
     { "source": "/api/crm-customers", "destination": "/api/module7?action=crm-customers" },
     { "source": "/api/telemetry-health", "destination": "/api/module7?action=telemetry-health" },
     { "source": "/api/product-analytics", "destination": "/api/module7?action=product-analytics" },
+    { "source": "/api/b2c-public", "destination": "/api/module7?action=b2c-public" },
     { "source": "/_data/:match*", "destination": "/Module%201/_data/:match*" },
     { "source": "/nova-studio-engine.js", "destination": "/Module%202/nova-studio-engine.js" },
     { "source": "/panoramic-carousel-engine.js", "destination": "/Module%202/panoramic-carousel-engine.js" },
