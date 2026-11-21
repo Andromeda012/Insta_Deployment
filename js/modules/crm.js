@@ -1,6 +1,38 @@
-// Module 3: CRM Control Panel
+// Module 3: CRM Control Panel (Integrated with Clerk B2C Lazy Registration & Supabase crm_customers)
 export function renderCrmModule(data) {
     const crm = data.crm;
+
+    setTimeout(async () => {
+        try {
+            const res = await fetch('/api/crm-customers');
+            const json = await res.json().catch(() => null);
+            const tbody = document.querySelector('#leads-table tbody');
+            if (!tbody || !res.ok || !Array.isArray(json?.customers)) return;
+            const liveRows = json.customers.map(c => `
+                <tr style="background:rgba(16,185,129,0.06);">
+                    <td><code>${c.latest_quote_ref || c.id || 'CRM-B2C'}</code></td>
+                    <td>
+                        <strong>${c.full_name || 'Müşteri'}</strong>
+                        ${c.email ? `<div style="font-size:11px;color:var(--text-muted);">${c.email}</div>` : ''}
+                        ${c.phone ? `<div style="font-size:11px;color:#34d399;">📞 ${c.phone}</div>` : ''}
+                    </td>
+                    <td><span class="badge badge-primary">🌐 Vitrin (Clerk B2C)</span></td>
+                    <td><small>${c.interested_model || 'Özel Ölçü Mobilya'}${c.notes ? ` — ${c.notes}` : ''}</small></td>
+                    <td><span class="badge badge-accent">${c.stage || 'Yeni Teklif Talebi'}</span></td>
+                    <td><strong class="text-success">Teklif Bekliyor</strong></td>
+                    <td>Satış Ekibi (CRM)</td>
+                    <td>
+                        ${c.phone
+                            ? `<a class="btn-action" href="https://wa.me/90${String(c.phone).replace(/\D/g, '').replace(/^90/, '').replace(/^0/, '')}" target="_blank" style="text-decoration:none;">💬 WhatsApp</a>`
+                            : '<span class="badge badge-secondary">Kayıtlı</span>'}
+                    </td>
+                </tr>
+            `).join('');
+            if (liveRows) {
+                tbody.insertAdjacentHTML('afterbegin', liveRows);
+            }
+        } catch (_) {}
+    }, 60);
 
     return `
         <div class="page-header">

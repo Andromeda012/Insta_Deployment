@@ -7,6 +7,7 @@
  */
 import crypto from 'crypto';
 import { getR2PublicUrl } from '../r2-storage.js';
+import { authenticateRoles as clerkAuthenticateRoles } from '../auth.js';
 
 export const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/+$/, '');
 export const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
@@ -150,40 +151,23 @@ export function verifyWorkerAuth(req) {
 }
 
 export async function authenticateRoles(req, allowedRoles) {
-  const authorization = req.headers.authorization || '';
+  const authorization = req?.headers?.authorization || '';
   const token = authorization.startsWith('Bearer ') ? authorization.slice(7).trim() : '';
-  const apiKey = req.headers.apikey || '';
+  const apiKey = req?.headers?.apikey || '';
 
-  // Service Role or Internal Admin Key bypass
-  if ((token && token === SERVICE_KEY) || (apiKey && apiKey === SERVICE_KEY)) {
-    return { id: 'service-role-admin', role: 'service_role', app_metadata: { role: 'admin', roles: ['admin'] } };
+  // Service Role or Internal Render Worker bypass
+  if ((SERVICE_KEY && ((token && token === SERVICE_KEY) || (apiKey && apiKey === SERVICE_KEY))) || verifyWorkerAuth(req)) {
+    return {
+      id: 'service-role-admin',
+      role: 'service_role',
+      department: 'admin',
+      isOrganizationMember: true,
+      canWrite: true,
+      app_metadata: { role: 'admin', roles: ['admin'] }
+    };
   }
 
-  if (!token) {
-    const err = new Error('Oturum açmanız gerekiyor.');
-    err.status = 401;
-    throw err;
-  }
-
-  const response = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-    headers: { apikey: ANON_KEY || SERVICE_KEY, Authorization: `Bearer ${token}` },
-    cache: 'no-store'
-  });
-  if (!response.ok) {
-    const err = new Error('Oturum geçersiz veya süresi dolmuş.');
-    err.status = 401;
-    throw err;
-  }
-
-  const user = await response.json();
-  const metadata = user.app_metadata || {};
-  const roles = Array.isArray(metadata.roles) ? metadata.roles : (metadata.role ? [metadata.role] : []);
-  if (!roles.some(role => allowedRoles.includes(role))) {
-    const err = new Error('Bu işlem için yetkiniz bulunmuyor.');
-    err.status = 403;
-    throw err;
-  }
-  return user;
+  return await clerkAuthenticateRoles(req, allowedRoles);
 }
 
 export function normalizeJobRecord(job) {

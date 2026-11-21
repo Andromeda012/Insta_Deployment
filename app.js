@@ -1,6 +1,14 @@
 // Global Mobilya — Master Application Coordinator
 import { mockData } from './js/data.js';
-import { initializeCentralAuth, getUserRoles, signOutCentral } from './js/auth.js';
+import {
+    initializeCentralAuth,
+    getUserRoles,
+    signOutCentral,
+    canDepartmentAccessRoute,
+    getDepartmentConfig,
+    enforceReadOnlyDomLockIfNeeded,
+    isViewerReadOnly
+} from './js/auth.js';
 import { renderWebsiteModule } from './js/modules/website.js';
 import { renderSocialModule } from './js/modules/social.js';
 import { renderProductsModule } from './js/modules/products.js';
@@ -16,6 +24,7 @@ const state = {
     currentRoute: 'products',
     currentRole: mockData.roles[0],
     user: null,
+    department: 'viewer',
     roles: [],
     isAnalyticsEmpty: false
 };
@@ -30,39 +39,77 @@ const modalTitle = document.getElementById('modal-title');
 const modalBody = document.getElementById('modal-body');
 
 function canAccessRoute(route) {
-    if (state.roles.includes('admin')) return true;
-    if (route === 'products') return state.roles.includes('product_manager');
-    if (route === 'website' || route === 'social') return state.roles.includes('content_manager');
-    if (route === 'studio') return state.roles.includes('production_manager') || state.roles.includes('content_manager');
-    return false;
+    return canDepartmentAccessRoute(state.department, route);
 }
 
 function getDefaultRoute() {
-    if (canAccessRoute('products')) return 'products';
-    if (canAccessRoute('website')) return 'website';
-    if (canAccessRoute('social')) return 'social';
-    if (canAccessRoute('studio')) return 'studio';
+    const deptCfg = getDepartmentConfig(state.department);
+    if (deptCfg?.defaultRoute && canAccessRoute(deptCfg.defaultRoute)) {
+        return deptCfg.defaultRoute;
+    }
+    for (const candidate of ['products', 'production', 'crm', 'social', 'website', 'studio', 'analytics', 'operations']) {
+        if (canAccessRoute(candidate)) return candidate;
+    }
     return 'products';
+}
+
+function propagateAuthAndReadOnlyToIframes() {
+    document.querySelectorAll('iframe').forEach(frame => {
+        const applyToFrame = () => {
+            try {
+                const doc = frame.contentDocument || frame.contentWindow?.document;
+                if (doc) {
+                    enforceReadOnlyDomLockIfNeeded(doc);
+                }
+            } catch (_) {}
+        };
+        applyToFrame();
+        frame.addEventListener('load', applyToFrame);
+    });
 }
 
 function applyAuthenticatedUser(user) {
     state.user = user;
+    state.department = user.department || 'viewer';
     state.roles = getUserRoles(user);
-    const roleLabels = { admin: 'Sistem Yöneticisi', product_manager: 'Ürün Yöneticisi', content_manager: 'İçerik Yöneticisi', production_manager: 'Prodüksiyon Yöneticisi' };
-    const label = state.roles.map(role => roleLabels[role] || role).join(' • ');
-    if (activeRoleBadge) activeRoleBadge.textContent = label || 'Yetki yok';
-    const email = user.email || 'Yetkili kullanıcı';
+    const deptCfg = getDepartmentConfig(state.department);
+
+    if (activeRoleBadge) {
+        activeRoleBadge.textContent = `${deptCfg.label} (${deptCfg.badge})`;
+    }
+    const displayUser = user.username || user.fullName || user.email || 'Yetkili personel';
+    const email = user.email || displayUser;
     const emailEl = document.getElementById('central-user-email');
     const sidebarName = document.getElementById('sidebar-user-name');
     const sidebarEmail = document.getElementById('sidebar-user-email');
-    if (emailEl) emailEl.textContent = email;
-    if (sidebarName) sidebarName.textContent = email.split('@')[0];
-    if (sidebarEmail) sidebarEmail.textContent = email;
+    if (emailEl) emailEl.textContent = `${displayUser} • ${deptCfg.badge}`;
+    if (sidebarName) sidebarName.textContent = displayUser;
+    if (sidebarEmail) sidebarEmail.textContent = deptCfg.label;
+
     document.querySelectorAll('.nav-item[data-route]').forEach(item => {
-        const allowed = canAccessRoute(item.dataset.route) || item.dataset.route === 'permissions' && state.roles.includes('admin');
+        const routeName = item.dataset.route;
+        const allowed = canAccessRoute(routeName);
         item.hidden = !allowed;
         item.style.display = allowed ? '' : 'none';
     });
+
+    // Viewer departmanı için üst bilgi şeridi göster
+    let roBanner = document.getElementById('erp-viewer-top-banner');
+    if (isViewerReadOnly(user)) {
+        if (!roBanner) {
+            roBanner = document.createElement('div');
+            roBanner.id = 'erp-viewer-top-banner';
+            roBanner.style.cssText = 'background:rgba(245,158,11,0.14);border-bottom:1px solid rgba(245,158,11,0.38);color:#fde68a;padding:8px 20px;font-size:12px;font-weight:700;text-align:center;letter-spacing:0.3px;';
+            roBanner.innerHTML = '👁️ <strong>SALT OKUNUR YETKİ (VIEWER):</strong> Tüm modülleri ve raporları inceleyebilirsiniz; oluşturma, düzenleme ve silme işlemleri devre dışıdır.';
+            const topbar = document.querySelector('.topbar');
+            if (topbar && topbar.parentNode) {
+                topbar.parentNode.insertBefore(roBanner, topbar.nextSibling);
+            }
+        }
+    } else if (roBanner) {
+        roBanner.remove();
+    }
+
     const logout = document.getElementById('central-logout-btn');
     if (logout && !logout.dataset.bound) {
         logout.dataset.bound = '1';
@@ -78,11 +125,15 @@ export function navigateTo(route) {
     if (!route || route === 'dashboard') {
         route = getDefaultRoute();
     }
-    if (!canAccessRoute(route) && !(route === 'permissions' && state.roles.includes('admin'))) {
-        showToast('Bu modüle erişim yetkiniz bulunmuyor.');
+    if (!canAccessRoute(route)) {
+        const deptCfg = getDepartmentConfig(state.department);
+        showToast(`⛔ Departman Yetki Sınırı: "${deptCfg.label}" bu modüle erişemez.`);
         route = getDefaultRoute();
     }
     state.currentRoute = route;
+    if (window.location.hash !== `#${route}`) {
+        window.history.replaceState(null, '', `#${route}`);
+    }
 
     // Update active class on sidebar items
     document.querySelectorAll('.nav-item').forEach(item => {
@@ -100,6 +151,8 @@ export function navigateTo(route) {
     }
 
     renderCurrentView();
+    enforceReadOnlyDomLockIfNeeded(document);
+    propagateAuthAndReadOnlyToIframes();
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 if (typeof window !== 'undefined') window.navigateTo = navigateTo;

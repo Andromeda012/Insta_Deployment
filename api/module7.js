@@ -1,4 +1,13 @@
-import { authenticateRoles, apiError } from './_lib/auth.js';
+import {
+  authenticateRoles,
+  apiError,
+  CLERK_PUBLISHABLE_KEY,
+  DEPARTMENT_DEFINITIONS,
+  handleClerkWebhookRequest,
+  resolveClerkAuthContext,
+  syncErpUserToSupabase,
+  upsertCrmCustomerToSupabase
+} from './_lib/auth.js';
 import { createR2PresignedUrl, getR2PublicUrl, uploadBufferToR2 } from './_lib/r2-storage.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
@@ -1319,12 +1328,125 @@ async function generateFeatures(req, res) {
   return res.status(200).json({ ok: true, features });
 }
 
+// ── 10. CLERK SESSION DOĞRULAMA, B2C LAZY REGISTRATION & CRM MÜŞTERİLER ──────
+async function handleClerkSession(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Clerk-Org-Id');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+
+  try {
+    const ctx = await resolveClerkAuthContext(req);
+    if (ctx.isOrganizationMember) {
+      await syncErpUserToSupabase({
+        clerk_user_id: ctx.clerk_user_id,
+        email: ctx.email,
+        username: ctx.username,
+        full_name: ctx.fullName,
+        avatar_url: ctx.avatarUrl,
+        org_id: ctx.orgId,
+        org_role: ctx.orgRole,
+        department: ctx.department
+      }).catch(() => {});
+    }
+    return res.status(200).json({
+      ok: true,
+      authenticated: true,
+      publishableKey: CLERK_PUBLISHABLE_KEY,
+      user: ctx,
+      departments: DEPARTMENT_DEFINITIONS
+    });
+  } catch (err) {
+    return res.status(err.status || 401).json({
+      ok: false,
+      authenticated: false,
+      code: err.code || 'UNAUTHENTICATED',
+      publishableKey: CLERK_PUBLISHABLE_KEY,
+      error: err.message
+    });
+  }
+}
+
+async function handleB2CLazyQuote(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  if (req.method === 'OPTIONS') return res.status(204).end();
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+  const b = req.body || {};
+  let clerkCtx = null;
+  try {
+    if (req.headers?.authorization) {
+      clerkCtx = await resolveClerkAuthContext(req);
+    }
+  } catch (_) {}
+
+  const clerkUserId = clerkCtx?.clerk_user_id || String(b.clerk_user_id || '').trim() || null;
+  const email = clerkCtx?.email || String(b.email || b.customer_email || '').trim() || null;
+  const fullName = String(b.name || b.customer_name || clerkCtx?.fullName || 'Müşteri').trim();
+  const phone = String(b.phone || b.customer_phone || clerkCtx?.phone || '').trim();
+  const city = String(b.city || b.customer_city || '').trim();
+  const model = String(b.collection_id || b.model || b.interested_model || '').trim();
+  const notes = String(b.notes || b.custom_notes || '').trim();
+
+  // Müşteriyi organizasyona eklemeden doğrudan Supabase crm_customers tablosuna kaydet
+  const result = await upsertCrmCustomerToSupabase({
+    clerk_user_id: clerkUserId,
+    email,
+    full_name: fullName,
+    phone,
+    city,
+    interested_model: model,
+    notes,
+    source: 'b2c_lazy_quote'
+  });
+
+  return res.status(201).json({
+    ok: true,
+    reference_code: result.reference_code,
+    customer: result.customer,
+    message: 'Teklif talebiniz ve müşteri kaydınız başarıyla oluşturuldu.'
+  });
+}
+
+async function handleCrmCustomers(req, res) {
+  await authenticateRoles(req, ['admin', 'sales']);
+
+  if (req.method === 'GET') {
+    const [dbRows, storeRows] = await Promise.all([
+      supabase('/rest/v1/crm_customers?select=*&order=created_at.desc&limit=200', SERVICE_KEY).catch(() => []),
+      supabase('/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1', SERVICE_KEY).catch(() => [])
+    ]);
+    const storeData = Array.isArray(storeRows) && storeRows[0]?.data ? storeRows[0].data : { customers: [], quotes: [] };
+    const customers = (Array.isArray(dbRows) && dbRows.length > 0) ? dbRows : (storeData.customers || []);
+    const quotesList = storeData.quotes || [];
+
+    return res.status(200).json({
+      ok: true,
+      customers,
+      quotes: quotesList
+    });
+  }
+
+  if (req.method === 'POST' || req.method === 'PATCH') {
+    const saved = await upsertCrmCustomerToSupabase(req.body || {});
+    return res.status(200).json(saved);
+  }
+
+  return res.status(405).json({ ok: false, error: 'Method not allowed' });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   try {
     const action = actionOf(req);
+    if (action === 'clerk-webhook') return await handleClerkWebhookRequest(req, res);
+    if (action === 'clerk-session') return await handleClerkSession(req, res);
+    if (action === 'b2c-lazy-quote') return await handleB2CLazyQuote(req, res);
+    if (action === 'crm-customers') return await handleCrmCustomers(req, res);
     if (action === 'products') return await products(req, res);
     if (action === 'settings') return await settings(req, res);
     if (action === 'ai-profiles' || action === 'marketing-profiles') return await aiProfiles(req, res);

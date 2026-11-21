@@ -1,134 +1,146 @@
-// Shared Platform Feature: User Roles and Permission Management
+// ============================================================================
+// GLOBAL KAPAK MOBİLYA — CLERK DEPARTMAN BAZLI YETKİ MATRİSİ (publicMetadata.department)
+// ============================================================================
+
 export function renderPermissionsModule(data, currentRole) {
-    const modules = [
-        { id: "website", name: "1. Web Sitesi Yönetimi" },
-        { id: "social", name: "2. Sosyal Medya & Bot" },
-        { id: "crm", name: "3. CRM & Satış" },
-        { id: "production", name: "4. Üretim & Fabrika" },
-        { id: "operations", name: "5. Altyapı & Operasyon" },
-        { id: "analytics", name: "6. Performans Analitiği" }
-    ];
+  const departments = [
+    {
+      id: 'admin',
+      name: 'Sistem & Kurum Yöneticisi',
+      badge: 'org:admin / admin',
+      desc: 'Tüm ERP modüllerine, altyapı ayarlarına, katalog yönetimine ve sosyal medya botlarına tam okuma/yazma erişimi.',
+      modules: 'Tüm 8 Modül + Yetki Yönetimi (Tam Yetki)'
+    },
+    {
+      id: 'factory',
+      name: 'Fabrika & Üretim Planlama',
+      badge: 'mrp_manager / factory',
+      desc: 'Sadece MRP üretim iş emirleri, stok/katalog yönetimi ve 3D teknik çizim stüdyosu modüllerine erişim.',
+      modules: 'Modül 4 (MRP), Modül 7 (Stok/Katalog), Modül 8 (Teknik Çizim)'
+    },
+    {
+      id: 'sales',
+      name: 'CRM, Satış & Teklif',
+      badge: 'crm_sales / sales',
+      desc: 'Sadece CRM müşterileri (Vitrin B2C Lazy Registration kayıtları dahil), teklifler ve sipariş/katalog modüllerine erişim.',
+      modules: 'Modül 3 (CRM & Teklifler), Modül 7 (Ürün & Sipariş)'
+    },
+    {
+      id: 'social_media',
+      name: 'Sosyal Medya & İçerik',
+      badge: 'social_operator / social_media',
+      desc: 'Sadece 4 sosyal medya botu, kurumsal web sitesi içerik akışı ve medya/sunum kütüphanesi modüllerine erişim.',
+      modules: 'Modül 1 (Web İçerik), Modül 2 (4 Bot), Modül 8 (Medya & Sunum)'
+    },
+    {
+      id: 'viewer',
+      name: 'Salt Okunur Denetçi',
+      badge: 'viewer (Read-Only)',
+      desc: 'Tüm panellere ve raporlara salt okunur (Read-Only) erişim; hiçbir oluşturma, düzenleme veya silme işlemi yapamaz.',
+      modules: 'Tüm 8 Modül (Sadece Görüntüleme — GET)'
+    }
+  ];
 
-    return `
-        <div class="page-header">
-            <div class="page-title-group">
-                <div class="breadcrumbs">
-                    <span>Platform Yönetimi: Kullanıcı Rolleri & Yetkilendirme</span>
-                </div>
-                <h1>Kullanıcı Rolleri & Erişim Matrisi (RBAC)</h1>
-                <p class="subtitle">Platform düzeyinde rol bazlı yetkilendirme modeli. Modül erişimleri, yetki sınırları ve prototip rol simülatörü.</p>
-            </div>
-            <div class="page-actions">
-                <button class="btn btn-secondary" onclick="window.showToast('Yetki Matrisi Şablonu Kaydedildi (Prototip)')">
-                    💾 Matrisi Kaydet
-                </button>
-            </div>
+  const modules = [
+    { id: 'website', name: '1. Web Sitesi Yönetimi', admin: 'Tam Yetki', factory: 'Erişim Yok', sales: 'Erişim Yok', social: 'Yazma & Yönetim', viewer: 'Salt Okunur' },
+    { id: 'social', name: '2. Sosyal Medya Botları (4 Bot)', admin: 'Tam Yetki', factory: 'Erişim Yok', sales: 'Erişim Yok', social: 'Yazma & Yönetim', viewer: 'Salt Okunur' },
+    { id: 'crm', name: '3. CRM, Müşteriler & Teklifler', admin: 'Tam Yetki', factory: 'Erişim Yok', sales: 'Yazma & Yönetim', viewer: 'Salt Okunur', social: 'Erişim Yok' },
+    { id: 'production', name: '4. MRP, Üretim Emirleri & Fabrika', admin: 'Tam Yetki', factory: 'Yazma & Yönetim', sales: 'Erişim Yok', social: 'Erişim Yok', viewer: 'Salt Okunur' },
+    { id: 'operations', name: '5. Altyapı & Sistem Sağlığı', admin: 'Tam Yetki', factory: 'Erişim Yok', sales: 'Erişim Yok', social: 'Erişim Yok', viewer: 'Salt Okunur' },
+    { id: 'analytics', name: '6. Gelir/Gider & İstatistik', admin: 'Tam Yetki', factory: 'Erişim Yok', sales: 'Erişim Yok', social: 'Erişim Yok', viewer: 'Salt Okunur' },
+    { id: 'products', name: '7. Ürün, Stok & Katalog Yönetimi', admin: 'Tam Yetki', factory: 'Stok & Teknik', sales: 'Teklif & Sipariş', social: 'Erişim Yok', viewer: 'Salt Okunur' },
+    { id: 'studio', name: '8. 3D Teknik Çizim & Sunum Stüdyosu', admin: 'Tam Yetki', factory: '3D & Teknik Çizim', sales: 'Erişim Yok', social: 'Medya & Sunum', viewer: 'Salt Okunur' }
+  ];
+
+  const badgeHtml = val => {
+    if (val === 'Tam Yetki' || val === 'Yazma & Yönetim' || val === 'Stok & Teknik' || val === 'Teklif & Sipariş' || val === '3D & Teknik Çizim' || val === 'Medya & Sunum') {
+      return `<span class="badge badge-success">${val}</span>`;
+    }
+    if (val === 'Salt Okunur') {
+      return `<span class="badge badge-primary">👁️ ${val}</span>`;
+    }
+    return `<span class="badge badge-secondary">🔒 ${val}</span>`;
+  };
+
+  return `
+    <div class="page-header">
+      <div class="page-title-group">
+        <div class="breadcrumbs">
+          <span>Platform Yönetimi: Clerk Organizations &amp; Departman RBAC</span>
         </div>
+        <h1>Clerk Kurumsal Departman &amp; Yetki Matrisi</h1>
+        <p class="subtitle">
+          Global Kapak Mobilya Clerk Organization (<code>org_3MQEn3zykDenqO7WuKDpWfKDInY</code>) üyeliği ve
+          <code>publicMetadata.department</code> (<code>sessionClaims.metadata.department</code>) bazlı canlı yetkilendirme mimarisi.
+        </p>
+      </div>
+    </div>
 
-        <!-- Prototype Disclaimer Banner -->
-        <div class="alert-banner info">
-            <div class="alert-icon">ℹ️</div>
-            <div class="alert-content">
-                <strong>Prototip Bilgilendirmesi:</strong>
-                <p>Bu ekran, kurumsal rol bazlı erişim denetiminin (RBAC) frontend modellemesidir. Gerçek bir veritabanı veya kimlik doğrulama servisi henüz bağlanmamıştır. Rol değiştirici yalnızca arayüz önizlemesi amacıyla çalışmaktadır.</p>
-            </div>
+    <div class="alert-banner info">
+      <div class="alert-icon">🔐</div>
+      <div class="alert-content">
+        <strong>Canlı Clerk Production &amp; Svix Webhook Koruma Kuralı:</strong>
+        <p>
+          Global Kapak Mobilya Clerk Organizasyonuna (<code>orgId</code>) üye olmayan bireysel vitrin müşterileri ERP paneline alınmaz.
+          Personel yetkileri Clerk <code>publicMetadata.department</code> alanı üzerinden hem sol menüde, hem doğrudan modül URL'lerinde hem de API uçlarında zorunlu tutulur.
+        </p>
+      </div>
+    </div>
+
+    <div class="section-title-row">
+      <h3>Tanımlı Clerk Departmanları (5 Departman)</h3>
+      <span class="tag">Webhook: <code>/api/webhooks/clerk</code> (Svix Aktif)</span>
+    </div>
+
+    <div class="channel-grid">
+      ${departments.map(d => `
+        <div class="card channel-card">
+          <div class="channel-header">
+            <h4>${d.name}</h4>
+            <span class="badge badge-primary">${d.badge}</span>
+          </div>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 8px 0 12px 0;">${d.desc}</p>
+          <div style="font-size: 12px;">
+            <span>Yetkili Alanlar:</span>
+            <strong style="display:block; margin-top:4px; color:#f8fafc;">${d.modules}</strong>
+          </div>
         </div>
+      `).join('')}
+    </div>
 
-        <!-- Role Cards Grid -->
-        <div class="section-title-row">
-            <h3>Tanımlı Kurumsal Roller (5 Rol)</h3>
-            <span class="tag">Aktif Rolünüz: <strong>${currentRole.name}</strong></span>
+    <div class="card panel" style="margin-top: 24px;">
+      <div class="panel-header">
+        <div class="panel-title-wrap">
+          <h3>Departman x Modül &amp; API Erişim Matrisi</h3>
+          <span class="tag">publicMetadata.department</span>
         </div>
-
-        <div class="channel-grid">
-            ${data.roles.map(r => `
-                <div class="card channel-card ${r.id === currentRole.id ? 'active-role-card' : ''}">
-                    <div class="channel-header">
-                        <h4>${r.name}</h4>
-                        <span class="badge ${r.id === currentRole.id ? 'badge-primary' : 'badge-secondary'}">${r.badge}</span>
-                    </div>
-                    <p style="font-size: 13px; color: var(--text-muted); margin: 8px 0 12px 0;">${r.description}</p>
-                    <div style="font-size: 12px; margin-bottom: 14px;">
-                        <span>Erişebildiği Modüller:</span>
-                        <strong>${r.modules.includes('all') ? 'Tüm 6 Modül' : r.modules.length + ' Modül'}</strong>
-                    </div>
-                    <button class="btn ${r.id === currentRole.id ? 'btn-secondary' : 'btn-primary'}" style="width: 100%; justify-content: center;" onclick="window.setRole('${r.id}')">
-                        ${r.id === currentRole.id ? '✓ Bu Role Geçildi' : 'Bu Role Geç (Simüle Et)'}
-                    </button>
-                </div>
+      </div>
+      <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Modül / İşlev Alanı</th>
+              <th>admin (org:admin)</th>
+              <th>factory (mrp_manager)</th>
+              <th>sales (crm_sales)</th>
+              <th>social_media (social_operator)</th>
+              <th>viewer (Read-Only)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${modules.map(m => `
+              <tr>
+                <td><strong>${m.name}</strong></td>
+                <td>${badgeHtml(m.admin)}</td>
+                <td>${badgeHtml(m.factory)}</td>
+                <td>${badgeHtml(m.sales)}</td>
+                <td>${badgeHtml(m.social)}</td>
+                <td>${badgeHtml(m.viewer)}</td>
+              </tr>
             `).join('')}
-        </div>
-
-        <!-- Permission Matrix Table -->
-        <div class="card panel" style="margin-top: 24px;">
-            <div class="panel-header">
-                <div class="panel-title-wrap">
-                    <h3>Modül ve İşlem Yetki Matrisi</h3>
-                    <span class="tag">Rol x Modül İzinleri</span>
-                </div>
-            </div>
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>Modül / İşlev Alanı</th>
-                            <th>Sistem Yöneticisi</th>
-                            <th>Şirket Yönetimi</th>
-                            <th>Satış & Pazarlama</th>
-                            <th>Üretim Sorumlusu</th>
-                            <th>Altyapı Operatörü</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${modules.map(m => `
-                            <tr>
-                                <td><strong>${m.name}</strong></td>
-                                <td><span class="badge badge-success">Tam Yetki</span></td>
-                                <td>
-                                    ${['website', 'crm', 'production', 'analytics'].includes(m.id) 
-                                        ? '<span class="badge badge-primary">Görüntüleme</span>' 
-                                        : '<span class="badge badge-secondary">Kısıtlı</span>'}
-                                </td>
-                                <td>
-                                    ${['website', 'social', 'crm'].includes(m.id) 
-                                        ? '<span class="badge badge-success">Yazma & Yönetim</span>' 
-                                        : m.id === 'analytics' ? '<span class="badge badge-primary">Raporlar</span>' : '<span class="badge badge-secondary">Erişim Yok</span>'}
-                                </td>
-                                <td>
-                                    ${m.id === 'production' 
-                                        ? '<span class="badge badge-success">İmalat & CNC Tam</span>' 
-                                        : m.id === 'analytics' ? '<span class="badge badge-primary">Üretim Raporu</span>' : '<span class="badge badge-secondary">Erişim Yok</span>'}
-                                </td>
-                                <td>
-                                    ${m.id === 'operations' 
-                                        ? '<span class="badge badge-success">DevOps & Cloud Tam</span>' 
-                                        : m.id === 'analytics' ? '<span class="badge badge-primary">Sistem Sağlığı</span>' : '<span class="badge badge-secondary">Erişim Yok</span>'}
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Restricted State Example Simulation -->
-        <div class="card panel" style="margin-top: 24px;">
-            <div class="panel-header">
-                <h3>Yetkisiz Erişim / Kısıtlı Arayüz Örneği (UI Preview)</h3>
-                <span class="badge badge-warning">Örnek Durum</span>
-            </div>
-            <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 16px;">
-                Bir kullanıcı kendi yetki alanında olmayan bir sayfaya doğrudan erişmeye çalıştığında görüntülenecek kurumsal kısıtlama arayüzü:
-            </p>
-            <div class="restricted-box">
-                <div class="restricted-icon">🔒</div>
-                <h3>Erişim Yetkisi Bulunmuyor (403 Yetkisiz İşlem)</h3>
-                <p>Mevcut rolünüz (<strong>${currentRole.name}</strong>), bu modül için tanımlı yönetici izinlerine sahip değildir. Erişim talebinde bulunmak için şirket IT yöneticinizle iletişime geçebilirsiniz.</p>
-                <div style="margin-top: 16px;">
-                    <button class="btn btn-secondary" onclick="window.navigateTo('dashboard')">Merkezi Panele Dön</button>
-                    <button class="btn btn-primary" onclick="window.setRole('admin')">Yönetici Rolüne Geç (Admin)</button>
-                </div>
-            </div>
-        </div>
-    `;
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
 }

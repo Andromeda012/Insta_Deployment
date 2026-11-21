@@ -3545,6 +3545,15 @@ export default async function handler(req, res) {
   const action = String(req.query?.action || new URL(req.url, 'https://local.invalid').searchParams.get('action') || 'overview').toLowerCase();
 
   try {
+    // R2 medya ağ geçidi hariç, Clerk oturum jetonu taşıyan tüm ERP isteklerinde Kurum Üyeliği (orgId), Departman ve Viewer Read-Only kuralını zorunlu tut
+    if (action !== 'r2-media' && action !== 'r2' && !verifyWorkerAuth(req)) {
+      const hasBearer = String(req.headers?.authorization || '').startsWith('Bearer ');
+      const isMutation = !['GET', 'HEAD', 'OPTIONS'].includes(String(req.method || 'GET').toUpperCase());
+      if (hasBearer || isMutation) {
+        await authenticateRoles(req, ['admin', 'factory', 'social_media', 'production_manager', 'content_manager', 'product_manager']);
+      }
+    }
+
     switch (action) {
       case 'r2-media':
       case 'r2':
