@@ -440,9 +440,8 @@ async function pieceSlide(entity, piece, index, total, extraLines = []) {
   const tSize = title.length > 26 ? 50 : 62;
   const details = [...detailLines(piece.dimensions, 3), ...extraLines].slice(0, 4);
   let body = '';
-  body += textEl({ x: 60, y: 1010, text: total > 1 ? `${String(index).padStart(2, '0')} / ${String(total).padStart(2, '0')}` : trUpper(entity.category || ''), size: 24, weight: 600, fill: BRAND.gold, spacing: 6 });
-  body += textEl({ x: 60, y: 1010 + tSize + 14, text: title, size: tSize, font: TITLE_FONT, weight: 700, fill: BRAND.dark });
-  let y = 1010 + tSize + 14 + 58;
+  body += textEl({ x: 60, y: 1015 + tSize, text: title, size: tSize, font: TITLE_FONT, weight: 700, fill: BRAND.dark });
+  let y = 1015 + tSize + 62;
   for (const d of details) {
     for (const ln of wrapText(d, 64, 2)) { body += textEl({ x: 62, y, text: ln, size: 28, fill: '#475569', weight: 600 }); y += 40; }
   }
@@ -1557,10 +1556,9 @@ export async function renderTriptychCovers(entity) {
           stroke-opacity="0.72"
           filter="url(#textGlow)">${cleanWord}</text>
 
-    <!-- Orta Gönderi İçin Editoryal Dijital Katalog Rehberi (Çerçeveyi ve ışığı bozmadan tek parçada işlenir) -->
+    <!-- Orta Gönderi İçin Zarif Marka & Kaydırma Yönlendirmesi -->
     <text x="${W3 / 2}" y="185" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="22" font-weight="800" letter-spacing="8" fill="#ffffff" filter="url(#textGlow)">${BRAND.name}</text>
-    <text x="${W3 / 2}" y="1195" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="20" font-weight="700" letter-spacing="6" fill="${BRAND.gold}" filter="url(#textGlow)">DİJİTAL KOLEKSİYON KATALOĞU</text>
-    <text x="${W3 / 2}" y="1240" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="18" font-weight="600" letter-spacing="4" fill="#ffffff" filter="url(#textGlow)">ÖLÇÜLER &amp; MODÜLLER İÇİN KAYDIRIN  →</text>
+    <text x="${W3 / 2}" y="1225" text-anchor="middle" font-family="Montserrat, sans-serif" font-size="18" font-weight="600" letter-spacing="5" fill="#ffffff" filter="url(#textGlow)">İNCELEMEK İÇİN KAYDIRIN  →</text>
   </svg>`;
 
   const masterWide = await sharp(wide)
@@ -1664,8 +1662,7 @@ export async function renderCollectionPost02Breakdown(entity, triptych = null) {
       const topG = gradientRect(W, 200, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
       let body = topG.body;
       body += textEl({ x: W / 2, y: 175, text: BRAND.name, size: 22, weight: 800, anchor: 'middle', spacing: 8, shadow: true });
-      body += textEl({ x: W / 2, y: 1120, text: 'DİJİTAL KOLEKSİYON KATALOĞU', size: 20, weight: 700, fill: BRAND.gold, anchor: 'middle', spacing: 6, shadow: true });
-      body += textEl({ x: W / 2, y: 1165, text: 'ÖLÇÜLER & MODÜLLER İÇİN KAYDIRIN  →', size: 18, weight: 600, fill: '#ffffff', anchor: 'middle', spacing: 4, shadow: true });
+      body += textEl({ x: W / 2, y: 1150, text: 'İNCELEMEK İÇİN KAYDIRIN  →', size: 18, weight: 600, fill: '#ffffff', anchor: 'middle', spacing: 5, shadow: true });
       const fallbackCover = await sharp(baseImg)
         .composite([{ input: svgDoc(W, H, body, topG.defs + SHADOW_DEF) }])
         .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
@@ -1929,13 +1926,11 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
   const cta = `📩 Fiyat ve sipariş bilgisi için DM'den ulaşabilir veya WhatsApp hattımızdan yazabilirsiniz: ${BRAND.whatsapp}`;
 
   if (postIndex === 1) {
-    // POST 01 — COLLECTION REVEAL
+    // POST 01 — ÜRÜN & ÖLÇÜ TANITIMI
     const lines = [
-      `✨ ${name} — KOLEKSİYON TANITIMI (Bölüm 1/3: ${splitInfo.parts[0]})`,
+      `✨ ${name}`,
       '',
       story || `${entity.title}, çağdaş çizgileri ve özenli işçiliğiyle yaşam alanınıza prestijli bir kimlik kazandırıyor.`,
-      '',
-      `🏛️ Bu koleksiyonda toplam ${(entity.pieces || []).length} farklı modül seçeneği yer almaktadır. Tüm alt ürünleri ve ölçü detaylarını incelemek için profilimizdeki katalog gönderisine göz atabilirsiniz.`,
       '',
       cta
     ];
@@ -1943,11 +1938,11 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
   }
 
   if (postIndex === 2) {
-    // POST 02 — PRODUCT BREAKDOWN
+    // POST 02 — ÜRÜN DETAYLARI & ÖLÇÜLER
     const lines = [
-      `📐 ${name} — DİJİTAL ÜRÜN KATALOĞU (Bölüm 2/3: ${splitInfo.parts[1]})`,
+      `📐 ${name}`,
       '',
-      `${entity.title} içerisinde yer alan tüm modüller ve doğrulanmış ölçü bilgileri:`,
+      `${entity.title} ölçü ve tasarım bilgileri:`,
       ''
     ];
     for (const p of (entity.pieces || [])) {
@@ -1955,7 +1950,7 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
       lines.push(`▫️ ${p.title}${d ? ' — ' + d : ''}`);
     }
     if (entity.features && entity.features.length) {
-      lines.push('', 'Öne Çıkan Yapısal Özellikler:');
+      lines.push('', 'Öne Çıkan Özellikler:');
       for (const f of entity.features.slice(0, 4)) {
         lines.push(`• ${f}`);
       }
@@ -1964,9 +1959,9 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
     return lines.join('\n');
   }
 
-  // POST 03 — DESIGN STORY
+  // POST 03 — KOLEKSİYON TANITIMI
   const lines = [
-    `🕯️ ${name} — TASARIM HİKAYESİ & ATMOSFER (Bölüm 3/3: ${splitInfo.parts[2]})`,
+    `🕯️ ${name}`,
     '',
     story || `Mekanda dinginlik, doku uyumu ve fonksiyonel estetik bir arada.`,
     ''
