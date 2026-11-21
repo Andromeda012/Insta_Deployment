@@ -1157,11 +1157,11 @@
 
       container.innerHTML = items.map((item, idx) => {
         const p = item.product;
-        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumb = p.ana_resim || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
 
         return `
           <div class="upcoming-card">
-            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                 <span class="slot-type-badge ${item.badgeClass}">${item.formatTitle}</span>
@@ -1256,12 +1256,12 @@
       }
 
       container.innerHTML = queue.slice(0, 25).map(item => {
-        const thumbUrl = item.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumbUrl = item.media_url || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
         const statusTxt = item.status === 'published' ? '✅ Yayınlandı' : '⏸️ Bağlantı Bekleniyor / Hazır Paket';
         return `
           <div class="history-item">
             <div class="history-left">
-              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="Thumb">
+              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'" alt="Thumb">
               <div class="history-info">
                 <div class="history-title">${item.product || item.title || 'Nova Koleksiyon Paketi'}</div>
                 <div class="history-meta">
@@ -1298,7 +1298,7 @@
           id: `tt-pkg-${Date.now()}`,
           product: prod.title || prod.slug,
           product_slug: prod.slug,
-          media_url: prod.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
+          media_url: prod.ana_resim || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png',
           scheduled: new Date().toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
           status: conn.ready ? 'queued' : 'connection_pending'
         };

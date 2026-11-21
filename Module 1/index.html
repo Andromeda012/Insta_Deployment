@@ -4180,25 +4180,14 @@ async function initializeModule1CmsAuth() {
 }
 async function signInModule1Cms(event) {
   if(event)event.preventDefault();
-  if(!isSupabaseReady()){setCmsAuthError('Önce Supabase bağlantı ayarlarını yapılandırın.');return;}
-  const btn=document.getElementById('cmsLoginButton'); if(btn){btn.disabled=true;btn.textContent='Giriş yapılıyor...';}
-  setCmsAuthError('');
-  try {
-    const email=document.getElementById('cmsLoginEmail').value.trim();
-    const password=document.getElementById('cmsLoginPassword').value;
-    const {data,error}=await supabaseClient.auth.signInWithPassword({email,password}); if(error)throw error;
-    const user=data?.user;
-    const meta=user?.app_metadata||{}; const roles=Array.isArray(meta.roles)?meta.roles:(meta.role?[meta.role]:[]);
-    if(!user||!roles.some(role=>['admin','content_manager'].includes(role))){
-      await supabaseClient.auth.signOut();
-      throw new Error('Bu kullanıcıya CMS yetkisi verilmemiş. Supabase app_metadata.role alanını kontrol edin.');
-    }
-    hideCmsAuthGate(user); document.getElementById('cmsLoginPassword').value='';
-    await bootModule1AdminData();
-  } catch(error){setCmsAuthError(error.message||'Giriş başarısız.');}
-  finally{if(btn){btn.disabled=false;btn.textContent='Güvenli Giriş Yap';}}
+  // Kimlik doğrulama yalnızca Clerk Production (Global Kapak Mobilya Org) üzerinden yapılır.
+  window.location.href = '/index.html';
 }
-async function signOutModule1Cms(){try{await supabaseClient.auth.signOut();}catch(e){}module1CmsUser=null;showCmsAuthGate('Oturum kapatıldı.');}
+async function signOutModule1Cms(){
+  try{ if(window.Clerk && window.Clerk.signOut) await window.Clerk.signOut(); }catch(e){}
+  module1CmsUser=null;
+  window.location.href = '/index.html';
+}
 async function bootModule1AdminData(){
   await Promise.allSettled([loadAllProducts(),loadCompanySettings(),loadHomeSettings(),loadAllGallery(),loadAllBlogs(),loadAllSuppliers()]);
   setupDragAndDrop();renderWebsiteAnalytics();runLiveSiteHealthCheck();await refreshCmsRevisionCount();

@@ -978,11 +978,11 @@
 
       container.innerHTML = items.map((item, idx) => {
         const p = item.product;
-        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumb = p.ana_resim || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
 
         return `
           <div class="upcoming-card">
-            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                 <span class="slot-type-badge ${item.badgeClass}">${item.formatTitle}</span>
@@ -1062,13 +1062,13 @@
       container.innerHTML = posts.slice(0, 25).map(post => {
         const rawTitle = (post.title || 'Nova Furniture #Shorts').replace(/^\[Otonom YouTube\]\s*/i, '');
         const pubTime = (post.published_at || post.scheduled_for) ? new Date(post.published_at || post.scheduled_for).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Yeni';
-        const thumbUrl = post.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumbUrl = post.media_url || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
         const isPub = post.status === 'published';
 
         return `
           <div class="history-item">
             <div class="history-left">
-              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="Thumb">
+              <img class="history-thumb" src="${thumbUrl}" onerror="this.src='https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'" alt="Thumb">
               <div class="history-info">
                 <div class="history-title">${rawTitle}</div>
                 <div class="history-meta">
@@ -1103,7 +1103,7 @@
         const prod = catalogProducts[0];
         const cleanTitle = (prod.title || prod.slug).toUpperCase();
         const videoTitle = `NOVA | ${cleanTitle} — Lüks Mimari Tasarım #Shorts`;
-        const mediaUrl = prod.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const mediaUrl = prod.ana_resim || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
         const caption = window.NovaStudioEngine
           ? window.NovaStudioEngine.generateNovaLuxuryCaption(prod, 'youtube')
           : `${videoTitle}\n1. sınıf 18mm E1 MDF gövde ve CNC membran işçiliği.\n📲 WhatsApp: 0 505 015 1035`;

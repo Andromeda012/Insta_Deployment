@@ -48,6 +48,11 @@ async function runFaz1Checks() {
     record('FAZ 1', 'Cloudflare R2 Presigned GET', signedRes.ok,
       `HTTP ${signedRes.status}`);
 
+    const cdnUrl = `https://cdn.globalkapakmobilya.com/${sampleKey}`;
+    const cdnRes = await fetch(cdnUrl, { method: 'HEAD' });
+    record('FAZ 1', 'Cloudflare R2 Custom CDN (cdn.globalkapakmobilya.com)', cdnRes.ok,
+      `HTTP ${cdnRes.status} (${cdnUrl})`);
+
     const gatewayUrl = `https://insta-deployment-rho.vercel.app/r2/${sampleKey}`;
     const gwRes = await fetch(gatewayUrl, { method: 'HEAD' });
     record('FAZ 1', 'Vercel Edge /r2/* Gateway', gwRes.ok,

@@ -582,33 +582,8 @@
         document.getElementById('module7-auth-form').addEventListener('submit', async (event) => {
           event.preventDefault();
           const button = event.currentTarget.querySelector('button[type="submit"]');
-          const errorBox = document.getElementById('module7-auth-error');
-          button.disabled = true;
-          button.textContent = 'Giriş yapılıyor...';
-          errorBox.textContent = '';
-          try {
-            if (!sb) throw new Error('Kimlik doğrulama kütüphanesi yüklenemedi.');
-            const remember = document.getElementById('module7-auth-remember').checked;
-            if (remember) localStorage.setItem(REMEMBER_DEVICE_KEY, '1');
-            else {
-              localStorage.removeItem(REMEMBER_DEVICE_KEY);
-              localStorage.removeItem(AUTH_STORAGE_KEY);
-            }
-            sb = createModule7AuthClient(remember);
-            const { data, error } = await sb.auth.signInWithPassword({
-              email: document.getElementById('module7-auth-email').value.trim(),
-              password: document.getElementById('module7-auth-password').value
-            });
-            if (error) throw error;
-            accessToken = data.session.access_token;
-            overlay.remove();
-            await loadCatalogFromSupabase();
-          } catch (err) {
-            errorBox.textContent = err.message || 'Giriş yapılamadı.';
-          } finally {
-            button.disabled = false;
-            button.textContent = 'Giriş Yap';
-          }
+          // Kimlik doğrulama yalnızca Clerk Production üzerinden yapılır.
+          window.location.href = '/index.html';
         });
       }
       overlay.style.display = 'flex';

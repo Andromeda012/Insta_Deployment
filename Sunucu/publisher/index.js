@@ -101,7 +101,7 @@ async function heartbeatLockExtension(taskId, extraSeconds = 120) {
 }
 
 // ── YOUTUBE SHORTS VİDEO HAZIRLAMA YARDIMCISI (MP4 DOĞRULAMA & PNG->MP4) ─────
-const DEFAULT_YT_MP4_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
+const DEFAULT_YT_MP4_FALLBACK = 'https://cdn.globalkapakmobilya.com/instagram/reels-1793379608273-qhjj.mp4';
 
 async function prepareYouTubeVideoBuffer(mediaUrl, taskId) {
   const cleanUrl = String(mediaUrl || '').trim();

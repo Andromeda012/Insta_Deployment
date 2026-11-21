@@ -30,7 +30,7 @@ const BRAND_CONTEXT = {
     factoryAddress: 'Yüzyıl Mah. Mehmet Akif Cad. 1995 Sok. No:11 Bağcılar / İstanbul',
     phone: '0 (505) 015 1035',
     whatsappUrl: 'https://wa.me/905050151035',
-    email: 'info@thenovafurniture.com',
+    email: 'info@globalkapakmobilya.com',
     website: 'https://wa.me/905050151035',
     deliverySla: '5 İş Gününde Hızlı Sevkiyat',
     warranty: '5 Yıl Fabrika Garantisi',

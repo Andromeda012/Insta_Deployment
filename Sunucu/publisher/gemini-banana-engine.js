@@ -43,8 +43,8 @@ const SUPABASE_CONFIG = {
     const valid = candidates.find(k => k && !k.includes('YOUR_SUPABASE'));
     return valid || DEFAULT_PUBLIC_ANON_KEY;
   },
-  mediaFallback: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
-  defaultReelsMp4: 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4'
+  mediaFallback: 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png',
+  defaultReelsMp4: 'https://cdn.globalkapakmobilya.com/instagram/reels-1793379608273-qhjj.mp4'
 };
 
 const BRAND = {
@@ -259,11 +259,11 @@ Sadece aşağıdaki JSON formatında yanıt ver (web sitesi linki ve Global Kapa
  *   mimari stüdyo sahnesine hazırlar.
  */
 const KNOWN_PRODUCT_IMAGES = {
-  'siena-makyaj-masasi-7uht': 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/siena-makyaj-masasi-7uht-1793731691432.png',
-  'eren-portmanto-rzy4': 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/eren-portmanto-rzy4-1793451458911.png',
-  'porto-portmanto-56jk': 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/porto-portmanto-56jk-1793451341659.png',
-  'bahar-portmanto-i6el': 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png',
-  'bahar-portmanto-ymz9': 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'
+  'siena-makyaj-masasi-7uht': 'https://cdn.globalkapakmobilya.com/products/siena-makyaj-masasi-7uht-1793731691432.png',
+  'eren-portmanto-rzy4': 'https://cdn.globalkapakmobilya.com/products/eren-portmanto-rzy4-1793451458911.png',
+  'porto-portmanto-56jk': 'https://cdn.globalkapakmobilya.com/products/porto-portmanto-56jk-1793451341659.png',
+  'bahar-portmanto-i6el': 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png',
+  'bahar-portmanto-ymz9': 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'
 };
 
 export async function generateBananaRecontextualizedImage({

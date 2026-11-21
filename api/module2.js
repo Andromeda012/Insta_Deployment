@@ -1540,8 +1540,8 @@ async function handleCampaignGenerate(req, res) {
     selectedSlugs[0] ? {
       title: b.campaign_title || selectedSlugs[0],
       slug: selectedSlugs[0],
-      hero_image: b.hero_url || b.hero_image || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana.jpg',
-      ana_resim: b.hero_url || b.hero_image || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/viyana.jpg'
+      hero_image: b.hero_url || b.hero_image || 'https://cdn.globalkapakmobilya.com/products/viyana.jpg',
+      ana_resim: b.hero_url || b.hero_image || 'https://cdn.globalkapakmobilya.com/products/viyana.jpg'
     } : null
   );
   if (!primaryItem) {

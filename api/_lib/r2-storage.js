@@ -9,7 +9,8 @@ const DEFAULT_CF_ACCOUNT_ID = 'acc85eed4fc7ca291657dcb808fc5578';
 const DEFAULT_R2_ACCESS_KEY_ID = 'c72c243d6b276174be73b547d630928c';
 const DEFAULT_R2_SECRET_ACCESS_KEY = '99a211277c8f991dda629f84378432d7d4f8242685962d3ae3fc0b0e4d57f39d';
 const DEFAULT_R2_BUCKET_NAME = 'globalkapak-medya';
-const DEFAULT_PUBLIC_APP_ORIGIN = 'https://insta-deployment-rho.vercel.app';
+const DEFAULT_R2_PUBLIC_BASE_URL = 'https://cdn.globalkapakmobilya.com';
+const DEFAULT_PUBLIC_APP_ORIGIN = 'https://erp.globalkapakmobilya.com';
 
 export function getR2Config() {
   const accountId = (process.env.CF_ACCOUNT_ID || DEFAULT_CF_ACCOUNT_ID).trim();
@@ -18,7 +19,7 @@ export function getR2Config() {
   const bucketName = (process.env.R2_BUCKET_NAME || DEFAULT_R2_BUCKET_NAME).trim();
   const host = `${accountId}.r2.cloudflarestorage.com`;
   const endpoint = `https://${host}`;
-  const rawPublicBase = (process.env.R2_PUBLIC_BASE_URL || process.env.R2_CUSTOM_PUBLIC_DOMAIN || '').trim().replace(/\/+$/, '');
+  const rawPublicBase = (process.env.R2_PUBLIC_BASE_URL || process.env.R2_CUSTOM_PUBLIC_DOMAIN || DEFAULT_R2_PUBLIC_BASE_URL).trim().replace(/\/+$/, '');
   const hasCustomPublicDomain = Boolean(
     rawPublicBase &&
     !rawPublicBase.includes('.r2.cloudflarestorage.com')
@@ -190,7 +191,7 @@ export function createR2PresignedUrl(objectKey, method = 'GET', expiresInSec = 6
 
 /**
  * Nesne için genel erişim URL'si üretir:
- * - Eğer özel alan adı (örn. media.thenovafurniture.com veya pub-xxx.r2.dev) tanımlıysa doğrudan onu döner.
+ * - Eğer özel alan adı (örn. https://cdn.globalkapakmobilya.com) tanımlıysa doğrudan onu döner.
  * - `preferPresigned=true` ise (Meta/TikTok/YouTube API'lerine doğrudan R2 üzerinden medya gönderirken) 7 günlük doğrudan R2 Presigned URL döner.
  * - Kalıcı veritabanı kayıtları (ürün/koleksiyon görselleri, 3D modeller) için süresi asla dolmayan `/r2/<key>` CDN ağ geçidi URL'sini döner.
  */

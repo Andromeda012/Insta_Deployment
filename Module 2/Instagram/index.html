@@ -1080,12 +1080,12 @@
 
       container.innerHTML = upcomingItems.map((item, idx) => {
         const p = item.product;
-        const thumb = p.ana_resim || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumb = p.ana_resim || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
         const promoQuote = (p.promo_quote || p.design_story || '').trim();
 
         return `
           <div class="upcoming-card">
-            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
+            <img class="upcoming-thumb" src="${thumb}" onerror="this.src='https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png'" alt="${p.title || p.slug}">
             <div class="upcoming-body">
               <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                 <span class="slot-type-badge ${item.badgeClass}">${item.formatTitle}</span>
@@ -1207,7 +1207,7 @@
 
         const rawTitle = (post.title || post.headline || 'Nova Furniture Özel Tasarım').replace(/^\[Otonom Tasarım\]\s*/i, '');
         const pubTime = post.published_at ? new Date(post.published_at).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Az önce';
-        const thumbUrl = post.media_url || 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+        const thumbUrl = post.media_url || 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
 
         return `
           <div class="history-item">
@@ -1329,12 +1329,12 @@
 
         let mediaUrl = product.ana_resim;
         if (!mediaUrl || !mediaUrl.startsWith('http')) {
-          mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+          mediaUrl = 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
         }
 
         const isVideo = format === 'REELS';
         if (isVideo) {
-          mediaUrl = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/instagram/reels-1793379608273-qhjj.mp4';
+          mediaUrl = 'https://cdn.globalkapakmobilya.com/instagram/reels-1793379608273-qhjj.mp4';
         }
 
         // Ürünün Modül 7'de belirlenen sunum tercihini oku

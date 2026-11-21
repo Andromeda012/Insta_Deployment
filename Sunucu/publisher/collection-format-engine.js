@@ -47,12 +47,12 @@ export const BRAND = {
   name: env('BRAND_NAME', 'NOVA FURNITURE'),
   whatsapp: env('BRAND_WHATSAPP', '0505 015 1035'),
   whatsappLink: env('BRAND_WHATSAPP_LINK', 'https://wa.me/905050151035'),
-  website: env('BRAND_WEBSITE', 'thenovafurniture.com'),
+  website: env('BRAND_WEBSITE', 'globalkapakmobilya.com'),
   instagram: env('BRAND_INSTAGRAM', '@thenovafurniture'),
   gold: '#C9A24B',
   dark: '#141414'
 };
-const SITE_BASE_URL = env('SITE_BASE_URL', 'https://thenovafurniture.com');
+const SITE_BASE_URL = env('SITE_BASE_URL', 'https://globalkapakmobilya.com');
 function resolveFfmpegBinary() {
   if (process.env.FFMPEG_PATH && fs.existsSync(process.env.FFMPEG_PATH)) return process.env.FFMPEG_PATH;
   const currentDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));

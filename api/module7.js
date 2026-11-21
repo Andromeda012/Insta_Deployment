@@ -1563,9 +1563,9 @@ async function handleB2CPublicCatalog(req, res) {
     generated_at: new Date().toISOString(),
     storage_provider: 'cloudflare_r2',
     brand: {
-      name: 'Nova Furniture',
+      name: 'Global Kapak Mobilya',
       whatsapp: '0505 015 1035',
-      website: 'thenovafurniture.com'
+      website: 'globalkapakmobilya.com'
     },
     collections: Array.from(colMap.values()),
     products: independentProducts,

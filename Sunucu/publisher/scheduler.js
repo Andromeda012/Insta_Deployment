@@ -26,7 +26,7 @@
 import GeminiBananaEngine from './gemini-banana-engine.js';
 import CollectionFormatEngine, { buildCatalogEntities, buildCollectionPostCaption, buildHashtags, prepareFormatPayload } from './collection-format-engine.js';
 
-const DEFAULT_MEDIA_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
+const DEFAULT_MEDIA_FALLBACK = 'https://cdn.globalkapakmobilya.com/products/bahar-portmanto-ymz9.png';
 
 /**
  * Europe/Istanbul Saat Dilimi Hesaplayıcısı
