@@ -99,7 +99,33 @@ export function isViewerReadOnly(user = activeClerkProfile) {
   return dept === 'viewer' || user?.canWrite === false;
 }
 
+async function loadClerkUIScript() {
+  if (window.__internal_ClerkUICtor) return window.__internal_ClerkUICtor;
+
+  const uiSources = [
+    'https://clerk.globalkapakmobilya.com/npm/@clerk/ui@1/dist/ui.browser.js',
+    'https://cdn.jsdelivr.net/npm/@clerk/ui@1/dist/ui.browser.js'
+  ];
+
+  for (const src of uiSources) {
+    try {
+      await new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+      if (window.__internal_ClerkUICtor) return window.__internal_ClerkUICtor;
+    } catch (_) {}
+  }
+  return null;
+}
+
 async function loadClerkBrowserScript() {
+  await loadClerkUIScript();
   if (window.Clerk) return window.Clerk;
 
   const sources = [
@@ -284,7 +310,10 @@ export async function initializeCentralAuth() {
 
   const clerk = await loadClerkBrowserScript();
   if (!clerk.loaded) {
-    await clerk.load({ publishableKey: CLERK_PUBLISHABLE_KEY });
+    await clerk.load({
+      publishableKey: CLERK_PUBLISHABLE_KEY,
+      ...(window.__internal_ClerkUICtor ? { ui: { ClerkUI: window.__internal_ClerkUICtor } } : {})
+    });
   }
 
   return new Promise(async (resolve) => {

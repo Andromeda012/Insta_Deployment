@@ -111,6 +111,24 @@
     if (!token && !isInsideIframe) {
       // Doğrudan URL ile girildiyse Clerk SDK yükleyip aktif oturumu kontrol et
       try {
+        const uiSources = [
+          'https://clerk.globalkapakmobilya.com/npm/@clerk/ui@1/dist/ui.browser.js',
+          'https://cdn.jsdelivr.net/npm/@clerk/ui@1/dist/ui.browser.js'
+        ];
+        for (const uiSrc of uiSources) {
+          if (window.__internal_ClerkUICtor) break;
+          try {
+            await new Promise((resolve, reject) => {
+              const s = document.createElement('script');
+              s.src = uiSrc;
+              s.async = true;
+              s.crossOrigin = 'anonymous';
+              s.onload = resolve;
+              s.onerror = reject;
+              document.head.appendChild(s);
+            });
+          } catch (_) {}
+        }
         const clerkSources = [
           'https://clerk.globalkapakmobilya.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js',
           'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/dist/clerk.browser.js'
@@ -132,7 +150,10 @@
         }
         if (window.Clerk) {
           if (!window.Clerk.loaded) {
-            await window.Clerk.load({ publishableKey: CLERK_PK });
+            await window.Clerk.load({
+              publishableKey: CLERK_PK,
+              ...(window.__internal_ClerkUICtor ? { ui: { ClerkUI: window.__internal_ClerkUICtor } } : {})
+            });
           }
           if (window.Clerk.session) {
             token = await window.Clerk.session.getToken();
