@@ -2,23 +2,104 @@
 // Global Mobilya & Nova Furniture — Teknoloji, Altyapı ve Entegrasyonlar Envanteri
 
 export function renderOperationsModule(data) {
+    window.loadLiveInfraHealth = async function (showNotice = false) {
+        const box = document.getElementById('live-sentry-telemetry-box');
+        if (!box) return;
+        box.innerHTML = '<div style="padding:18px;color:#94a3b8;font-size:13px;">📡 Sentry EU, Cloudflare R2, Supabase Kuyruk ve DigitalOcean Heartbeat verileri taranıyor…</div>';
+        try {
+            const res = await fetch('/api/telemetry-health');
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !json?.services) {
+                box.innerHTML = `<div style="padding:16px;color:#fca5a5;font-size:13px;">⚠️ Telemetri okunamadı: ${json?.error || res.status}</div>`;
+                return;
+            }
+            const { sentry, cloudflareR2, supabaseQueue, digitalOceanWorker } = json.services;
+            const doBadge = digitalOceanWorker.online
+                ? `<span style="color:#34d399;font-weight:800;">🟢 Çevrimiçi (${digitalOceanWorker.ageSeconds}s önce)</span>`
+                : `<span style="color:#fbbf24;font-weight:800;">🟡 Beklemede ${digitalOceanWorker.lastHeartbeatAt ? `(Son: ${digitalOceanWorker.lastHeartbeatAt.slice(0, 19).replace('T', ' ')})` : '(Heartbeat bekleniyor)'}</span>`;
+            const r2Badge = cloudflareR2.ok
+                ? `<span style="color:#34d399;font-weight:800;">🟢 Aktif (${cloudflareR2.latencyMs} ms)</span>`
+                : `<span style="color:#f87171;font-weight:800;">🔴 Hata</span>`;
+            const sentryBadge = sentry.ok
+                ? `<span style="color:#34d399;font-weight:800;">🟢 Bağlı (${sentry.projects?.length || 0} Proje • ${sentry.latencyMs} ms)</span>`
+                : `<span style="color:#fbbf24;font-weight:800;">🟡 ${sentry.note || 'Yapılandırma Bekliyor'}</span>`;
+
+            const issuesHtml = (sentry.recentIssues && sentry.recentIssues.length > 0)
+                ? sentry.recentIssues.slice(0, 6).map(i => `
+                    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 12px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.22);border-radius:8px;margin-top:8px;">
+                        <div style="min-width:0;">
+                            <span style="font-size:10.5px;font-weight:800;color:#fca5a5;text-transform:uppercase;">${i.project} • ${i.shortId}</span>
+                            <div style="font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${i.title}</div>
+                        </div>
+                        <span style="font-size:11px;font-weight:700;color:#fde68a;white-space:nowrap;">${i.count}x</span>
+                    </div>
+                `).join('')
+                : '<div style="padding:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;color:#6ee7b7;font-size:12.5px;margin-top:10px;">✅ Son 24 saatte Sentry üzerinde çözülmemiş kritik hata bulunmuyor.</div>';
+
+            box.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">Sentry EU (3 Proje)</div>
+                        <div style="margin:6px 0;font-size:13.5px;">${sentryBadge}</div>
+                        <div style="font-size:11.5px;color:#cbd5e1;">Son 24s Açık Hata: <strong>${sentry.unresolvedCount ?? 0}</strong></div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">DigitalOcean Sunucu &amp; 4 Bot</div>
+                        <div style="margin:6px 0;font-size:13.5px;">${doBadge}</div>
+                        <div style="font-size:11.5px;color:#cbd5e1;">Host: <code>${digitalOceanWorker.host}</code></div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">Cloudflare R2 Storage</div>
+                        <div style="margin:6px 0;font-size:13.5px;">${r2Badge}</div>
+                        <div style="font-size:11.5px;color:#cbd5e1;">Bucket: <code>${cloudflareR2.bucket}</code> (Sıfır Egress)</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;font-weight:800;color:#94a3b8;text-transform:uppercase;">Supabase Yayın Kuyruğu</div>
+                        <div style="margin:6px 0;font-size:13.5px;color:#38bdf8;font-weight:800;">⚡ ${supabaseQueue.latencyMs} ms</div>
+                        <div style="font-size:11.5px;color:#cbd5e1;">Bekleyen: <strong>${supabaseQueue.counts?.pending || 0}</strong> • Yayında: <strong>${supabaseQueue.counts?.published || 0}</strong> • Hata: <strong>${supabaseQueue.counts?.failed || 0}</strong></div>
+                    </div>
+                </div>
+                <div style="margin-top:14px;">
+                    <div style="font-size:12px;font-weight:800;color:#cbd5e1;letter-spacing:0.5px;">🛡️ Sentry Son 24 Saatlik Olay Kaydı (${sentry.orgSlug})</div>
+                    ${issuesHtml}
+                </div>
+            `;
+            if (showNotice && typeof window.showToast === 'function') {
+                window.showToast(`Canlı sağlık taraması tamamlandı (${json.totalCheckMs} ms).`);
+            }
+        } catch (err) {
+            box.innerHTML = `<div style="padding:16px;color:#fca5a5;font-size:13px;">⚠️ Bağlantı hatası: ${err.message}</div>`;
+        }
+    };
+
+    setTimeout(() => { window.loadLiveInfraHealth(false); }, 60);
+
     return `
         <div class="page-header" style="margin-bottom: 24px;">
             <div class="page-title-group">
                 <div class="breadcrumbs">
                     <span>Modül 5: Altyapı, Entegrasyonlar & Teknoloji Envanteri</span>
                 </div>
-                <h1 style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">Sistem Mimarisi & Teknoloji Ekipmanları</h1>
+                <h1 style="font-size: 24px; font-weight: 800; color: #fff; margin-top: 4px;">Sistem Mimarisi & Canlı Altyapı Sağlık Monitörü</h1>
                 <p class="subtitle" style="color: #94A3B8; font-size: 13.5px; margin-top: 4px;">
-                    Global Mobilya & Nova Furniture ekosisteminde şu ana kadar kurulan, aktif çalışan ve ileride devreye alınacak tüm bulut servisleri, veritabanı, yapay zeka ve API entegrasyonları.
+                    Sentry EU hata/heartbeat takibi, Cloudflare R2 depolama gecikmesi, DigitalOcean sunucu canlılığı ve Supabase kuyruk durumu.
                 </p>
             </div>
             <div class="page-actions" style="display:flex; gap:10px; align-items:center;">
                 
-                <button class="btn btn-primary" onclick="window.showToast('Tüm altyapı servisleri yeşil: Supabase, Vercel, Meta ve Gemini aktif.')" style="font-weight:700;">
-                    ⚡ Sistem Sağlık Taraması
+                <button class="btn btn-primary" onclick="window.loadLiveInfraHealth(true)" style="font-weight:700;">
+                    ⚡ Canlı Sağlık Taraması
                 </button>
             </div>
+        </div>
+
+        <!-- Canlı Sentry + DigitalOcean + Cloudflare R2 + Supabase Telemetri Paneli -->
+        <div style="background:#111B2E; border:1px solid rgba(56,189,248,0.32); border-radius:16px; padding:20px 22px; margin-bottom:24px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                <h3 style="font-size:15.5px; font-weight:800; color:#fff; margin:0;">📡 Canlı Altyapı Sağlık &amp; Sentry Telemetrisi</h3>
+                <span style="font-size:11px; font-weight:700; color:#38bdf8;">Sentry EU • Cloudflare R2 • DigitalOcean • Supabase</span>
+            </div>
+            <div id="live-sentry-telemetry-box"></div>
         </div>
 
         <!-- Mimari Bilgilendirme Bannerı -->

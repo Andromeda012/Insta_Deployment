@@ -9,6 +9,7 @@ import {
   upsertCrmCustomerToSupabase
 } from './_lib/auth.js';
 import { createR2PresignedUrl, getR2PublicUrl, uploadBufferToR2 } from './_lib/r2-storage.js';
+import { fetchInfraHealthSnapshot, fetchPostHogAnalyticsSummary } from './_lib/observability.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
@@ -1437,6 +1438,31 @@ async function handleCrmCustomers(req, res) {
   return res.status(405).json({ ok: false, error: 'Method not allowed' });
 }
 
+async function handleTelemetryHealth(req, res) {
+  await authenticateRoles(req, ['admin', 'viewer']);
+  const snapshot = await fetchInfraHealthSnapshot();
+  return res.status(200).json(snapshot);
+}
+
+async function handleProductAnalytics(req, res) {
+  await authenticateRoles(req, ['admin', 'viewer', 'sales', 'social_media']);
+  const [posthog, crmStoreRows] = await Promise.all([
+    fetchPostHogAnalyticsSummary(),
+    supabase('/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1', SERVICE_KEY).catch(() => [])
+  ]);
+  const crmStore = Array.isArray(crmStoreRows) && crmStoreRows[0]?.data ? crmStoreRows[0].data : { customers: [], quotes: [] };
+  return res.status(200).json({
+    ok: true,
+    checkedAt: new Date().toISOString(),
+    posthog,
+    crmSummary: {
+      totalB2CCustomers: Array.isArray(crmStore.customers) ? crmStore.customers.length : 0,
+      totalQuotes: Array.isArray(crmStore.quotes) ? crmStore.quotes.length : 0,
+      latestQuotes: (crmStore.quotes || []).slice(0, 8)
+    }
+  });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -1447,6 +1473,8 @@ export default async function handler(req, res) {
     if (action === 'clerk-session') return await handleClerkSession(req, res);
     if (action === 'b2c-lazy-quote') return await handleB2CLazyQuote(req, res);
     if (action === 'crm-customers') return await handleCrmCustomers(req, res);
+    if (action === 'telemetry-health') return await handleTelemetryHealth(req, res);
+    if (action === 'product-analytics') return await handleProductAnalytics(req, res);
     if (action === 'products') return await products(req, res);
     if (action === 'settings') return await settings(req, res);
     if (action === 'ai-profiles' || action === 'marketing-profiles') return await aiProfiles(req, res);

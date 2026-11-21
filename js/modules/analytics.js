@@ -1,6 +1,70 @@
-// Module 6: Performance Analytics Control Panel
+// Module 6: Performance Analytics Control Panel (Integrated with Live PostHog EU HogQL API)
 export function renderAnalyticsModule(data) {
     const an = data.analytics;
+
+    window.loadLivePostHogAnalytics = async function () {
+        const box = document.getElementById('live-posthog-analytics-box');
+        if (!box) return;
+        box.innerHTML = '<div style="padding:16px;color:#94a3b8;font-size:13px;">📊 PostHog EU (HogQL) canlı B2C vitrin, 3D etkileşim ve teklif hunisi verileri yükleniyor…</div>';
+        try {
+            const res = await fetch('/api/product-analytics');
+            const json = await res.json().catch(() => null);
+            if (!res.ok || !json?.posthog) {
+                box.innerHTML = `<div style="padding:14px;color:#fca5a5;font-size:13px;">⚠️ PostHog verileri alınamadı: ${json?.error || res.status}</div>`;
+                return;
+            }
+            const ph = json.posthog;
+            const s = ph.summary || {};
+            const crm = json.crmSummary || {};
+
+            const modelsRows = (ph.topModels && ph.topModels.length > 0)
+                ? ph.topModels.map(m => `<tr><td><strong>${m.name}</strong></td><td><span class="badge badge-primary">${m.interactions} etkileşim</span></td></tr>`).join('')
+                : '<tr><td colspan="2" style="color:#94a3b8;font-size:12px;">Henüz 30 günlük model etkileşimi birikmedi — Vitrin trafiği geldikçe otomatik dolacaktır.</td></tr>';
+
+            const sourcesRows = (ph.topSources && ph.topSources.length > 0)
+                ? ph.topSources.map(src => `<tr><td><strong>${src.source}</strong></td><td><span class="badge badge-success">${src.visits} ziyaret</span></td></tr>`).join('')
+                : '<tr><td colspan="2" style="color:#94a3b8;font-size:12px;">Henüz kaynak verisi birikmedi — Sosyal medya bot linkleri ve vitrin girişleriyle anlık güncellenir.</td></tr>';
+
+            box.innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px;margin-bottom:16px;">
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;">30g Tekil Ziyaretçi</div>
+                        <div style="font-size:24px;font-weight:900;color:#38bdf8;margin-top:4px;">${s.uniqueVisitors30d || 0}</div>
+                        <div style="font-size:11px;color:#94a3b8;">Sayfa Görüntüleme: ${s.pageviews30d || 0}</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Koleksiyon &amp; Ürün İnceleme</div>
+                        <div style="font-size:24px;font-weight:900;color:#fde68a;margin-top:4px;">${s.collectionViews30d || 0}</div>
+                        <div style="font-size:11px;color:#94a3b8;">PostHog EU (${ph.latencyMs || 0} ms)</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;">3D Model Etkileşimi</div>
+                        <div style="font-size:24px;font-weight:900;color:#c084fc;margin-top:4px;">${s.model3dInteractions30d || 0}</div>
+                        <div style="font-size:11px;color:#94a3b8;">3d_model_interacted</div>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.85);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:11px;color:#94a3b8;font-weight:700;text-transform:uppercase;">Teklif &amp; CRM Kayıtları</div>
+                        <div style="font-size:24px;font-weight:900;color:#34d399;margin-top:4px;">${Math.max(s.quoteSubmissions30d || 0, crm.totalQuotes || 0)}</div>
+                        <div style="font-size:11px;color:#94a3b8;">Kayıtlı B2C Müşteri: ${crm.totalB2CCustomers || 0}</div>
+                    </div>
+                </div>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;">
+                    <div style="background:rgba(15,23,42,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:12px;font-weight:800;color:#fde68a;margin-bottom:8px;">🛋️ En Çok İncelenen Koleksiyon &amp; 3D Modeller</div>
+                        <table class="data-table" style="font-size:12px;"><tbody>${modelsRows}</tbody></table>
+                    </div>
+                    <div style="background:rgba(15,23,42,0.65);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:14px;">
+                        <div style="font-size:12px;font-weight:800;color:#38bdf8;margin-bottom:8px;">🌐 Trafik Kaynakları &amp; Sosyal Medya UTM</div>
+                        <table class="data-table" style="font-size:12px;"><tbody>${sourcesRows}</tbody></table>
+                    </div>
+                </div>
+            `;
+        } catch (err) {
+            box.innerHTML = `<div style="padding:14px;color:#fca5a5;font-size:13px;">⚠️ Bağlantı hatası: ${err.message}</div>`;
+        }
+    };
+
+    setTimeout(() => { window.loadLivePostHogAnalytics(); }, 60);
 
     return `
         <div class="page-header">
@@ -8,17 +72,13 @@ export function renderAnalyticsModule(data) {
                 <div class="breadcrumbs">
                     <span>Modül 6: Performans Analitiği</span>
                 </div>
-                <h1>Konsolide İşletme Performans Analitiği</h1>
-                <p class="subtitle">Satış trendleri, üretim verimliliği, web/sosyal medya dönüşümleri ve operasyonel KPI göstergeleri.</p>
+                <h1>Konsolide İşletme &amp; PostHog Ürün Analitiği</h1>
+                <p class="subtitle">PostHog EU canlı B2C etkileşimleri, 3D model ilgisi, teklif dönüşümleri ve operasyonel KPI göstergeleri.</p>
             </div>
             <div class="page-actions">
-                <!-- Date Range Selector -->
-                <div class="date-range-group">
-                    <span class="icon">📅</span>
-                    <select class="form-select" onchange="window.showToast('Tarih aralığı uygulandı: ' + this.value)">
-                        ${an.dateRanges.map((r, i) => `<option value="${r}" ${i === 1 ? 'selected' : ''}>${r}</option>`).join('')}
-                    </select>
-                </div>
+                <button class="btn btn-primary" onclick="window.loadLivePostHogAnalytics()">
+                    📊 PostHog Verilerini Yenile
+                </button>
                 <button class="btn btn-secondary" onclick="window.toggleAnalyticsEmptyState()">
                     🔄 Veri/Boş Durum Testi
                 </button>
@@ -26,6 +86,16 @@ export function renderAnalyticsModule(data) {
         </div>
 
         <div id="analytics-content">
+            <!-- Canlı PostHog EU (HogQL) B2C Ürün & Dönüşüm Paneli -->
+            <div class="card panel" style="margin-bottom:24px; border:1px solid rgba(168,85,247,0.35);">
+                <div class="panel-header">
+                    <div class="panel-title-wrap">
+                        <h3>📊 Canlı PostHog EU — Vitrin, 3D Showroom &amp; Teklif Hunisi</h3>
+                        <span class="tag">Project #361931 • HogQL API</span>
+                    </div>
+                </div>
+                <div id="live-posthog-analytics-box"></div>
+            </div>
             <!-- Executive KPI Cards -->
             <div class="metrics-grid">
                 ${an.kpis.map(kpi => `

@@ -9,6 +9,8 @@
     { "source": "/api/clerk-session", "destination": "/api/module7?action=clerk-session" },
     { "source": "/api/b2c-lazy-quote", "destination": "/api/module7?action=b2c-lazy-quote" },
     { "source": "/api/crm-customers", "destination": "/api/module7?action=crm-customers" },
+    { "source": "/api/telemetry-health", "destination": "/api/module7?action=telemetry-health" },
+    { "source": "/api/product-analytics", "destination": "/api/module7?action=product-analytics" },
     { "source": "/_data/:match*", "destination": "/Module%201/_data/:match*" },
     { "source": "/nova-studio-engine.js", "destination": "/Module%202/nova-studio-engine.js" },
     { "source": "/panoramic-carousel-engine.js", "destination": "/Module%202/panoramic-carousel-engine.js" },

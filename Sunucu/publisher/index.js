@@ -32,6 +32,11 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createClient } from '@supabase/supabase-js';
 import httpClient from './http-client.cjs';
+import {
+  captureWorkerException,
+  sendWorkerCronCheckIn,
+  recordDigitalOceanHeartbeat
+} from './lib/sentry-heartbeat.js';
 
 const { fetchWithTimeout } = httpClient;
 
@@ -986,9 +991,13 @@ async function pollQueueCycle() {
     const task = tasks[0];
     isTaskRunning = true;
     currentRunningTaskId = task.task_id;
+    const botSlug = `do-${String(task.platform || 'social').toLowerCase()}-bot`;
+    const taskStartMs = Date.now();
+    const checkInId = await sendWorkerCronCheckIn(botSlug, 'in_progress');
 
     try {
       const result = await executePublish(task);
+      await sendWorkerCronCheckIn(botSlug, 'ok', { checkInId, durationSeconds: (Date.now() - taskStartMs) / 1000 });
 
       // Görev Sonucunu Kaydet
       const { data: completedSuccessfully, error: completeError } = await supabase.rpc('complete_publish_task', {
@@ -1047,6 +1056,11 @@ async function pollQueueCycle() {
       const cleanErrMsg = sanitize(execErr.message);
 
       console.error(`[Görev Sonucu: ${finalStatus.toUpperCase()}] ID: ${task.task_id} -> ${cleanErrMsg}`);
+      await sendWorkerCronCheckIn(botSlug, 'error', { checkInId, durationSeconds: (Date.now() - taskStartMs) / 1000 });
+      await captureWorkerException(execErr, {
+        tags: { platform: String(task.platform || 'unknown'), content_type: String(task.content_type || ''), status: finalStatus },
+        extra: { task_id: task.task_id, product_slug: task.product_slug }
+      });
 
       const { data: failCompleteOk, error: failCompleteErr } = await supabase.rpc('complete_publish_task', {
         p_task_id: task.task_id,
@@ -1072,6 +1086,7 @@ async function pollQueueCycle() {
     }
   } catch (cycleErr) {
     console.error('[Döngü Hatası]:', sanitize(cycleErr.message));
+    await captureWorkerException(cycleErr, { tags: { phase: 'poll_queue_cycle' } });
   }
 }
 
@@ -1079,7 +1094,15 @@ async function pollQueueCycle() {
 
 const schedulerHandle = startAutonomousScheduler(supabase, 30000, process.env.GEMINI_API_KEY);
 
-
+// DigitalOcean + Sentry Canlı Heartbeat (60 saniyede bir)
+const heartbeatIntervalHandle = setInterval(() => {
+  recordDigitalOceanHeartbeat(supabase, {
+    workerId: WORKER_ID,
+    status: isTaskRunning ? 'busy' : 'online',
+    extra: { current_task_id: currentRunningTaskId }
+  }).catch(() => {});
+}, 60000);
+recordDigitalOceanHeartbeat(supabase, { workerId: WORKER_ID, status: 'online' }).catch(() => {});
 
 // Kuyruk Tüketici Zamanlayıcısını Başlat
 
@@ -1095,6 +1118,7 @@ async function handleShutdown(signal) {
   if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
 
   clearInterval(pollIntervalHandle);
+  clearInterval(heartbeatIntervalHandle);
 
   if (isTaskRunning) {
     console.log('[Shutdown] Devam eden yayın görevinin tamamlanması bekleniyor (Maks 35 sn)...');

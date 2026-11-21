@@ -5,6 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Mobilya — Modüler Operasyon Yönetim Platformu</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://browser.sentry-cdn.com/8.33.1/bundle.min.js" crossorigin="anonymous"></script>
+    <script>
+      if (window.Sentry && typeof window.Sentry.init === 'function') {
+        window.Sentry.init({
+          dsn: 'https://c32c91beaf289736261b4955e833dff2@o4512471153246208.ingest.de.sentry.io/4512471181361232',
+          environment: 'production'
+        });
+      }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="/js/site-modal-feedback.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -5,6 +5,7 @@
 // ============================================================================
 
 import crypto from 'node:crypto';
+import { captureSentryException } from './observability.js';
 
 export const CLERK_PUBLISHABLE_KEY = (
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
@@ -662,7 +663,10 @@ export async function handleClerkWebhookRequest(req, res) {
 
 export function apiError(res, error, label = 'API') {
   const status = error.status || 500;
-  if (status >= 500) console.error(`[${label}]`, error);
+  if (status >= 500) {
+    console.error(`[${label}]`, error);
+    captureSentryException(error, { tags: { api_module: label, status: String(status) } }).catch(() => {});
+  }
   return res.status(status).json({
     ok: false,
     code: error.code || null,
