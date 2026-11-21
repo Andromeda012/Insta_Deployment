@@ -172,12 +172,13 @@ async function executePublish(task) {
   if (typeof media_url === 'string' && media_url.startsWith('auto_render_3post:')) {
     const [, targetSlug, postKey] = media_url.split(':');
     console.log(`[Otonom 3'lü Kampanya Render] ${targetSlug} -> ${postKey} hazırlanıyor...`);
-    await heartbeatLockExtension(task_id, 240);
-    const [prods, extStore] = await Promise.all([
+    await heartbeatLockExtension(task_id, 480);
+    const [prods, extStore, aiProfiles] = await Promise.all([
       fetchProductsCatalog(supabase),
-      fetchSiteSetting(supabase, 'module7_extended_catalog')
+      fetchSiteSetting(supabase, 'module7_extended_catalog'),
+      fetchSiteSetting(supabase, 'ai_studio_profiles')
     ]);
-    const entities = buildCatalogEntities(prods || [], extStore || {}, {});
+    const entities = buildCatalogEntities(prods || [], extStore || {}, aiProfiles || {});
     const entity = entities.find(e => e.slug === targetSlug);
     if (!entity) throw new Error(`Katalogda "${targetSlug}" koleksiyonu bulunamadı.`);
     const campaign = await produceCollectionThreePostCampaign({ supabase, entity, log: console.log });

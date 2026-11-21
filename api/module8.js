@@ -5,6 +5,8 @@
 
 import { authenticateRoles, apiError } from './_lib/auth.js';
 import crypto from 'crypto';
+import fs from 'fs';
+import path from 'path';
 import {
   TRIPO_BASE_URL,
   TRIPO_DEFAULT_MODEL,
@@ -3063,6 +3065,97 @@ async function handleEngines(req, res) {
 }
 
 // Action: Catalog Reference (Rich Read-Only proxy to Module 7 products & collections)
+function formatMusicLibraryOptionLabel(baseName) {
+  const lower = String(baseName || '').toLowerCase();
+  let icon = '🎵';
+  if (lower.includes('atmospheric') || lower.includes('ambient')) icon = '🌌';
+  else if (lower.includes('caz') || lower.includes('jazz')) icon = '🎷';
+  else if (lower.includes('cinematic')) icon = '🎬';
+  else if (lower.includes('holiday') || lower.includes('lounge') || lower.includes('chill')) icon = '🌿';
+  else if (lower.includes('classic') || lower.includes('piano')) icon = '🎹';
+  return `${icon} ${baseName}`;
+}
+
+function scanLocalAssetsMusicFolder() {
+  const AUDIO_EXT_RE = /\.(mp3|mp4|m4a|wav|aac|ogg|flac)$/i;
+  const candidates = [
+    path.resolve(process.cwd(), 'Sunucu/publisher/assets/music'),
+    path.resolve(process.cwd(), 'assets/music')
+  ];
+  for (const dirPath of candidates) {
+    try {
+      if (!fs.existsSync(dirPath)) continue;
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+      const tracks = [];
+      for (const entry of entries) {
+        if (!entry.isFile()) continue;
+        if (entry.name.startsWith('.') || entry.name.toLowerCase() === 'readme.txt') continue;
+        if (!AUDIO_EXT_RE.test(entry.name)) continue;
+        const baseName = entry.name.replace(AUDIO_EXT_RE, '').trim();
+        if (!baseName) continue;
+        tracks.push({
+          value: baseName,
+          label: formatMusicLibraryOptionLabel(baseName),
+          fileName: entry.name
+        });
+      }
+      tracks.sort((a, b) => a.value.localeCompare(b.value, 'tr', { numeric: true, sensitivity: 'base' }));
+      return tracks;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function resolveDynamicMusicLibrary(manifestRes = null) {
+  const diskTracks = scanLocalAssetsMusicFolder();
+  let tracks = diskTracks;
+
+  if (Array.isArray(diskTracks) && diskTracks.length > 0) {
+    // Yerel diskte müzik klasörü erişilebilirse manifest'i Supabase site_settings'e senkronize et
+    const savedTracks = (manifestRes?.ok && Array.isArray(manifestRes.data) && Array.isArray(manifestRes.data[0]?.data?.tracks))
+      ? manifestRes.data[0].data.tracks
+      : [];
+    const oldSig = savedTracks.map(t => t.fileName || t.value).join('|');
+    const newSig = diskTracks.map(t => t.fileName || t.value).join('|');
+    if (oldSig !== newSig) {
+      const now = new Date().toISOString();
+      supabaseRequest('/rest/v1/site_settings', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({
+          key: 'music_library_manifest',
+          data: { updated_at: now, track_count: diskTracks.length, tracks: diskTracks },
+          updated_at: now
+        })
+      }).catch(() => {});
+    }
+  } else if (manifestRes?.ok && Array.isArray(manifestRes.data) && Array.isArray(manifestRes.data[0]?.data?.tracks)) {
+    tracks = manifestRes.data[0].data.tracks;
+  }
+
+  if (!Array.isArray(tracks) || tracks.length === 0) {
+    tracks = [
+      { value: 'Atmospheric 1', label: '🌌 Atmospheric 1', fileName: 'Atmospheric 1.mp4' },
+      { value: 'Caz 1', label: '🎷 Caz 1', fileName: 'Caz 1.mp4' },
+      { value: 'Cinematic 1', label: '🎬 Cinematic 1', fileName: 'Cinematic 1.mp4' },
+      { value: 'Cinematic 2', label: '🎬 Cinematic 2', fileName: 'Cinematic 2.mp4' },
+      { value: 'Holiday 1', label: '🌿 Holiday 1', fileName: 'Holiday 1.mp4' },
+      { value: 'Holiday 2', label: '🌿 Holiday 2', fileName: 'Holiday 2.mp4' },
+      { value: 'Holiday 3', label: '🌿 Holiday 3', fileName: 'Holiday 3.mp4' }
+    ];
+  }
+
+  return [
+    { value: 'auto', label: '🎵 Otomatik (Kütüphaneden Seç)' },
+    ...tracks.map(t => ({
+      value: t.value,
+      label: t.label || formatMusicLibraryOptionLabel(t.value),
+      fileName: t.fileName || `${t.value}.mp4`
+    })),
+    { value: 'custom', label: '🔗 Özel Müzik Bağlantısı (URL)' }
+  ];
+}
+
 async function handleCatalogRef(req, res) {
   try {
     // POST: Modül 8 Sunum, Tema & Müzik Stüdyosundan ürün/koleksiyon sunum ayarlarını kaydetme ve Modül 1/2'ye dağıtma
@@ -3094,12 +3187,13 @@ async function handleCatalogRef(req, res) {
       const prefs = {
         atmosphere: String(b.atmosphere || b.theme || 'Lüks'),
         theme: String(b.theme || b.atmosphere || 'Lüks'),
-        music_preference: String(b.music_preference || b.music || 'luxury_piano'),
+        music_preference: String(b.music_preference || b.music || 'auto'),
         custom_music_url: String(b.custom_music_url || '').trim(),
         camera: String(b.camera || 'slow_push_in'),
         marketing_tone: String(b.marketing_tone || 'Premium'),
         distributed_to_modules: Boolean(b.distribute_to_modules || b.distributed_to_modules),
         distributed_at: b.distribute_to_modules ? now : (extStore.marketing_profiles[slug]?.distributed_at || null),
+        auto_campaign_ready: Boolean(b.distribute_to_modules || b.distributed_to_modules),
         transform_enabled: false,
         updated_at: now
       };
@@ -3161,11 +3255,14 @@ async function handleCatalogRef(req, res) {
     const categoryQuery = req.query?.category ? String(req.query.category).trim() : '';
     const collectionQuery = req.query?.collection ? String(req.query.collection).trim() : '';
 
-    const [pRes, extStoreRes, aiProfRes] = await Promise.all([
+    const [pRes, extStoreRes, aiProfRes, musicManifestRes] = await Promise.all([
       supabaseRequest('/rest/v1/products?select=*&order=created_at.desc'),
       supabaseRequest('/rest/v1/site_settings?key=eq.module7_extended_catalog&select=data'),
-      supabaseRequest('/rest/v1/site_settings?key=eq.ai_studio_profiles&select=data')
+      supabaseRequest('/rest/v1/site_settings?key=eq.ai_studio_profiles&select=data'),
+      supabaseRequest('/rest/v1/site_settings?key=eq.music_library_manifest&select=data')
     ]);
+
+    const musicLibrary = await resolveDynamicMusicLibrary(musicManifestRes);
 
     const rawProducts = Array.isArray(pRes.data) ? pRes.data : [];
     const extStore = (extStoreRes.ok && Array.isArray(extStoreRes.data) && extStoreRes.data[0]?.data)
@@ -3289,7 +3386,8 @@ async function handleCatalogRef(req, res) {
     const result = {
       products: productsList,
       collections: collectionsList,
-      categories
+      categories,
+      music_library: musicLibrary
     };
 
     return res.status(200).json({

@@ -5976,13 +5976,16 @@
       { value: 'Doğal', label: '🌿 Doğal Ahşap & Dinginlik' }
     ];
 
-    const PRES_MUSIC_OPTIONS = [
-      { value: 'luxury_piano', label: '🎹 Piyano & Lüks Mimari' },
-      { value: 'cinematic_strings', label: '🎻 Sinematik Yaylılar & Kurumsal' },
-      { value: 'warm_acoustic', label: '🎸 Akustik Sıcak Ev & Yaşam' },
-      { value: 'modern_lofi', label: '🎧 Modern Minimalist Lo-Fi' },
-      { value: 'upbeat_interior', label: '✨ Dinamik Modern Tasarım Ritmi' },
-      { value: 'custom', label: '🔗 Özel MP3 Bağlantısı' }
+    let PRES_MUSIC_OPTIONS = [
+      { value: 'auto', label: '🎵 Otomatik (Kütüphaneden Seç)' },
+      { value: 'Atmospheric 1', label: '🌌 Atmospheric 1' },
+      { value: 'Caz 1', label: '🎷 Caz 1' },
+      { value: 'Cinematic 1', label: '🎬 Cinematic 1' },
+      { value: 'Cinematic 2', label: '🎬 Cinematic 2' },
+      { value: 'Holiday 1', label: '🌿 Holiday 1' },
+      { value: 'Holiday 2', label: '🌿 Holiday 2' },
+      { value: 'Holiday 3', label: '🌿 Holiday 3' },
+      { value: 'custom', label: '🔗 Özel Müzik Bağlantısı (URL)' }
     ];
 
     const PRES_CAMERA_OPTIONS = [
@@ -6055,6 +6058,9 @@
 
         if (catalogRes) {
           currentCatalog = catalogRes;
+          if (Array.isArray(catalogRes.music_library) && catalogRes.music_library.length > 0) {
+            PRES_MUSIC_OPTIONS = catalogRes.music_library;
+          }
           populateCatalogSelectors();
           renderCatalogExplorer();
         }
@@ -6147,7 +6153,11 @@
       container.innerHTML = filtered.map(item => {
         const p = item.prefs || {};
         const curTheme = p.atmosphere || p.theme || 'Lüks';
-        const curMusic = p.music_preference || 'luxury_piano';
+        const rawMusic = p.music_preference || 'auto';
+        const matchedMusicOpt = PRES_MUSIC_OPTIONS.find(
+          opt => opt.value === rawMusic || String(opt.value).toLowerCase() === String(rawMusic).toLowerCase()
+        );
+        const curMusic = matchedMusicOpt ? matchedMusicOpt.value : (PRES_MUSIC_OPTIONS[0]?.value || 'auto');
         const curCustomUrl = p.custom_music_url || '';
         const curCamera = p.camera || 'slow_push_in';
         const curTone = p.marketing_tone || 'Premium';

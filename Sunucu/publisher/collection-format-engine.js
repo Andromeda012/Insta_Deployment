@@ -34,7 +34,7 @@ import { createRequire } from 'node:module';
 
 const requireFallback = createRequire(import.meta.url);
 
-export const ENGINE_VERSION = 'cfe-1.0.0';
+export const ENGINE_VERSION = 'cfe-2.0.0';
 
 // ── MARKA & ORTAM AYARLARI ───────────────────────────────────────────────────
 const env = (k, d) => (process.env[k] && String(process.env[k]).trim()) || d;
@@ -324,7 +324,7 @@ export function entitySignature(entity, extra = '') {
     v: ENGINE_VERSION, k: entity.kind, t: entity.title, c: entity.category, q: entity.promoQuote,
     h: entity.heroUrl, s: entity.sourceImageUrl || '', d: entity.dimensions, f: entity.features,
     p: (entity.pieces || []).map(x => [x.title, x.dimensions, x.imageUrl, x.presentation]),
-    m: entity.prefs?.music_preference, mu: entity.prefs?.custom_music_url, cam: entity.prefs?.camera,
+    m: entity.prefs?.music_preference || entity.prefs?.music, mu: entity.prefs?.custom_music_url, cam: entity.prefs?.camera,
     b: BRAND.name, w: BRAND.whatsapp, extra
   });
   return crypto.createHash('sha1').update(payload).digest('hex').slice(0, 16);
@@ -964,9 +964,127 @@ function cameraMotion(camera, i) {
   }
 }
 
-async function resolveMusic(dir, prefs, log) {
-  // 1. Kullanıcı Modül 8'den özel bir müzik bağlantısı tanımladıysa onu yükle
-  if (prefs?.music_preference === 'custom' && /^https:\/\//i.test(prefs?.custom_music_url || '')) {
+// ── DİNAMİK MÜZİK KÜTÜPHANESİ TARAYICI & EŞLEYİCİ (assets/music) ─────────────
+export function resolveMusicLibraryDir() {
+  const thisDir = path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'));
+  const candidates = [
+    path.join(thisDir, 'assets/music'),
+    path.resolve(process.cwd(), 'assets/music'),
+    path.resolve(process.cwd(), 'Sunucu/publisher/assets/music')
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(c)) return c;
+  }
+  return candidates[0];
+}
+
+export function formatMusicTrackLabel(stem) {
+  const s = String(stem || '').trim();
+  const low = s.toLowerCase();
+  let icon = '🎵';
+  if (low.startsWith('atmospheric') || low.startsWith('ambient')) icon = '🌌';
+  else if (low.startsWith('caz') || low.startsWith('jazz')) icon = '🎷';
+  else if (low.startsWith('cinematic') || low.startsWith('sinematik')) icon = '🎬';
+  else if (low.startsWith('holiday') || low.startsWith('chill') || low.startsWith('lounge')) icon = '🏖️';
+  else if (low.startsWith('classical') || low.startsWith('klasik') || low.startsWith('piano')) icon = '🎻';
+  else if (low.startsWith('acoustic') || low.startsWith('akustik')) icon = '🎸';
+  return `${icon} ${s}`;
+}
+
+export function normalizeMusicKey(str) {
+  return String(str || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\.(mp3|mp4|m4a|wav|aac|ogg|flac)$/i, '')
+    .replace(/[\s_-]+/g, ' ');
+}
+
+/**
+ * `assets/music` klasöründeki tüm ses/müzik dosyalarını dinamik olarak tarar.
+ * Klasöre yeni müzik eklendiğinde veya çıkarıldığında kod değişikliği gerekmeden otomatik algılanır.
+ */
+export function scanLocalMusicLibrary() {
+  const musicDir = resolveMusicLibraryDir();
+  if (!fs.existsSync(musicDir)) return [];
+  const files = fs.readdirSync(musicDir)
+    .filter(f => /\.(mp3|mp4|m4a|wav|aac|ogg|flac)$/i.test(f))
+    .sort((a, b) => a.localeCompare(b, 'tr', { numeric: true, sensitivity: 'base' }));
+
+  return files.map(fileName => {
+    const ext = path.extname(fileName);
+    const stem = path.basename(fileName, ext).trim();
+    const genre = stem.split(/\s+/)[0] || 'General';
+    const fullPath = path.join(musicDir, fileName);
+    const stat = fs.statSync(fullPath);
+    return {
+      value: stem,
+      key: stem,
+      normalizedKey: normalizeMusicKey(stem),
+      label: formatMusicTrackLabel(stem),
+      fileName,
+      ext: ext.toLowerCase(),
+      genre,
+      sizeBytes: stat.size,
+      fullPath
+    };
+  });
+}
+
+/**
+ * Yerel `assets/music` klasöründeki müzikleri Supabase Storage ve `site_settings('music_library_manifest')`
+ * ile senkronize eder. Böylece hem Modül 8 web arayüzü hem de bulut/sunucu işçileri güncel listeyi görür.
+ */
+export async function syncMusicLibraryToSupabase(supabase, log = () => {}) {
+  if (!supabase) return [];
+  const tracks = scanLocalMusicLibrary();
+  if (!tracks.length) return [];
+
+  const manifestTracks = [];
+  for (const t of tracks) {
+    const safeSlug = t.stem
+      ? t.stem
+      : t.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const storagePath = `music-library/${safeSlug}${t.ext}`;
+    let publicUrl = '';
+    try {
+      const buf = fs.readFileSync(t.fullPath);
+      const contentType = t.ext === '.mp4' ? 'video/mp4' : t.ext === '.m4a' ? 'audio/mp4' : t.ext === '.wav' ? 'audio/wav' : 'audio/mpeg';
+      const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(storagePath, buf, { contentType, upsert: true });
+      if (!error) {
+        publicUrl = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(storagePath).data?.publicUrl || '';
+      }
+    } catch (_) {}
+
+    manifestTracks.push({
+      value: t.value,
+      key: t.key,
+      label: t.label,
+      fileName: t.fileName,
+      genre: t.genre,
+      sizeBytes: t.sizeBytes,
+      publicUrl
+    });
+  }
+
+  try {
+    await supabase.from('site_settings').upsert({
+      key: 'music_library_manifest',
+      data: {
+        updated_at: new Date().toISOString(),
+        tracks: manifestTracks
+      },
+      updated_at: new Date().toISOString()
+    });
+  } catch (err) {
+    log(`[Müzik Kütüphanesi] Manifest senkronizasyon uyarısı: ${err.message}`);
+  }
+  return manifestTracks;
+}
+
+export async function resolveMusic(dir, prefs, log = () => {}, entitySlug = '') {
+  const rawPref = String(prefs?.music_preference || prefs?.music || '').trim();
+  // 1. Kullanıcı Modül 8'den özel bir müzik URL bağlantısı tanımladıysa onu yükle
+  if (rawPref === 'custom' && /^https:\/\//i.test(prefs?.custom_music_url || '')) {
     try {
       const buf = await fetchBuffer(prefs.custom_music_url, 30000);
       const p = path.join(dir, 'custom_music.mp3');
@@ -978,11 +1096,57 @@ async function resolveMusic(dir, prefs, log) {
     }
   }
 
-  // 2. Kullanıcı talebi: Telif riski olmayan hafif doğal oda/ortam ambiansı (nature ambience)
+  // 2. `assets/music` klasöründeki dinamik müzik kütüphanesinden eşleştir
+  const library = scanLocalMusicLibrary();
+  if (library.length > 0) {
+    const requestedRaw = rawPref;
+    const requestedNorm = normalizeMusicKey(requestedRaw);
+
+    let chosen = null;
+    if (requestedNorm && requestedNorm !== 'auto' && requestedNorm !== 'custom') {
+      // Birebir isim veya dosya adı eşleşmesi (örn. "Atmospheric 1", "Caz 1", "Cinematic 2", "Holiday 1")
+      chosen = library.find(t =>
+        t.normalizedKey === requestedNorm ||
+        normalizeMusicKey(t.fileName) === requestedNorm
+      );
+      // Eğer eski bir tema anahtarı kalmışsa (örn. luxury_piano, cinematic_strings, warm_acoustic, modern_lofi) türe göre eşleştir
+      if (!chosen) {
+        if (requestedNorm.includes('cinematic') || requestedNorm.includes('strings')) {
+          chosen = library.find(t => t.normalizedKey.startsWith('cinematic'));
+        } else if (requestedNorm.includes('ambient') || requestedNorm.includes('atmospheric')) {
+          chosen = library.find(t => t.normalizedKey.startsWith('atmospheric') || t.normalizedKey.startsWith('ambient'));
+        } else if (requestedNorm.includes('lofi') || requestedNorm.includes('caz') || requestedNorm.includes('jazz')) {
+          chosen = library.find(t => t.normalizedKey.startsWith('caz') || t.normalizedKey.startsWith('jazz'));
+        } else if (requestedNorm.includes('warm') || requestedNorm.includes('holiday') || requestedNorm.includes('upbeat')) {
+          chosen = library.find(t => t.normalizedKey.startsWith('holiday'));
+        }
+      }
+    }
+
+    // Seçilen müzik klasörden silinmişse veya 'auto' ise mevcut kütüphaneden deterministik seç
+    if (!chosen) {
+      const seedStr = String(entitySlug || requestedRaw || 'nova');
+      let hash = 0;
+      for (let i = 0; i < seedStr.length; i++) hash = ((hash << 5) - hash + seedStr.charCodeAt(i)) | 0;
+      const idx = Math.abs(hash) % library.length;
+      chosen = library[idx];
+    }
+
+    if (chosen && fs.existsSync(chosen.fullPath)) {
+      log(`[Müzik Kütüphanesi] Seçilen müzik: "${chosen.value}" (${chosen.fileName})`);
+      return {
+        path: chosen.fullPath,
+        url: null,
+        key: chosen.value,
+        fileName: chosen.fileName
+      };
+    }
+  }
+
+  // 3. Yedek: Kütüphane boşsa telifsiz hafif ambians sesi üret
   try {
     const ambientPath = path.join(dir, 'nature_ambient.mp3');
     const FFMPEG_BIN = resolveFfmpegBinary();
-    // 48kHz stereo, yumuşak pembe gürültü + sıcak oda akustiği filtresi (huzurlu iç mekan esintisi)
     const res = spawnSync(FFMPEG_BIN, [
       '-hide_banner', '-loglevel', 'error', '-y',
       '-f', 'lavfi', '-i', 'anoisesrc=c=pink:r=48000:a=0.012,lowpass=f=340,highpass=f=75,volume=0.35',
@@ -1155,7 +1319,7 @@ export async function renderVerticalVideo(entity, { log = () => {}, workDir, int
 
   // ── BİRLEŞTİRME: YUMUŞAK GEÇİŞLER + MÜZİK ──
   const total = scenes.reduce((s, x) => s + x.duration, 0) - XFADE * (scenes.length - 1);
-  const music = await resolveMusic(dir, entity.prefs, log);
+  const music = await resolveMusic(dir, entity.prefs, log, entity.slug || entity.title || '');
   const args = [];
   scenes.forEach(s => args.push('-i', s.path));
   if (music) args.push('-stream_loop', '-1', '-i', music.path);
@@ -1173,7 +1337,7 @@ export async function renderVerticalVideo(entity, { log = () => {}, workDir, int
   const a = scenes.length;
   const fadeOutSt = Math.max(0, total - 3).toFixed(3);
   fc += music
-    ? `[${a}:a]atrim=0:${total.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=1.5,afade=t=out:st=${fadeOutSt}:d=3,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[aout]`
+    ? `[${a}:a]asetpts=N/SR/TB,atrim=0:${total.toFixed(3)},afade=t=in:st=0:d=2.2,afade=t=out:st=${fadeOutSt}:d=3,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[aout]`
     : `[${a}:a]aresample=48000[aout]`;
   const finalPath = path.join(dir, 'final.mp4');
   args.push('-filter_complex', fc, '-map', '[vout]', '-map', '[aout]', '-t', total.toFixed(3),
@@ -1707,15 +1871,624 @@ export async function renderCollectionPost02Breakdown(entity, triptych = null) {
 }
 
 /**
- * POST 01 — COLLECTION REVEAL (Instagram Reels | Sol 1/3 Kapak)
- * Amaç: Koleksiyonun tamamını sinematik, prestijli ve çarpıcı bir akışla tanıtmak.
+ * Ortak Animasyonlu Karakter Yardımcıları (MO & BER Reels için)
+ */
+const escXml = xmlEscape;
+
+function smoothstepAnim(x) {
+  const c = Math.max(0, Math.min(1, x));
+  return c * c * (3 - 2 * c);
+}
+
+function buildAnimatedCharsTspans(text, t, startTime, charInterval, charFadeDur = 0.20, customFill = null) {
+  const chars = Array.from(String(text || ''));
+  let out = '';
+  for (let i = 0; i < chars.length; i++) {
+    const ch = chars[i];
+    if (ch === ' ') {
+      out += '&#160;';
+      continue;
+    }
+    const cStart = startTime + i * charInterval;
+    const smoothOp = smoothstepAnim((t - cStart) / charFadeDur).toFixed(3);
+    const fillAttr = customFill ? ` fill="${customFill}"` : '';
+    out += `<tspan${fillAttr} fill-opacity="${smoothOp}">${escXml(ch)}</tspan>`;
+  }
+  return out;
+}
+
+function parsePieceDimensionsForHud(dimStr, idx = 0) {
+  const s = String(dimStr || '');
+  const findVal = (re, fb) => {
+    const m = s.match(re);
+    return m ? `${m[1]} cm` : fb;
+  };
+  const defaultEn = idx === 0 ? '80 cm' : (idx === 1 ? '120 cm' : '160 cm');
+  const boyVal = findVal(/(?:yükseklik|boy|h)\s*[:=]?\s*(\d{2,3})/i, '200 cm');
+  const enVal = findVal(/(?:genişlik|en|w)\s*[:=]?\s*(\d{2,3})/i, defaultEn);
+  const genVal = findVal(/(?:derinlik|d)\s*[:=]?\s*(\d{2,3})/i, '45 cm');
+  return { boyVal, enVal, genVal };
+}
+
+function splitPromoTextIntoThreeParts(entity) {
+  const raw = clean(entity.promoQuote || entity.shortDescription || '');
+  if (!raw || /en asil halini deneyimlemeye/i.test(raw)) {
+    return [
+      ['Yaşam alanınızda kahve keyfinin en asil halini', 'deneyimlemeye hazır mısınız?'],
+      [`Modern çizgileri sıcak aydınlatma detaylarıyla`, `harmanlayan ${entity.title} Koleksiyonu,`],
+      ['...titiz işçiliğiyle evinizin', 'en sevilen köşesi olmaya aday.']
+    ];
+  }
+  const words = raw.split(/\s+/).filter(Boolean);
+  if (words.length < 9) {
+    return [
+      wrapText(raw, 44, 2),
+      wrapText(`${entity.title}, modern çizgileri ve özenli detaylarıyla yaşam alanınıza zarafet katar.`, 44, 2),
+      wrapText('Titiz işçiliğiyle evinizin en sevilen köşesi olmaya aday.', 44, 2)
+    ];
+  }
+  const third = Math.ceil(words.length / 3);
+  const p1 = words.slice(0, third).join(' ');
+  const p2 = words.slice(third, third * 2).join(' ');
+  const p3 = words.slice(third * 2).join(' ');
+  return [
+    wrapText(p1, 44, 2),
+    wrapText(p2, 44, 2),
+    wrapText(p3.startsWith('...') ? p3 : `...${p3}`, 44, 2)
+  ];
+}
+
+function buildFeatureCalloutItems(entity) {
+  const feats = Array.isArray(entity.features) ? entity.features.filter(Boolean) : [];
+  const defaults = [
+    { title: 'SICAK LED AYDINLATMA', detail: 'Temperli Cam Vitrin & Entegre LED' },
+    { title: 'GENİŞ BARİSTA TEZGÂHI', detail: 'Kahve Makinesi & Ekipman Alanı' },
+    { title: '1. SINIF MDF GÖVDE', detail: 'Özel CNC Membran Kapak & Yüzey' }
+  ];
+  return [0, 1, 2].map(i => {
+    const f = clean(feats[i] || '');
+    if (!f || /bergamo/i.test(entity.slug || '')) return defaults[i];
+    const parts = f.split(/[:–—-]/).map(x => x.trim()).filter(Boolean);
+    if (parts.length >= 2) {
+      return {
+        title: trUpper(parts[0]).slice(0, 28),
+        detail: parts.slice(1).join(' ').slice(0, 38)
+      };
+    }
+    const w = f.split(/\s+/);
+    return {
+      title: trUpper(w.slice(0, 3).join(' ')).slice(0, 28),
+      detail: f.slice(0, 38)
+    };
+  });
+}
+
+async function renderLuxuryBlackLogoOutroScene(tempDir, entity, duration = 4.6) {
+  const sharp = await getSharp();
+  const outroSvg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <radialGradient id="og" cx="50%" cy="48%" r="68%">
+        <stop offset="0%" stop-color="#231f1b"/>
+        <stop offset="60%" stop-color="#13110f"/>
+        <stop offset="100%" stop-color="#090807"/>
+      </radialGradient>
+    </defs>
+    <rect width="${VW}" height="${VH}" fill="url(#og)"/>
+    <rect x="64" y="64" width="${VW - 128}" height="${VH - 128}" fill="none" stroke="${BRAND.gold}" stroke-width="2" stroke-opacity="0.55"/>
+    <rect x="80" y="80" width="${VW - 160}" height="${VH - 160}" fill="none" stroke="#ffffff" stroke-width="1" stroke-opacity="0.22"/>
+    <circle cx="${VW / 2}" cy="760" r="145" fill="none" stroke="${BRAND.gold}" stroke-width="2" stroke-opacity="0.4"/>
+    <circle cx="${VW / 2}" cy="760" r="126" fill="none" stroke="${BRAND.gold}" stroke-width="1" stroke-opacity="0.22"/>
+    <text x="${VW / 2}" y="788" text-anchor="middle" font-family="${TITLE_FONT}" font-size="82" font-weight="700" letter-spacing="12" fill="${BRAND.gold}">N</text>
+    <text x="${VW / 2}" y="1020" text-anchor="middle" font-family="${BODY_FONT}" font-size="34" font-weight="700" letter-spacing="12" fill="#ffffff">${escXml(BRAND.name)}</text>
+    <rect x="${VW / 2 - 110}" y="1058" width="220" height="2" fill="${BRAND.gold}" fill-opacity="0.75"/>
+    <text x="${VW / 2}" y="1118" text-anchor="middle" font-family="${TITLE_FONT}" font-size="34" font-style="italic" letter-spacing="2" fill="#e2e8f0">${escXml(entity.title)}</text>
+    <text x="${VW / 2}" y="1180" text-anchor="middle" font-family="${BODY_FONT}" font-size="21" font-weight="600" letter-spacing="6" fill="${BRAND.gold}">${escXml(BRAND.website)}</text>
+    <text x="${VW / 2}" y="1230" text-anchor="middle" font-family="${BODY_FONT}" font-size="20" font-weight="500" letter-spacing="4" fill="#94a3b8">WhatsApp: ${escXml(BRAND.whatsapp)}</text>
+  </svg>`;
+  const outroJpg = path.join(tempDir, 'outro_luxury_black.jpg');
+  await sharp(Buffer.from(outroSvg)).jpeg({ quality: 96 }).toFile(outroJpg);
+  const outMp4 = path.join(tempDir, 'scene_outro_black.mp4');
+  await runFfmpeg([
+    '-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', outroJpg,
+    '-vf', 'scale=1080:1920,format=yuv420p',
+    '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-pix_fmt', 'yuv420p', '-an',
+    outMp4
+  ], { label: 'luxury_black_outro' });
+  return { path: outMp4, duration, xfadeAfter: 0.9 };
+}
+
+async function stitchScenesAndMixMusic({ tempDir, scenes, entity, log, outFileName }) {
+  const concatArgs = [];
+  scenes.forEach(s => concatArgs.push('-i', s.path));
+
+  let fc = scenes.map((_, i) => `[${i}:v]settb=AVTB[v${i}];`).join('');
+  let offset = 0;
+  let lastV = 'v0';
+  let curLen = scenes[0].duration;
+  for (let i = 1; i < scenes.length; i++) {
+    const xf = scenes[i - 1].xfadeAfter || 0.9;
+    offset = curLen - xf;
+    const nextV = `x${i}`;
+    fc += `[${lastV}][v${i}]xfade=transition=fade:duration=${xf.toFixed(3)}:offset=${offset.toFixed(3)}[${nextV}];`;
+    lastV = nextV;
+    curLen = offset + scenes[i].duration;
+  }
+  const totalDur = curLen;
+  const videoNoAudio = path.join(tempDir, `${outFileName}_no_audio.mp4`);
+
+  concatArgs.push(
+    '-filter_complex', fc.replace(/;$/, ''),
+    '-map', `[${lastV}]`,
+    '-t', totalDur.toFixed(3),
+    '-c:v', 'libx264', '-preset', 'medium', '-crf', '17', '-pix_fmt', 'yuv420p',
+    videoNoAudio
+  );
+  await runFfmpeg(concatArgs, { label: `${outFileName}_stitch`, timeoutMs: 360000 });
+
+  const music = await resolveMusic(tempDir, entity.prefs, log, entity.slug || entity.title || '');
+  const finalPath = path.join(tempDir, `${outFileName}.mp4`);
+  const fadeOutStart = Math.max(0, totalDur - 3.6).toFixed(2);
+
+  if (music && music.path && fs.existsSync(music.path)) {
+    const audioFilter = `[1:a]asetpts=N/SR/TB,atrim=0:${totalDur.toFixed(3)},afade=t=in:st=0:d=2.5,afade=t=out:st=${fadeOutStart}:d=3.5,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[aout]`;
+    await runFfmpeg([
+      '-i', videoNoAudio,
+      '-stream_loop', '-1', '-i', music.path,
+      '-filter_complex', audioFilter,
+      '-map', '0:v', '-map', '[aout]',
+      '-t', totalDur.toFixed(3),
+      '-c:v', 'copy',
+      '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2',
+      '-movflags', '+faststart',
+      finalPath
+    ], { label: `${outFileName}_mix_music`, timeoutMs: 180000 });
+  } else {
+    const ambientExpr = [
+      '0.055*sin(2*PI*110*t)*(0.5+0.5*sin(2*PI*0.08*t))',
+      '0.045*sin(2*PI*164.81*t)*(0.5+0.5*sin(2*PI*0.06*t+1))',
+      '0.040*sin(2*PI*220*t)*(0.5+0.5*sin(2*PI*0.05*t+2))',
+      '0.032*sin(2*PI*261.63*t)*(0.5+0.5*cos(2*PI*0.07*t))',
+      '0.028*sin(2*PI*329.63*t)*(0.5+0.5*sin(2*PI*0.09*t+0.5))',
+      '0.018*sin(2*PI*392.00*t)*(0.5+0.5*cos(2*PI*0.04*t+1.5))'
+    ].join('+');
+    const audioFilter = `[1:a]lowpass=f=900,aecho=0.8:0.88:120|240:0.35|0.25[pad];[2:a]lowpass=f=320,highpass=f=80,volume=0.14[air];[pad][air]amix=inputs=2:duration=first,afade=t=in:st=0:d=3.5,afade=t=out:st=${fadeOutStart}:d=3.5,loudnorm=I=-18:TP=-2.0:LRA=9[aout]`;
+    await runFfmpeg([
+      '-i', videoNoAudio,
+      '-f', 'lavfi', '-t', totalDur.toFixed(3), '-i', `aevalsrc='${ambientExpr}|${ambientExpr}':s=48000`,
+      '-f', 'lavfi', '-t', totalDur.toFixed(3), '-i', 'anoisesrc=c=pink:r=48000:a=0.008',
+      '-filter_complex', audioFilter,
+      '-map', '0:v', '-map', '[aout]',
+      '-c:v', 'copy',
+      '-c:a', 'aac', '-b:a', '192k', '-ar', '48000', '-ac', '2',
+      '-movflags', '+faststart',
+      '-shortest',
+      finalPath
+    ], { label: `${outFileName}_synth_fallback`, timeoutMs: 180000 });
+  }
+
+  return { finalPath, totalDur, music };
+}
+
+/**
+ * POST 01 — "BER" REELS (Instagram Reels | Sol 1/3 Kapak | 3. Yayınlanan Gönderi)
+ * Amaç: Koleksiyon parçalarının tek başına var olduklarını, ölçülerini (Boy/En/Genişlik çizgi animasyonu)
+ * ve ürün üzerindeki nokta+çizgi özelliklerini hafif kamera yakınlaştırmasıyla tanıtmak.
  */
 export async function renderCollectionPost01Reveal(entity, triptych = null, { log = () => {} } = {}) {
+  const sharp = await getSharp();
   const covers = triptych || await renderTriptychCovers(entity);
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post01-reveal-'));
-  const baseVideo = await renderVerticalVideo(entity, { log, workDir: dir, introCoverBuffer9x16: covers.left9x16 });
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post01-ber-'));
+  const heroBuf = await loadImage(entity.heroUrl);
+
+  const masterRoomPath = path.join(dir, 'master_room_4k.jpg');
+  await sharp(heroBuf)
+    .rotate()
+    .resize(3840, 2144, { fit: 'cover', position: 'centre', kernel: sharp.kernel.lanczos3 })
+    .modulate({ brightness: 1.02, saturation: 1.04 })
+    .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+    .toFile(masterRoomPath);
+
+  const topBrandSvg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gTopOnly" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#000000" stop-opacity="0.62"/>
+        <stop offset="16%" stop-color="#000000" stop-opacity="0"/>
+        <stop offset="86%" stop-color="#000000" stop-opacity="0"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.55"/>
+      </linearGradient>
+    </defs>
+    <rect width="${VW}" height="${VH}" fill="url(#gTopOnly)"/>
+    <text x="72" y="208" font-family="${BODY_FONT}" font-size="22" font-weight="700" letter-spacing="8" fill="#ffffff" fill-opacity="0.94">${escXml(BRAND.name)}</text>
+    <text x="${VW - 72}" y="208" text-anchor="end" font-family="${BODY_FONT}" font-size="18" font-weight="600" letter-spacing="5" fill="${BRAND.gold}" fill-opacity="0.94">${escXml(trUpper(entity.title))}</text>
+    <line x1="72" y1="232" x2="${VW - 72}" y2="232" stroke="${BRAND.gold}" stroke-width="1.3" stroke-opacity="0.45"/>
+  </svg>`;
+  const brandBarPng = path.join(dir, 'brand_bar.png');
+  await sharp(Buffer.from(topBrandSvg)).png().toFile(brandBarPng);
+
+  const pieces = (entity.pieces && entity.pieces.length)
+    ? entity.pieces.slice(0, 4)
+    : [
+        { title: `${entity.title} — Küçük Modül`, dimensions: 'Yükseklik: 200 cm | Genişlik: 80 cm | Derinlik: 45 cm', imageUrl: entity.heroUrl },
+        { title: `${entity.title} — Orta Modül`, dimensions: 'Yükseklik: 200 cm | Genişlik: 120 cm | Derinlik: 45 cm', imageUrl: entity.heroUrl },
+        { title: `${entity.title} — Büyük Modül`, dimensions: 'Yükseklik: 200 cm | Genişlik: 160 cm | Derinlik: 45 cm', imageUrl: entity.heroUrl }
+      ];
+
+  const scenes = [];
+
+  // ─── SAHNE 1 (7.6s): Genel Fotoğrafın Tamamını Soldan Sağa Baştan Sona Gezen Geçiş (ax: 0.00 -> 1.00) ───
+  {
+    const duration = 7.6;
+    const seqDir = path.join(dir, 'seq_s1_opening_list');
+    fs.mkdirSync(seqDir, { recursive: true });
+    const totalFrames = Math.round(duration * FPS);
+    const fadeOutStart = duration - 0.90;
+    const fadeOutDur = 0.75;
+
+    const pieceItems = pieces.map((p, idx) => ({
+      name: clean(p.title),
+      tStart: 1.35 + idx * 1.40
+    }));
+
+    async function renderOpeningFrame(f) {
+      const t = f / FPS;
+      let globalAlpha = 1.0;
+      if (t > fadeOutStart) globalAlpha = 1.0 - smoothstepAnim((t - fadeOutStart) / fadeOutDur);
+
+      let body = '';
+      const cardH = Math.max(360, 185 + pieceItems.length * 80);
+      const cardAlpha = smoothstepAnim((t - 0.20) / 0.55);
+      if (cardAlpha > 0.01) {
+        body += `<rect x="74" y="1285" width="${VW - 148}" height="${cardH}" rx="20" fill="rgba(10, 12, 16, ${(0.76 * cardAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1.4" stroke-opacity="${(0.45 * cardAlpha).toFixed(3)}"/>`;
+      }
+
+      const titleTspans = buildAnimatedCharsTspans(trUpper(entity.title), t, 0.35, 0.026, 0.20);
+      body += `<text x="${VW / 2}" y="1358" xml:space="preserve" text-anchor="middle" font-family="${TITLE_FONT}" font-size="44" font-weight="700" letter-spacing="3" fill="#ffffff">${titleTspans}</text>`;
+
+      const lineP = smoothstepAnim((t - 0.45) / 0.60);
+      if (lineP > 0.01) {
+        const lw = (180 * lineP).toFixed(1);
+        body += `<rect x="${(VW / 2 - lw / 2).toFixed(1)}" y="1384" width="${lw}" height="2" fill="${BRAND.gold}" fill-opacity="${(0.85 * lineP).toFixed(3)}"/>`;
+      }
+
+      let py = 1456;
+      for (const item of pieceItems) {
+        if (t >= item.tStart) {
+          const pAlpha = smoothstepAnim((t - item.tStart) / 0.30);
+          body += `<circle cx="170" cy="${py - 14}" r="5.5" fill="${BRAND.gold}" fill-opacity="${pAlpha.toFixed(3)}"/>`;
+          const nameTspans = buildAnimatedCharsTspans(item.name, t, item.tStart + 0.08, 0.028, 0.18);
+          body += `<text x="200" y="${py - 4}" xml:space="preserve" font-family="${TITLE_FONT}" font-size="33" font-weight="600" letter-spacing="1" fill="#f8fafc">${nameTspans}</text>`;
+        }
+        py += 82;
+      }
+
+      const svg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#000000" flood-opacity="0.88"/>
+          </filter>
+        </defs>
+        <g opacity="${globalAlpha.toFixed(3)}" filter="url(#sh)">${body}</g>
+      </svg>`;
+      await sharp(Buffer.from(svg)).png({ compressionLevel: 2 }).toFile(path.join(seqDir, `f_${String(f).padStart(4, '0')}.png`));
+    }
+
+    const BATCH = 16;
+    for (let i = 0; i < totalFrames; i += BATCH) {
+      const jobs = [];
+      for (let j = i; j < Math.min(totalFrames, i + BATCH); j++) jobs.push(renderOpeningFrame(j));
+      await Promise.all(jobs);
+    }
+
+    const s1Out = path.join(dir, 's1_opening.mp4');
+    const ch = 2144, cw = Math.round((ch * 9 / 16) / 2) * 2;
+    const e = `(0.5-0.5*cos(PI*t/${duration.toFixed(3)}))`;
+    const xExpr = `(iw-${cw})*${e}`;
+    const vChain = `[0:v]crop=w=${cw}:h=${ch}:x='${xExpr}':y='0':exact=1,scale=1080:1920:flags=lanczos,setsar=1,split[sharp][blurSrc];[blurSrc]gblur=sigma=14,fade=t=out:st=0.15:d=1.10:alpha=1[blurOv];[sharp][blurOv]overlay=0:0,format=yuv420p[bg0];[1:v]format=rgba[bb];[bg0][bb]overlay=0:0[bg1];[2:v]format=rgba[cd];[bg1][cd]overlay=0:0:shortest=1[vout]`;
+
+    await runFfmpeg([
+      '-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', masterRoomPath,
+      '-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', brandBarPng,
+      '-framerate', String(FPS), '-i', path.join(seqDir, 'f_%04d.png'),
+      '-filter_complex', vChain,
+      '-map', '[vout]', '-t', duration.toFixed(3), '-r', String(FPS),
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-pix_fmt', 'yuv420p', '-an',
+      s1Out
+    ], { label: 'ber_s1_opening' });
+    scenes.push({ path: s1Out, duration, xfadeAfter: 0.9 });
+  }
+
+  // ─── SAHNE 2..N (Her Biri 10.0s): Bağımsız Ürün Fotoğrafları + Hafif Yakınlaştırma + Animasyonlu Ölçü & Özellikler ───
+  const studioDir = path.join(path.dirname(resolveMusicLibraryDir()), 'studio');
+  const studioFiles = ['clean_p1_9x16.jpg', 'wide_p2_9x16.jpg', 'wide_p3_9x16.jpg'];
+  const isBergamo = /bergamo/i.test(entity.slug || entity.title || '');
+  const featCallouts = buildFeatureCalloutItems(entity);
+
+  const layoutTemplates = [
+    {
+      zMax: 1.038,
+      boy: { x: 118, yBot: 1812, yTop: 365, badgeX: 136, badgeY: 840 },
+      en: { xLeft: 155, xRight: 918, y: 1852 },
+      genislik: { x1: 912, y1: 1122, x2: 830, y2: 1055, badgeX: 605, badgeY: 1168 },
+      callouts: [
+        { dotX: 660, dotY: 575, elbowX: 605, lineY: 510, endX: 205, boxX: 185, boxY: 458, boxW: 525, boxH: 102, textX: 208, titleY: 495, detailY: 540, tDot: 4.30, tLine: 4.55, lineDur: 0.55, tText: 4.90 },
+        { dotX: 670, dotY: 1475, elbowX: 615, lineY: 1410, endX: 205, boxX: 185, boxY: 1358, boxW: 535, boxH: 102, textX: 208, titleY: 1395, detailY: 1440, tDot: 6.30, tLine: 6.55, lineDur: 0.55, tText: 6.90 }
+      ]
+    },
+    {
+      zMax: 1.036,
+      boy: { x: 88, yBot: 1636, yTop: 410, badgeX: 108, badgeY: 845 },
+      en: { xLeft: 122, xRight: 958, y: 1682 },
+      genislik: { x1: 955, y1: 1072, x2: 882, y2: 1015, badgeX: 625, badgeY: 1120 },
+      callouts: [
+        { dotX: 245, dotY: 615, elbowX: 305, lineY: 550, endX: 870, boxX: 350, boxY: 498, boxW: 545, boxH: 102, textX: 374, titleY: 535, detailY: 580, tDot: 4.30, tLine: 4.55, lineDur: 0.55, tText: 4.90 },
+        { dotX: 705, dotY: 1380, elbowX: 650, lineY: 1315, endX: 250, boxX: 230, boxY: 1262, boxW: 545, boxH: 102, textX: 254, titleY: 1300, detailY: 1345, tDot: 6.30, tLine: 6.55, lineDur: 0.55, tText: 6.90 }
+      ]
+    },
+    {
+      zMax: 1.032,
+      boy: { x: 56, yBot: 1588, yTop: 492, badgeX: 76, badgeY: 855 },
+      en: { xLeft: 88, xRight: 992, y: 1638 },
+      genislik: { x1: 765, y1: 1105, x2: 712, y2: 1055, badgeX: 485, badgeY: 1150 },
+      callouts: [
+        { dotX: 865, dotY: 675, elbowX: 805, lineY: 610, endX: 295, boxX: 275, boxY: 558, boxW: 555, boxH: 102, textX: 298, titleY: 595, detailY: 640, tDot: 4.30, tLine: 4.55, lineDur: 0.55, tText: 4.90 },
+        { dotX: 605, dotY: 1355, elbowX: 550, lineY: 1290, endX: 225, boxX: 205, boxY: 1238, boxW: 550, boxH: 102, textX: 228, titleY: 1275, detailY: 1320, tDot: 6.30, tLine: 6.55, lineDur: 0.55, tText: 6.90 }
+      ]
+    }
+  ];
+
+  for (let idx = 0; idx < pieces.length; idx++) {
+    const piece = pieces[idx];
+    const tpl = layoutTemplates[Math.min(idx, layoutTemplates.length - 1)];
+    const dims = parsePieceDimensionsForHud(piece.dimensions, idx);
+    const duration = 10.0;
+    const sceneName = `s_piece_${idx + 1}`;
+    const pBase4k = path.join(dir, `${sceneName}_4k.jpg`);
+
+    const prebuiltStudioPath = path.join(studioDir, studioFiles[idx] || '');
+    if (isBergamo && studioFiles[idx] && fs.existsSync(prebuiltStudioPath)) {
+      await sharp(prebuiltStudioPath)
+        .resize(2160, 3840, { kernel: sharp.kernel.lanczos3 })
+        .jpeg({ quality: 96 })
+        .toFile(pBase4k);
+    } else {
+      const pBuf = await loadImage(piece.imageUrl || entity.heroUrl);
+      const isWide = idx >= 2 || /160|180|200|büyük/i.test(`${piece.title} ${piece.dimensions}`);
+      const targetW = isWide ? 1820 : (idx === 1 ? 1740 : 1620);
+      const bg4k = await sharp(pBuf)
+        .rotate()
+        .resize(2160, 3840, { fit: 'cover' })
+        .blur(48)
+        .modulate({ brightness: 0.52, saturation: 0.88 })
+        .toBuffer();
+      const fg4k = await sharp(pBuf)
+        .rotate()
+        .resize(targetW, 2520, { fit: 'inside', withoutEnlargement: false, kernel: sharp.kernel.lanczos3 })
+        .toBuffer();
+      await sharp(bg4k)
+        .composite([{ input: fg4k, gravity: 'center' }])
+        .jpeg({ quality: 96 })
+        .toFile(pBase4k);
+    }
+
+    const c0 = idx === 1
+      ? { title: 'BOY CAM VİTRİN ÜNİTESİ', detail: 'Entegre Sıcak LED & Cam Raflar' }
+      : (idx >= 2 ? { title: 'ÇİFT KULE VİTRİN MİMARİSİ', detail: 'Simetrik Cam Vitrin & Amber LED' } : featCallouts[0]);
+    const c1 = idx === 1
+      ? { title: '1. SINIF MDF & DEPOLAMA', detail: 'Özel CNC Membran Kapak & Çekmece' }
+      : (idx >= 2 ? { title: 'MAKSİMUM HACİM & MDF GÖVDE', detail: 'Özel CNC Membran Kapak & Barista Alanı' } : featCallouts[2]);
+
+    const cfg = {
+      productTitle: trUpper(clean(piece.title)),
+      boy: { ...tpl.boy, val: dims.boyVal },
+      en: { ...tpl.en, val: dims.enVal },
+      genislik: { ...tpl.genislik, val: dims.genVal },
+      callouts: [
+        { ...tpl.callouts[0], ...(isBergamo ? c0 : featCallouts[0]) },
+        { ...tpl.callouts[1], ...(isBergamo ? c1 : featCallouts[2]) }
+      ]
+    };
+
+    const seqDir = path.join(dir, `seq_${sceneName}`);
+    fs.mkdirSync(seqDir, { recursive: true });
+    const totalFrames = Math.round(duration * FPS);
+    const fadeOutStart = duration - 0.85;
+    const fadeOutDur = 0.70;
+    const zMax = tpl.zMax;
+
+    async function renderHudFrame(f) {
+      const t = f / FPS;
+      let globalAlpha = 1.0;
+      if (t > fadeOutStart) globalAlpha = 1.0 - smoothstepAnim((t - fadeOutStart) / fadeOutDur);
+
+      const eZoom = 0.5 - 0.5 * Math.cos((Math.PI * f) / totalFrames);
+      const curZ = (1.0 + (zMax - 1.0) * eZoom).toFixed(5);
+
+      let headerBody = '';
+      const hdrAlpha = smoothstepAnim((t - 0.15) / 0.45);
+      if (hdrAlpha > 0.01) {
+        headerBody += `<rect x="84" y="258" width="${VW - 168}" height="78" rx="14" fill="rgba(10, 12, 16, ${(0.78 * hdrAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1.3" stroke-opacity="${(0.55 * hdrAlpha).toFixed(3)}"/>`;
+        const prodTspans = buildAnimatedCharsTspans(cfg.productTitle, t, 0.28, 0.025, 0.18);
+        headerBody += `<text x="${VW / 2}" y="309" xml:space="preserve" text-anchor="middle" font-family="${TITLE_FONT}" font-size="33" font-weight="700" letter-spacing="2" fill="#ffffff" filter="url(#sh)">${prodTspans}</text>`;
+      }
+
+      let trackedBody = '';
+      const { boy, en, genislik, callouts } = cfg;
+
+      // 1. Boy Ölçü Çizgisi (Aşağıdan Yukarıya)
+      const tBoyStart = 0.95, boyLineDur = 0.80;
+      if (t >= tBoyStart) {
+        const pBoy = smoothstepAnim((t - tBoyStart) / boyLineDur);
+        const curYTop = (boy.yBot + (boy.yTop - boy.yBot) * pBoy).toFixed(1);
+        trackedBody += `<g filter="url(#sh)">`;
+        trackedBody += `<line x1="${boy.x - 14}" y1="${boy.yBot}" x2="${boy.x + 14}" y2="${boy.yBot}" stroke="${BRAND.gold}" stroke-width="2.4"/>`;
+        trackedBody += `<polygon points="${boy.x},${boy.yBot - 2} ${boy.x - 7},${boy.yBot - 18} ${boy.x + 7},${boy.yBot - 18}" fill="${BRAND.gold}"/>`;
+        trackedBody += `<line x1="${boy.x}" y1="${boy.yBot}" x2="${boy.x}" y2="${curYTop}" stroke="${BRAND.gold}" stroke-width="2.4"/>`;
+        if (pBoy > 0.92) {
+          const topTickOp = ((pBoy - 0.92) / 0.08).toFixed(2);
+          trackedBody += `<line x1="${boy.x - 14}" y1="${boy.yTop}" x2="${boy.x + 14}" y2="${boy.yTop}" stroke="${BRAND.gold}" stroke-width="2.4" stroke-opacity="${topTickOp}"/>`;
+          trackedBody += `<polygon points="${boy.x},${boy.yTop + 2} ${boy.x - 7},${boy.yTop + 18} ${boy.x + 7},${boy.yTop + 18}" fill="${BRAND.gold}" fill-opacity="${topTickOp}"/>`;
+        }
+        const tBoyText = tBoyStart + 0.30;
+        if (t >= tBoyText) {
+          const bAlpha = smoothstepAnim((t - tBoyText) / 0.35);
+          trackedBody += `<rect x="${boy.badgeX}" y="${boy.badgeY - 38}" width="236" height="54" rx="12" fill="rgba(10, 12, 16, ${(0.86 * bAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1.4" stroke-opacity="${bAlpha.toFixed(3)}"/>`;
+          const lblTspans = buildAnimatedCharsTspans('Boy : ', t, tBoyText + 0.05, 0.028, 0.16, BRAND.gold);
+          const valTspans = buildAnimatedCharsTspans(boy.val, t, tBoyText + 0.22, 0.030, 0.16, '#ffffff');
+          trackedBody += `<text x="${boy.badgeX + 118}" y="${boy.badgeY - 3}" xml:space="preserve" text-anchor="middle" font-family="${BODY_FONT}" font-size="23" font-weight="700" letter-spacing="2" fill="#ffffff">${lblTspans}${valTspans}</text>`;
+        }
+        trackedBody += `</g>`;
+      }
+
+      // 2. En Ölçü Çizgisi (Soldan Sağa)
+      const tEnStart = 2.15, enLineDur = 0.75;
+      if (t >= tEnStart) {
+        const pEn = smoothstepAnim((t - tEnStart) / enLineDur);
+        const curXRight = (en.xLeft + (en.xRight - en.xLeft) * pEn).toFixed(1);
+        trackedBody += `<g filter="url(#sh)">`;
+        trackedBody += `<line x1="${en.xLeft}" y1="${en.y - 14}" x2="${en.xLeft}" y2="${en.y + 14}" stroke="${BRAND.gold}" stroke-width="2.4"/>`;
+        trackedBody += `<polygon points="${en.xLeft + 2},${en.y} ${en.xLeft + 18},${en.y - 7} ${en.xLeft + 18},${en.y + 7}" fill="${BRAND.gold}"/>`;
+        trackedBody += `<line x1="${en.xLeft}" y1="${en.y}" x2="${curXRight}" y2="${en.y}" stroke="${BRAND.gold}" stroke-width="2.4"/>`;
+        if (pEn > 0.92) {
+          const rTickOp = ((pEn - 0.92) / 0.08).toFixed(2);
+          trackedBody += `<line x1="${en.xRight}" y1="${en.y - 14}" x2="${en.xRight}" y2="${en.y + 14}" stroke="${BRAND.gold}" stroke-width="2.4" stroke-opacity="${rTickOp}"/>`;
+          trackedBody += `<polygon points="${en.xRight - 2},${en.y} ${en.xRight - 18},${en.y - 7} ${en.xRight - 18},${en.y + 7}" fill="${BRAND.gold}" fill-opacity="${rTickOp}"/>`;
+        }
+        const tEnText = tEnStart + 0.28;
+        if (t >= tEnText) {
+          const eAlpha = smoothstepAnim((t - tEnText) / 0.35);
+          const cx = (en.xLeft + en.xRight) / 2;
+          trackedBody += `<rect x="${cx - 118}" y="${en.y - 27}" width="236" height="54" rx="12" fill="rgba(10, 12, 16, ${(0.88 * eAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1.4" stroke-opacity="${eAlpha.toFixed(3)}"/>`;
+          const lblTspans = buildAnimatedCharsTspans('En : ', t, tEnText + 0.05, 0.028, 0.16, BRAND.gold);
+          const valTspans = buildAnimatedCharsTspans(en.val, t, tEnText + 0.20, 0.030, 0.16, '#ffffff');
+          trackedBody += `<text x="${cx}" y="${en.y + 8}" xml:space="preserve" text-anchor="middle" font-family="${BODY_FONT}" font-size="23" font-weight="700" letter-spacing="2" fill="#ffffff">${lblTspans}${valTspans}</text>`;
+        }
+        trackedBody += `</g>`;
+      }
+
+      // 3. Genişlik Ölçü Çizgisi (Perspektif Açısıyla)
+      const tGenStart = 3.30, genLineDur = 0.55;
+      if (t >= tGenStart) {
+        const pGen = smoothstepAnim((t - tGenStart) / genLineDur);
+        const curX2 = (genislik.x1 + (genislik.x2 - genislik.x1) * pGen).toFixed(1);
+        const curY2 = (genislik.y1 + (genislik.y2 - genislik.y1) * pGen).toFixed(1);
+        trackedBody += `<g filter="url(#sh)">`;
+        trackedBody += `<line x1="${genislik.x1}" y1="${genislik.y1}" x2="${curX2}" y2="${curY2}" stroke="${BRAND.gold}" stroke-width="2.6"/>`;
+        trackedBody += `<circle cx="${genislik.x1}" cy="${genislik.y1}" r="5" fill="${BRAND.gold}"/>`;
+        if (pGen > 0.90) trackedBody += `<circle cx="${genislik.x2}" cy="${genislik.y2}" r="5" fill="${BRAND.gold}"/>`;
+        const tGenText = tGenStart + 0.22;
+        if (t >= tGenText) {
+          const gAlpha = smoothstepAnim((t - tGenText) / 0.35);
+          trackedBody += `<rect x="${genislik.badgeX}" y="${genislik.badgeY - 38}" width="286" height="54" rx="12" fill="rgba(10, 12, 16, ${(0.86 * gAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1.4" stroke-opacity="${gAlpha.toFixed(3)}"/>`;
+          const lblTspans = buildAnimatedCharsTspans('Genişlik : ', t, tGenText + 0.05, 0.025, 0.16, BRAND.gold);
+          const valTspans = buildAnimatedCharsTspans(genislik.val, t, tGenText + 0.28, 0.028, 0.16, '#ffffff');
+          trackedBody += `<text x="${genislik.badgeX + 143}" y="${genislik.badgeY - 3}" xml:space="preserve" text-anchor="middle" font-family="${BODY_FONT}" font-size="22" font-weight="700" letter-spacing="2" fill="#ffffff">${lblTspans}${valTspans}</text>`;
+        }
+        trackedBody += `</g>`;
+      }
+
+      // 4. Ürün Üzerinde Nokta + Uzayan Çizgi + Harf Harf Özellik Callout'ları
+      for (const c of callouts) {
+        if (t < c.tDot) continue;
+        const dotProg = smoothstepAnim((t - c.tDot) / 0.32);
+        const pulse = 1.0 + 0.14 * Math.sin(Math.max(0, t - c.tDot) * 5.5);
+        const outerR = (15 * dotProg * pulse).toFixed(2);
+        const innerR = (6.5 * dotProg).toFixed(2);
+
+        const lineProg = smoothstepAnim((t - c.tLine) / c.lineDur);
+        let polyStr = '';
+        if (lineProg > 0.01) {
+          const seg1P = Math.min(1, lineProg / 0.28);
+          const curElbowX = (c.dotX + (c.elbowX - c.dotX) * seg1P).toFixed(1);
+          const curElbowY = (c.dotY + (c.lineY - c.dotY) * seg1P).toFixed(1);
+          if (lineProg <= 0.28) {
+            polyStr = `${c.dotX},${c.dotY} ${curElbowX},${curElbowY}`;
+          } else {
+            const seg2P = (lineProg - 0.28) / 0.72;
+            const curEndX = (c.elbowX + (c.endX - c.elbowX) * seg2P).toFixed(1);
+            polyStr = `${c.dotX},${c.dotY} ${c.elbowX},${c.lineY} ${curEndX},${c.lineY}`;
+          }
+        }
+
+        const boxAlpha = smoothstepAnim((t - c.tLine) / 0.45);
+        if (boxAlpha > 0.01) {
+          trackedBody += `<rect x="${c.boxX}" y="${c.boxY}" width="${c.boxW}" height="${c.boxH}" rx="14" fill="rgba(10, 12, 16, ${(0.76 * boxAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1" stroke-opacity="${(0.40 * boxAlpha).toFixed(3)}"/>`;
+        }
+        if (polyStr) {
+          trackedBody += `<polyline points="${polyStr}" fill="none" stroke="${BRAND.gold}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#sh)"/>`;
+        }
+        trackedBody += `<circle cx="${c.dotX}" cy="${c.dotY}" r="${outerR}" fill="${BRAND.gold}" fill-opacity="${(0.30 * dotProg).toFixed(3)}" stroke="${BRAND.gold}" stroke-width="2" stroke-opacity="${(0.95 * dotProg).toFixed(3)}" filter="url(#glow)"/>`;
+        trackedBody += `<circle cx="${c.dotX}" cy="${c.dotY}" r="${innerR}" fill="#ffffff" stroke="${BRAND.gold}" stroke-width="2.5"/>`;
+
+        if (t >= c.tText) {
+          const titleTspans = buildAnimatedCharsTspans(c.title, t, c.tText, 0.025, 0.16);
+          const detailStart = c.tText + Array.from(c.title).length * 0.020;
+          const detailTspans = buildAnimatedCharsTspans(c.detail, t, detailStart, 0.024, 0.18);
+          trackedBody += `<text x="${c.textX}" y="${c.titleY}" xml:space="preserve" font-family="${BODY_FONT}" font-size="19" font-weight="700" letter-spacing="3.5" fill="${BRAND.gold}" filter="url(#sh)">${titleTspans}</text>`;
+          trackedBody += `<text x="${c.textX}" y="${c.detailY}" xml:space="preserve" font-family="${TITLE_FONT}" font-size="25" font-style="italic" font-weight="500" fill="#ffffff" filter="url(#sh)">${detailTspans}</text>`;
+        }
+      }
+
+      const svg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity="0.9"/>
+          </filter>
+          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="${BRAND.gold}" flood-opacity="0.95"/>
+          </filter>
+        </defs>
+        <g opacity="${globalAlpha.toFixed(3)}">
+          <g transform="translate(540, 960) scale(${curZ}) translate(-540, -960)">
+            ${trackedBody}
+          </g>
+          ${headerBody}
+        </g>
+      </svg>`;
+      await sharp(Buffer.from(svg)).png({ compressionLevel: 2 }).toFile(path.join(seqDir, `f_${String(f).padStart(4, '0')}.png`));
+    }
+
+    const BATCH = 16;
+    for (let i = 0; i < totalFrames; i += BATCH) {
+      const jobs = [];
+      for (let j = i; j < Math.min(totalFrames, i + BATCH); j++) jobs.push(renderHudFrame(j));
+      await Promise.all(jobs);
+    }
+
+    const pOut = path.join(dir, `${sceneName}.mp4`);
+    const frames = Math.round(duration * FPS);
+    const e = `(0.5-0.5*cos(PI*on/${frames}))`;
+    const zExpr = `1.00+${(zMax - 1.0).toFixed(4)}*${e}`;
+    const vChain = `[0:v]zoompan=z='${zExpr}':x='(iw-iw/zoom)*0.5':y='(ih-ih/zoom)*0.5':d=${frames}:s=2160x3840:fps=${FPS},scale=1080:1920:flags=lanczos,setsar=1,format=yuv420p[bg0];[1:v]format=rgba[bb];[bg0][bb]overlay=0:0[bg1];[2:v]format=rgba[hud];[bg1][hud]overlay=0:0:shortest=1,format=yuv420p[vout]`;
+
+    await runFfmpeg([
+      '-i', pBase4k,
+      '-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', brandBarPng,
+      '-framerate', String(FPS), '-i', path.join(seqDir, 'f_%04d.png'),
+      '-filter_complex', vChain,
+      '-map', '[vout]', '-t', duration.toFixed(3), '-r', String(FPS),
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-pix_fmt', 'yuv420p', '-an',
+      pOut
+    ], { label: `ber_${sceneName}` });
+    scenes.push({ path: pOut, duration, xfadeAfter: 0.9 });
+  }
+
+  // ─── SON SAHNE (4.6s): Siyah Arka Planlı Logolu Kapanış ───
+  scenes.push(await renderLuxuryBlackLogoOutroScene(dir, entity, 4.6));
+
+  const { finalPath, totalDur, music } = await stitchScenesAndMixMusic({
+    tempDir: dir,
+    scenes,
+    entity,
+    log,
+    outFileName: 'post01_ber_product_showcase'
+  });
+
   return {
-    ...baseVideo,
+    path: finalPath,
+    duration: Number(totalDur.toFixed(2)),
+    hasMusic: !!music,
+    musicKey: music?.key || null,
+    workDir: dir,
     coverBuffer9x16: covers.left9x16,
     coverBuffer4x5: covers.left4x5,
     postIndex: 1,
@@ -1724,184 +2497,436 @@ export async function renderCollectionPost01Reveal(entity, triptych = null, { lo
 }
 
 /**
- * POST 03 — DESIGN STORY (Instagram Reels | Sağ 3/3 Kapak)
- * Amaç: Koleksiyonun tasarım felsefesini, malzeme/doku uyumunu ve yaşam alanı atmosferini anlatmak.
+ * POST 03 — "MO" REELS (Instagram Reels | Sağ 3/3 Kapak | 1. Yayınlanan Gönderi)
+ * Amaç: Koleksiyonun genel atmosferini, tanıtım metnini 3 parçada zarif harf harf akışla,
+ * ortadaki ürün üzerinde 3 nokta+çizgi özellik animasyonuyla ve 8.2 saniyelik çok yavaş panoramik finalle sunmak.
  */
 export async function renderCollectionPost03DesignStory(entity, triptych = null, { log = () => {} } = {}) {
   const sharp = await getSharp();
   const covers = triptych || await renderTriptychCovers(entity);
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post03-story-'));
-  const scenes = [];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'nova-post03-mo-'));
   const heroBuf = await loadImage(entity.heroUrl);
 
-  // Sahne 0: Sağ 3/3 Triptych Kapağı (2.2 sn)
-  {
-    const coverPath = path.join(dir, 'cover_right_9x16.jpg');
-    fs.writeFileSync(coverPath, covers.right9x16);
-    const outCover = path.join(dir, 'story_scene_0_cover.mp4');
-    await renderScene({
-      basePath: coverPath,
-      motion: { type: 'zoom', z0: 1.0, z1: 1.02, ax0: 0.5, ax1: 0.5, ay: 0.5 },
-      overlays: [],
-      duration: 2.2,
-      out: outCover
-    });
-    scenes.push({ path: outCover, duration: 2.2, label: 'story_cover_right' });
-  }
+  const masterRoomPath = path.join(dir, 'master_room_4k.jpg');
+  await sharp(heroBuf)
+    .rotate()
+    .resize(3840, 2144, { fit: 'cover', position: 'centre', kernel: sharp.kernel.lanczos3 })
+    .modulate({ brightness: 1.02, saturation: 1.04 })
+    .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+    .toFile(masterRoomPath);
 
-  // Sahne 1: Tasarım Hikayesi & Mimari Felsefe (7 sn) — Asil ve Yavaş Pan
-  {
-    const heroBase = await prepareHeroBase(dir, heroBuf);
-    const grad = gradientRect(VW, VH, 680, [[0, '#000', 0.1], [0.45, '#000', 0.65], [1, '#000', 0.92]]);
-    const topG = gradientRect(VW, 300, 0, [[0, '#000', 0.55], [1, '#000', 0]]);
-    const shade = await fullFramePng(
-      dir,
-      'st1_shade',
-      grad.body + topG.body +
-        textEl({ x: 70, y: 120, text: `${BRAND.name}  •  DESIGN STORY`, size: 28, weight: 700, fill: BRAND.gold, spacing: 7 }),
-      grad.defs + topG.defs
-    );
-    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.6, effect: 'fade' }];
+  const baseW = 1206, baseH = 2144;
+  const leftCrop = Math.max(0, Math.min(3840 - baseW, Math.round((3840 - baseW) * 0.495)));
+  const center9x16Path = path.join(dir, 'center_product_4k_9x16.jpg');
+  await sharp(masterRoomPath)
+    .extract({ left: leftCrop, top: 0, width: baseW, height: baseH })
+    .resize(2160, 3840, { kernel: sharp.kernel.lanczos3 })
+    .jpeg({ quality: 96, chromaSubsampling: '4:4:4' })
+    .toFile(center9x16Path);
 
-    const name = trUpper(entity.title);
-    const n = await textPng(dir, 'st1_name', { lines: wrapText(name, 18, 2), size: 80, font: TITLE_FONT, weight: 700, spacing: 4, lineHeight: 1.08 });
-    overlays.push({ ...n, x: 64, y: 1040, start: 0.6, dur: 1.0, effect: 'wipe' });
+  const topBrandSvg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="gAmbient" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#000000" stop-opacity="0.58"/>
+        <stop offset="20%" stop-color="#000000" stop-opacity="0"/>
+        <stop offset="68%" stop-color="#000000" stop-opacity="0"/>
+        <stop offset="85%" stop-color="#000000" stop-opacity="0.50"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0.84"/>
+      </linearGradient>
+      <radialGradient id="warmSun" cx="20%" cy="25%" r="75%">
+        <stop offset="0%" stop-color="#ffb84d" stop-opacity="0.13"/>
+        <stop offset="50%" stop-color="#ff9933" stop-opacity="0.04"/>
+        <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+    <rect width="${VW}" height="${VH}" fill="url(#warmSun)"/>
+    <rect width="${VW}" height="${VH}" fill="url(#gAmbient)"/>
+    <text x="72" y="208" font-family="${BODY_FONT}" font-size="22" font-weight="700" letter-spacing="8" fill="#ffffff" fill-opacity="0.94">${escXml(BRAND.name)}</text>
+    <text x="${VW - 72}" y="208" text-anchor="end" font-family="${BODY_FONT}" font-size="18" font-weight="600" letter-spacing="5" fill="${BRAND.gold}" fill-opacity="0.94">${escXml(trUpper(entity.title))}</text>
+    <line x1="72" y1="232" x2="${VW - 72}" y2="232" stroke="${BRAND.gold}" stroke-width="1.3" stroke-opacity="0.45"/>
+  </svg>`;
+  const brandBarPng = path.join(dir, 'brand_bar.png');
+  await sharp(Buffer.from(topBrandSvg)).png().toFile(brandBarPng);
 
-    const quote = entity.promoQuote || entity.shortDescription || `${entity.title} ile yaşam alanınızda zamansız mimari estetik.`;
-    const qLines = wrapText(quote, 38, 4);
-    let qy = 1040 + n.h + 40;
-    for (let i = 0; i < qLines.length; i++) {
-      const qp = await textPng(dir, `st1_q${i}`, { lines: [qLines[i]], size: 42, font: TITLE_FONT, italic: true, fill: '#f1f5f9' });
-      overlays.push({ ...qp, x: 66, y: Math.round(qy + i * 56), start: 1.4 + i * 0.75, dur: 0.8, effect: 'wipe' });
+  async function renderTypewriterCardSequence(sceneName, duration, {
+    eyebrow = '',
+    title = '',
+    lines = [],
+    footer = '',
+    writeStart = 0.45,
+    writeEnd = null,
+    maxCharInterval = 0.052,
+    charFadeDur = 0.22
+  }) {
+    const seqDir = path.join(dir, `seq_${sceneName}`);
+    fs.mkdirSync(seqDir, { recursive: true });
+    const totalFrames = Math.round(duration * FPS);
+    const fadeOutStart = duration - 0.95;
+    const fadeOutDur = 0.80;
+
+    const segments = [];
+    if (eyebrow) segments.push({ type: 'eyebrow', text: eyebrow, weight: 0.65 });
+    if (title) segments.push({ type: 'title', text: title, weight: 0.95 });
+    for (const ln of lines) segments.push({ type: 'line', text: ln, weight: 1.0 });
+    if (footer) segments.push({ type: 'footer', text: footer, weight: 0.65 });
+
+    const totalChars = segments.reduce((acc, s) => acc + Array.from(s.text).length, 0);
+    const targetWriteSpan = (writeEnd || Math.min(duration - 1.9, Math.max(2.4, duration * 0.56))) - writeStart;
+    const baseCharInterval = Math.max(0.022, Math.min(maxCharInterval, targetWriteSpan / Math.max(12, totalChars)));
+
+    let cursorTime = writeStart;
+    for (const seg of segments) {
+      seg.startTime = cursorTime;
+      seg.charInterval = baseCharInterval * seg.weight;
+      cursorTime += Array.from(seg.text).length * seg.charInterval + 0.14;
     }
-    const out = path.join(dir, 'story_scene_1.mp4');
-    await renderScene({ basePath: heroBase, motion: { type: 'pan' }, overlays, duration: 7, out });
-    scenes.push({ path: out, duration: 7, label: 'design_philosophy' });
+
+    const cardH = 380;
+    async function renderSingleFrame(f) {
+      const t = f / FPS;
+      let globalAlpha = 1.0;
+      if (t > fadeOutStart) globalAlpha = 1.0 - smoothstepAnim((t - fadeOutStart) / fadeOutDur);
+
+      let y = 56;
+      let body = '';
+      for (const seg of segments) {
+        if (seg.type === 'eyebrow') {
+          const tspans = buildAnimatedCharsTspans(seg.text, t, seg.startTime, seg.charInterval, charFadeDur);
+          body += `<text x="${VW / 2}" y="${y}" xml:space="preserve" text-anchor="middle" font-family="${BODY_FONT}" font-size="21" font-weight="700" letter-spacing="6" fill="${BRAND.gold}">${tspans}</text>`;
+          y += 48;
+        } else if (seg.type === 'title') {
+          const tspans = buildAnimatedCharsTspans(seg.text, t, seg.startTime, seg.charInterval, charFadeDur + 0.04);
+          body += `<text x="${VW / 2}" y="${y}" xml:space="preserve" text-anchor="middle" font-family="${TITLE_FONT}" font-size="48" font-weight="700" letter-spacing="3" fill="#ffffff">${tspans}</text>`;
+          y += 24;
+          const titleDur = Array.from(seg.text).length * seg.charInterval;
+          const smoothLine = smoothstepAnim((t - seg.startTime) / Math.max(0.4, titleDur));
+          const lineW = (120 * smoothLine).toFixed(1);
+          if (smoothLine > 0.01) {
+            body += `<rect x="${(VW / 2 - lineW / 2).toFixed(1)}" y="${y}" width="${lineW}" height="2" fill="${BRAND.gold}" fill-opacity="${(0.85 * smoothLine).toFixed(3)}"/>`;
+          }
+          y += 46;
+        } else if (seg.type === 'line') {
+          const tspans = buildAnimatedCharsTspans(seg.text, t, seg.startTime, seg.charInterval, charFadeDur + 0.04);
+          body += `<text x="${VW / 2}" y="${y}" xml:space="preserve" text-anchor="middle" font-family="${TITLE_FONT}" font-size="35" font-style="italic" font-weight="500" letter-spacing="0.5" fill="#f8fafc">${tspans}</text>`;
+          y += 50;
+        } else if (seg.type === 'footer') {
+          y += 8;
+          const tspans = buildAnimatedCharsTspans(seg.text, t, seg.startTime, seg.charInterval, charFadeDur);
+          body += `<text x="${VW / 2}" y="${y}" xml:space="preserve" text-anchor="middle" font-family="${BODY_FONT}" font-size="19" font-weight="600" letter-spacing="4" fill="${BRAND.gold}">${tspans}</text>`;
+          y += 32;
+        }
+      }
+
+      const svg = `<svg width="${VW}" height="${cardH}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="4" stdDeviation="7" flood-color="#000000" flood-opacity="0.88"/>
+          </filter>
+        </defs>
+        <g opacity="${globalAlpha.toFixed(3)}" filter="url(#sh)">${body}</g>
+      </svg>`;
+      await sharp(Buffer.from(svg)).png({ compressionLevel: 2 }).toFile(path.join(seqDir, `f_${String(f).padStart(4, '0')}.png`));
+    }
+
+    const BATCH = 16;
+    for (let i = 0; i < totalFrames; i += BATCH) {
+      const jobs = [];
+      for (let j = i; j < Math.min(totalFrames, i + BATCH); j++) jobs.push(renderSingleFrame(j));
+      await Promise.all(jobs);
+    }
+    return { pattern: path.join(seqDir, 'f_%04d.png'), h: cardH };
   }
 
-  // Sahne 2: Üst Vitrin, Aydınlatma ve Raf Mimarisi Yakın Planı (5 sn)
-  {
-    const meta = await sharp(heroBuf).metadata();
-    const topH = Math.round(meta.height * 0.58);
-    const topW = Math.round(meta.width * 0.76);
-    const topCropBuf = await sharp(heroBuf)
-      .extract({ left: Math.round(meta.width * 0.12), top: Math.round(meta.height * 0.04), width: topW, height: topH })
-      .resize(VW, VH, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 93 })
-      .toBuffer();
+  async function renderProductCalloutsSequence(duration) {
+    const seqDir = path.join(dir, 'seq_s4_callouts');
+    fs.mkdirSync(seqDir, { recursive: true });
+    const totalFrames = Math.round(duration * FPS);
+    const fadeOutStart = duration - 0.85;
+    const fadeOutDur = 0.70;
+    const featItems = buildFeatureCalloutItems(entity);
 
-    const topCropPath = path.join(dir, 'story_macro_top.jpg');
-    fs.writeFileSync(topCropPath, topCropBuf);
+    const callouts = [
+      {
+        dotX: 680, dotY: 610, elbowX: 625, lineY: 538, endX: 78,
+        boxX: 58, boxY: 485, boxW: 548, boxH: 104,
+        textX: 84, titleY: 523, detailY: 570,
+        title: featItems[0].title, detail: featItems[0].detail,
+        tDot: 0.45, tLine: 0.70, lineDur: 0.55, tText: 1.05
+      },
+      {
+        dotX: 355, dotY: 1065, elbowX: 415, lineY: 1000, endX: 1002,
+        boxX: 434, boxY: 948, boxW: 588, boxH: 104,
+        textX: 458, titleY: 986, detailY: 1033,
+        title: featItems[1].title, detail: featItems[1].detail,
+        tDot: 3.05, tLine: 3.30, lineDur: 0.55, tText: 3.65
+      },
+      {
+        dotX: 690, dotY: 1430, elbowX: 635, lineY: 1362, endX: 78,
+        boxX: 58, boxY: 1310, boxW: 565, boxH: 104,
+        textX: 84, titleY: 1348, detailY: 1395,
+        title: featItems[2].title, detail: featItems[2].detail,
+        tDot: 5.65, tLine: 5.90, lineDur: 0.55, tText: 6.25
+      }
+    ];
 
-    const grad = gradientRect(VW, VH, 750, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
-    const shade = await fullFramePng(dir, 'st2_shade', grad.body, grad.defs);
-    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.5, effect: 'fade' }];
+    async function renderSingleFrame(f) {
+      const t = f / FPS;
+      let globalAlpha = 1.0;
+      if (t > fadeOutStart) globalAlpha = 1.0 - smoothstepAnim((t - fadeOutStart) / fadeOutDur);
 
-    const header = await textPng(dir, 'st2_hdr', { lines: ['IŞIKLI CAM VİTRİN & RAF MİMARİSİ'], size: 32, weight: 700, fill: BRAND.gold, spacing: 6 });
-    overlays.push({ ...header, x: 66, y: 1240, start: 0.5, dur: 0.7, effect: 'fade', rise: 18 });
+      let body = '';
+      for (const c of callouts) {
+        if (t < c.tDot) continue;
+        const dotProg = smoothstepAnim((t - c.tDot) / 0.32);
+        const pulse = 1.0 + 0.14 * Math.sin(Math.max(0, t - c.tDot) * 5.5);
+        const outerR = (15 * dotProg * pulse).toFixed(2);
+        const innerR = (6.5 * dotProg).toFixed(2);
 
-    const desc = await textPng(dir, 'st2_desc', { lines: wrapText('✦ Mekana derinlik ve sıcaklık katan entegre vitrin aydınlatması.', 40, 2), size: 38, weight: 600, fill: '#ffffff' });
-    overlays.push({ ...desc, x: 66, y: 1320, start: 1.1, dur: 0.7, effect: 'fade', rise: 16 });
+        const lineProg = smoothstepAnim((t - c.tLine) / c.lineDur);
+        let polyStr = '';
+        if (lineProg > 0.01) {
+          const seg1P = Math.min(1, lineProg / 0.28);
+          const curElbowX = (c.dotX + (c.elbowX - c.dotX) * seg1P).toFixed(1);
+          const curElbowY = (c.dotY + (c.lineY - c.dotY) * seg1P).toFixed(1);
+          if (lineProg <= 0.28) {
+            polyStr = `${c.dotX},${c.dotY} ${curElbowX},${curElbowY}`;
+          } else {
+            const seg2P = (lineProg - 0.28) / 0.72;
+            const curEndX = (c.elbowX + (c.endX - c.elbowX) * seg2P).toFixed(1);
+            polyStr = `${c.dotX},${c.dotY} ${c.elbowX},${c.lineY} ${curEndX},${c.lineY}`;
+          }
+        }
 
-    const out = path.join(dir, 'story_scene_2_macro.mp4');
-    await renderScene({
-      basePath: topCropPath,
-      motion: { type: 'zoom', z0: 1.0, z1: 1.04, ax0: 0.5, ax1: 0.5, ay: 0.4 },
-      overlays,
-      duration: 5,
-      out
-    });
-    scenes.push({ path: out, duration: 5, label: 'macro_upper_vitrine' });
+        const boxAlpha = smoothstepAnim((t - c.tLine) / 0.45);
+        if (boxAlpha > 0.01) {
+          body += `<rect x="${c.boxX}" y="${c.boxY}" width="${c.boxW}" height="${c.boxH}" rx="14" fill="rgba(10, 12, 16, ${(0.72 * boxAlpha).toFixed(3)})" stroke="${BRAND.gold}" stroke-width="1" stroke-opacity="${(0.35 * boxAlpha).toFixed(3)}"/>`;
+        }
+        if (polyStr) {
+          body += `<polyline points="${polyStr}" fill="none" stroke="${BRAND.gold}" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#sh)"/>`;
+        }
+        body += `<circle cx="${c.dotX}" cy="${c.dotY}" r="${outerR}" fill="${BRAND.gold}" fill-opacity="${(0.30 * dotProg).toFixed(3)}" stroke="${BRAND.gold}" stroke-width="2" stroke-opacity="${(0.95 * dotProg).toFixed(3)}" filter="url(#glow)"/>`;
+        body += `<circle cx="${c.dotX}" cy="${c.dotY}" r="${innerR}" fill="#ffffff" stroke="${BRAND.gold}" stroke-width="2.5"/>`;
+
+        if (t >= c.tText) {
+          const titleTspans = buildAnimatedCharsTspans(c.title, t, c.tText, 0.026, 0.16);
+          const detailStart = c.tText + Array.from(c.title).length * 0.022;
+          const detailTspans = buildAnimatedCharsTspans(c.detail, t, detailStart, 0.025, 0.18);
+          body += `<text x="${c.textX}" y="${c.titleY}" xml:space="preserve" font-family="${BODY_FONT}" font-size="20" font-weight="700" letter-spacing="3.5" fill="${BRAND.gold}" filter="url(#sh)">${titleTspans}</text>`;
+          body += `<text x="${c.textX}" y="${c.detailY}" xml:space="preserve" font-family="${TITLE_FONT}" font-size="26" font-style="italic" font-weight="500" fill="#ffffff" filter="url(#sh)">${detailTspans}</text>`;
+        }
+      }
+
+      const svg = `<svg width="${VW}" height="${VH}" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <filter id="sh" x="-20%" y="-20%" width="140%" height="140%">
+            <feDropShadow dx="0" dy="3" stdDeviation="6" flood-color="#000000" flood-opacity="0.9"/>
+          </filter>
+          <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+            <feDropShadow dx="0" dy="0" stdDeviation="6" flood-color="${BRAND.gold}" flood-opacity="0.95"/>
+          </filter>
+        </defs>
+        <g opacity="${globalAlpha.toFixed(3)}">${body}</g>
+      </svg>`;
+      await sharp(Buffer.from(svg)).png({ compressionLevel: 2 }).toFile(path.join(seqDir, `f_${String(f).padStart(4, '0')}.png`));
+    }
+
+    const BATCH = 16;
+    for (let i = 0; i < totalFrames; i += BATCH) {
+      const jobs = [];
+      for (let j = i; j < Math.min(totalFrames, i + BATCH); j++) jobs.push(renderSingleFrame(j));
+      await Promise.all(jobs);
+    }
+    return { pattern: path.join(seqDir, 'f_%04d.png') };
   }
 
-  // Sahne 3: Tezgah, Kapaklar & CNC Gövde İşçiliği Yakın Planı (5 sn)
-  {
-    const meta = await sharp(heroBuf).metadata();
-    const botH = Math.round(meta.height * 0.55);
-    const botW = Math.round(meta.width * 0.78);
-    const botCropBuf = await sharp(heroBuf)
-      .extract({ left: Math.round(meta.width * 0.11), top: Math.round(meta.height * 0.42), width: botW, height: botH })
-      .resize(VW, VH, { fit: 'cover', position: 'centre' })
-      .jpeg({ quality: 93 })
-      .toBuffer();
+  async function renderPanScene({ name, duration, zFixed = 1.01, ax0 = 0.0, ax1 = 0.2, ay0 = 0.5, ay1 = 0.5, rackFocusOpen = false, cardSeq = null, cardY = 1410 }) {
+    const outPath = path.join(dir, `${name}.mp4`);
+    const args = ['-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', masterRoomPath];
+    const ch = Math.round(2144 / zFixed / 2) * 2;
+    const cw = Math.round((ch * 9 / 16) / 2) * 2;
+    const e = `(0.5-0.5*cos(PI*t/${duration.toFixed(3)}))`;
+    const axCur = `(${ax0}+(${ax1 - ax0})*${e})`;
+    const ayCur = `(${ay0}+(${ay1 - ay0})*${e})`;
+    const xExpr = `(iw-${cw})*${axCur}`;
+    const yExpr = `(ih-${ch})*${ayCur}`;
 
-    const botCropPath = path.join(dir, 'story_macro_bot.jpg');
-    fs.writeFileSync(botCropPath, botCropBuf);
+    let vChain = `[0:v]crop=w=${cw}:h=${ch}:x='${xExpr}':y='${yExpr}':exact=1,scale=1080:1920:flags=lanczos,setsar=1`;
+    if (rackFocusOpen) {
+      vChain += `,split[sharp][blurSrc];[blurSrc]gblur=sigma=15,fade=t=out:st=0.15:d=1.20:alpha=1[blurOv];[sharp][blurOv]overlay=0:0`;
+    }
+    vChain += `,format=yuv420p[bg0];`;
+    args.push('-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', brandBarPng);
+    vChain += `[1:v]format=rgba[bb];[bg0][bb]overlay=0:0[bg1];`;
 
-    const grad = gradientRect(VW, VH, 750, [[0, '#000', 0.15], [0.5, '#000', 0.72], [1, '#000', 0.92]]);
-    const shade = await fullFramePng(dir, 'st3_shade', grad.body, grad.defs);
-    const overlays = [{ path: shade, x: 0, y: 0, start: 0, dur: 0.5, effect: 'fade' }];
+    let last = 'bg1';
+    if (cardSeq) {
+      args.push('-framerate', String(FPS), '-i', cardSeq.pattern);
+      vChain += `[2:v]format=rgba[cd];[${last}][cd]overlay=x=0:y=${cardY}:shortest=1[vout]`;
+      last = 'vout';
+    } else {
+      vChain = vChain.replace(/;$/, '');
+    }
 
-    const header = await textPng(dir, 'st3_hdr', { lines: ['KUSURSUZ KAPAK & GÖVDE İŞÇİLİĞİ'], size: 32, weight: 700, fill: BRAND.gold, spacing: 6 });
-    overlays.push({ ...header, x: 66, y: 1240, start: 0.5, dur: 0.7, effect: 'fade', rise: 18 });
-
-    const feats = (entity.features && entity.features.length)
-      ? entity.features[0]
-      : 'Özel tasarım fluted CNC kapak işçiliği ve 1. sınıf dayanıklı membran yüzey.';
-    const desc = await textPng(dir, 'st3_desc', { lines: wrapText(`✦ ${feats}`, 40, 2), size: 38, weight: 600, fill: '#ffffff' });
-    overlays.push({ ...desc, x: 66, y: 1320, start: 1.1, dur: 0.7, effect: 'fade', rise: 16 });
-
-    const out = path.join(dir, 'story_scene_3_macro.mp4');
-    await renderScene({
-      basePath: botCropPath,
-      motion: { type: 'zoom', z0: 1.0, z1: 1.045, ax0: 0.52, ax1: 0.48, ay: 0.4 },
-      overlays,
-      duration: 5,
-      out
-    });
-    scenes.push({ path: out, duration: 5, label: 'macro_lower_cabinets' });
+    args.push(
+      '-filter_complex', vChain,
+      '-map', `[${last}]`,
+      '-t', duration.toFixed(3),
+      '-r', String(FPS),
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-pix_fmt', 'yuv420p', '-an',
+      outPath
+    );
+    await runFfmpeg(args, { label: `mo_${name}` });
+    return { path: outPath, duration };
   }
 
-  // Sahne 4: Kapanış (4.5 sn)
-  {
-    const bg = path.join(dir, 'story_outro_bg.jpg');
-    await sharp(heroBuf).rotate().resize(VW * 2, VH * 2, { fit: 'cover' }).blur(40).modulate({ brightness: 0.32 }).jpeg({ quality: 88 }).toFile(bg);
-    const overlays = [];
-    const b = await textPng(dir, 'sto_brand', { lines: [BRAND.name], size: 76, font: TITLE_FONT, weight: 700, spacing: 8 });
-    overlays.push({ ...b, x: 70, y: 700, start: 0.3, dur: 0.9, effect: 'wipe' });
-    const bar = await fullFramePng(dir, 'sto_bar', `<rect x="76" y="840" width="140" height="4" fill="${BRAND.gold}"/>`);
-    overlays.push({ path: bar, x: 0, y: 0, start: 1.0, dur: 0.5, effect: 'fade' });
-    const l1 = await textPng(dir, 'sto_l1', { lines: [trUpper(entity.title)], size: 46, weight: 700, fill: '#f8fafc' });
-    overlays.push({ ...l1, x: 72, y: 890, start: 1.3, dur: 0.6, effect: 'fade', rise: 18 });
-    const l2 = await textPng(dir, 'sto_l2', { lines: [`WhatsApp  ${BRAND.whatsapp}`], size: 52, weight: 700, fill: BRAND.gold });
-    overlays.push({ ...l2, x: 72, y: 970, start: 1.8, dur: 0.6, effect: 'fade', rise: 18 });
-    const out = path.join(dir, 'story_scene_4.mp4');
-    await renderScene({ basePath: bg, motion: { type: 'zoom', z0: 1.0, z1: 1.04, ax0: 0.5, ax1: 0.5, ay: 0.5 }, overlays, duration: 4.5, out });
-    scenes.push({ path: out, duration: 4.5, label: 'story_outro' });
+  async function renderCenterZoomScene({ name, duration, z0 = 1.13, z1 = 1.00, centerY = 0.48, cardSeq = null, cardY = 0 }) {
+    const outPath = path.join(dir, `${name}.mp4`);
+    const frames = Math.round(duration * FPS);
+    const e = `(0.5-0.5*cos(PI*on/${frames}))`;
+    const zExpr = `${z0}+(${z1 - z0})*${e}`;
+    const xExpr = `(iw-iw/zoom)*0.5`;
+    const yExpr = `(ih-ih/zoom)*${centerY}`;
+
+    const args = ['-i', center9x16Path];
+    let vChain = `[0:v]zoompan=z='${zExpr}':x='${xExpr}':y='${yExpr}':d=${frames}:s=2160x3840:fps=${FPS},scale=1080:1920:flags=lanczos,setsar=1,format=yuv420p[bg0];`;
+    args.push('-loop', '1', '-framerate', String(FPS), '-t', duration.toFixed(3), '-i', brandBarPng);
+    vChain += `[1:v]format=rgba[bb];[bg0][bb]overlay=0:0[bg1];`;
+
+    let last = 'bg1';
+    if (cardSeq) {
+      args.push('-framerate', String(FPS), '-i', cardSeq.pattern);
+      vChain += `[2:v]format=rgba[cd];[${last}][cd]overlay=x=0:y=${cardY}:shortest=1[vout]`;
+      last = 'vout';
+    } else {
+      vChain = vChain.replace(/;$/, '');
+    }
+
+    args.push(
+      '-filter_complex', vChain,
+      '-map', `[${last}]`,
+      '-t', duration.toFixed(3),
+      '-r', String(FPS),
+      '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '17', '-pix_fmt', 'yuv420p', '-an',
+      outPath
+    );
+    await runFfmpeg(args, { label: `mo_${name}` });
+    return { path: outPath, duration };
   }
 
-  const total = scenes.reduce((s, x) => s + x.duration, 0) - XFADE * (scenes.length - 1);
-  const music = await resolveMusic(dir, entity.prefs, log);
-  const args = [];
-  scenes.forEach(s => args.push('-i', s.path));
-  if (music) args.push('-stream_loop', '-1', '-i', music.path);
-  else args.push('-f', 'lavfi', '-t', total.toFixed(3), '-i', 'anullsrc=r=48000:cl=stereo');
+  const [part1Lines, part2Lines, part3Lines] = splitPromoTextIntoThreeParts(entity);
+  const scenes = [];
 
-  let fc = '';
-  let prev = '0:v';
-  let offset = 0;
-  for (let i = 1; i < scenes.length; i++) {
-    offset += scenes[i - 1].duration - XFADE;
-    fc += `[${prev}][${i}:v]xfade=transition=fade:duration=${XFADE}:offset=${offset.toFixed(3)}[x${i}];`;
-    prev = `x${i}`;
-  }
-  fc += `[${prev}]format=yuv420p[vout];`;
-  const a = scenes.length;
-  const fadeOutSt = Math.max(0, total - 3).toFixed(3);
-  fc += music
-    ? `[${a}:a]atrim=0:${total.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=1.5,afade=t=out:st=${fadeOutSt}:d=3,loudnorm=I=-16:TP=-1.5:LRA=11,aresample=48000[aout]`
-    : `[${a}:a]aresample=48000[aout]`;
+  // Sahne 1 (7.0s): Sinematik Bulanık Odak Açılışı + Tanıtım Metni 1. Parça
+  const seq1 = await renderTypewriterCardSequence('s1', 7.0, {
+    title: trUpper(entity.title),
+    lines: part1Lines,
+    writeStart: 0.55
+  });
+  scenes.push({
+    ...(await renderPanScene({
+      name: 's1_opening_window_bar',
+      duration: 7.0,
+      zFixed: 1.01,
+      ax0: 0.00, ax1: 0.18,
+      ay0: 0.50, ay1: 0.50,
+      rackFocusOpen: true,
+      cardSeq: seq1,
+      cardY: 1385
+    })),
+    xfadeAfter: 1.0
+  });
 
-  const finalPath = path.join(dir, 'post03_design_story.mp4');
-  args.push('-filter_complex', fc, '-map', '[vout]', '-map', '[aout]', '-t', total.toFixed(3),
-    '-c:v', 'libx264', '-preset', 'veryfast', '-profile:v', 'high', '-level', '4.1', '-crf', '21', '-maxrate', '5M', '-bufsize', '10M',
-    '-pix_fmt', 'yuv420p', '-r', String(FPS), '-g', String(FPS * 2),
-    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-movflags', '+faststart', finalPath);
-  await runFfmpeg(args, { label: 'post03 video birleştirme', timeoutMs: 360000 });
+  // Sahne 2 (7.0s): Yavaş Dönüş + Tanıtım Metni 2. Parça
+  const seq2 = await renderTypewriterCardSequence('s2', 7.0, {
+    eyebrow: 'MİMARİ ATMOSFER & IŞIK',
+    lines: part2Lines,
+    writeStart: 0.45
+  });
+  scenes.push({
+    ...(await renderPanScene({
+      name: 's2_lounge_turn',
+      duration: 7.0,
+      zFixed: 1.01,
+      ax0: 1.00, ax1: 0.80,
+      ay0: 0.50, ay1: 0.50,
+      cardSeq: seq2,
+      cardY: 1450
+    })),
+    xfadeAfter: 1.0
+  });
+
+  // Sahne 3 (7.2s): Ortadaki Ürüne Odak + Hafif Geri Çekilme (z: 1.13 -> 1.00) + Tanıtım Metni 3. Parça
+  const seq3 = await renderTypewriterCardSequence('s3', 7.2, {
+    eyebrow: 'ZAMANSIZ İŞÇİLİK',
+    lines: part3Lines,
+    writeStart: 0.45
+  });
+  scenes.push({
+    ...(await renderCenterZoomScene({
+      name: 's3_center_pullback',
+      duration: 7.2,
+      z0: 1.13,
+      z1: 1.00,
+      centerY: 0.48,
+      cardSeq: seq3,
+      cardY: 1450
+    })),
+    xfadeAfter: 0.45
+  });
+
+  // Sahne 4 (9.5s): Ortadaki Ürüne Tekrar Hafif Yakınlaşma (z: 1.00 -> 1.10) + Ürün Üzerinde 3 Animasyonlu Nokta & Çizgi & Özellik
+  const seq4Callouts = await renderProductCalloutsSequence(9.5);
+  scenes.push({
+    ...(await renderCenterZoomScene({
+      name: 's4_animated_product_callouts',
+      duration: 9.5,
+      z0: 1.00,
+      z1: 1.10,
+      centerY: 0.48,
+      cardSeq: seq4Callouts,
+      cardY: 0
+    })),
+    xfadeAfter: 1.0
+  });
+
+  // Sahne 5 (8.2s): Soldan Sağa Çok Yavaş Panoramik Geçiş + Yavaş Harf Harf Yazılan Son Reklam Metni
+  const seq5 = await renderTypewriterCardSequence('s5', 8.2, {
+    eyebrow: trUpper(entity.title),
+    title: BRAND.name,
+    lines: ['Yaşam alanınıza değer katan zamansız koleksiyonlar.'],
+    footer: `${BRAND.website}  •  ${BRAND.whatsapp}`,
+    writeStart: 0.65,
+    writeEnd: 6.35,
+    maxCharInterval: 0.085,
+    charFadeDur: 0.30
+  });
+  scenes.push({
+    ...(await renderPanScene({
+      name: 's5_slow_left_to_right_finale',
+      duration: 8.2,
+      zFixed: 1.00,
+      ax0: 0.14, ax1: 0.72,
+      ay0: 0.50, ay1: 0.50,
+      cardSeq: seq5,
+      cardY: 1370
+    })),
+    xfadeAfter: 1.0
+  });
+
+  // Sahne 6 (4.6s): Siyah Arka Planlı Logolu Kapanış
+  scenes.push(await renderLuxuryBlackLogoOutroScene(dir, entity, 4.6));
+
+  const { finalPath, totalDur, music } = await stitchScenesAndMixMusic({
+    tempDir: dir,
+    scenes,
+    entity,
+    log,
+    outFileName: 'post03_mo_collection_intro'
+  });
 
   return {
     path: finalPath,
-    duration: Number(total.toFixed(2)),
+    duration: Number(totalDur.toFixed(2)),
     hasMusic: !!music,
     musicKey: music?.key || null,
     workDir: dir,
@@ -1982,15 +3007,18 @@ export function buildCollectionPostCaption(entity, postIndex = 1, platform = 'in
  * üretir, Supabase Storage'a yükler ve önbelleğe kaydeder.
  */
 export async function produceCollectionThreePostCampaign({ supabase, entity, log = console.log }) {
-  const sig = entitySignature(entity, 'three_post_campaign_v2');
-  const cacheKey = `${entity.slug}:three_post_v2:${sig}`;
+  // Her kampanya üretiminde assets/music klasöründeki dinamik müzik listesini Supabase'e senkronize et
+  await syncMusicLibraryToSupabase(supabase, log);
+
+  const sig = entitySignature(entity, 'three_post_campaign_v3');
+  const cacheKey = `${entity.slug}:three_post_v3:${sig}`;
   const cache = await readCache(supabase);
   if (cache[cacheKey] && cache[cacheKey].post01 && cache[cacheKey].post02 && cache[cacheKey].post03) {
     return { ...cache[cacheKey], cached: true };
   }
 
   const folder = `${RENDER_FOLDER}/${entity.slug}/grid3-${sig}`;
-  log(`[3'lü Koleksiyon Motoru] "${entity.title}" (${entity.slug}) için 3'lü Grid Kampanyası hazırlanıyor...`);
+  log(`[3'lü Koleksiyon Motoru] "${entity.title}" (${entity.slug}) için 3'lü Grid Kampanyası hazırlanıyor (Müzik Tercihi: ${entity.prefs?.music || 'auto'})...`);
 
   // 1. Triptych Kapakları (BER - GA - MO) üret ve yükle
   const triptych = await renderTriptychCovers(entity);
@@ -2008,7 +3036,7 @@ export async function produceCollectionThreePostCampaign({ supabase, entity, log
     post02SlideUrls.push(sUrl);
   }
 
-  // 3. POST 01 — COLLECTION REVEAL (Reels)
+  // 3. POST 01 — COLLECTION REVEAL ("BER" Reels — Bağımsız Ürün & Ölçü Sunumu)
   const post01Video = await renderCollectionPost01Reveal(entity, triptych, { log });
   let post01VideoUrl = '';
   try {
@@ -2018,7 +3046,7 @@ export async function produceCollectionThreePostCampaign({ supabase, entity, log
     try { fs.rmSync(post01Video.workDir, { recursive: true, force: true }); } catch (_) {}
   }
 
-  // 4. POST 03 — DESIGN STORY (Reels)
+  // 4. POST 03 — DESIGN STORY ("MO" Reels — Sinematik Koleksiyon Tanıtımı)
   const post03Video = await renderCollectionPost03DesignStory(entity, triptych, { log });
   let post03VideoUrl = '';
   try {
@@ -2033,6 +3061,7 @@ export async function produceCollectionThreePostCampaign({ supabase, entity, log
     slug: entity.slug,
     title: entity.title,
     category: entity.category,
+    musicKey: post03Video.musicKey || post01Video.musicKey || null,
     splitInfo: triptych.splitInfo,
     covers: {
       left4x5: coverLeft4x5Url,
@@ -2049,6 +3078,7 @@ export async function produceCollectionThreePostCampaign({ supabase, entity, log
       coverUrl: coverLeft9x16Url,
       mediaUrlWithCover: `${post01VideoUrl}#cover=${encodeURIComponent(coverLeft9x16Url)}`,
       duration: post01Video.duration,
+      musicKey: post01Video.musicKey,
       caption: buildCollectionPostCaption(entity, 1, 'instagram'),
       hashtags
     },
@@ -2071,13 +3101,14 @@ export async function produceCollectionThreePostCampaign({ supabase, entity, log
       coverUrl: coverRight9x16Url,
       mediaUrlWithCover: `${post03VideoUrl}#cover=${encodeURIComponent(coverRight9x16Url)}`,
       duration: post03Video.duration,
+      musicKey: post03Video.musicKey,
       caption: buildCollectionPostCaption(entity, 3, 'instagram'),
       hashtags
     }
   };
 
   await writeCacheEntry(supabase, cacheKey, result);
-  log(`[3'lü Koleksiyon Motoru] "${entity.title}" tamamlandı: Post01 (${post01Video.duration}s Reels), Post02 (${post02SlideUrls.length} Slayt Carousel), Post03 (${post03Video.duration}s Reels).`);
+  log(`[3'lü Koleksiyon Motoru] "${entity.title}" tamamlandı: Post01 (${post01Video.duration}s Reels, Müzik: ${post01Video.musicKey}), Post02 (${post02SlideUrls.length} Slayt Carousel), Post03 (${post03Video.duration}s Reels, Müzik: ${post03Video.musicKey}).`);
   return { ...result, cached: false };
 }
 
@@ -2087,5 +3118,6 @@ export default {
   wrapText, excerptQuote, detailLines, splitSentences,
   CAMPAIGN_THEMES, resolveCampaignTheme, campaignCoverSlide, campaignBridgeSlide, renderCampaignCarousel, buildCampaignCaption,
   splitCollectionNameIntoThree, renderTriptychCovers, renderCollectionPost01Reveal, renderCollectionPost02Breakdown,
-  renderCollectionPost03DesignStory, buildCollectionPostCaption, produceCollectionThreePostCampaign
+  renderCollectionPost03DesignStory, buildCollectionPostCaption, produceCollectionThreePostCampaign,
+  scanLocalMusicLibrary, syncMusicLibraryToSupabase, resolveMusic
 };

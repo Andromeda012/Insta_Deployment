@@ -24,7 +24,7 @@
  */
 
 import GeminiBananaEngine from './gemini-banana-engine.js';
-import CollectionFormatEngine, { buildCatalogEntities, prepareFormatPayload } from './collection-format-engine.js';
+import CollectionFormatEngine, { buildCatalogEntities, buildCollectionPostCaption, buildHashtags, prepareFormatPayload } from './collection-format-engine.js';
 
 const DEFAULT_MEDIA_FALLBACK = 'https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/products/bahar-portmanto-ymz9.png';
 
@@ -342,6 +342,88 @@ export async function checkAndEnqueueSlot({
   }
 
   const pickedProduct = selected.product;
+  const scheduledForIso = getIstanbulSlotIso(dateStr, slotTime);
+
+  // Eğer seçilen öğe bir KOLEKSİYON ise ve platform Instagram ise:
+  // Modül 8 ayarlarıyla (seçilen müzik ve tema ile) 3'lü Grid Kampanyasını (1. MO -> 2. GA -> 3. BER) sırayla kuyruğa ekle!
+  if (platform === 'instagram' && pickedProduct.kind === 'collection') {
+    const baseMs = new Date(scheduledForIso).getTime();
+    const hashtags = buildHashtags(pickedProduct, 'instagram');
+    const tripletPlan = [
+      {
+        postKey: 'post03',
+        postIndex: 3,
+        contentType: 'REELS',
+        slotLabel: `${slotTime}_IG_1_MO`,
+        offsetMs: 0
+      },
+      {
+        postKey: 'post02',
+        postIndex: 2,
+        contentType: 'CAROUSEL',
+        slotLabel: `${slotTime}_IG_2_GA`,
+        offsetMs: 90 * 1000
+      },
+      {
+        postKey: 'post01',
+        postIndex: 1,
+        contentType: 'REELS',
+        slotLabel: `${slotTime}_IG_3_BER`,
+        offsetMs: 180 * 1000
+      }
+    ];
+
+    const records = tripletPlan.map(step => ({
+      platform: 'instagram',
+      content_type: step.contentType,
+      slot_label: step.slotLabel,
+      product_slug: pickedProduct.slug,
+      media_url: `auto_render_3post:${pickedProduct.slug}:${step.postKey}`,
+      caption: buildCollectionPostCaption(pickedProduct, step.postIndex, 'instagram'),
+      hashtags,
+      target_link: null,
+      status: 'pending',
+      idempotency_key: `instagram_${pickedProduct.slug}_3grid_${step.postKey}_${dateStr}_${slotCode}`.toLowerCase(),
+      scheduled_for: new Date(baseMs + step.offsetMs).toISOString()
+    }));
+
+    const { data: insertedRows, error: colInsertErr } = await supabase
+      .from('social_publish_queue')
+      .insert(records)
+      .select('id, idempotency_key, scheduled_for, status');
+
+    if (colInsertErr) {
+      if (colInsertErr.code === '23505') {
+        console.log(`[Scheduler Idempotency] 3'lü koleksiyon görevi zaten mevcut: ${pickedProduct.slug}`);
+        return { status: 'skipped', reason: 'DUPLICATE_IDEMPOTENCY_KEY' };
+      }
+      console.error(`[Scheduler] 3'lü koleksiyon görevi kuyruğa eklenemedi:`, colInsertErr.message);
+      return { status: 'error', error: colInsertErr.message };
+    }
+
+    if (!tracker[pickedProduct.slug]) tracker[pickedProduct.slug] = [];
+    for (const fmt of ['REELS', 'CAROUSEL', 'POST']) {
+      if (!tracker[pickedProduct.slug].includes(fmt)) tracker[pickedProduct.slug].push(fmt);
+    }
+    try {
+      await supabase.from('site_settings').upsert({
+        key: trackerKey,
+        data: tracker,
+        updated_at: new Date().toISOString()
+      });
+    } catch (_) {}
+
+    console.log(
+      `[Scheduler 3'lü Koleksiyon Kuyruğa Eklendi] Koleksiyon: ${pickedProduct.slug} | Müzik: ${pickedProduct.prefs?.music || 'auto'} | Görev Sayısı: ${insertedRows?.length || 3}`
+    );
+
+    return {
+      status: 'enqueued',
+      task: insertedRows?.[0] || null,
+      tasks: insertedRows || []
+    };
+  }
+
   let taskPayload;
   try {
     taskPayload = await prepareFormatPayload({
@@ -362,7 +444,6 @@ export async function checkAndEnqueueSlot({
     });
   }
 
-  const scheduledForIso = getIstanbulSlotIso(dateStr, slotTime);
   const idempotencyKey = `${platform}_${pickedProduct.slug}_${taskPayload.contentType}_${dateStr}_${slotCode}`.toLowerCase();
 
   const queueRecord = {
