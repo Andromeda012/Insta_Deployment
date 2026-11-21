@@ -31,6 +31,11 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import {
+  downloadBufferFromR2,
+  extractR2KeyFromUrl,
+  uploadBufferToR2
+} from './lib/r2-storage.js';
 
 const requireFallback = createRequire(import.meta.url);
 
@@ -351,7 +356,22 @@ async function loadImage(url) {
   if (/^data:/i.test(url)) return Buffer.from(url.split(',')[1] || '', 'base64');
   if (fs.existsSync(url)) return fs.readFileSync(url);
   if (imageCache.has(url)) return imageCache.get(url);
-  const buf = await fetchBuffer(url);
+
+  // Eğer URL Cloudflare R2 veya göç edilmiş medya anahtarına aitse doğrudan R2'den yüksek hızla indir
+  let buf = null;
+  const r2Key = extractR2KeyFromUrl(url);
+  if (r2Key) {
+    try {
+      const r2Dl = await downloadBufferFromR2(r2Key);
+      if (r2Dl?.buffer && r2Dl.buffer.length >= 200) {
+        buf = r2Dl.buffer;
+      }
+    } catch (_) {}
+  }
+  if (!buf) {
+    buf = await fetchBuffer(url);
+  }
+
   imageCache.set(url, buf);
   if (imageCache.size > 40) imageCache.delete(imageCache.keys().next().value);
   return buf;
@@ -1049,10 +1069,8 @@ export async function syncMusicLibraryToSupabase(supabase, log = () => {}) {
     try {
       const buf = fs.readFileSync(t.fullPath);
       const contentType = t.ext === '.mp4' ? 'video/mp4' : t.ext === '.m4a' ? 'audio/mp4' : t.ext === '.wav' ? 'audio/wav' : 'audio/mpeg';
-      const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(storagePath, buf, { contentType, upsert: true });
-      if (!error) {
-        publicUrl = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(storagePath).data?.publicUrl || '';
-      }
+      const r2Up = await uploadBufferToR2(storagePath, buf, contentType);
+      publicUrl = r2Up.publicUrl || '';
     } catch (_) {}
 
     manifestTracks.push({
@@ -1491,22 +1509,13 @@ async function writeCacheEntry(supabase, key, value) {
 }
 
 async function uploadFile(supabase, objectPath, buffer, contentType) {
-  if (supabase && supabase.storage && typeof supabase.storage.from === 'function') {
-    const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(objectPath, buffer, { contentType, upsert: true, cacheControl: '31536000' });
-    if (error) throw new Error(`Storage yükleme hatası (${objectPath}): ${error.message}`);
-    const { data } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(objectPath);
-    return data.publicUrl;
-  }
-  const sbUrl = env('SUPABASE_URL', '').replace(/\/$/, '');
-  const sbKey = env('SUPABASE_SERVICE_ROLE_KEY', '');
-  if (!sbUrl || !sbKey) throw new Error('SUPABASE_URL veya SUPABASE_SERVICE_ROLE_KEY eksik.');
-  const res = await fetch(`${sbUrl}/storage/v1/object/${MEDIA_BUCKET}/${objectPath}`, {
-    method: 'POST',
-    headers: { apikey: sbKey, Authorization: `Bearer ${sbKey}`, 'Content-Type': contentType, 'x-upsert': 'true' },
-    body: buffer
+  // Tüm sosyal medya video/görsel render çıktıları sıfır egress maliyetli Cloudflare R2 ('globalkapak-medya') üzerine yüklenir.
+  // Meta/TikTok/YouTube API'lerinin doğrudan R2 üzerinden yüksek hızda çekebilmesi için 7 günlük Presigned R2 URL döner.
+  const r2Up = await uploadBufferToR2(objectPath, buffer, contentType, {
+    preferPresignedUrl: true,
+    expiresInSec: 604800
   });
-  if (!res.ok) throw new Error(`Storage yükleme hatası (${objectPath}): HTTP ${res.status}`);
-  return `${sbUrl}/storage/v1/object/public/${MEDIA_BUCKET}/${objectPath}`;
+  return r2Up.publicUrl;
 }
 
 /**

@@ -6,6 +6,7 @@
  * ============================================================================
  */
 import crypto from 'crypto';
+import { getR2PublicUrl } from '../r2-storage.js';
 
 export const SUPABASE_URL = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co').replace(/\/+$/, '');
 export const SERVICE_KEY = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
@@ -195,7 +196,7 @@ export function normalizeJobRecord(job) {
   job.job_id = job.id;
   job.input_model_path = job.input_model_path ?? mergedSettings.input_model_path ?? mergedSettings.model_path ?? null;
   job.output_render_path = job.output_render_path ?? null;
-  job.output_public_url = job.output_public_url ?? (job.output_render_path ? `${SUPABASE_URL}/storage/v1/object/public/media/${job.output_render_path}` : null);
+  job.output_public_url = job.output_public_url ?? (job.output_render_path ? getR2PublicUrl(job.output_render_path) : null);
   job.render_settings = mergedSettings;
   job.config_params = mergedSettings;
   job.worker_id = job.worker_id ?? null;

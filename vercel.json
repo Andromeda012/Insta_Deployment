@@ -4,6 +4,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/admin", "destination": "/index.html" },
+    { "source": "/r2/:key*", "destination": "/api/module8?action=r2-media&key=:key*" },
     { "source": "/_data/:match*", "destination": "/Module%201/_data/:match*" },
     { "source": "/nova-studio-engine.js", "destination": "/Module%202/nova-studio-engine.js" },
     { "source": "/panoramic-carousel-engine.js", "destination": "/Module%202/panoramic-carousel-engine.js" },

@@ -7,6 +7,7 @@
  * ============================================================================
  */
 import crypto from 'crypto';
+import { deleteR2Object, uploadBufferToR2 } from '../r2-storage.js';
 import {
   supabaseRequest,
   authenticateRoles,
@@ -104,12 +105,12 @@ export async function handleMedia(req, res) {
     const asset = (aRes.ok && Array.isArray(aRes.data)) ? aRes.data[0] : null;
     if (!asset) return res.status(404).json({ ok: false, error: 'Medya varlığı bulunamadı.' });
 
-    // 2. Delete from Supabase Storage if path exists
+    // 2. Delete from Cloudflare R2 if path exists
     if (asset.storage_path) {
       try {
-        await supabaseRequest(`/storage/v1/object/media/${asset.storage_path}`, { method: 'DELETE' });
+        await deleteR2Object(asset.storage_path);
       } catch (err) {
-        console.warn(`Storage delete warning for ${asset.storage_path}:`, err.message);
+        console.warn(`R2 delete warning for ${asset.storage_path}:`, err.message);
       }
     }
 
@@ -215,28 +216,18 @@ export async function handleUpload(req, res) {
     storagePath = `studio/${safeType}/${safeSlug}/${Date.now()}-${randomSuffix}.${cleanExt}`;
   }
 
-  // Upload to Supabase Storage Bucket 'media'
-  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/media/${storagePath}`;
-  const uploadRes = await fetch(uploadUrl, {
-    method: 'POST',
-    headers: {
-      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-      Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY || ''}`,
-      'Content-Type': mime_type,
-      'x-upsert': 'true'
-    },
-    body: buffer
-  });
-
-  if (!uploadRes.ok) {
-    const errText = await uploadRes.text().catch(() => '');
+  // Upload to Cloudflare R2 Bucket 'globalkapak-medya'
+  let r2Upload;
+  try {
+    r2Upload = await uploadBufferToR2(storagePath, buffer, mime_type);
+  } catch (r2Err) {
     return res.status(502).json({
       ok: false,
-      error: `Supabase Storage yükleme hatası (${uploadRes.status}): ${errText}`
+      error: `Cloudflare R2 yükleme hatası: ${r2Err.message}`
     });
   }
 
-  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
+  const publicUrl = r2Upload.publicUrl;
   const assetId = 'ast-' + Date.now() + '-' + randomSuffix;
 
   const newAsset = {

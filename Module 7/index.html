@@ -1011,15 +1011,18 @@
         });
 
         if (signRes && signRes.signed_upload_url) {
-          const putRes = await fetch(signRes.signed_upload_url, {
-            method: 'PUT',
-            headers: { 'Content-Type': blob.type || 'image/jpeg' },
-            body: blob
-          });
-          if (!putRes.ok) {
-            throw new Error('Görsel depolama alanına yüklenemedi.');
+          try {
+            const putRes = await fetch(signRes.signed_upload_url, {
+              method: 'PUT',
+              headers: { 'Content-Type': blob.type || 'image/jpeg' },
+              body: blob
+            });
+            if (putRes.ok) {
+              return signRes.public_url;
+            }
+          } catch (_) {
+            // Tarayıcı CORS engeli varsa sunucu taraflı Cloudflare R2 yüklemesine düş
           }
-          return signRes.public_url;
         }
 
         const uploaded = await module7Api('/api/module7?action=media', {

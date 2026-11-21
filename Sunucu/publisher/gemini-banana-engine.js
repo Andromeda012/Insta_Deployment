@@ -26,6 +26,7 @@
  */
 
 import zlib from 'node:zlib';
+import { uploadBufferToR2 } from './lib/r2-storage.js';
 
 const DEFAULT_PUBLIC_ANON_KEY = [
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
@@ -820,19 +821,11 @@ async function uploadBufferToStorage(storagePath, buffer, contentType = 'image/p
   const candidates = [storagePath, `campaigns/${storagePath.replace(/\//g, '-')}`];
   for (const pathCandidate of candidates) {
     try {
-      const res = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/media/${pathCandidate}`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-          'Content-Type': contentType,
-          'x-upsert': 'true'
-        },
-        body: buffer
+      const up = await uploadBufferToR2(pathCandidate, buffer, contentType, {
+        preferPresignedUrl: true,
+        expiresInSec: 604800
       });
-      if (res.ok) {
-        return `${SUPABASE_CONFIG.url}/storage/v1/object/public/media/${pathCandidate}`;
-      }
+      if (up?.publicUrl) return up.publicUrl;
     } catch (_) {}
   }
   return null;
@@ -842,19 +835,11 @@ async function uploadStringToStorage(storagePath, stringContent, contentType = '
   const candidates = [storagePath, `campaigns/${storagePath.replace(/\//g, '-')}`];
   for (const pathCandidate of candidates) {
     try {
-      const res = await fetch(`${SUPABASE_CONFIG.url}/storage/v1/object/media/${pathCandidate}`, {
-        method: 'POST',
-        headers: {
-          'apikey': SUPABASE_CONFIG.key,
-          'Authorization': `Bearer ${SUPABASE_CONFIG.key}`,
-          'Content-Type': contentType,
-          'x-upsert': 'true'
-        },
-        body: stringContent
+      const up = await uploadBufferToR2(pathCandidate, Buffer.from(String(stringContent), 'utf8'), contentType, {
+        preferPresignedUrl: true,
+        expiresInSec: 604800
       });
-      if (res.ok) {
-        return `${SUPABASE_CONFIG.url}/storage/v1/object/public/media/${pathCandidate}`;
-      }
+      if (up?.publicUrl) return up.publicUrl;
     } catch (_) {}
   }
   return null;

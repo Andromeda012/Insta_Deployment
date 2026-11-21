@@ -1,4 +1,5 @@
 import { authenticateRoles, apiError } from './_lib/auth.js';
+import { createR2PresignedUrl, getR2PublicUrl, uploadBufferToR2 } from './_lib/r2-storage.js';
 
 const SUPABASE_URL = (process.env.SUPABASE_URL || '').replace(/\/+$/, '');
 const ANON_KEY = process.env.SUPABASE_ANON_KEY || '';
@@ -550,7 +551,7 @@ async function media(req, res) {
   if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz ürün kodu.' });
   if (!SUPABASE_URL || !SERVICE_KEY) throw error('Storage server configuration is incomplete.', 503);
 
-  // Yüksek boyutlu görseller (50 MB'a kadar) için doğrudan imzalı yükleme URL'si üretimi (Vercel 4.5 MB limitini aşar)
+  // Yüksek boyutlu görseller (50 MB'a kadar) için doğrudan Cloudflare R2 imzalı yükleme URL'si üretimi (Vercel 4.5 MB limitini aşar)
   if (mode === 'sign') {
     const rawMime = String(mime_type || 'image/jpeg').toLowerCase().trim();
     const sizeNum = Number(file_size || 0);
@@ -559,27 +560,14 @@ async function media(req, res) {
     }
     const ext = rawMime.includes('webp') ? 'webp' : rawMime.includes('png') ? 'png' : 'jpg';
     const path = `products/${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
-    const signRes = await fetch(`${SUPABASE_URL}/storage/v1/object/upload/sign/media/${path}`, {
-      method: 'POST',
-      headers: {
-        apikey: SERVICE_KEY,
-        Authorization: `Bearer ${SERVICE_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({})
-    });
-    if (!signRes.ok) {
-      const err = new Error((await signRes.text()) || 'İmzalı yükleme adresi oluşturulamadı.');
-      err.status = signRes.status >= 500 ? 502 : 400;
-      throw err;
-    }
-    const signData = await signRes.json();
+    const signedUploadUrl = createR2PresignedUrl(path, 'PUT', 3600);
+    const publicUrl = getR2PublicUrl(path);
     return res.status(200).json({
       ok: true,
+      storage_provider: 'cloudflare_r2',
       path,
-      signed_upload_url: `${SUPABASE_URL}/storage/v1${signData.url}`,
-      token: signData.token,
-      public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${path}`
+      signed_upload_url: signedUploadUrl,
+      public_url: publicUrl
     });
   }
 
@@ -591,18 +579,13 @@ async function media(req, res) {
   if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) return res.status(413).json({ ok: false, error: 'Görsel en fazla 50 MB olabilir.' });
   const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png';
   const path = `products/${slug}-${Date.now()}.${ext}`;
-  const response = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${path}`, {
-    method: 'POST',
-    headers: { apikey: SERVICE_KEY, Authorization: `Bearer ${SERVICE_KEY}`, 'Content-Type': mime, 'x-upsert': 'true' },
-    body: bytes,
-    cache: 'no-store'
+  const up = await uploadBufferToR2(path, bytes, mime);
+  return res.status(201).json({
+    ok: true,
+    storage_provider: 'cloudflare_r2',
+    path: up.key,
+    public_url: up.publicUrl
   });
-  if (!response.ok) {
-    const err = new Error((await response.text()) || 'Storage upload failed.');
-    err.status = response.status >= 500 ? 502 : 400;
-    throw err;
-  }
-  return res.status(201).json({ ok: true, path, public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${path}` });
 }
 
 // ── 5. KOLEKSİYONLAR CRUD (BÖLÜM 4.1 MERKEZİ KOLEKSİYON YÖNETİMİ) ───────────

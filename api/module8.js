@@ -4,6 +4,14 @@
 // ============================================================================
 
 import { authenticateRoles, apiError } from './_lib/auth.js';
+import {
+  createR2PresignedUrl,
+  downloadBufferFromR2,
+  getR2PublicUrl,
+  headR2Object,
+  normalizeR2Key,
+  uploadBufferToR2
+} from './_lib/r2-storage.js';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -380,62 +388,24 @@ function computeTotalSpentUsd(store) {
 }
 
 async function uploadBufferToStorageMedia(storagePath, buffer, mimeType, upsert = 'true') {
-  const uploadUrl = `${SUPABASE_URL}/storage/v1/object/media/${storagePath}`;
-  let uploadRes = null;
-  let uploadErrText = '';
-  const maxStorageRetries = 3;
-
-  for (let attempt = 1; attempt <= maxStorageRetries; attempt++) {
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      uploadRes = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          apikey: SERVICE_KEY,
-          Authorization: `Bearer ${SERVICE_KEY}`,
-          'Content-Type': mimeType,
-          'x-upsert': upsert
-        },
-        body: buffer
-      });
-      if (uploadRes.ok) {
-        break;
+      const up = await uploadBufferToR2(storagePath, buffer, mimeType);
+      return {
+        storage_path: up.key,
+        public_url: up.publicUrl,
+        presigned_get_url: up.presignedGetUrl,
+        storage_provider: 'cloudflare_r2'
+      };
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, 200 * Math.pow(2, attempt - 1)));
       }
-      uploadErrText = await uploadRes.text().catch(() => uploadRes.statusText);
-      if (uploadRes.status === 413) {
-        try {
-          await fetch(`${SUPABASE_URL}/storage/v1/bucket/media`, {
-            method: 'PUT',
-            headers: {
-              apikey: SERVICE_KEY,
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-              public: true,
-              file_size_limit: 104857600
-            })
-          });
-        } catch {}
-      }
-      if (uploadRes.status < 500 && uploadRes.status !== 429 && uploadRes.status !== 413) {
-        break;
-      }
-    } catch (netErr) {
-      uploadErrText = netErr.message || 'Storage network error';
-    }
-    if (attempt < maxStorageRetries) {
-      await new Promise(r => setTimeout(r, 200 * Math.pow(2, attempt - 1)));
     }
   }
-
-  if (!uploadRes || !uploadRes.ok) {
-    throw new Error(`STORAGE_UPLOAD_FAILED: ${uploadErrText || uploadRes?.statusText || 'Depolama sunucusuna yükleme başarısız.'}`);
-  }
-
-  return {
-    storage_path: storagePath,
-    public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`
-  };
+  throw new Error(`STORAGE_UPLOAD_FAILED: ${lastErr?.message || 'Cloudflare R2 yükleme başarısız.'}`);
 }
 
 function resolveTripoApiKey(req = {}, store = {}) {
@@ -1574,28 +1544,16 @@ async function handleSceneAnalyzeRef(req, res) {
     });
   }
 
-  // Optionally upload reference image to Supabase Storage under studio/scenes/references/
+  // Upload reference image to Cloudflare R2 under studio/scenes/references/
   const cleanB64 = String(body.file_base64 || '').replace(/^data:[^;]+;base64,/, '');
   const imgBuffer = Buffer.from(cleanB64, 'base64');
   const ext = analysis.source_image.format === 'png' ? 'png' : (analysis.source_image.format === 'webp' ? 'webp' : 'jpg');
   const refStoragePath = `studio/scenes/references/ref_${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${ext}`;
-  let refPublicUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${refStoragePath}`;
+  let refPublicUrl = getR2PublicUrl(refStoragePath);
 
   try {
-    const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${refStoragePath}`, {
-      method: 'POST',
-      headers: {
-        apikey: SERVICE_KEY,
-        Authorization: `Bearer ${SERVICE_KEY}`,
-        'Content-Type': analysis.source_image.mime_type || 'image/jpeg',
-        'x-upsert': 'true'
-      },
-      body: imgBuffer
-    });
-    if (!upRes.ok) {
-      // Keep deterministic storage path even if offline in local test mode
-      refPublicUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${refStoragePath}`;
-    }
+    const up = await uploadBufferToR2(refStoragePath, imgBuffer, analysis.source_image.mime_type || 'image/jpeg');
+    refPublicUrl = up.publicUrl;
   } catch {}
 
   return res.status(200).json({
@@ -1707,25 +1665,18 @@ async function handleSceneSave(req, res) {
     const storageUploadResults = {};
     for (const target of uploadTargets) {
       let uploadedRemote = false;
+      let publicUrl = getR2PublicUrl(target.path);
       try {
-        const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${target.path}`, {
-          method: 'POST',
-          headers: {
-            apikey: SERVICE_KEY,
-            Authorization: `Bearer ${SERVICE_KEY}`,
-            'Content-Type': target.contentType,
-            'x-upsert': 'true'
-          },
-          body: target.buffer
-        });
-        uploadedRemote = upRes.ok;
+        const up = await uploadBufferToR2(target.path, target.buffer, target.contentType);
+        uploadedRemote = Boolean(up?.ok);
+        if (up?.publicUrl) publicUrl = up.publicUrl;
       } catch {
         uploadedRemote = false;
       }
 
       storageUploadResults[target.key] = {
         storage_path: target.path,
-        public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${target.path}`,
+        public_url: publicUrl,
         byte_length: target.buffer.length,
         uploaded_remote: uploadedRemote
       };
@@ -2155,25 +2106,18 @@ async function handleCinematicSave(req, res) {
     const storageUploadResults = {};
     for (const target of uploadTargets) {
       let uploadedRemote = false;
+      let publicUrl = getR2PublicUrl(target.path);
       try {
-        const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${target.path}`, {
-          method: 'POST',
-          headers: {
-            apikey: SERVICE_KEY,
-            Authorization: `Bearer ${SERVICE_KEY}`,
-            'Content-Type': target.contentType,
-            'x-upsert': 'true'
-          },
-          body: target.buffer
-        });
-        uploadedRemote = upRes.ok;
+        const up = await uploadBufferToR2(target.path, target.buffer, target.contentType);
+        uploadedRemote = Boolean(up?.ok);
+        if (up?.publicUrl) publicUrl = up.publicUrl;
       } catch {
         uploadedRemote = false;
       }
 
       storageUploadResults[target.key] = {
         storage_path: target.path,
-        public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${target.path}`,
+        public_url: publicUrl,
         byte_length: target.buffer.length,
         uploaded_remote: uploadedRemote
       };
@@ -2685,11 +2629,11 @@ async function handleVideoProduce(req, res) {
         render_status: body.queue_for_worker === true ? 'pending' : 'completed',
         storage_path: storagePaths.video_storage_path,
         video_storage_path: storagePaths.video_storage_path,
-        public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${storagePaths.video_storage_path}`,
+        public_url: getR2PublicUrl(storagePaths.video_storage_path),
         metadata_storage_path: storagePaths.metadata_storage_path,
-        metadata_public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${storagePaths.metadata_storage_path}`,
+        metadata_public_url: getR2PublicUrl(storagePaths.metadata_storage_path),
         preview_frame_path: storagePaths.preview_frame_path,
-        preview_frame_url: `${SUPABASE_URL}/storage/v1/object/public/media/${storagePaths.preview_frame_path}`,
+        preview_frame_url: getR2PublicUrl(storagePaths.preview_frame_path),
         editing_settings: editingSettings,
         shots: adapted.shots,
         master_keyframes: adapted.master_keyframes,
@@ -2709,24 +2653,17 @@ async function handleVideoProduce(req, res) {
       storageUploads[platformId] = {};
       for (const t of targets) {
         let uploadedRemote = false;
+        let pubUrl = getR2PublicUrl(t.path);
         try {
-          const upRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${t.path}`, {
-            method: 'POST',
-            headers: {
-              apikey: SERVICE_KEY,
-              Authorization: `Bearer ${SERVICE_KEY}`,
-              'Content-Type': t.contentType,
-              'x-upsert': 'true'
-            },
-            body: t.buffer
-          });
-          uploadedRemote = upRes.ok;
+          const up = await uploadBufferToR2(t.path, t.buffer, t.contentType);
+          uploadedRemote = Boolean(up?.ok);
+          if (up?.publicUrl) pubUrl = up.publicUrl;
         } catch {
           uploadedRemote = false;
         }
         storageUploads[platformId][t.key] = {
           storage_path: t.path,
-          public_url: `${SUPABASE_URL}/storage/v1/object/public/media/${t.path}`,
+          public_url: pubUrl,
           byte_length: t.buffer.length,
           uploaded_remote: uploadedRemote
         };
@@ -3524,6 +3461,83 @@ async function handleLibraryPresets(req, res) {
   return res.status(200).json({ ok: true, success: true, total: presets.length, presets });
 }
 
+// ── 10. CLOUDFLARE R2 EDGE MEDIA GATEWAY & PRESIGNED URL SERVICE ────────────
+async function handleR2MediaGateway(req, res) {
+  const urlObj = new URL(req.url, 'https://local.invalid');
+  const rawKey = req.query?.key || urlObj.searchParams.get('key') || '';
+  const cleanKey = normalizeR2Key(Array.isArray(rawKey) ? rawKey.join('/') : rawKey);
+  if (!cleanKey) {
+    return res.status(400).json({ ok: false, error: 'Geçerli bir R2 nesne anahtarı (key) gerekli.' });
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, HEAD, OPTIONS');
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+
+  const forceRedirect = req.query?.redirect === '1' || urlObj.searchParams.get('redirect') === '1';
+  const isHeavyMedia = /\.(mp4|mov|webm|glb|gltf|usdz|fbx|obj|blend|hdr|exr|mp3|m4a|wav|aac|flac)$/i.test(cleanKey);
+
+  // Yüksek boyutlu 3D modeller (.glb), videolar (.mp4) ve ses dosyaları için doğrudan imzalı R2 S3 URL'sine 307 yönlendirmesi yap (sıfır Vercel bant genişliği)
+  if (forceRedirect || isHeavyMedia) {
+    const signedUrl = createR2PresignedUrl(cleanKey, req.method === 'HEAD' ? 'HEAD' : 'GET', 86400);
+    res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=3600');
+    res.setHeader('Location', signedUrl);
+    return res.status(307).end();
+  }
+
+  try {
+    if (req.method === 'HEAD') {
+      const hd = await headR2Object(cleanKey);
+      if (!hd.exists) return res.status(404).end();
+      res.setHeader('Content-Type', hd.contentType || 'application/octet-stream');
+      res.setHeader('Content-Length', String(hd.sizeBytes || 0));
+      res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
+      return res.status(200).end();
+    }
+
+    const dl = await downloadBufferFromR2(cleanKey);
+    res.setHeader('Content-Type', dl.contentType || 'image/jpeg');
+    res.setHeader('Content-Length', String(dl.sizeBytes));
+    res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
+    if (dl.etag) res.setHeader('ETag', dl.etag);
+    return res.status(200).send(dl.buffer);
+  } catch (err) {
+    // Eğer doğrudan akışta hata veya boyut sınırı oluşursa imzalı R2 URL'sine yönlendir
+    const signedUrl = createR2PresignedUrl(cleanKey, 'GET', 86400);
+    res.setHeader('Location', signedUrl);
+    return res.status(307).end();
+  }
+}
+
+async function handleR2Presign(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  }
+  await authenticateRoles(req, ['admin', 'production_manager', 'content_manager', 'product_manager']).catch(() => null);
+  const b = req.body || {};
+  const rawKey = String(b.key || b.storage_path || b.path || '').trim();
+  const method = String(b.method || 'PUT').toUpperCase();
+  if (!rawKey) {
+    return res.status(400).json({ ok: false, error: 'Dosya yolu (key) zorunludur.' });
+  }
+  const cleanKey = normalizeR2Key(rawKey);
+  const signedUrl = createR2PresignedUrl(cleanKey, method, 3600);
+  const publicUrl = getR2PublicUrl(cleanKey);
+  const presignedGetUrl = createR2PresignedUrl(cleanKey, 'GET', 604800);
+
+  return res.status(200).json({
+    ok: true,
+    storage_provider: 'cloudflare_r2',
+    key: cleanKey,
+    signed_url: signedUrl,
+    signed_upload_url: method === 'PUT' ? signedUrl : null,
+    public_url: publicUrl,
+    presigned_get_url: presignedGetUrl
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -3532,6 +3546,12 @@ export default async function handler(req, res) {
 
   try {
     switch (action) {
+      case 'r2-media':
+      case 'r2':
+        return await handleR2MediaGateway(req, res);
+      case 'r2-presign':
+      case 'presign':
+        return await handleR2Presign(req, res);
       case 'library-assets':
       case 'library-models':
         return await handleLibraryAssets(req, res);

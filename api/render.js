@@ -19,6 +19,7 @@ import {
   YT_AUTONOMOUS_THEMES,
   renderAutonomousYouTubeShortsSvg
 } from '../Module 2/Youtube Shorts/bot-engine.js';
+import { uploadBufferToR2 } from './_lib/r2-storage.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -220,23 +221,12 @@ export default async function handler(req, res) {
     const storagePath = `tiktok/${fileName}`;
     let publicMediaUrl = `https://insta-deployment-rho.vercel.app/api/render?platform=tiktok&raw=1&format=${encodeURIComponent(format)}&sku=${encodeURIComponent(sku)}&title=${encodeURIComponent(title)}`;
 
-    if (SUPABASE_KEY) {
-      try {
-        const uploadRes = await fetch(`${SUPABASE_URL}/storage/v1/object/media/${storagePath}`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'image/svg+xml',
-            'x-upsert': 'true'
-          },
-          body: svgContent
-        });
-        if (uploadRes.ok) {
-          publicMediaUrl = `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
-        }
-      } catch (_) {}
-    }
+    try {
+      const r2Up = await uploadBufferToR2(storagePath, Buffer.from(svgContent, 'utf8'), 'image/svg+xml');
+      if (r2Up?.publicUrl) {
+        publicMediaUrl = r2Up.publicUrl;
+      }
+    } catch (_) {}
 
     return res.status(200).json({
       ok: true,

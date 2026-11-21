@@ -4024,7 +4024,7 @@
       }
 
       tbody.innerHTML = jobs.map(j => {
-        const previewUrl = j.output_public_url || (j.output_render_path ? `https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/${j.output_render_path}` : '');
+        const previewUrl = j.output_public_url || (j.output_render_path ? `/r2/${j.output_render_path}` : '');
         return `
         <tr>
           <td><code style="font-family:var(--font-mono); color:var(--accent-gold);">${escapeHtml(j.id)}</code></td>
@@ -4104,7 +4104,7 @@
 
         const primaryPreviewUrl = j.output_public_url ||
           outputs[0]?.public_url ||
-          (j.output_render_path ? `https://vrfujrpsjzqjthaqdalx.supabase.co/storage/v1/object/public/media/${j.output_render_path}` : '');
+          (j.output_render_path ? `/r2/${j.output_render_path}` : '');
 
         body.innerHTML = `
           <div style="display:flex; flex-direction:column; gap:16px;">

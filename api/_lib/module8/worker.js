@@ -14,6 +14,7 @@ import {
   REGISTERED_ENGINES,
   SUPABASE_URL
 } from './db.js';
+import { getR2PublicUrl } from '../r2-storage.js';
 
 export async function handleWorker(req, res) {
   const isWorker = verifyWorkerAuth(req);
@@ -123,7 +124,7 @@ export async function handleWorker(req, res) {
 
     const firstOutput = Array.isArray(outputs) && outputs[0] ? outputs[0] : null;
     const resolvedPath = output_render_path || firstOutput?.storage_path || null;
-    const resolvedUrl = output_public_url || firstOutput?.public_url || (resolvedPath ? `${SUPABASE_URL}/storage/v1/object/public/media/${resolvedPath}` : null);
+    const resolvedUrl = output_public_url || firstOutput?.public_url || (resolvedPath ? getR2PublicUrl(resolvedPath) : null);
 
     const rpcRes = await supabaseRequest('/rest/v1/rpc/complete_production_job', {
       method: 'POST',
@@ -144,7 +145,7 @@ export async function handleWorker(req, res) {
     for (let idx = 0; idx < outputs.length; idx++) {
       const out = outputs[idx];
       const outputAssetId = out.asset_id || ('ast-out-' + Date.now() + '-' + idx);
-      const outUrl = out.public_url || (out.storage_path ? `${SUPABASE_URL}/storage/v1/object/public/media/${out.storage_path}` : resolvedUrl);
+      const outUrl = out.public_url || (out.storage_path ? getR2PublicUrl(out.storage_path) : resolvedUrl);
 
       const outputRecord = {
         id: 'out-' + Date.now() + '-' + idx,

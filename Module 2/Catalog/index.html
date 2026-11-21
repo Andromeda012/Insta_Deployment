@@ -1018,15 +1018,14 @@
           const blob = new Blob([byteArray], { type: `image/${ext === 'jpg' ? 'jpeg' : 'png'}` });
           const storagePath = `products/${slug}-${Date.now()}.${ext}`;
 
-          const { error: upErr } = await sb.storage.from('media').upload(storagePath, blob, {
-            contentType: `image/${ext === 'jpg' ? 'jpeg' : 'png'}`,
-            upsert: true
+          const upRes = await fetch('/api/module7?action=media', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ slug, data_url: currentImageBase64 })
           });
-          if (!upErr) {
-            const { data: pubData } = sb.storage.from('media').getPublicUrl(storagePath);
-            if (pubData?.publicUrl) {
-              ana_resim = pubData.publicUrl;
-            }
+          const upData = await upRes.json().catch(() => ({}));
+          if (upRes.ok && upData?.public_url) {
+            ana_resim = upData.public_url;
           }
         } catch (e) {
           console.warn('Storage yükleme hatası:', e);
