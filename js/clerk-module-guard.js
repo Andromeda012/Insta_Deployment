@@ -111,18 +111,29 @@
     if (!token && !isInsideIframe) {
       // Doğrudan URL ile girildiyse Clerk SDK yükleyip aktif oturumu kontrol et
       try {
-        await new Promise((resolve, reject) => {
-          const s = document.createElement('script');
-          s.src = 'https://clerk.globalkapakmobilya.com/npm/@clerk/clerk-js@5/dist/clerk.browser.js';
-          s.async = true;
-          s.crossOrigin = 'anonymous';
-          s.setAttribute('data-clerk-publishable-key', CLERK_PK);
-          s.onload = resolve;
-          s.onerror = reject;
-          document.head.appendChild(s);
-        });
+        const clerkSources = [
+          'https://clerk.globalkapakmobilya.com/npm/@clerk/clerk-js@6/dist/clerk.browser.js',
+          'https://cdn.jsdelivr.net/npm/@clerk/clerk-js@6/dist/clerk.browser.js'
+        ];
+        for (const src of clerkSources) {
+          if (window.Clerk) break;
+          try {
+            await new Promise((resolve, reject) => {
+              const s = document.createElement('script');
+              s.src = src;
+              s.async = true;
+              s.crossOrigin = 'anonymous';
+              s.setAttribute('data-clerk-publishable-key', CLERK_PK);
+              s.onload = resolve;
+              s.onerror = reject;
+              document.head.appendChild(s);
+            });
+          } catch (_) {}
+        }
         if (window.Clerk) {
-          await window.Clerk.load({ publishableKey: CLERK_PK });
+          if (!window.Clerk.loaded) {
+            await window.Clerk.load({ publishableKey: CLERK_PK });
+          }
           if (window.Clerk.session) {
             token = await window.Clerk.session.getToken();
             if (token) sessionStorage.setItem('gm_clerk_jwt', token);
