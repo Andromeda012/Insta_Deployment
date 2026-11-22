@@ -1181,16 +1181,28 @@
       if (!ttState) ttState = { config: {}, queue: [] };
       if (!ttState.config) ttState.config = {};
 
-      ttState.config.posting_slots = [
-        { type: 'TT_COLLECTION', time: document.getElementById('timeSlotNoon').value || '12:00', active: document.getElementById('chkSlotNoonActive').checked },
-        { type: 'TT_DETAIL', time: document.getElementById('timeSlotAfternoon').value || '17:30', active: document.getElementById('chkSlotAfternoonActive').checked },
-        { type: 'TT_PRIME', time: document.getElementById('timeSlotPrime').value || '21:00', active: document.getElementById('chkSlotPrimeActive').checked }
+      const newSlots = [
+        { slot_id: 'tt_slot_1', type: 'TT_COLLECTION', time: document.getElementById('timeSlotNoon').value || '12:00', active: document.getElementById('chkSlotNoonActive').checked, enabled: document.getElementById('chkSlotNoonActive').checked },
+        { slot_id: 'tt_slot_2', type: 'TT_DETAIL', time: document.getElementById('timeSlotAfternoon').value || '17:30', active: document.getElementById('chkSlotAfternoonActive').checked, enabled: document.getElementById('chkSlotAfternoonActive').checked },
+        { slot_id: 'tt_slot_3', type: 'TT_PRIME', time: document.getElementById('timeSlotPrime').value || '21:00', active: document.getElementById('chkSlotPrimeActive').checked, enabled: document.getElementById('chkSlotPrimeActive').checked }
       ];
+      ttState.config.posting_slots = newSlots;
 
-      await persistTtState();
-      updateSlotVisuals();
-      renderUpcomingPreviews();
-      showToast('✅ TikTok yayın akış saatleri kaydedildi!');
+      try {
+        const res = await fetch('/api/module2?action=save-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: 'tiktok', posting_slots: newSlots })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.ok === false) throw new Error(json.error || `Kayıt hatası (${res.status})`);
+        ttState.config.posting_slots = json.posting_slots || newSlots;
+        updateSlotVisuals();
+        renderUpcomingPreviews();
+        showToast('✅ TikTok yayın akış saatleri Supabase veritabanına kaydedildi!');
+      } catch (err) {
+        showToast(`❌ TikTok saat kayıt hatası: ${err.message}`);
+      }
     }
 
     async function saveApiConfig() {

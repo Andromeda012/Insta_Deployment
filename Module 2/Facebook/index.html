@@ -962,15 +962,27 @@
       if (!fbState) fbState = { config: {}, scheduled_posts: [] };
       if (!fbState.config) fbState.config = {};
 
-      fbState.config.posting_slots = [
-        { slot_id: 'fb_slot_1', type: 'PHOTO_POST', time: document.getElementById('timeSlotPhoto').value || '10:00', active: document.getElementById('chkSlotPhotoActive').checked, label: "6'lı Koleksiyon Carousel / Albüm" },
-        { slot_id: 'fb_slot_2', type: 'FB_REELS', time: document.getElementById('timeSlotReels').value || '19:30', active: document.getElementById('chkSlotReelsActive').checked, label: 'Sinematik Facebook Reels' }
+      const newSlots = [
+        { slot_id: 'fb_slot_1', type: 'PHOTO_POST', time: document.getElementById('timeSlotPhoto').value || '10:00', active: document.getElementById('chkSlotPhotoActive').checked, enabled: document.getElementById('chkSlotPhotoActive').checked, label: "6'lı Koleksiyon Carousel / Albüm" },
+        { slot_id: 'fb_slot_2', type: 'FB_REELS', time: document.getElementById('timeSlotReels').value || '19:30', active: document.getElementById('chkSlotReelsActive').checked, enabled: document.getElementById('chkSlotReelsActive').checked, label: 'Sinematik Facebook Reels' }
       ];
+      fbState.config.posting_slots = newSlots;
 
-      await persistFbState();
-      updateSlotVisuals();
-      renderUpcomingPreviews();
-      showToast('✅ Facebook yayın akış saatleri kaydedildi!');
+      try {
+        const res = await fetch('/api/module2?action=save-schedule', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: 'facebook', posting_slots: newSlots })
+        });
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok || json.ok === false) throw new Error(json.error || `Kayıt hatası (${res.status})`);
+        fbState.config.posting_slots = json.posting_slots || newSlots;
+        updateSlotVisuals();
+        renderUpcomingPreviews();
+        showToast('✅ Facebook yayın akış saatleri Supabase veritabanına kaydedildi!');
+      } catch (err) {
+        showToast(`❌ Facebook saat kayıt hatası: ${err.message}`);
+      }
     }
 
     async function saveAssistantSettings() {

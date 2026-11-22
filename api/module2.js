@@ -28,6 +28,11 @@ import {
   validateMediaTransferSafety,
   applyModule8VideoToModule2Deliverable
 } from './_lib/module8-distribution-bridge.js';
+import {
+  syncSocialPublishRegistry,
+  setCatalogItemPublishTag,
+  summarizeRegistry
+} from './_lib/social-publish-registry.js';
 
 const STATE_KEYS = new Set([
   'insta_bot_state',
@@ -1854,6 +1859,98 @@ async function handleAttachModule8Video(req, res) {
   });
 }
 
+// ── YAYIN SAATLERİ KAYDETME (/api/module2?action=save-schedule) ──────────────
+async function handleSaveSchedule(req, res) {
+  if (req.method !== 'POST') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+  await authenticateModule2Admin(req);
+  const body = req.body && typeof req.body === 'object' ? req.body : {};
+  const platform = String(body.platform || 'instagram').toLowerCase();
+  const stateKeyMap = {
+    instagram: 'insta_bot_state',
+    facebook: 'fb_bot_state',
+    tiktok: 'tt_bot_state',
+    youtube: 'yt_bot_state'
+  };
+  const stateKey = stateKeyMap[platform];
+  if (!stateKey) return res.status(400).json({ ok: false, error: 'Geçersiz platform: ' + platform });
+
+  const rawSlots = Array.isArray(body.posting_slots) ? body.posting_slots : [];
+  if (rawSlots.length === 0) return res.status(400).json({ ok: false, error: 'En az bir yayın saati (posting_slots) gönderilmelidir.' });
+
+  const normalizedSlots = rawSlots.map((s, idx) => {
+    const t = String(s.time || '').trim();
+    if (!/^\d{2}:\d{2}$/.test(t)) {
+      throw new Error(`Geçersiz saat formatı (HH:MM beklenir): ${t}`);
+    }
+    const isEnabled = s.enabled !== undefined ? Boolean(s.enabled) : (s.active !== undefined ? Boolean(s.active) : true);
+    return {
+      ...s,
+      slot_id: s.slot_id || `${platform}_slot_${idx + 1}`,
+      type: String(s.type || 'POST').toUpperCase(),
+      time: t,
+      enabled: isEnabled,
+      active: isEnabled
+    };
+  });
+
+  const existingRows = await supabaseAdminRequest(`/rest/v1/site_settings?key=eq.${stateKey}&select=data&limit=1`);
+  const existingState = (Array.isArray(existingRows) && existingRows[0]?.data) ? existingRows[0].data : { config: {} };
+  if (!existingState.config || typeof existingState.config !== 'object') existingState.config = {};
+  existingState.config.posting_slots = normalizedSlots;
+
+  const nowIso = new Date().toISOString();
+  await supabaseAdminRequest('/rest/v1/site_settings', {
+    method: 'POST',
+    headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+    body: JSON.stringify({ key: stateKey, data: existingState, updated_at: nowIso })
+  });
+
+  return res.status(200).json({
+    ok: true,
+    platform,
+    state_key: stateKey,
+    posting_slots: normalizedSlots,
+    updated_at: nowIso
+  });
+}
+
+// ── YAYIN ETİKETİ & OTOMATİK DURDURMA KAYDI (/api/module2?action=publish-registry)
+async function handlePublishRegistry(req, res) {
+  await authenticateModule2Admin(req);
+  if (req.method === 'GET') {
+    const forceCheck = req.query?.force === '1' || req.query?.force_check === '1';
+    const result = await syncSocialPublishRegistry({ forceCheck });
+    return res.status(200).json({
+      ok: true,
+      summary: result.summary,
+      items: Object.values(result.registry.items || {}),
+      skippedCheck: result.skippedCheck
+    });
+  }
+  if (req.method === 'POST') {
+    const body = req.body && typeof req.body === 'object' ? req.body : {};
+    const op = String(body.op || 'check_new_products').toLowerCase();
+    if (op === 'set_tag') {
+      const slug = String(body.slug || '').trim();
+      const status = String(body.status || 'unpublished').toLowerCase();
+      if (!slug) return res.status(400).json({ ok: false, error: 'slug zorunludur.' });
+      const resTag = await setCatalogItemPublishTag(slug, status);
+      return res.status(200).json({
+        ok: true,
+        summary: resTag.summary,
+        items: Object.values(resTag.registry.items || {})
+      });
+    }
+    const synced = await syncSocialPublishRegistry({ forceCheck: true });
+    return res.status(200).json({
+      ok: true,
+      summary: synced.summary,
+      items: Object.values(synced.registry.items || {})
+    });
+  }
+  return res.status(405).json({ ok: false, error: 'Method not allowed' });
+}
+
 // ── ANA YÖNLENDİRİCİ ────────────────────────────────────────────────────────
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0');
@@ -1861,6 +1958,8 @@ export default async function handler(req, res) {
   const action = actionOf(req);
   try {
     if (action === 'state') return await handleState(req, res);
+    if (action === 'save-schedule') return await handleSaveSchedule(req, res);
+    if (action === 'publish-registry') return await handlePublishRegistry(req, res);
     if (action === 'prompt-preview') return await handlePromptPreview(req, res);
     if (action === 'enqueue') return await handleEnqueue(req, res);
     if (action === 'cancel') return await handleCancel(req, res);

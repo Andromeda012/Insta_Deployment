@@ -10,6 +10,11 @@
 // 4. Görevler 'pending' olarak bırakılır; Meta yayınını VPS worker gerçekleştirir.
 // ============================================================================
 import GeminiBananaEngine from '../Module 2/gemini-banana-engine.js';
+import {
+  pickNextUnpublishedCatalogItem,
+  markCatalogItemPublished,
+  getNormalizedPostingSlots
+} from './_lib/social-publish-registry.js';
 
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vrfujrpsjzqjthaqdalx.supabase.co';
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZyZnVqcnBzanpxanRoYXFkYWx4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwOTcxMzQsImV4cCI6MjEwODY3MzEzNH0.P427jKJ8YX7wGvhK1mBwD2-vuOluvSm8QfVWpwAgQl4';
@@ -62,6 +67,20 @@ export default async function handler(req, res) {
     const state = (rows && rows[0] && rows[0].data) || { config: {}, scheduled_posts: [], conversations: [] };
 
     // ── OTONOM PLANLAMA VE SOCIAL_PUBLISH_QUEUE KUYRUĞUNA EKLEME ─────────────
+    const forceCheck = req.query && (req.query.force_check === '1' || req.query.force === '1');
+    const selection = await pickNextUnpublishedCatalogItem({ platform: 'facebook', forceCheck });
+    if (selection.paused || !selection.item) {
+      return res.status(200).json({
+        ok: true,
+        paused: true,
+        reason: selection.reason || 'ALL_PRODUCTS_PUBLISHED',
+        message: 'Veritabanındaki tüm ürün ve koleksiyonlar "Yayınlandı" etiketine sahip. Facebook kuyruğu otomatik durduruldu; yeni ürün kontrolü 6 saatlik döngüde devam ediyor.',
+        next_check_at: selection.next_check_at,
+        auto_resume_interval_hours: selection.auto_resume_interval_hours,
+        summary: selection.summary
+      });
+    }
+
     const catalog = await fetchProductsCatalog();
     if (!catalog || catalog.length === 0) {
       return res.status(200).json({ ok: true, message: 'Katalogda ürün bulunamadı.' });
@@ -74,11 +93,14 @@ export default async function handler(req, res) {
     const todayStr = localNow.toISOString().slice(0, 10);
     const currentHHMM = `${String(localNow.getHours()).padStart(2, '0')}:${String(localNow.getMinutes()).padStart(2, '0')}`;
 
-    const slots = [
-      { name: 'fb_morning_post', time: '11:00', type: 'PHOTO_POST' },
-      { name: 'fb_midday_post',  time: '14:00', type: 'PHOTO_POST' },
-      { name: 'fb_reels_video',  time: '18:00', type: 'VIDEO_REELS' }
+    const defaultSlots = [
+      { name: 'fb_slot_1', time: '10:00', type: 'PHOTO_POST', enabled: true },
+      { name: 'fb_slot_2', time: '19:30', type: 'FB_REELS',   enabled: true }
     ];
+    const slots = getNormalizedPostingSlots(state.config || {}, defaultSlots);
+    if (slots.length === 0) {
+      return res.status(200).json({ ok: true, skipped: true, reason: 'ALL_SLOTS_DISABLED', message: 'Module 2 üzerinde tüm Facebook yayın saatleri pasif durumda.' });
+    }
 
     const forceType = req.query && req.query.type ? String(req.query.type).toUpperCase() : null;
     let activeSlot = null;
@@ -97,14 +119,17 @@ export default async function handler(req, res) {
 
     const chosenType = activeSlot.type || 'PHOTO_POST';
 
-    // Günün ürünü seçimi: Yılın gününe göre deterministik dağılım
-    const startOfYear = new Date(now.getFullYear(), 0, 1);
-    const dayOfYear = Math.floor((now - startOfYear) / (24 * 60 * 60 * 1000));
-    const pickedProduct = catalog[dayOfYear % catalog.length];
+    const pickedProduct = catalog.find(p => p.slug === selection.item.slug) || {
+      slug: selection.item.slug,
+      title: selection.item.title,
+      kategori: selection.item.category,
+      ana_resim: selection.item.image_url || DEFAULT_MEDIA_FALLBACK
+    };
 
     if (!pickedProduct || !pickedProduct.slug) {
-      return res.status(400).json({ ok: false, error: 'Ürün seçilemedi veya ürün slug eksik.' });
+      return res.status(400).json({ ok: false, error: 'Yayınlanmamış ürün seçilemedi veya ürün slug eksik.' });
     }
+    await markCatalogItemPublished(pickedProduct.slug, { platform: 'facebook' });
 
     // Gemini Banana Mimari Üretim Pipeline'ından Varlığı Çek
     let campaign = await GeminiBananaEngine.fetchActiveCampaignFromSupabase('facebook');

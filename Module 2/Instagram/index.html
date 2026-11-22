@@ -1117,35 +1117,25 @@
       const reelsActive = document.getElementById('chkSlotReelsActive').checked;
 
       const newSlots = [
-        { type: 'POST', time: postTime, enabled: postActive },
-        { type: 'STORIES', time: storyTime, enabled: storyActive },
-        { type: 'REELS', time: reelsTime, enabled: reelsActive }
+        { slot_id: 'ig_slot_1', type: 'POST', time: postTime, enabled: postActive, active: postActive },
+        { slot_id: 'ig_slot_2', type: 'STORIES', time: storyTime, enabled: storyActive, active: storyActive },
+        { slot_id: 'ig_slot_3', type: 'REELS', time: reelsTime, enabled: reelsActive, active: reelsActive }
       ];
 
       botState.config.posting_slots = newSlots;
-      showToast('⏳ Saatler Supabase veritabanına yazılıyor...');
+      showToast('⏳ Saatler güvenli sunucu API üzerinden Supabase veritabanına yazılıyor...');
 
       try {
-        const saveRes = await fetch(`${SUPABASE_URL}/rest/v1/site_settings`, {
+        const saveRes = await fetch('/api/module2?action=save-schedule', {
           method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({
-            key: 'insta_bot_state',
-            data: botState,
-            updated_at: new Date().toISOString()
-          })
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platform: 'instagram', posting_slots: newSlots })
         });
-
-        if (!saveRes.ok) {
-          const errText = await saveRes.text();
-          throw new Error(`Supabase kayıt hatası (${saveRes.status}): ${errText}`);
+        const saveJson = await saveRes.json().catch(() => ({}));
+        if (!saveRes.ok || saveJson.ok === false) {
+          throw new Error(saveJson.error || `Sunucu kayıt hatası (${saveRes.status})`);
         }
-
+        botState.config.posting_slots = saveJson.posting_slots || newSlots;
         updateSlotVisuals();
         renderUpcomingPreviews();
         showToast(`✅ Yayın saatleri kaydedildi! (Gönderi: ${postTime}, Story: ${storyTime}, Reels: ${reelsTime})`);
