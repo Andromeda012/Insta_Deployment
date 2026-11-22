@@ -19,7 +19,10 @@ export function getR2Config() {
   const bucketName = (process.env.R2_BUCKET_NAME || DEFAULT_R2_BUCKET_NAME).trim();
   const host = `${accountId}.r2.cloudflarestorage.com`;
   const endpoint = `https://${host}`;
-  const rawPublicBase = (process.env.R2_PUBLIC_BASE_URL || process.env.R2_CUSTOM_PUBLIC_DOMAIN || DEFAULT_R2_PUBLIC_BASE_URL).trim().replace(/\/+$/, '');
+  const envPublicBase = (process.env.R2_PUBLIC_BASE_URL || process.env.R2_CUSTOM_PUBLIC_DOMAIN || '').trim().replace(/\/+$/, '');
+  const rawPublicBase = (envPublicBase && !envPublicBase.includes('.r2.cloudflarestorage.com'))
+    ? envPublicBase
+    : DEFAULT_R2_PUBLIC_BASE_URL;
   const hasCustomPublicDomain = Boolean(
     rawPublicBase &&
     !rawPublicBase.includes('.r2.cloudflarestorage.com')

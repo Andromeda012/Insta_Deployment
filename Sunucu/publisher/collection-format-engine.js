@@ -1907,12 +1907,21 @@ function buildAnimatedCharsTspans(text, t, startTime, charInterval, charFadeDur 
 }
 
 function parsePieceDimensionsForHud(dimStr, idx = 0) {
-  const s = String(dimStr || '');
+  const s = String(dimStr || '').trim();
   const findVal = (re, fb) => {
     const m = s.match(re);
     return m ? `${m[1]} cm` : fb;
   };
   const defaultEn = idx === 0 ? '80 cm' : (idx === 1 ? '120 cm' : '160 cm');
+  // "Genişlik / Yükseklik / Derinlik" formatı (örn: "230 / 200 / 52", "140 / 200 / 45")
+  const slashMatch = s.match(/(\d{2,3})\s*\/\s*(\d{2,3})\s*\/\s*(\d{2,3})/);
+  if (slashMatch) {
+    return {
+      boyVal: `${slashMatch[2]} cm`,
+      enVal: `${slashMatch[1]} cm`,
+      genVal: `${slashMatch[3]} cm`
+    };
+  }
   const boyVal = findVal(/(?:yükseklik|boy|h)\s*[:=]?\s*(\d{2,3})/i, '200 cm');
   const enVal = findVal(/(?:genişlik|en|w)\s*[:=]?\s*(\d{2,3})/i, defaultEn);
   const genVal = findVal(/(?:derinlik|d)\s*[:=]?\s*(\d{2,3})/i, '45 cm');
@@ -1921,10 +1930,11 @@ function parsePieceDimensionsForHud(dimStr, idx = 0) {
 
 function splitPromoTextIntoThreeParts(entity) {
   const raw = clean(entity.promoQuote || entity.shortDescription || '');
+  const colLabel = /koleksiyon/i.test(entity.title || '') ? entity.title : `${entity.title} Koleksiyonu`;
   if (!raw || /en asil halini deneyimlemeye/i.test(raw)) {
     return [
       ['Yaşam alanınızda kahve keyfinin en asil halini', 'deneyimlemeye hazır mısınız?'],
-      [`Modern çizgileri sıcak aydınlatma detaylarıyla`, `harmanlayan ${entity.title} Koleksiyonu,`],
+      ['Modern çizgileri sıcak aydınlatma detaylarıyla', `harmanlayan ${colLabel},`],
       ['...titiz işçiliğiyle evinizin', 'en sevilen köşesi olmaya aday.']
     ];
   }
@@ -1932,7 +1942,7 @@ function splitPromoTextIntoThreeParts(entity) {
   if (words.length < 9) {
     return [
       wrapText(raw, 44, 2),
-      wrapText(`${entity.title}, modern çizgileri ve özenli detaylarıyla yaşam alanınıza zarafet katar.`, 44, 2),
+      wrapText(`${colLabel}, modern çizgileri ve özenli detaylarıyla yaşam alanınıza zarafet katar.`, 44, 2),
       wrapText('Titiz işçiliğiyle evinizin en sevilen köşesi olmaya aday.', 44, 2)
     ];
   }
