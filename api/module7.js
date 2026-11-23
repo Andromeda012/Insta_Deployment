@@ -1390,6 +1390,7 @@ async function handleB2CLazyQuote(req, res) {
   const city = String(b.city || b.customer_city || '').trim();
   const model = String(b.collection_id || b.model || b.interested_model || '').trim();
   const notes = String(b.notes || b.custom_notes || '').trim();
+  const referenceCode = String(b.reference_code || '').trim();
 
   // Müşteriyi organizasyona eklemeden doğrudan Supabase crm_customers tablosuna kaydet
   const result = await upsertCrmCustomerToSupabase({
@@ -1400,8 +1401,28 @@ async function handleB2CLazyQuote(req, res) {
     city,
     interested_model: model,
     notes,
-    source: 'b2c_lazy_quote'
+    reference_code: referenceCode || undefined,
+    source: String(b.source || 'b2c_lazy_quote')
   });
+
+  // Eğer iş/sipariş talebiyle (örn. hay-mobilya.html) bir workOrder payload'ı geldiyse factory_work_orders'a da ekle
+  if (b.work_order && typeof b.work_order === 'object') {
+    try {
+      const woRows = await supabase('/rest/v1/site_settings?key=eq.factory_work_orders&select=data&limit=1', SERVICE_KEY).catch(() => []);
+      const woStore = Array.isArray(woRows) && woRows[0]?.data ? woRows[0].data : { orders: [] };
+      const ordersList = Array.isArray(woStore.orders) ? woStore.orders : [];
+      ordersList.unshift(b.work_order);
+      await supabase('/rest/v1/site_settings', SERVICE_KEY, {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({
+          key: 'factory_work_orders',
+          data: { orders: ordersList.slice(0, 500), updated_at: new Date().toISOString() },
+          updated_at: new Date().toISOString()
+        })
+      });
+    } catch (_) {}
+  }
 
   return res.status(201).json({
     ok: true,
@@ -1498,12 +1519,151 @@ function normalizePublicR2Url(rawUrl) {
   return s;
 }
 
+async function handleWorkOrders(req, res) {
+  await authenticateRoles(req, ['admin', 'factory', 'sales']);
+
+  const readStore = async () => {
+    const rows = await supabase('/rest/v1/site_settings?key=eq.factory_work_orders&select=data&limit=1', SERVICE_KEY).catch(() => []);
+    const d = Array.isArray(rows) && rows[0]?.data ? rows[0].data : { orders: [], images: {} };
+    return {
+      orders: Array.isArray(d.orders) ? d.orders : [],
+      images: (d.images && typeof d.images === 'object') ? d.images : {}
+    };
+  };
+
+  const writeStore = async (store) => {
+    await supabase('/rest/v1/site_settings', SERVICE_KEY, {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        key: 'factory_work_orders',
+        data: { ...store, updated_at: new Date().toISOString() },
+        updated_at: new Date().toISOString()
+      })
+    });
+  };
+
+  if (req.method === 'GET') {
+    const orderId = String(req.query?.image_order_id || '').trim();
+    const store = await readStore();
+    if (orderId) {
+      return res.status(200).json({ ok: true, image: store.images[orderId] || null });
+    }
+    return res.status(200).json({ ok: true, orders: store.orders });
+  }
+
+  if (req.method === 'POST' || req.method === 'PATCH') {
+    const b = req.body || {};
+    const store = await readStore();
+    if (b.image_order_id) {
+      if (b.image === null) delete store.images[b.image_order_id];
+      else if (b.image) store.images[b.image_order_id] = String(b.image);
+    } else if (Array.isArray(b.orders)) {
+      store.orders = b.orders.slice(0, 500);
+    } else if (b.order && b.order.id) {
+      const idx = store.orders.findIndex(o => o && o.id === b.order.id);
+      if (idx >= 0) store.orders[idx] = { ...store.orders[idx], ...b.order, id: b.order.id };
+      else store.orders.unshift(b.order);
+    }
+    await writeStore(store);
+    return res.status(200).json({ ok: true, count: store.orders.length });
+  }
+
+  if (req.method === 'DELETE') {
+    const id = String(req.query?.id || req.body?.id || '').trim();
+    if (!id) return res.status(400).json({ ok: false, error: 'id gerekli' });
+    const store = await readStore();
+    store.orders = store.orders.filter(o => o && o.id !== id);
+    delete store.images[id];
+    await writeStore(store);
+    return res.status(200).json({ ok: true, count: store.orders.length });
+  }
+
+  return res.status(405).json({ ok: false, error: 'Method not allowed' });
+}
+
 async function handleB2CPublicCatalog(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ ok: false, error: 'Method not allowed' });
+
+  // Tekil sipariş / teklif kodu sorgusu (takip.html için Firebase yerine Supabase)
+  const trackCode = String(req.query?.track || '').trim().toUpperCase();
+  if (trackCode) {
+    res.setHeader('Cache-Control', 'no-store');
+    const [woRows, crmRows, qrRows] = await Promise.all([
+      supabase('/rest/v1/site_settings?key=eq.factory_work_orders&select=data&limit=1', SERVICE_KEY).catch(() => []),
+      supabase('/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1', SERVICE_KEY).catch(() => []),
+      supabase(`/rest/v1/quote_requests?reference_code=eq.${encodeURIComponent(trackCode)}&select=reference_code,customer_name,collection_id,custom_dimensions_note,status,created_at&limit=1`, SERVICE_KEY || ANON_KEY).catch(() => [])
+    ]);
+
+    const workOrders = Array.isArray(woRows) && Array.isArray(woRows[0]?.data?.orders) ? woRows[0].data.orders : [];
+    const foundWo = workOrders.find(o => o && String(o.trackingCode || o.orderNumber || '').toUpperCase() === trackCode);
+    if (foundWo) {
+      return res.status(200).json({
+        ok: true,
+        order: {
+          trackingCode: foundWo.trackingCode || foundWo.orderNumber || trackCode,
+          customerName: foundWo.customerName || 'Müşteri',
+          productTitle: foundWo.productTitle || 'Özel Üretim',
+          currentStage: foundWo.currentStage || 'cizim',
+          membraneColor: foundWo.membraneColor || '-',
+          modelPattern: foundWo.modelPattern || '-',
+          partCount: foundWo.partCount || '-',
+          totalAreaM2: foundWo.totalAreaM2 || null,
+          estimatedDelivery: foundWo.estimatedDelivery || 'Planlanıyor',
+          stageHistory: Array.isArray(foundWo.stageHistory) ? foundWo.stageHistory : []
+        }
+      });
+    }
+
+    const crmStore = Array.isArray(crmRows) && crmRows[0]?.data ? crmRows[0].data : {};
+    const crmQuotes = Array.isArray(crmStore.quotes) ? crmStore.quotes : [];
+    const foundQuote = crmQuotes.find(q => q && String(q.reference_code || '').toUpperCase() === trackCode)
+      || (Array.isArray(qrRows) ? qrRows[0] : null);
+
+    if (foundQuote) {
+      return res.status(200).json({
+        ok: true,
+        order: {
+          trackingCode: foundQuote.reference_code || trackCode,
+          customerName: foundQuote.customer_name || 'Müşteri',
+          productTitle: foundQuote.collection_id || 'Teklif / Özel Üretim Talebi',
+          currentStage: 'cizim',
+          membraneColor: '-',
+          modelPattern: foundQuote.collection_id || '-',
+          partCount: '-',
+          totalAreaM2: null,
+          estimatedDelivery: 'Planlama Aşamasında',
+          stageHistory: [
+            {
+              stageName: 'Talep Alındı',
+              timestamp: foundQuote.created_at || new Date().toISOString(),
+              note: foundQuote.notes || foundQuote.custom_dimensions_note || 'B2C vitrin üzerinden iletildi.'
+            }
+          ]
+        }
+      });
+    }
+
+    return res.status(404).json({ ok: false, error: 'Kayıt bulunamadı.' });
+  }
+
+  // Hay Mobilya bayi portalı için salt imalat özeti
+  if (String(req.query?.scope || '') === 'hay_mobilya') {
+    res.setHeader('Cache-Control', 'no-store');
+    const woRows = await supabase('/rest/v1/site_settings?key=eq.factory_work_orders&select=data&limit=1', SERVICE_KEY).catch(() => []);
+    const allOrders = Array.isArray(woRows) && Array.isArray(woRows[0]?.data?.orders) ? woRows[0].data.orders : [];
+    const hayOrders = allOrders.filter(o => {
+      const cust = String(o?.customerName || '').toLowerCase();
+      const title = String(o?.productTitle || '').toLowerCase();
+      return cust.includes('hay mob') || cust.includes('haymob') || title.includes('hay mob');
+    });
+    return res.status(200).json({ ok: true, orders: hayOrders });
+  }
+
+  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
 
   const [prodsRes, extStore, studioRows, threeDRows] = await Promise.all([
     supabase('/rest/v1/products?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => []),
@@ -1612,6 +1772,7 @@ export default async function handler(req, res) {
     if (action === 'telemetry-health') return await handleTelemetryHealth(req, res);
     if (action === 'product-analytics') return await handleProductAnalytics(req, res);
     if (action === 'b2c-public') return await handleB2CPublicCatalog(req, res);
+    if (action === 'work-orders') return await handleWorkOrders(req, res);
     if (action === 'products') return await products(req, res);
     if (action === 'settings') return await settings(req, res);
     if (action === 'ai-profiles' || action === 'marketing-profiles') return await aiProfiles(req, res);

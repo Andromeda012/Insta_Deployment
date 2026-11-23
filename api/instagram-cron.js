@@ -74,7 +74,7 @@ async function resolveCached3PostMedia(slug, postKey) {
   const res = await sbRequest('/rest/v1/site_settings?key=eq.module2_render_cache&select=data&limit=1');
   const cache = (res.ok && Array.isArray(res.data) && res.data[0]?.data) ? res.data[0].data : {};
   const matchingKey = Object.keys(cache)
-    .filter(k => k.startsWith(`${slug}:three_post_v`))
+    .filter(k => k.startsWith(`${slug}:three_post_v3:`))
     .sort((a, b) => String(cache[b]?.created_at || '').localeCompare(String(cache[a]?.created_at || '')))[0];
   if (!matchingKey) return null;
   const campaign = cache[matchingKey];
@@ -82,6 +82,24 @@ async function resolveCached3PostMedia(slug, postKey) {
     campaign,
     post: campaign?.[postKey] || null
   };
+}
+
+async function enqueueRenderRequest(slug, reason = 'auto_cron_queue') {
+  try {
+    const reqRes = await sbRequest('/rest/v1/site_settings?key=eq.module2_render_requests&select=data&limit=1');
+    const store = (reqRes.ok && Array.isArray(reqRes.data) && reqRes.data[0]?.data) || { pending_slugs: [] };
+    const list = Array.isArray(store.pending_slugs) ? store.pending_slugs.filter(x => x && x.slug !== slug) : [];
+    list.unshift({ slug, reason, requested_at: new Date().toISOString() });
+    await sbRequest('/rest/v1/site_settings', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+      body: JSON.stringify({
+        key: 'module2_render_requests',
+        data: { pending_slugs: list.slice(0, 30), updated_at: new Date().toISOString() },
+        updated_at: new Date().toISOString()
+      })
+    });
+  } catch (_) {}
 }
 
 async function metaGraphFetch(url, options = {}) {
@@ -121,9 +139,13 @@ async function publishInstagramQueueTask(task, { igUserId, igAccessToken }) {
 
   if (typeof media_url === 'string' && media_url.startsWith('auto_render_3post:')) {
     const [, targetSlug, postKey] = media_url.split(':');
-    const resolved = await resolveCached3PostMedia(targetSlug || product_slug, postKey || 'post02');
+    const slugToResolve = targetSlug || product_slug;
+    const resolved = await resolveCached3PostMedia(slugToResolve, postKey || 'post02');
     if (!resolved?.post) {
-      throw new Error(`Önbellekte hazır 3'lü kampanya bulunamadı (${targetSlug}:${postKey}).`);
+      await enqueueRenderRequest(slugToResolve, 'due_task_waiting_render');
+      const err = new Error(`Önbellekte hazır 3'lü kampanya bekleniyor (${slugToResolve}:${postKey}).`);
+      err.code = 'RENDER_PENDING';
+      throw err;
     }
     media_url = resolved.post.mediaUrlWithCover || resolved.post.mediaUrl || resolved.post.videoUrl;
     if (!caption) caption = resolved.post.caption;
@@ -362,6 +384,24 @@ export default async function handler(req, res) {
           registry_summary: registrySummary
         });
       } catch (pubErr) {
+        if (pubErr.code === 'RENDER_PENDING') {
+          await sbRequest(`/rest/v1/social_publish_queue?id=eq.${dueTask.id}`, {
+            method: 'PATCH',
+            headers: { Prefer: 'return=minimal' },
+            body: JSON.stringify({
+              status: 'pending',
+              error_message: pubErr.message,
+              updated_at: new Date().toISOString()
+            })
+          }).catch(() => {});
+          return res.status(200).json({
+            ok: true,
+            deferred_for_render: true,
+            task_id: dueTask.id,
+            product_slug: dueTask.product_slug,
+            message: pubErr.message
+          });
+        }
         await sbRequest(`/rest/v1/social_publish_queue?id=eq.${dueTask.id}`, {
           method: 'PATCH',
           headers: { Prefer: 'return=minimal' },
@@ -408,39 +448,76 @@ export default async function handler(req, res) {
       });
     }
 
-    const { todayStr } = getIstanbulParts();
+    const { todayStr, currentHHMM } = getIstanbulParts();
     const defaultSlots = [
       { name: 'slot_mo',  time: '10:00', type: 'REELS',    enabled: true },
       { name: 'slot_ga',  time: '14:30', type: 'CAROUSEL', enabled: true },
-      { name: 'slot_ber', time: '19:30', type: 'REELS',    enabled: true }
+      { name: 'slot_ber', time: '20:00', type: 'REELS',    enabled: true }
     ];
     const slots = getNormalizedPostingSlots(config, defaultSlots);
     const pickedSlug = selection.item.slug;
+    const t0 = slots[0]?.time || '10:00';
+    const t1 = slots[1]?.time || '14:30';
+    const t2 = slots[2]?.time || '20:00';
+
+    // Eğer ilk slot saati bugün 15 dakikadan fazla geçtiyse otomatik olarak ertesi günün 10:00/14:30/20:00 döngüsüne planla
+    const [h0, m0] = t0.split(':').map(Number);
+    const [ch, cm] = currentHHMM.split(':').map(Number);
+    const passedToday = (ch * 60 + cm) > (h0 * 60 + m0 + 15);
+    const targetDateStr = passedToday
+      ? new Date(new Date(`${todayStr}T12:00:00+03:00`).getTime() + 86400000).toISOString().slice(0, 10)
+      : todayStr;
+
     const cached3 = await resolveCached3PostMedia(pickedSlug, 'post03');
 
-    if (cached3?.campaign?.post01 && cached3?.campaign?.post02 && cached3?.campaign?.post03) {
-      const c = cached3.campaign;
-      const t0 = slots[0]?.time || '10:00';
-      const t1 = slots[1]?.time || '14:30';
-      const t2 = slots[2]?.time || '19:30';
+    if (selection.item.entity_type === 'collection' || cached3?.campaign?.post01) {
+      const c = cached3?.campaign || {};
+      const hasCached = Boolean(c.post01 && c.post02 && c.post03);
+      const baseTitle = selection.item.title || c.title || pickedSlug;
+
       const tripletDefs = [
-        { postKey: 'post03', contentType: 'REELS', slotLabel: `${t0}_IG_1_MO`, time: t0, post: c.post03 },
-        { postKey: 'post02', contentType: 'CAROUSEL', slotLabel: `${t1}_IG_2_GA`, time: t1, post: c.post02 },
-        { postKey: 'post01', contentType: 'REELS', slotLabel: `${t2}_IG_3_BER`, time: t2, post: c.post01 }
+        {
+          postKey: 'post03',
+          contentType: 'REELS',
+          slotLabel: `${t0}_IG_1_MO`,
+          time: t0,
+          post: c.post03 || null,
+          fallbackCaption: `✨ ${baseTitle} — Tasarım Hikayesi & Mimari Çizgiler.\n\nDetaylı bilgi ve özel ölçü talepleriniz için WhatsApp hattımızdan ulaşabilirsiniz.`
+        },
+        {
+          postKey: 'post02',
+          contentType: 'CAROUSEL',
+          slotLabel: `${t1}_IG_2_GA`,
+          time: t1,
+          post: c.post02 || null,
+          fallbackCaption: `📐 ${baseTitle} — Teknik Modül & Ölçü Dağılımı.\n\nTüm modül detayları için görselleri kaydırın.`
+        },
+        {
+          postKey: 'post01',
+          contentType: 'REELS',
+          slotLabel: `${t2}_IG_3_BER`,
+          time: t2,
+          post: c.post01 || null,
+          fallbackCaption: `🏡 ${baseTitle} — Özel Ölçü & Koleksiyon Sunumu.\n\nGlobal Kapak Mobilya | İstanbul`
+        }
       ];
+
+      if (!hasCached) {
+        await enqueueRenderRequest(pickedSlug, 'auto_cron_queue');
+      }
 
       const records = tripletDefs.map(td => ({
         platform: 'instagram',
         content_type: td.contentType,
         slot_label: td.slotLabel,
         product_slug: pickedSlug,
-        media_url: td.post.mediaUrlWithCover || td.post.mediaUrl || td.post.videoUrl,
-        caption: td.post.caption || c.title || pickedSlug,
-        hashtags: td.post.hashtags || '#novafurniture #thenovafurniture #minimalistmobilya',
+        media_url: (td.post && (td.post.mediaUrlWithCover || td.post.mediaUrl || td.post.videoUrl)) || `auto_render_3post:${pickedSlug}:${td.postKey}`,
+        caption: (td.post && td.post.caption) || td.fallbackCaption,
+        hashtags: (td.post && td.post.hashtags) || '#novafurniture #thenovafurniture #minimalistmobilya #globalkapakmobilya',
         target_link: null,
         status: 'pending',
-        idempotency_key: `instagram_${pickedSlug}_3grid_${td.postKey}_${todayStr}`.toLowerCase(),
-        scheduled_for: new Date(`${todayStr}T${td.time}:00+03:00`).toISOString()
+        idempotency_key: `instagram_${pickedSlug}_3grid_${td.postKey}_${targetDateStr}`.toLowerCase(),
+        scheduled_for: new Date(`${targetDateStr}T${td.time}:00+03:00`).toISOString()
       }));
 
       const insRes = await sbRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key', {
@@ -452,9 +529,10 @@ export default async function handler(req, res) {
       return res.status(200).json({
         ok: true,
         queued_triplet: true,
+        render_status: hasCached ? 'cached_ready' : 'auto_render_pending',
         product_slug: pickedSlug,
         inserted_count: Array.isArray(insRes.data) ? insRes.data.length : 0,
-        scheduled_date: todayStr
+        scheduled_date: targetDateStr
       });
     }
 

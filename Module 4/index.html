@@ -725,11 +725,11 @@
       </div>
       <div class="modal-body">
         <p style="font-size:0.85rem; color:var(--text-muted);">
-          Fabrikanın farklı yerlerindeki telefonlar ve ofis bilgisayarlarının aynı ortak veritabanına bağlanması için Firebase veya bulut REST endpoint URL'inizi buraya bağlayabilirsiniz.
+          Fabrikanın tüm cihazları artık merkezi Supabase / ERP bulut uç noktası üzerinden senkronize çalışmaktadır.
         </p>
         <div class="form-group">
-          <label class="form-label">Bulut Veritabanı URL'i (Firebase Realtime DB veya REST API)</label>
-          <input type="text" id="cloudEndpointInput" class="form-input" placeholder="https://[projeniz].firebaseio.com/siparisler.json" />
+          <label class="form-label">Bulut Veritabanı Uç Noktası (ERP Supabase API)</label>
+          <input type="text" id="cloudEndpointInput" class="form-input" placeholder="/api/module7?action=work-orders" />
         </div>
         <div style="display:flex; gap:8px; margin-top:8px;">
           <button class="btn btn-gold" onclick="saveCloudConfig()">Bulutu Kaydet ve Bağlan</button>
@@ -780,18 +780,25 @@ const STAGES = [
   }
   
   let users = JSON.parse(localStorage.getItem('global_kapak_users') || 'null');
-  const DEFAULT_FIREBASE_BASE = 'https://global-kapak-default-rtdb.firebaseio.com';
-  const DEFAULT_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/siparisler.json';
-  const DEFAULT_USERS_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/kullanicilar.json';
-  const DEFAULT_IMAGES_FIREBASE_URL = 'https://global-kapak-default-rtdb.firebaseio.com/siparis_gorseller';
-  let cloudEndpoint = localStorage.getItem('global_cloud_endpoint') || DEFAULT_FIREBASE_URL;
-  let usersCloudEndpoint = DEFAULT_USERS_FIREBASE_URL;
+  const DEFAULT_ERP_WORK_ORDERS_API = '/api/module7?action=work-orders';
+  const storedCloud = localStorage.getItem('global_cloud_endpoint') || '';
+  let cloudEndpoint = (storedCloud && !storedCloud.includes('firebaseio.com') && !storedCloud.includes('firebasedatabase.app'))
+    ? storedCloud
+    : DEFAULT_ERP_WORK_ORDERS_API;
+  let usersCloudEndpoint = '';
+
+  async function getErpAuthHeaders(extra = {}) {
+    const headers = { 'Content-Type': 'application/json', ...extra };
+    try {
+      const clerk = window.parent?.Clerk || window.Clerk;
+      const tok = clerk?.session ? await clerk.session.getToken() : '';
+      if (tok) headers['Authorization'] = `Bearer ${tok}`;
+    } catch (_) {}
+    return headers;
+  }
 
   function getCloudBaseUrl() {
-    if (cloudEndpoint && (cloudEndpoint.includes('firebaseio.com') || cloudEndpoint.includes('firebasedatabase.app'))) {
-      return cloudEndpoint.replace(/\/siparisler\.json.*$/, '').replace(/\/+$/, '');
-    }
-    return DEFAULT_FIREBASE_BASE;
+    return cloudEndpoint || DEFAULT_ERP_WORK_ORDERS_API;
   }
 
   function normalizeOrdersData(data) {
@@ -843,12 +850,11 @@ const STAGES = [
     }
   }
 
-  // Tekil siparişi buluta kaydet (ASLA diğer ekranları veya diğer siparişleri ezmez!)
+  // Tekil siparişi Supabase/ERP bulutuna kaydet
   async function saveOrderSingle(order, patchFields = null) {
     saveLocalOrders();
     if (!order || !order.id) return;
     try {
-      const url = `${getCloudBaseUrl()}/siparisler/${order.id}.json`;
       const payload = patchFields ? { ...patchFields } : { ...order };
       payload.id = order.id;
       if (payload.receiptImage && payload.receiptImage.length > 500) {
@@ -858,31 +864,30 @@ const STAGES = [
       payload.updatedAt = new Date().toISOString();
       order.updatedAt = payload.updatedAt;
 
-      await fetch(url, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      await fetch(getCloudBaseUrl(), {
+        method: 'POST',
+        headers: await getErpAuthHeaders(),
+        body: JSON.stringify({ order: payload })
       });
     } catch(err) {
       console.warn(`Sipariş bulut kayıt hatası (${order.id}):`, err);
     }
   }
 
-  // Yeni siparişi buluta tekil olarak ekle
+  // Yeni siparişi Supabase/ERP bulutuna ekle
   async function createOrderInCloud(newOrder) {
     saveLocalOrders();
     try {
-      const url = `${getCloudBaseUrl()}/siparisler/${newOrder.id}.json`;
       const payload = { ...newOrder, updatedAt: new Date().toISOString() };
       payload.id = newOrder.id;
       if (payload.receiptImage && payload.receiptImage.length > 500) {
         payload.hasReceiptImage = true;
         payload.receiptImage = "";
       }
-      await fetch(url, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+      await fetch(getCloudBaseUrl(), {
+        method: 'POST',
+        headers: await getErpAuthHeaders(),
+        body: JSON.stringify({ order: payload })
       });
     } catch(err) {
       console.warn('Yeni sipariş buluta eklenirken hata:', err);
@@ -893,32 +898,31 @@ const STAGES = [
   async function deleteOrderFromCloud(orderId) {
     saveLocalOrders();
     try {
-      const url = `${getCloudBaseUrl()}/siparisler/${orderId}.json`;
-      await fetch(url, { method: 'DELETE' });
-      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, { method: 'DELETE' }).catch(() => {});
+      await fetch(`${getCloudBaseUrl()}&id=${encodeURIComponent(orderId)}`, {
+        method: 'DELETE',
+        headers: await getErpAuthHeaders()
+      });
     } catch(err) {
       console.warn('Sipariş buluttan silinirken hata:', err);
     }
   }
 
-  // Toplu yedek yükleme gibi durumlar için toplu bulut kaydı
+  // Toplu bulut kaydı
   async function saveAllOrdersToCloud(ordersList) {
     saveLocalOrders();
     try {
-      const keyed = {};
-      (ordersList || []).forEach(o => {
-        if (!o || !o.id) return;
+      const sanitized = (ordersList || []).filter(Boolean).map(o => {
         const c = { ...o };
         if (c.receiptImage && c.receiptImage.length > 500) {
           c.hasReceiptImage = true;
           c.receiptImage = "";
         }
-        keyed[o.id] = c;
+        return c;
       });
-      await fetch(`${getCloudBaseUrl()}/siparisler.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(keyed)
+      await fetch(getCloudBaseUrl(), {
+        method: 'POST',
+        headers: await getErpAuthHeaders(),
+        body: JSON.stringify({ orders: sanitized })
       });
     } catch(err) {
       console.warn('Toplu sipariş bulut kayıt hatası:', err);
@@ -2000,16 +2004,18 @@ function renderTable(container) {
     });
   }
 
-  // Görseli sadece talep edildiğinde buluttan yükle
+  // Görseli sadece talep edildiğinde ERP Supabase deposundan yükle
   async function loadOrderImage(orderId) {
     const o = orders.find(x => x.id === orderId);
     if (o && o.receiptImage) return o.receiptImage;
     try {
-      const res = await fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`);
+      const res = await fetch(`${getCloudBaseUrl()}&image_order_id=${encodeURIComponent(orderId)}`, {
+        headers: await getErpAuthHeaders()
+      });
       if (res.ok) {
         const data = await res.json();
         if (data && data.image) {
-          if (o) o.receiptImage = data.image; // bellekte önbelleğe al
+          if (o) o.receiptImage = data.image;
           return data.image;
         }
       }
@@ -2096,11 +2102,11 @@ function renderTable(container) {
       if (o) {
         o.receiptImage = compressedDataUrl;
         o.hasReceiptImage = true;
-        // 1. Görseli /siparis_gorseller/{orderId}.json konumuna kaydet
-        await fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: compressedDataUrl })
+        // 1. Görseli ERP Supabase deposuna kaydet
+        await fetch(getCloudBaseUrl(), {
+          method: 'POST',
+          headers: await getErpAuthHeaders(),
+          body: JSON.stringify({ image_order_id: orderId, image: compressedDataUrl })
         });
         // 2. Sipariş objesini güncelle
         await saveOrderSingle(o, { hasReceiptImage: true });
@@ -2119,7 +2125,11 @@ function renderTable(container) {
     if (o) {
       delete o.receiptImage;
       o.hasReceiptImage = false;
-      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, { method: 'DELETE' }).catch(() => {});
+      fetch(getCloudBaseUrl(), {
+        method: 'POST',
+        headers: await getErpAuthHeaders(),
+        body: JSON.stringify({ image_order_id: orderId, image: null })
+      }).catch(() => {});
       await saveOrderSingle(o, { hasReceiptImage: false });
       showDetails(orderId);
       renderView();
@@ -2136,11 +2146,11 @@ function renderTable(container) {
     const hasImg = Boolean(currentNewOrderImage);
 
     if (hasImg) {
-      fetch(`${getCloudBaseUrl()}/siparis_gorseller/${orderId}.json`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image: currentNewOrderImage })
-      }).catch(err => console.warn('Görsel yükleme hatası:', err));
+      getErpAuthHeaders().then(headers => fetch(getCloudBaseUrl(), {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ image_order_id: orderId, image: currentNewOrderImage })
+      })).catch(err => console.warn('Görsel yükleme hatası:', err));
     }
 
     const newOrder = {
@@ -2605,11 +2615,11 @@ function renderTable(container) {
       return;
     }
     try {
-      if (!silent) showToast('Bulut veritabanına bağlanılıyor...', 'info');
-      const res = await fetch(cloudEndpoint);
+      if (!silent) showToast('Supabase ERP iş emirleri eşitleniyor...', 'info');
+      const res = await fetch(cloudEndpoint, { headers: await getErpAuthHeaders(), cache: 'no-store' });
       if (res.ok) {
         const remoteData = await res.json();
-        const remoteList = normalizeOrdersData(remoteData);
+        const remoteList = normalizeOrdersData(Array.isArray(remoteData?.orders) ? remoteData.orders : remoteData);
         orders = remoteList;
         saveLocalOrders();
         renderView();
@@ -2664,17 +2674,11 @@ function renderTable(container) {
     renderView();
     renderStats();
 
-    // Sayfa açılır açılmaz Firebase bulut veritabanından kullanıcıları ve siparişleri çek
-    if (usersCloudEndpoint) {
-      await syncUsersFromCloud();
-    }
+    // Sayfa açılır açılmaz Supabase ERP bulut veritabanından iş emirlerini çek
     if (cloudEndpoint) {
       await syncWithCloud(true);
       setupCloudStream();
     }
-
-    // Kullanıcı listesini de 30 saniyede bir buluttan tazele
-    setInterval(syncUsersFromCloud, 30000);
 
     const urlParams = new URLSearchParams(window.location.search);
     const codeParam = urlParams.get('kod') || urlParams.get('code');
@@ -2724,89 +2728,26 @@ function renderTable(container) {
     reader.readAsText(file);
   }
 
-  // REALTIME CLOUD STREAM LISTENER (Firebase SSE: PUT + PATCH Canlı Dinleyici)
-  let cloudEventSource = null;
+  // SUPABASE CLOUD STREAM FALLBACK (Periyodik Polling)
   function setupCloudStream() {
-    if (!cloudEndpoint) return;
-    try {
-      if (cloudEventSource) {
-        cloudEventSource.close();
-        cloudEventSource = null;
-      }
-      if (cloudEndpoint.includes('firebaseio.com') || cloudEndpoint.includes('firebasedatabase.app')) {
-        cloudEventSource = new EventSource(cloudEndpoint);
-
-        const handleStreamUpdate = (e) => {
-          try {
-            const parsed = JSON.parse(e.data);
-            if (!parsed) return;
-            const path = parsed.path || '/';
-            const data = parsed.data;
-
-            if (path === '/') {
-              // Kök güncelleme
-              if (data && typeof data === 'object') {
-                orders = normalizeOrdersData(data);
-                saveLocalOrders();
-                renderView();
-                renderStats();
-              }
-            } else {
-              // Belirli bir sipariş veya alan güncellemesi (örn: "/ord_123" veya "/ord_123/currentStage")
-              const parts = path.replace(/^\//, '').split('/');
-              const targetId = parts[0];
-              if (!targetId) return;
-
-              if (parts.length === 1) {
-                if (data === null) {
-                  // Silindi
-                  orders = orders.filter(o => o.id !== targetId);
-                } else if (typeof data === 'object') {
-                  const idx = orders.findIndex(o => o.id === targetId);
-                  if (idx !== -1) {
-                    orders[idx] = { ...orders[idx], ...data, id: targetId };
-                  } else if (data.customerName || data.orderNumber) {
-                    orders.unshift({ id: targetId, ...data });
-                  }
-                }
-              } else if (parts.length === 2) {
-                const field = parts[1];
-                const o = orders.find(x => x.id === targetId);
-                if (o) {
-                  o[field] = data;
-                }
-              }
-              saveLocalOrders();
-              renderView();
-              renderStats();
-            }
-          } catch(err) {
-            console.warn('Canlı akış verisi işlenemedi:', err);
-          }
-        };
-
-        cloudEventSource.addEventListener('put', handleStreamUpdate);
-        cloudEventSource.addEventListener('patch', handleStreamUpdate);
-      }
-    } catch(err) {
-      console.warn('Bulut akış dinleyicisi başlatılamadı:', err);
-    }
+    // Firebase SSE kaldırıldı; aşağıdaki 15 sn polling sekme açıkken otomatik tazeler.
   }
 
-  // Sekme arka plandan ön plana geldiğinde (bilgisayar uyandıysa veya sekmeye dönüldüyse) anında sessizce tazele
+  // Sekme arka plandan ön plana geldiğinde anında sessizce tazele
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible' && cloudEndpoint) {
       syncWithCloud(true);
     }
   });
 
-  // Her 15 saniyede bir sessiz kontrol (SADECE okuma, ASLA buluttaki veriyi ezmez!)
+  // Her 15 saniyede bir sessiz kontrol
   setInterval(() => {
     if (cloudEndpoint && document.visibilityState === 'visible') {
-      fetch(cloudEndpoint)
-        .then(res => res.json())
+      getErpAuthHeaders().then(headers => fetch(cloudEndpoint, { headers, cache: 'no-store' }))
+        .then(res => res.ok ? res.json() : null)
         .then(remoteData => {
-          const remoteList = normalizeOrdersData(remoteData);
+          if (!remoteData) return;
+          const remoteList = normalizeOrdersData(Array.isArray(remoteData?.orders) ? remoteData.orders : remoteData);
           const remoteSignature = remoteList.map(o => o.id + (o.currentStage || '') + (o.remainingBalance || '') + (o.stageHistory?.length || 0)).join('|');
           const localSignature = orders.map(o => o.id + (o.currentStage || '') + (o.remainingBalance || '') + (o.stageHistory?.length || 0)).join('|');
           if (remoteSignature !== localSignature) {

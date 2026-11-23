@@ -894,21 +894,148 @@ async function syncAdminPanelStatus(task, finalStatus, platformPostId = null, er
 async function syncInstagramPublishedTracker(task, platformPostId) {
   if (task.platform !== 'instagram' || !platformPostId || !task.product_slug) return;
   const format = String(task.content_type || '').toUpperCase();
-  if (!['POST', 'REELS', 'STORIES'].includes(format)) return;
   try {
-    const { data: rows, error: readError } = await supabase.from('site_settings')
-      .select('data').eq('key', 'instagram_published_tracker').limit(1);
-    if (readError) throw readError;
-    const tracker = rows?.[0]?.data || {};
-    const formats = Array.isArray(tracker[task.product_slug]) ? tracker[task.product_slug] : [];
-    if (!formats.includes(format)) formats.push(format);
-    tracker[task.product_slug] = formats;
-    const { error: writeError } = await supabase.from('site_settings').upsert({
-      key: 'instagram_published_tracker', data: tracker, updated_at: new Date().toISOString()
-    });
-    if (writeError) throw writeError;
+    if (['POST', 'REELS', 'STORIES', 'CAROUSEL'].includes(format)) {
+      const { data: rows } = await supabase.from('site_settings')
+        .select('data').eq('key', 'instagram_published_tracker').limit(1);
+      const tracker = rows?.[0]?.data || {};
+      const formats = Array.isArray(tracker[task.product_slug]) ? tracker[task.product_slug] : [];
+      if (!formats.includes(format)) formats.push(format);
+      tracker[task.product_slug] = formats;
+      await supabase.from('site_settings').upsert({
+        key: 'instagram_published_tracker', data: tracker, updated_at: new Date().toISOString()
+      });
+    }
+
+    // Aynı ürün/koleksiyon için kuyrukta başka bekleyen Instagram görevi kalmadıysa 'Yayınlandı' etiketi bas
+    const { data: remRows } = await supabase
+      .from('social_publish_queue')
+      .select('id')
+      .eq('platform', 'instagram')
+      .eq('product_slug', task.product_slug)
+      .in('status', ['pending', 'processing'])
+      .limit(1);
+
+    if (!remRows || remRows.length === 0) {
+      const { data: regRow } = await supabase.from('site_settings')
+        .select('data').eq('key', 'social_publish_registry').maybeSingle();
+      const reg = regRow?.data;
+      if (reg && reg.items && reg.items[task.product_slug]) {
+        const nowIso = new Date().toISOString();
+        reg.items[task.product_slug].status = 'published';
+        reg.items[task.product_slug].published_at = nowIso;
+        const plats = new Set(Array.isArray(reg.items[task.product_slug].published_platforms) ? reg.items[task.product_slug].published_platforms : []);
+        plats.add('instagram');
+        reg.items[task.product_slug].published_platforms = Array.from(plats);
+        const allVals = Object.values(reg.items);
+        const unpubCount = allVals.filter(i => i.status === 'unpublished').length;
+        if (allVals.length > 0 && unpubCount === 0) {
+          const intervalMs = (Number(reg.auto_resume_interval_hours) || 6) * 3600000;
+          reg.queue_paused = true;
+          reg.pause_reason = 'ALL_PRODUCTS_PUBLISHED';
+          reg.paused_at = reg.paused_at || nowIso;
+          reg.next_check_at = new Date(Date.now() + intervalMs).toISOString();
+        }
+        reg.updated_at = nowIso;
+        await supabase.from('site_settings').upsert({
+          key: 'social_publish_registry', data: reg, updated_at: nowIso
+        });
+      }
+    }
   } catch (error) {
     console.warn('[Instagram Tracker Sync Warning]:', sanitize(error.message));
+  }
+}
+
+let isPreRendering = false;
+async function preRenderPending3PostCollections() {
+  if (isShuttingDown || isPreRendering) return;
+  isPreRendering = true;
+  try {
+    const [{ data: pendingAuto }, reqSetting, cacheSetting, regSetting] = await Promise.all([
+      supabase
+        .from('social_publish_queue')
+        .select('id, product_slug, media_url')
+        .eq('platform', 'instagram')
+        .eq('status', 'pending')
+        .ilike('media_url', 'auto_render_3post:%')
+        .order('scheduled_for', { ascending: true })
+        .limit(12),
+      fetchSiteSetting(supabase, 'module2_render_requests'),
+      fetchSiteSetting(supabase, 'module2_render_cache'),
+      fetchSiteSetting(supabase, 'social_publish_registry')
+    ]);
+
+    const cache = cacheSetting || {};
+    const targetSlugs = new Set();
+
+    for (const row of (pendingAuto || [])) {
+      const slug = row.product_slug || String(row.media_url || '').split(':')[1];
+      if (slug) targetSlugs.add(slug);
+    }
+
+    for (const reqItem of (reqSetting?.pending_slugs || [])) {
+      if (reqItem?.slug) targetSlugs.add(reqItem.slug);
+    }
+
+    // Bir sonraki 'unpublished' koleksiyonu da önceden render et (v3 yoksa)
+    if (regSetting && !regSetting.queue_paused && regSetting.items) {
+      const nextUnpub = Object.values(regSetting.items).find(i =>
+        i && i.status === 'unpublished' && i.entity_type === 'collection' &&
+        !Object.keys(cache).some(k => k.startsWith(`${i.slug}:three_post_v3:`))
+      );
+      if (nextUnpub?.slug) targetSlugs.add(nextUnpub.slug);
+    }
+
+    if (targetSlugs.size === 0) return;
+
+    const [prods, extStore, aiProfiles] = await Promise.all([
+      fetchProductsCatalog(supabase),
+      fetchSiteSetting(supabase, 'module7_extended_catalog'),
+      fetchSiteSetting(supabase, 'ai_studio_profiles')
+    ]);
+    const entities = buildCatalogEntities(prods || [], extStore || {}, aiProfiles || {});
+
+    for (const slug of targetSlugs) {
+      if (isShuttingDown) break;
+      const entity = entities.find(e => e.slug === slug);
+      if (!entity) continue;
+
+      console.log(`[Otonom Ön-Render] "${entity.title}" (${slug}) için 3'lü grid + Atmospheric 1 hazırlanıyor...`);
+      const campaign = await produceCollectionThreePostCampaign({ supabase, entity, log: console.log });
+
+      // Bekleyen `auto_render_3post:` kuyruk satırlarını gerçek Cloudflare R2 URL'leriyle güncelle
+      const waitingRows = (pendingAuto || []).filter(r => r.product_slug === slug || String(r.media_url).startsWith(`auto_render_3post:${slug}:`));
+      for (const row of waitingRows) {
+        const [, , postKey] = String(row.media_url || '').split(':');
+        const chosen = campaign[postKey] || campaign.post02;
+        if (!chosen) continue;
+        await supabase
+          .from('social_publish_queue')
+          .update({
+            media_url: chosen.mediaUrlWithCover || chosen.mediaUrl || chosen.videoUrl,
+            caption: chosen.caption || undefined,
+            hashtags: chosen.hashtags || undefined,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', row.id)
+          .eq('status', 'pending');
+      }
+    }
+
+    // İstek listesini temizle
+    if (Array.isArray(reqSetting?.pending_slugs) && reqSetting.pending_slugs.length > 0) {
+      const remaining = reqSetting.pending_slugs.filter(x => !targetSlugs.has(x?.slug));
+      await supabase.from('site_settings').upsert({
+        key: 'module2_render_requests',
+        data: { pending_slugs: remaining, updated_at: new Date().toISOString() },
+        updated_at: new Date().toISOString()
+      });
+    }
+  } catch (err) {
+    console.warn('[Otonom Ön-Render Uyarı]:', sanitize(err.message));
+  } finally {
+    isPreRendering = false;
   }
 }
 async function claimDirectYouTubeTaskIfReady() {
@@ -1107,8 +1234,10 @@ recordDigitalOceanHeartbeat(supabase, { workerId: WORKER_ID, status: 'online' })
 // Kuyruk Tüketici Zamanlayıcısını Başlat
 
 const pollIntervalHandle = setInterval(pollQueueCycle, POLL_INTERVAL_MS);
+const preRenderIntervalHandle = setInterval(preRenderPending3PostCollections, 90000);
 
 pollQueueCycle();
+setTimeout(preRenderPending3PostCollections, 4000);
 
 // ── GRACEFUL SHUTDOWN (KONTROLLÜ KAPATMA) ────────────────────────────────────
 async function handleShutdown(signal) {
@@ -1118,6 +1247,7 @@ async function handleShutdown(signal) {
   if (schedulerHandle && typeof schedulerHandle.stop === 'function') schedulerHandle.stop();
 
   clearInterval(pollIntervalHandle);
+  clearInterval(preRenderIntervalHandle);
   clearInterval(heartbeatIntervalHandle);
 
   if (isTaskRunning) {

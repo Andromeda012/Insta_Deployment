@@ -500,6 +500,162 @@ export async function checkAndEnqueueSlot({
 }
 
 /**
+ * Instagram için `social_publish_registry` (Yayınlandı / Yayınlanmadı + 6 saatlik auto-pause)
+ * tablosunu okuyup güncel katalog ile senkronize eder.
+ */
+async function syncAndPickInstagramRegistryItem(supabase, activeCatalog) {
+  const nowMs = Date.now();
+  const nowIso = new Date(nowMs).toISOString();
+  const regData = (await fetchSiteSetting(supabase, 'social_publish_registry')) || {};
+  const registry = {
+    items: (regData.items && typeof regData.items === 'object' && !Array.isArray(regData.items)) ? regData.items : {},
+    queue_paused: Boolean(regData.queue_paused),
+    pause_reason: regData.pause_reason || null,
+    paused_at: regData.paused_at || null,
+    last_new_product_check_at: regData.last_new_product_check_at || null,
+    auto_resume_interval_hours: Number(regData.auto_resume_interval_hours) || 6,
+    next_check_at: regData.next_check_at || null
+  };
+
+  if (registry.queue_paused && registry.next_check_at) {
+    const nextMs = new Date(registry.next_check_at).getTime();
+    if (!Number.isNaN(nextMs) && nowMs < nextMs) {
+      return { paused: true, next_check_at: registry.next_check_at, item: null, registry };
+    }
+  }
+
+  const nextItems = {};
+  for (const entity of (activeCatalog || [])) {
+    if (!entity?.slug) continue;
+    const prev = registry.items[entity.slug];
+    nextItems[entity.slug] = {
+      slug: entity.slug,
+      title: entity.title || entity.slug,
+      entity_type: entity.kind === 'collection' ? 'collection' : 'product',
+      category: entity.category || (entity.kind === 'collection' ? 'Koleksiyon' : 'Ürün'),
+      image_url: entity.heroImage || entity.raw?.ana_resim || '',
+      status: prev?.status === 'published' ? 'published' : 'unpublished',
+      published_at: prev?.published_at || null,
+      published_platforms: Array.isArray(prev?.published_platforms) ? prev.published_platforms : [],
+      queue_task_id: prev?.queue_task_id || null
+    };
+  }
+
+  const allValues = Object.values(nextItems);
+  const unpublishedList = allValues.filter(i => i.status === 'unpublished');
+  const queuePaused = allValues.length === 0 || unpublishedList.length === 0;
+  const intervalMs = (registry.auto_resume_interval_hours || 6) * 60 * 60 * 1000;
+
+  const updatedRegistry = {
+    items: nextItems,
+    queue_paused: queuePaused,
+    pause_reason: allValues.length === 0 ? 'CATALOG_EMPTY' : (unpublishedList.length === 0 ? 'ALL_PRODUCTS_PUBLISHED' : null),
+    paused_at: queuePaused ? (registry.paused_at || nowIso) : null,
+    last_new_product_check_at: nowIso,
+    auto_resume_interval_hours: registry.auto_resume_interval_hours || 6,
+    next_check_at: queuePaused ? new Date(nowMs + intervalMs).toISOString() : null,
+    updated_at: nowIso
+  };
+
+  try {
+    await supabase.from('site_settings').upsert({
+      key: 'social_publish_registry',
+      data: updatedRegistry,
+      updated_at: nowIso
+    });
+  } catch (_) {}
+
+  if (queuePaused || unpublishedList.length === 0) {
+    return { paused: true, next_check_at: updatedRegistry.next_check_at, item: null, registry: updatedRegistry };
+  }
+
+  // Koleksiyonlara öncelik ver
+  const preferred = unpublishedList.find(i => i.entity_type === 'collection') || unpublishedList[0];
+  const matchedEntity = activeCatalog.find(e => e.slug === preferred.slug) || null;
+  return { paused: false, item: preferred, entity: matchedEntity, registry: updatedRegistry };
+}
+
+/**
+ * Instagram için kuyruk boşsa bir sonraki 'Yayınlanmamış' koleksiyonu
+ * panelde kayıtlı 3 slot saatine (MO Reels, GA Carousel, BER Reels) göre sıraya alır.
+ */
+async function ensureInstagramRegistryPlan({ supabase, instaSlots, activeCatalog, istanbulNow }) {
+  const { data: pendingRows, error: qErr } = await supabase
+    .from('social_publish_queue')
+    .select('id, product_slug, scheduled_for')
+    .eq('platform', 'instagram')
+    .eq('status', 'pending')
+    .limit(5);
+
+  if (qErr || (Array.isArray(pendingRows) && pendingRows.length > 0)) {
+    return { status: 'skipped', reason: 'QUEUE_HAS_PENDING_TASKS' };
+  }
+
+  const pick = await syncAndPickInstagramRegistryItem(supabase, activeCatalog);
+  if (pick.paused || !pick.entity) {
+    return { status: 'paused', reason: pick.registry?.pause_reason || 'ALL_PRODUCTS_PUBLISHED' };
+  }
+
+  const enabledSlots = (Array.isArray(instaSlots) ? instaSlots : []).filter(s => s && s.enabled !== false && s.active !== false && s.time);
+  const t0 = enabledSlots[0]?.time || '10:00';
+  const t1 = enabledSlots[1]?.time || '14:30';
+  const t2 = enabledSlots[2]?.time || '20:00';
+
+  const { dateStr, timeStr } = istanbulNow;
+  const [h0, m0] = t0.split(':').map(Number);
+  const [ch, cm] = timeStr.split(':').map(Number);
+  const passedToday = (ch * 60 + cm) > (h0 * 60 + m0 + 15);
+  const targetDateStr = passedToday
+    ? new Date(new Date(`${dateStr}T12:00:00+03:00`).getTime() + 86400000).toISOString().slice(0, 10)
+    : dateStr;
+
+  const pickedProduct = pick.entity;
+  const cache = (await fetchSiteSetting(supabase, 'module2_render_cache')) || {};
+  const cacheKey = Object.keys(cache)
+    .filter(k => k.startsWith(`${pickedProduct.slug}:three_post_v3:`))
+    .sort((a, b) => String(cache[b]?.created_at || '').localeCompare(String(cache[a]?.created_at || '')))[0];
+  const cachedCampaign = cacheKey ? cache[cacheKey] : null;
+  const hasCached = Boolean(cachedCampaign?.post01 && cachedCampaign?.post02 && cachedCampaign?.post03);
+  const hashtags = buildHashtags(pickedProduct, 'instagram');
+
+  if (pickedProduct.kind === 'collection' || hasCached) {
+    const tripletDefs = [
+      { postKey: 'post03', postIndex: 3, contentType: 'REELS', slotLabel: `${t0}_IG_1_MO`, time: t0, post: cachedCampaign?.post03 },
+      { postKey: 'post02', postIndex: 2, contentType: 'CAROUSEL', slotLabel: `${t1}_IG_2_GA`, time: t1, post: cachedCampaign?.post02 },
+      { postKey: 'post01', postIndex: 1, contentType: 'REELS', slotLabel: `${t2}_IG_3_BER`, time: t2, post: cachedCampaign?.post01 }
+    ];
+
+    const records = tripletDefs.map(step => ({
+      platform: 'instagram',
+      content_type: step.contentType,
+      slot_label: step.slotLabel,
+      product_slug: pickedProduct.slug,
+      media_url: (step.post && (step.post.mediaUrlWithCover || step.post.mediaUrl || step.post.videoUrl)) || `auto_render_3post:${pickedProduct.slug}:${step.postKey}`,
+      caption: (step.post && step.post.caption) || buildCollectionPostCaption(pickedProduct, step.postIndex, 'instagram'),
+      hashtags: (step.post && step.post.hashtags) || hashtags,
+      target_link: null,
+      status: 'pending',
+      idempotency_key: `instagram_${pickedProduct.slug}_3grid_${step.postKey}_${targetDateStr}`.toLowerCase(),
+      scheduled_for: getIstanbulSlotIso(targetDateStr, step.time)
+    }));
+
+    const { error: insErr } = await supabase
+      .from('social_publish_queue')
+      .upsert(records, { onConflict: 'idempotency_key', ignoreDuplicates: true });
+
+    if (insErr) {
+      console.warn(`[Scheduler] Instagram 3'lü plan ekleme hatası:`, insErr.message);
+      return { status: 'error', error: insErr.message };
+    }
+
+    console.log(`[Scheduler] Instagram 3'lü Grid sıraya alındı: ${pickedProduct.slug} (${targetDateStr} | ${t0} / ${t1} / ${t2} | Render: ${hasCached ? 'Hazır' : 'Otomatik Render Bekleniyor'})`);
+    return { status: 'enqueued_triplet', slug: pickedProduct.slug, scheduled_date: targetDateStr };
+  }
+
+  return { status: 'skipped', reason: 'NO_COLLECTION_MATCH' };
+}
+
+/**
  * Tek bir otonom zamanlayıcı döngüsü
  */
 export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey = null) {
@@ -512,12 +668,12 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
   const entities = buildCatalogEntities(catalog, extStore, transformSettings);
   const activeCatalog = entities && entities.length > 0 ? entities : catalog;
 
-  // 1. INSTAGRAM AYARLARI KONTROLÜ
+  // 1. INSTAGRAM AYARLARI KONTROLÜ (Merkezi Yayın Etiketi + 3'lü Grid Zamanlayıcı)
   const instaState = await fetchSiteSetting(supabase, 'insta_bot_state');
   const instaSlots = (instaState && instaState.config && instaState.config.posting_slots) || [
-    { type: 'POST', time: '10:00', enabled: true },
-    { type: 'STORIES', time: '14:30', enabled: true },
-    { type: 'REELS', time: '19:30', enabled: true }
+    { type: 'REELS', time: '10:00', enabled: true },
+    { type: 'POST', time: '14:30', enabled: true },
+    { type: 'STORIES', time: '20:00', enabled: true }
   ];
 
   // Ayar değişikliği algılama (Dinamik loglama)
@@ -527,20 +683,10 @@ export async function runSchedulerCycle(supabase, stateCache = {}, geminiApiKey 
   }
   stateCache.instaSlotsSig = currentInstaSlotsSig;
 
-  // Instagram slotlarını değerlendir
-  for (const slot of instaSlots) {
-    try {
-      await checkAndEnqueueSlot({
-        supabase,
-        platform: 'instagram',
-        slot,
-        istanbulNow,
-        catalog: activeCatalog,
-        geminiApiKey
-      });
-    } catch (err) {
-      console.warn(`[Scheduler Instagram Slot Hatası] ${slot.time}:`, err.message);
-    }
+  try {
+    await ensureInstagramRegistryPlan({ supabase, instaSlots, activeCatalog, istanbulNow });
+  } catch (igPlanErr) {
+    console.warn(`[Scheduler Instagram Plan Hatası]:`, igPlanErr.message);
   }
 
   // 2. FACEBOOK AYARLARI KONTROLÜ
