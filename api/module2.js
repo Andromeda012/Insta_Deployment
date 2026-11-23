@@ -1325,31 +1325,16 @@ async function handleCampaignApprovePublish(req, res) {
         });
       }
     } catch (err) {
-      if (process.env.NODE_ENV !== 'production') {
-        item.status = CONTENT_ITEM_STATUSES.QUEUED;
-        item.queue_task_id = `mock-queue-${Date.now()}`;
-        item.approved_at = item.approved_at || now.toISOString();
-        results.push({
-          item_id: item.id,
-          platform: item.platform,
-          package_type: item.package_type,
-          queued: true,
-          queue_task_id: item.queue_task_id,
-          status: item.status,
-          test_fallback: true
-        });
-      } else {
-        item.status = CONTENT_ITEM_STATUSES.FAILED;
-        item.error_message = err.message;
-        results.push({
-          item_id: item.id,
-          platform: item.platform,
-          package_type: item.package_type,
-          queued: false,
-          status: item.status,
-          reason: err.message
-        });
-      }
+      item.status = CONTENT_ITEM_STATUSES.FAILED;
+      item.error_message = err.message;
+      results.push({
+        item_id: item.id,
+        platform: item.platform,
+        package_type: item.package_type,
+        queued: false,
+        status: item.status,
+        reason: err.message
+      });
     }
   }
 

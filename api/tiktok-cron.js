@@ -1,19 +1,116 @@
-import {createHash} from 'node:crypto';
-import {TIKTOK_FORMATS,generateAutonomousTikTokDraft} from '../Module 2/Tiktok/bot-engine.js';
-import PhotoroomEngine from '../photoroom-engine.js';
-import {authenticateModule2Admin,authorizeVercelCron,getServiceRoleKey,supabaseAdminRequest,sendApiError,istanbulDateParts,istanbulScheduledIso} from './_lib/module2-publishing.js';
-export default async function handler(req,res){res.setHeader('Cache-Control','no-store');if(!['GET','POST'].includes(req.method))return res.status(405).json({ok:false});
-try{getServiceRoleKey();if(req.method==='GET'){if(!authorizeVercelCron(req))return res.status(401).json({ok:false});}else await authenticateModule2Admin(req);
-const st=await supabaseAdminRequest('/rest/v1/site_settings?key=eq.tt_bot_state&select=data&limit=1'),state=st?.[0]?.data||{config:{auto_publish_enabled:false},scheduledQueue:[]},cfg=state.config||{};
-if(req.method==='GET')return res.status(200).json({ok:true,skipped:true,reason:'tiktok_slots_not_configured'});
-const format=String(req.body?.format||'TIKTOK_ASMR_CNC').toUpperCase();if(!Object.prototype.hasOwnProperty.call(TIKTOK_FORMATS,format))return res.status(400).json({ok:false,error:'Unsupported TikTok format'});
-const p=await supabaseAdminRequest('/rest/v1/products?select=slug,sku,title,ana_resim,video_url&order=created_at.desc&limit=100');if(!p?.length)throw new Error('Product catalogue empty.');
-const sku=String(req.body?.product_sku||''),product=p.find(x=>x.sku===sku||x.slug===sku);if(!product)return res.status(404).json({ok:false,error:'Requested product was not found.'});const draft=generateAutonomousTikTokDraft({format,product});
-let campaign=await PhotoroomEngine.fetchActiveCampaignFromSupabase('tiktok');if(!campaign||campaign.product_slug!==product.slug)campaign=await PhotoroomEngine.buildAndSaveProductCampaign({product,apiKey:process.env.PHOTOROOM_API_KEY||process.env.GEMINI_API_KEY});
-const media=campaign?.reels_video_url||campaign?.photoroom_hero_vertical_url||product.ana_resim;if(!media||!/^https:\/\//i.test(media))return res.status(422).json({ok:false,error:'No valid TikTok media URL'});
-const type=/\.mp4(\?.*)?$/i.test(media)?'TIKTOK_VIDEO':'TIKTOK_PHOTO_CAROUSEL',scheduled=new Date().toISOString(),{date}=istanbulDateParts(),key=`tiktok_${createHash('sha256').update([product.slug,type,format,date].join('|')).digest('hex')}`;
-const ins=await supabaseAdminRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key',{method:'POST',headers:{Prefer:'resolution=ignore-duplicates,return=representation'},body:JSON.stringify({platform:'tiktok',content_type:type,slot_label:'Manuel yayın',product_slug:product.slug,media_url:media,caption:draft.caption||draft.onScreenHook||'',hashtags:Array.isArray(draft.hashtags)?draft.hashtags.join(' '):(draft.hashtags||''),status:'pending',idempotency_key:key,scheduled_for:scheduled})});
-let task=ins?.[0],dup=false;if(!task){dup=true;task=(await supabaseAdminRequest(`/rest/v1/social_publish_queue?idempotency_key=eq.${encodeURIComponent(key)}&select=id,status,scheduled_for&limit=1`))?.[0];}if(!task)throw new Error('Queue task not confirmed.');
-if(!dup){state.scheduledQueue=Array.isArray(state.scheduledQueue)?state.scheduledQueue:[];state.scheduledQueue.unshift({queue_task_id:task.id,idempotency_key:key,format,content_type:type,productSku:product.sku,productTitle:product.title,mediaUrl:media,scheduled_for:scheduled,status:'pending'});await supabaseAdminRequest('/rest/v1/site_settings',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({key:'tt_bot_state',data:state,updated_at:new Date().toISOString()})});}
-return res.status(200).json({ok:true,queued:true,duplicate_prevented:dup,queue_task_id:task.id,idempotency_key:key,content_type:type,product_sku:product.sku,product_title:product.title,media_url:media,scheduled_for:task.scheduled_for||scheduled});
-}catch(e){return sendApiError(res,e,'TikTok Cron');}}
+import { createHash } from 'node:crypto';
+import { TIKTOK_FORMATS, generateAutonomousTikTokDraft } from '../Module 2/Tiktok/bot-engine.js';
+import {
+  authenticateModule2Admin,
+  authorizeVercelCron,
+  getServiceRoleKey,
+  supabaseAdminRequest,
+  sendApiError,
+  istanbulDateParts
+} from './_lib/module2-publishing.js';
+
+export default async function handler(req, res) {
+  res.setHeader('Cache-Control', 'no-store');
+  if (!['GET', 'POST'].includes(req.method)) {
+    return res.status(405).json({ ok: false });
+  }
+
+  try {
+    getServiceRoleKey();
+    if (req.method === 'GET') {
+      if (!authorizeVercelCron(req)) return res.status(401).json({ ok: false });
+    } else {
+      await authenticateModule2Admin(req);
+    }
+
+    const st = await supabaseAdminRequest('/rest/v1/site_settings?key=eq.tt_bot_state&select=data&limit=1');
+    const state = st?.[0]?.data || { config: { auto_publish_enabled: false }, scheduledQueue: [] };
+
+    if (req.method === 'GET') {
+      return res.status(200).json({ ok: true, skipped: true, reason: 'tiktok_slots_not_configured' });
+    }
+
+    const format = String(req.body?.format || 'TIKTOK_ASMR_CNC').toUpperCase();
+    if (!Object.prototype.hasOwnProperty.call(TIKTOK_FORMATS, format)) {
+      return res.status(400).json({ ok: false, error: 'Unsupported TikTok format' });
+    }
+
+    const products = await supabaseAdminRequest('/rest/v1/products?select=slug,sku,title,ana_resim,video_url&order=created_at.desc&limit=100');
+    if (!products?.length) throw new Error('Product catalogue empty.');
+
+    const sku = String(req.body?.product_sku || '');
+    const product = products.find(x => x.sku === sku || x.slug === sku);
+    if (!product) return res.status(404).json({ ok: false, error: 'Requested product was not found.' });
+
+    const draft = generateAutonomousTikTokDraft({ format, product });
+    const media = product.video_url || product.ana_resim;
+    if (!media || !/^https:\/\//i.test(media)) {
+      return res.status(422).json({ ok: false, error: 'No valid TikTok media URL' });
+    }
+
+    const type = /\.mp4(\?.*)?$/i.test(media) ? 'TIKTOK_VIDEO' : 'TIKTOK_PHOTO_CAROUSEL';
+    const scheduled = new Date().toISOString();
+    const { date } = istanbulDateParts();
+    const key = `tiktok_${createHash('sha256').update([product.slug, type, format, date].join('|')).digest('hex')}`;
+
+    const ins = await supabaseAdminRequest('/rest/v1/social_publish_queue?on_conflict=idempotency_key', {
+      method: 'POST',
+      headers: { Prefer: 'resolution=ignore-duplicates,return=representation' },
+      body: JSON.stringify({
+        platform: 'tiktok',
+        content_type: type,
+        slot_label: 'Manuel yayın',
+        product_slug: product.slug,
+        media_url: media,
+        caption: draft.caption || draft.onScreenHook || '',
+        hashtags: Array.isArray(draft.hashtags) ? draft.hashtags.join(' ') : (draft.hashtags || ''),
+        status: 'pending',
+        idempotency_key: key,
+        scheduled_for: scheduled
+      })
+    });
+
+    let task = ins?.[0];
+    let dup = false;
+    if (!task) {
+      dup = true;
+      task = (await supabaseAdminRequest(`/rest/v1/social_publish_queue?idempotency_key=eq.${encodeURIComponent(key)}&select=id,status,scheduled_for&limit=1`))?.[0];
+    }
+    if (!task) throw new Error('Queue task not confirmed.');
+
+    if (!dup) {
+      state.scheduledQueue = Array.isArray(state.scheduledQueue) ? state.scheduledQueue : [];
+      state.scheduledQueue.unshift({
+        queue_task_id: task.id,
+        idempotency_key: key,
+        format,
+        content_type: type,
+        productSku: product.sku,
+        productTitle: product.title,
+        mediaUrl: media,
+        scheduled_for: scheduled,
+        status: 'pending'
+      });
+      await supabaseAdminRequest('/rest/v1/site_settings', {
+        method: 'POST',
+        headers: { Prefer: 'resolution=merge-duplicates,return=minimal' },
+        body: JSON.stringify({ key: 'tt_bot_state', data: state, updated_at: new Date().toISOString() })
+      });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      queued: true,
+      duplicate_prevented: dup,
+      queue_task_id: task.id,
+      idempotency_key: key,
+      content_type: type,
+      product_sku: product.sku,
+      product_title: product.title,
+      media_url: media,
+      scheduled_for: task.scheduled_for || scheduled
+    });
+  } catch (e) {
+    return sendApiError(res, e, 'TikTok Cron');
+  }
+}

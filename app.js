@@ -231,142 +231,189 @@ export function closeModal() {
     }
 }
 
-// Detail View Helpers
-export function showProductDetail(productId) {
-    const product = mockData.website.products.find(p => p.id === productId);
-    if (!product) return;
+// Detail View Helpers (Canlı Supabase / API Sorguları)
+export async function showProductDetail(productId) {
+    try {
+        const res = await fetch('/api/b2c-public?scope=catalog', { cache: 'no-store' });
+        const json = await res.json().catch(() => null);
+        const products = Array.isArray(json?.products) ? json.products : [];
+        const collections = Array.isArray(json?.collections) ? json.collections : [];
+        const target = String(productId || '').trim().toLowerCase();
+        const product = products.find(p =>
+            String(p.id || '').toLowerCase() === target ||
+            String(p.slug || '').toLowerCase() === target ||
+            String(p.sku || '').toLowerCase() === target
+        ) || collections.find(c =>
+            String(c.id || '').toLowerCase() === target ||
+            String(c.slug || '').toLowerCase() === target
+        );
 
-    const html = `
-        <div class="detail-drawer-content">
-            <div class="detail-header-row">
-                <span class="badge badge-accent">${product.category}</span>
-                <code>SKU: ${product.sku}</code>
-            </div>
-            <h2 style="margin: 10px 0;">${product.name}</h2>
-            <div class="detail-price-box">
-                <span>Fiyat:</span>
-                <strong>${product.price}</strong>
-            </div>
-            <div class="info-metric-list" style="margin-top: 16px;">
-                <div class="info-metric-item">
-                    <span>Malzeme & Ağaç Türü:</span>
-                    <strong>${product.material}</strong>
+        if (!product) {
+            showToast('Aranan ürün veya koleksiyon canlı katalogda bulunamadı.');
+            return;
+        }
+
+        const title = product.title || product.name || product.slug;
+        const category = product.kategori || product.category || 'Mobilya Koleksiyonu';
+        const imgUrl = product.ana_resim || product.hero_image || '';
+        const dims = product.body || product.short_description || '-';
+        const colors = Array.isArray(product.renkler) ? product.renkler.join(', ') : (product.renkler || '-');
+
+        const html = `
+            <div class="detail-drawer-content">
+                <div class="detail-header-row">
+                    <span class="badge badge-accent">${category}</span>
+                    <code>${product.sku ? `SKU: ${product.sku}` : `SLUG: ${product.slug}`}</code>
                 </div>
-                <div class="info-metric-item">
-                    <span>Mevcut Depo Stoğu:</span>
-                    <strong>${product.stock} Adet</strong>
+                <h2 style="margin: 10px 0;">${title}</h2>
+                ${imgUrl ? `<img src="${imgUrl}" alt="${title}" style="width:100%;max-height:220px;object-fit:cover;border-radius:10px;margin:10px 0;">` : ''}
+                <div class="info-metric-list" style="margin-top: 12px;">
+                    <div class="info-metric-item">
+                        <span>Ölçü / Açıklama:</span>
+                        <strong>${dims}</strong>
+                    </div>
+                    <div class="info-metric-item">
+                        <span>Renk Seçenekleri:</span>
+                        <strong>${colors}</strong>
+                    </div>
+                    <div class="info-metric-item">
+                        <span>Yayın Durumu:</span>
+                        <strong class="text-success">${product.web_gorunur === false ? 'Taslak' : 'Yayında'}</strong>
+                    </div>
                 </div>
-                <div class="info-metric-item">
-                    <span>Ürün Durumu:</span>
-                    <strong class="${product.status === 'Stokta' ? 'text-success' : 'text-warning'}">${product.status}</strong>
-                </div>
-                <div class="info-metric-item">
-                    <span>Öne Çıkan Ürün:</span>
-                    <strong>${product.featured ? 'Evet (Ana Sayfada Gösterilir)' : 'Hayır'}</strong>
+                <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
+                    <button class="btn btn-primary" onclick="window.closeModal(); window.navigateTo('products');">Modül 7'de Aç</button>
                 </div>
             </div>
-            <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
-            </div>
-        </div>
-    `;
-    showModal('Ürün Detay Kartı', html);
+        `;
+        showModal('Canlı Katalog Detayı', html);
+    } catch (err) {
+        showToast('Ürün detayı yüklenemedi: ' + err.message);
+    }
 }
 
-export function showLeadDetail(leadId) {
-    const lead = mockData.crm.leads.find(l => l.id === leadId);
-    if (!lead) return;
+export async function showLeadDetail(leadId) {
+    try {
+        const res = await fetch('/api/crm-customers', { cache: 'no-store' });
+        const json = await res.json().catch(() => null);
+        const customers = Array.isArray(json?.customers) ? json.customers : [];
+        const quotes = Array.isArray(json?.quotes) ? json.quotes : [];
+        const target = String(leadId || '').trim().toLowerCase();
+        const lead = customers.find(c =>
+            String(c.id || '').toLowerCase() === target ||
+            String(c.email || '').toLowerCase() === target
+        );
 
-    const html = `
-        <div class="detail-drawer-content">
-            <div class="detail-header-row">
-                <span class="badge badge-primary">${lead.channel}</span>
-                <code>${lead.id}</code>
-            </div>
-            <h2 style="margin: 10px 0;">${lead.customer}</h2>
-            <p style="color: var(--text-muted);">${lead.scope}</p>
+        if (!lead) {
+            showToast('CRM kaydı bulunamadı.');
+            return;
+        }
 
-            <div class="info-metric-list" style="margin-top: 16px;">
-                <div class="info-metric-item">
-                    <span>Huni Aşaması:</span>
-                    <span class="badge badge-accent">${lead.stage}</span>
-                </div>
-                <div class="info-metric-item">
-                    <span>Tahmini Teklif Tutarı:</span>
-                    <strong class="text-success">${lead.value}</strong>
-                </div>
-                <div class="info-metric-item">
-                    <span>Sorumlu Temsilci:</span>
-                    <strong>${lead.assignedTo}</strong>
-                </div>
-                <div class="info-metric-item">
-                    <span>Son Not:</span>
-                    <p style="margin: 0; font-size: 13px;">${lead.notes}</p>
-                </div>
-            </div>
+        const relQuotes = quotes.filter(q =>
+            (q.customer_id && q.customer_id === lead.id) ||
+            (q.email && lead.email && q.email === lead.email)
+        );
 
-            <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
-                <button class="btn btn-primary" onclick="window.showToast('${lead.id} için teklif PDF oluşturma penceresi açıldı.'); window.closeModal();">Teklif Hazırla</button>
+        const html = `
+            <div class="detail-drawer-content">
+                <div class="detail-header-row">
+                    <span class="badge badge-primary">${lead.source || 'B2C Vitrin'}</span>
+                    <code>${lead.id || '-'}</code>
+                </div>
+                <h2 style="margin: 10px 0;">${lead.full_name || lead.email || 'Müşteri'}</h2>
+                <p style="color: var(--text-muted);">${lead.email || '-'} ${lead.phone ? `• ${lead.phone}` : ''}</p>
+                <div class="info-metric-list" style="margin-top: 16px;">
+                    <div class="info-metric-item">
+                        <span>Huni Aşaması:</span>
+                        <span class="badge badge-accent">${lead.stage || 'Yeni Teklif Talebi'}</span>
+                    </div>
+                    <div class="info-metric-item">
+                        <span>Teklif Talepleri:</span>
+                        <strong>${relQuotes.length} Adet</strong>
+                    </div>
+                    <div class="info-metric-item">
+                        <span>Kayıt Tarihi:</span>
+                        <strong>${lead.created_at ? new Date(lead.created_at).toLocaleString('tr-TR') : '-'}</strong>
+                    </div>
+                </div>
+                <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
+                    <button class="btn btn-primary" onclick="window.closeModal(); window.navigateTo('crm');">Modül 3 CRM'e Git</button>
+                </div>
             </div>
-        </div>
-    `;
-    showModal('Müşteri Fırsat Detayı', html);
+        `;
+        showModal('Canlı CRM Müşteri Detayı', html);
+    } catch (err) {
+        showToast('CRM detayı yüklenemedi: ' + err.message);
+    }
 }
 
 export function showWorkOrderDetail(orderId) {
-    const ord = mockData.production.workOrders.find(o => o.id === orderId);
-    if (!ord) return;
-
     const html = `
         <div class="detail-drawer-content">
             <div class="detail-header-row">
-                <span class="badge badge-accent">${ord.stage}</span>
-                <code>İş Emri: ${ord.id}</code>
+                <span class="badge badge-accent">Üretim / MRP</span>
+                <code>${orderId || '-'}</code>
             </div>
-            <h2 style="margin: 10px 0;">${ord.item}</h2>
-            <p style="color: var(--text-muted);">Müşteri: <strong>${ord.customer}</strong> • Miktar: ${ord.quantity}</p>
-
-            <div class="cnc-workflow-timeline" style="margin: 20px 0;">
-                <h4>Üretim Aşamaları Takibi:</h4>
-                <div class="workflow-steps">
-                    <span class="step-badge done">1. Kesim ✓</span> →
-                    <span class="step-badge ${ord.stageIndex >= 2 ? 'done' : 'pending'}">2. CNC İşleme</span> →
-                    <span class="step-badge ${ord.stageIndex >= 3 ? 'done' : 'pending'}">3. Zımpara/Cila</span> →
-                    <span class="step-badge ${ord.stageIndex >= 4 ? 'done' : 'pending'}">4. Döşeme</span> →
-                    <span class="step-badge ${ord.stageIndex >= 5 ? 'done' : 'pending'}">5. Montaj</span> →
-                    <span class="step-badge ${ord.stageIndex >= 6 ? 'done' : 'pending'}">6. Kalite</span>
-                </div>
-            </div>
-
-            <div class="info-metric-list">
-                <div class="info-metric-item">
-                    <span>Sorumlu Fabrika Ekibi:</span>
-                    <strong>${ord.team}</strong>
-                </div>
-                <div class="info-metric-item">
-                    <span>İlerleme Oranı:</span>
-                    <strong>%${ord.progress}</strong>
-                </div>
-                <div class="info-metric-item">
-                    <span>Planlanan Teslim:</span>
-                    <strong>${ord.targetDate}</strong>
-                </div>
-                ${ord.bottleneck ? `
-                    <div class="info-metric-item" style="color: var(--warning);">
-                        <span>Darboğaz / Not:</span>
-                        <strong>${ord.bottleneck}</strong>
-                    </div>
-                ` : ''}
-            </div>
-
-            <div style="margin-top: 24px; display: flex; gap: 10px; justify-content: flex-end;">
+            <h2 style="margin: 10px 0;">Üretim İş Emri Takibi</h2>
+            <p style="color: var(--text-muted);">
+                İş emirleri doğrudan Modül 4 (Üretim & Fabrika Planlama) üzerinden yönetilmektedir.
+            </p>
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
                 <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
-                <button class="btn btn-primary" onclick="window.showToast('${ord.id} sonraki aşamaya taşındı.'); window.closeModal();">Aşamayı İlerlet</button>
+                <button class="btn btn-primary" onclick="window.closeModal(); window.navigateTo('production');">Modül 4'ü Aç</button>
             </div>
         </div>
     `;
     showModal('İmalat İş Emri Kartı', html);
+}
+
+async function runGlobalSearch(rawQuery) {
+    const q = String(rawQuery || '').trim();
+    if (!q) return;
+    const ql = q.toLowerCase();
+
+    showModal('Platform Genel Arama', `<div style="padding:20px;text-align:center;color:var(--text-muted);">"${q}" için canlı Supabase kataloğu ve CRM taranıyor…</div>`);
+
+    try {
+        const [catRes, crmRes] = await Promise.all([
+            fetch('/api/b2c-public?scope=catalog', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+            fetch('/api/crm-customers', { cache: 'no-store' }).then(r => r.json()).catch(() => null)
+        ]);
+
+        const products = (Array.isArray(catRes?.products) ? catRes.products : []).filter(p =>
+            JSON.stringify(p).toLowerCase().includes(ql)
+        ).slice(0, 8);
+        const collections = (Array.isArray(catRes?.collections) ? catRes.collections : []).filter(c =>
+            JSON.stringify(c).toLowerCase().includes(ql)
+        ).slice(0, 6);
+        const customers = (Array.isArray(crmRes?.customers) ? crmRes.customers : []).filter(c =>
+            JSON.stringify(c).toLowerCase().includes(ql)
+        ).slice(0, 6);
+
+        const total = products.length + collections.length + customers.length;
+        if (total === 0) {
+            showModal('Platform Genel Arama', `<div style="padding:20px;text-align:center;color:var(--text-muted);">"${q}" için canlı veritabanında eşleşen kayıt bulunamadı.</div>`);
+            return;
+        }
+
+        const section = (title, itemsHtml) => itemsHtml ? `<div style="margin-bottom:16px;"><h4 style="margin-bottom:8px;color:var(--accent);">${title}</h4>${itemsHtml}</div>` : '';
+        const html = `
+            <div class="detail-drawer-content">
+                <p style="margin-bottom:14px;color:var(--text-muted);">"${q}" için <strong>${total}</strong> canlı sonuç bulundu:</p>
+                ${section('Koleksiyonlar', collections.map(c => `<div class="info-metric-item" style="cursor:pointer;" onclick="window.showProductDetail('${c.slug}')"><strong>${c.title || c.slug}</strong><span class="badge badge-accent">${c.category || 'Koleksiyon'}</span></div>`).join(''))}
+                ${section('Ürünler', products.map(p => `<div class="info-metric-item" style="cursor:pointer;" onclick="window.showProductDetail('${p.slug || p.sku}')"><strong>${p.title || p.slug}</strong><code>${p.sku || p.slug}</code></div>`).join(''))}
+                ${section('CRM Müşterileri', customers.map(c => `<div class="info-metric-item" style="cursor:pointer;" onclick="window.showLeadDetail('${c.id || c.email}')"><strong>${c.full_name || c.email}</strong><span class="badge badge-primary">${c.stage || 'CRM'}</span></div>`).join(''))}
+                <div style="margin-top:16px;display:flex;justify-content:flex-end;">
+                    <button class="btn btn-secondary" onclick="window.closeModal()">Kapat</button>
+                </div>
+            </div>
+        `;
+        showModal(`Arama Sonuçları: "${q}"`, html);
+    } catch (err) {
+        showToast('Arama sırasında hata oluştu: ' + err.message);
+    }
 }
 
 // Tab Switcher
@@ -616,14 +663,15 @@ async function initApp() {
         });
     }
 
-    // Global quick search handler
+    // Global quick search handler (Canlı Supabase Kataloğu + CRM)
     const globalSearchInput = document.getElementById('global-search-input');
     if (globalSearchInput) {
         globalSearchInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 const q = e.target.value.trim();
                 if (q) {
-                    showToast(`"${q}" için platform genelinde arama simüle edildi`);
+                    runGlobalSearch(q);
                 }
             }
         });

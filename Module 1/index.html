@@ -4295,7 +4295,7 @@ async function saveSupabaseConfig() {
     window.module1SupabaseClient = supabaseClient;
 
     if (error && (error.message.includes('relation') || error.message.includes('does not exist') || error.code === '42P01')) {
-      showToast('⚠️ Supabase bağlantısı kuruldu ancak tablolar henüz oluşturulmamış. Lütfen "Kurulum SQL Kodunu Kopyala" butonuyla SQL Editor\'de tabloları oluşturun.', 'info');
+      showToast('⚠️ Supabase bağlantısı kuruldu ancak gerekli tablo eksik. Lütfen supabase/migrations altındaki migrasyonları kontrol edin.', 'info');
       return;
     }
 
@@ -4321,15 +4321,7 @@ async function seedExistingDataToSupabase() {
 }
 
 async function copySupabaseSetupSql() {
-  try {
-    const res = await fetch('/supabase_setup.sql?t=' + Date.now(), { cache: 'no-store' });
-    if (!res.ok) throw new Error('Güvenli Supabase kurulum SQL dosyası bulunamadı.');
-    const sqlText = await res.text();
-    await navigator.clipboard.writeText(sqlText);
-    showToast('Güvenli Supabase kurulum SQL kodu panoya kopyalandı.', 'success');
-  } catch(e) {
-    showToast('SQL kopyalanamadı: ' + e.message, 'error');
-  }
+  showToast('Kurulum artık supabase/migrations klasöründeki onaylı SQL dosyalarıyla yönetilmektedir.', 'info');
 }
 
 function toggleParentFullscreen() {
