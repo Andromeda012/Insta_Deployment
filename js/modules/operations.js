@@ -18,19 +18,19 @@ export function renderOperationsModule() {
                 return;
             }
 
-            const { clerk, cloudflareR2, supabaseDb, supabaseQueue, sentry, posthog, vercel } = json.services;
+            const { clerk, cloudflareR2, supabaseDb, supabaseQueue, sentry, posthog, vercel, storefronts, workers } = json.services;
 
             const statusPill = (ok, okText, warnText = 'Beklemede') => ok
                 ? `<span style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.38);color:#34d399;font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;">🟢 ${okText}</span>`
                 : `<span style="background:rgba(245,158,11,0.16);border:1px solid rgba(245,158,11,0.38);color:#fbbf24;font-size:11px;font-weight:800;padding:3px 9px;border-radius:12px;">🟡 ${warnText}</span>`;
 
-            const activeHealthyCount = [clerk?.ok, cloudflareR2?.ok && cloudflareR2?.cdnOk, supabaseDb?.ok, sentry?.ok, posthog?.ok, vercel?.ok].filter(Boolean).length;
+            const activeHealthyCount = [clerk?.ok, cloudflareR2?.ok && cloudflareR2?.cdnOk, supabaseDb?.ok, sentry?.ok, posthog?.ok, vercel?.ok, storefronts?.beta?.ok, workers?.igWebhookOk].filter(Boolean).length;
 
             if (summaryBadges) {
                 summaryBadges.innerHTML = `
                     <div class="card metric-card" style="background:#111B2E; border:1px solid rgba(16,185,129,0.28); border-radius:14px; padding:18px 20px;">
                         <div style="font-size:11px; font-weight:800; color:#94A3B8; text-transform:uppercase; margin-bottom:6px;">Çekirdek Altyapı Sağlığı</div>
-                        <div style="font-size:26px; font-weight:900; color:#34D399;">${activeHealthyCount} <span style="font-size:13px; color:#94A3B8;">/ 6 Çevrimiçi</span></div>
+                        <div style="font-size:26px; font-weight:900; color:#34D399;">${activeHealthyCount} <span style="font-size:13px; color:#94A3B8;">/ 8 Çevrimiçi</span></div>
                         <div style="font-size:12px; color:#CBD5E1; margin-top:4px;">Toplam Tarama: <strong>${json.totalCheckMs || 0} ms</strong></div>
                     </div>
                     <div class="card metric-card" style="background:#111B2E; border:1px solid rgba(56,189,248,0.28); border-radius:14px; padding:18px 20px;">
@@ -83,8 +83,8 @@ export function renderOperationsModule() {
                             ${statusPill(supabaseDb?.ok, `${supabaseDb?.latencyMs || 0} ms`, 'Hata')}
                         </div>
                         <div style="font-size:12px;color:#cbd5e1;line-height:1.55;">
-                            <div>Mod: <strong>Yalnızca İlişkisel DB</strong> (Auth &amp; Storage kapalı)</div>
-                            <div>Katalog: <strong>${supabaseDb?.collections || 0}</strong> koleksiyon • <strong>${supabaseDb?.products || 0}</strong> ürün • <strong>${supabaseDb?.threeDModels || 0}</strong> 3D</div>
+                            <div>Mod: <strong>Yalnızca İlişkisel DB</strong> (CRM &amp; ERP tabloları ${supabaseDb?.crmTableOk && supabaseDb?.erpUsersTableOk ? '✅ Hazır' : '⚠️ Kontrol'})</div>
+                            <div>Katalog: <strong>${supabaseDb?.collections || 0}</strong> koleksiyon • <strong>${supabaseDb?.products || 0}</strong> ürün • CRM: <strong>${supabaseDb?.crmCustomers || 0}</strong></div>
                             <div>Kuyruk: <strong>${supabaseQueue?.counts?.published || 0}</strong> yayında • <strong>${supabaseQueue?.counts?.pending || 0}</strong> bekleyen • <strong>${supabaseQueue?.counts?.failed || 0}</strong> hata</div>
                         </div>
                     </div>
@@ -120,8 +120,32 @@ export function renderOperationsModule() {
                         </div>
                         <div style="font-size:12px;color:#cbd5e1;line-height:1.55;">
                             <div>ERP: <code>erp.globalkapakmobilya.com</code></div>
-                            <div>Vitrin: <code>beta.globalkapakmobilya.com</code></div>
-                            <div>Runtime: <strong>${vercel?.serverlessFunctions || 12}</strong> Serverless Function + Vercel Cron</div>
+                            <div>Vitrinler: <code>beta</code> • <code>kapak</code></div>
+                            <div>Runtime: <strong>${vercel?.serverlessFunctions || 12}</strong>/12 Function + pg_cron</div>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(15,23,42,0.88);border:1px solid rgba(56,189,248,0.25);border-radius:12px;padding:15px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <strong style="font-size:13px;color:#fff;">🌐 B2C &amp; Membran Vitrinleri</strong>
+                            ${statusPill(storefronts?.beta?.ok, `${storefronts?.beta?.latencyMs || 0} ms`, 'Kontrol')}
+                        </div>
+                        <div style="font-size:12px;color:#cbd5e1;line-height:1.55;">
+                            <div>B2C Mobilya: <code>beta</code> → <strong>HTTP ${storefronts?.beta?.status || '-'}</strong></div>
+                            <div>Membran Kapak: <code>kapak</code> → <strong>${storefronts?.kapak?.ok ? `HTTP ${storefronts.kapak.status}` : 'DNS/Vercel Bekliyor'}</strong></div>
+                            <div>Köprü: <code>/api/b2c-public</code> + <code>/api/b2c-lazy-quote</code></div>
+                        </div>
+                    </div>
+
+                    <div style="background:rgba(15,23,42,0.88);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:15px;">
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                            <strong style="font-size:13px;color:#fff;">🤖 Bot &amp; DigitalOcean Render İşçisi</strong>
+                            ${statusPill(workers?.vpsOnline, 'VPS Online', workers?.igWebhookOk ? 'VPS Konteyner Kapalı' : 'Beklemede')}
+                        </div>
+                        <div style="font-size:12px;color:#cbd5e1;line-height:1.55;">
+                            <div>IG Webhook: <strong>${workers?.igWebhookOk ? `Çevrimiçi (HTTP ${workers.igWebhookStatus})` : 'Ulaşılamadı'}</strong></div>
+                            <div>VPS Render (<code>nova_publisher</code>): <strong>${workers?.vpsOnline ? 'Çevrimiçi' : 'Kapalı / Heartbeat Yok'}</strong></div>
+                            <div>Son Kalp Atışı: <code>${workers?.vpsLastSeen ? new Date(workers.vpsLastSeen).toLocaleString('tr-TR') : 'Henüz Sinyal Yok'}</code></div>
                         </div>
                     </div>
                 </div>

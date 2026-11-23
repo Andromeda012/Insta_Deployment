@@ -401,7 +401,7 @@ export async function fetchInfraHealthSnapshot() {
     ? rawCdnBase
     : 'https://cdn.globalkapakmobilya.com';
 
-  const [sentry, posthog, clerkProbe, r2Probe, queueProbe, dbCountsProbe] = await Promise.all([
+  const [sentry, posthog, clerkProbe, r2Probe, queueProbe, dbCountsProbe, storefrontProbe] = await Promise.all([
     fetchSentryTelemetrySummary(),
     fetchPostHogAnalyticsSummary(),
     (async () => {
@@ -431,7 +431,7 @@ export async function fetchInfraHealthSnapshot() {
           memberCount: members.length,
           departments: deptDist,
           webhookEndpoint: '/api/webhooks/clerk',
-          domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com']
+          domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com', 'kapak.globalkapakmobilya.com']
         };
       } catch (e) {
         return { ok: false, configured: true, latencyMs: Date.now() - t, orgId: clerkOrgId, error: e.message };
@@ -481,28 +481,61 @@ export async function fetchInfraHealthSnapshot() {
       }
     })(),
     (async () => {
-      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return { products: 0, collections: 0, crmCustomers: 0, threeDModels: 0 };
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) return { products: 0, collections: 0, crmCustomers: 0, crmTableOk: false, erpUsersTableOk: false, threeDModels: 0, workerOnline: false, workerLastSeen: null };
       try {
-        const [prodsRes, extRes, crmRes, tdRes] = await Promise.all([
+        const [prodsRes, extRes, crmStoreRes, crmTblRes, erpTblRes, tdRes, hbRes] = await Promise.all([
           fetch(`${SUPABASE_URL}/rest/v1/products?select=slug`, { headers: sbHeaders }),
           fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.module7_extended_catalog&select=data&limit=1`, { headers: sbHeaders }),
           fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.crm_customers_store&select=data&limit=1`, { headers: sbHeaders }),
-          fetch(`${SUPABASE_URL}/rest/v1/three_d_assets?select=id`, { headers: sbHeaders })
+          fetch(`${SUPABASE_URL}/rest/v1/crm_customers?select=id`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/erp_users?select=id`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/three_d_assets?select=id`, { headers: sbHeaders }),
+          fetch(`${SUPABASE_URL}/rest/v1/site_settings?key=eq.do_worker_heartbeat&select=data,updated_at&limit=1`, { headers: sbHeaders })
         ]);
         const prods = prodsRes.ok ? await prodsRes.json().catch(() => []) : [];
         const ext = extRes.ok ? await extRes.json().catch(() => []) : [];
-        const crm = crmRes.ok ? await crmRes.json().catch(() => []) : [];
+        const crmStore = crmStoreRes.ok ? await crmStoreRes.json().catch(() => []) : [];
+        const crmTbl = crmTblRes.ok ? await crmTblRes.json().catch(() => []) : [];
+        const erpTbl = erpTblRes.ok ? await erpTblRes.json().catch(() => []) : [];
         const td = tdRes.ok ? await tdRes.json().catch(() => []) : [];
+        const hb = hbRes.ok ? await hbRes.json().catch(() => []) : [];
+        const hbUpdatedAt = hb?.[0]?.updated_at || hb?.[0]?.data?.timestamp || null;
+        const workerOnline = Boolean(hbUpdatedAt && (Date.now() - new Date(hbUpdatedAt).getTime()) < 5 * 60 * 1000);
+        const storeCustCount = Array.isArray(crmStore?.[0]?.data?.customers) ? crmStore[0].data.customers.length : 0;
+        const tblCustCount = Array.isArray(crmTbl) ? crmTbl.length : 0;
         return {
           products: Array.isArray(prods) ? prods.length : 0,
           collections: Array.isArray(ext?.[0]?.data?.collections) ? ext[0].data.collections.length : 0,
-          crmCustomers: Array.isArray(crm?.[0]?.data?.customers) ? crm[0].data.customers.length : 0,
-          crmQuotes: Array.isArray(crm?.[0]?.data?.quotes) ? crm[0].data.quotes.length : 0,
-          threeDModels: Array.isArray(td) ? td.length : 0
+          crmCustomers: Math.max(storeCustCount, tblCustCount),
+          crmQuotes: Array.isArray(crmStore?.[0]?.data?.quotes) ? crmStore[0].data.quotes.length : 0,
+          crmTableOk: crmTblRes.ok,
+          erpUsersTableOk: erpTblRes.ok,
+          erpUsersCount: Array.isArray(erpTbl) ? erpTbl.length : 0,
+          threeDModels: Array.isArray(td) ? td.length : 0,
+          workerOnline,
+          workerLastSeen: hbUpdatedAt,
+          workerHost: hb?.[0]?.data?.host || 'DigitalOcean'
         };
       } catch (_) {
-        return { products: 0, collections: 0, crmCustomers: 0, crmQuotes: 0, threeDModels: 0 };
+        return { products: 0, collections: 0, crmCustomers: 0, crmQuotes: 0, crmTableOk: false, erpUsersTableOk: false, erpUsersCount: 0, threeDModels: 0, workerOnline: false, workerLastSeen: null };
       }
+    })(),
+    (async () => {
+      const probeUrl = async (url) => {
+        const t = Date.now();
+        try {
+          const r = await fetch(url, { method: 'GET', redirect: 'follow' });
+          return { ok: r.ok || (r.status >= 200 && r.status < 400), status: r.status, latencyMs: Date.now() - t };
+        } catch (e) {
+          return { ok: false, status: 0, latencyMs: Date.now() - t, error: e.message };
+        }
+      };
+      const [beta, kapak, igWebhook] = await Promise.all([
+        probeUrl('https://beta.globalkapakmobilya.com/'),
+        probeUrl('https://kapak.globalkapakmobilya.com/'),
+        probeUrl('https://erp.globalkapakmobilya.com/api/instagram-webhook')
+      ]);
+      return { beta, kapak, igWebhook };
     })()
   ]);
 
@@ -518,7 +551,7 @@ export async function fetchInfraHealthSnapshot() {
       supabaseDb: {
         ok: queueProbe.ok,
         latencyMs: queueProbe.latencyMs,
-        activeTables: 17,
+        activeTables: 19,
         storageDisabled: true,
         authDisabled: true,
         ...dbCountsProbe
@@ -536,9 +569,18 @@ export async function fetchInfraHealthSnapshot() {
         ok: true,
         region: process.env.VERCEL_REGION || 'fra1',
         env: process.env.VERCEL_ENV || 'production',
-        domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com'],
+        domains: ['erp.globalkapakmobilya.com', 'beta.globalkapakmobilya.com', 'kapak.globalkapakmobilya.com'],
         serverlessFunctions: 12,
         cronActive: true
+      },
+      storefronts: storefrontProbe,
+      workers: {
+        ok: dbCountsProbe.workerOnline || storefrontProbe.igWebhook?.ok,
+        vpsOnline: dbCountsProbe.workerOnline,
+        vpsLastSeen: dbCountsProbe.workerLastSeen,
+        vpsHost: dbCountsProbe.workerHost || 'DigitalOcean',
+        igWebhookOk: Boolean(storefrontProbe.igWebhook?.ok),
+        igWebhookStatus: storefrontProbe.igWebhook?.status || 0
       }
     }
   };
