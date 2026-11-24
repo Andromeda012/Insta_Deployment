@@ -6,6 +6,7 @@
 
 import crypto from 'node:crypto';
 import { captureSentryException } from './observability.js';
+import { claimCustomerAccount } from './crm.js';
 
 export const CLERK_PUBLISHABLE_KEY = (
   process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
@@ -270,11 +271,29 @@ export async function resolveClerkAuthContext(req) {
   const department = normalizeDepartment(rawDepartment, orgRole);
   const isOrganizationMember = Boolean(orgId && (!GLOBAL_KAPAK_ORG_ID || orgId === GLOBAL_KAPAK_ORG_ID));
 
-  const deptConfig = DEPARTMENT_DEFINITIONS[department] || DEPARTMENT_DEFINITIONS.viewer;
+  const rawRole = String(
+    apiProfile?.publicMetadata?.role ||
+    claims.public_metadata?.role ||
+    claims.metadata?.role ||
+    claims.app_metadata?.role ||
+    ''
+  ).toLowerCase().trim();
+
+  const role =
+    rawRole === 'admin' || orgRole === 'org:admin' || department === 'admin'
+      ? 'admin'
+      : rawRole === 'staff' || (isOrganizationMember && rawRole !== 'customer')
+        ? 'staff'
+        : 'customer';
+
+  const isStaffMember = isOrganizationMember || role === 'admin' || role === 'staff';
+  const effectiveDept = role === 'admin' && !rawDepartment ? 'admin' : department;
+  const deptConfig = DEPARTMENT_DEFINITIONS[effectiveDept] || DEPARTMENT_DEFINITIONS.viewer;
 
   return {
     id: clerkUserId,
     clerk_user_id: clerkUserId,
+    role,
     email: apiProfile?.email || claims.email || `${apiProfile?.username || clerkUserId}@globalkapakmobilya.com`,
     username: apiProfile?.username || claims.username || '',
     fullName: apiProfile?.fullName || apiProfile?.username || clerkUserId,
@@ -284,33 +303,43 @@ export async function resolveClerkAuthContext(req) {
     orgName: apiProfile?.orgName || 'Global Kapak Mobilya',
     orgRole,
     isOrganizationMember,
-    department: department || (isOrganizationMember ? 'viewer' : 'b2c_customer'),
-    departmentLabel: deptConfig.label,
-    departmentBadge: deptConfig.badge,
-    canWrite: isOrganizationMember ? deptConfig.canWrite : false,
-    allowedRoutes: isOrganizationMember ? deptConfig.allowedRoutes : [],
-    defaultRoute: isOrganizationMember ? deptConfig.defaultRoute : null,
+    department: effectiveDept || (isStaffMember ? 'viewer' : 'b2c_customer'),
+    departmentLabel: isStaffMember ? deptConfig.label : 'B2C Müşteri',
+    departmentBadge: isStaffMember ? deptConfig.badge : 'Müşteri',
+    canWrite: isStaffMember ? deptConfig.canWrite : false,
+    allowedRoutes: isStaffMember ? deptConfig.allowedRoutes : [],
+    defaultRoute: isStaffMember ? deptConfig.defaultRoute : null,
+    public_metadata: apiProfile?.publicMetadata || claims.public_metadata || claims.metadata || {},
     app_metadata: {
-      department: department || 'b2c_customer',
+      role,
+      department: effectiveDept || 'b2c_customer',
       org_id: orgId,
       org_role: orgRole,
-      roles: isOrganizationMember ? deptConfig.mappedRoles : []
+      roles: isStaffMember ? deptConfig.mappedRoles : []
     }
   };
 }
 
 /**
+ * Herhangi bir giriş yapmış Clerk kullanıcısını doğrular (customer, staff veya admin).
+ * Müşteri portalı (/hesabim/tekliflerim) gibi uçlar için kullanılır.
+ */
+export async function requireAuthenticatedUser(req) {
+  return resolveClerkAuthContext(req);
+}
+
+/**
  * ERP API Endpoint Yetkilendirme Middleware'i:
  * 1. Giriş yapmamış kullanıcıları (401) reddeder.
- * 2. Global Kapak Mobilya Clerk Organization üyeliği (orgId) olmayan bireysel B2C müşterilerini (403) kesinlikle reddeder.
- * 3. 'viewer' departmanındaki kullanıcıların oluşturma/düzenleme/silme (POST/PUT/PATCH/DELETE) isteklerini (403) reddeder.
+ * 2. Bireysel müşteri hesaplarını ('customer' veya Org üyesi olmayanlar) (403) reddeder.
+ * 3. 'viewer' departmanındaki kullanıcıların yazma/silme isteklerini (403) reddeder.
  * 4. Kullanıcının publicMetadata.department yetkisini ilgili modülün izin verilen rolleriyle eşleştirir.
  */
 export async function authenticateRoles(req, allowedRoles = []) {
   const ctx = await resolveClerkAuthContext(req);
 
-  // KURAL 1: Global Kapak Mobilya Clerk Organization (orgId) üyeliği zorunludur!
-  if (!ctx.isOrganizationMember) {
+  // KURAL 1: Bireysel B2C müşterileri (role === 'customer' veya kurum üyesi olmayanlar) ERP'ye giremez!
+  if (ctx.role === 'customer' || (!ctx.isOrganizationMember && !['staff', 'admin'].includes(ctx.role))) {
     throw httpError(
       'Yetkisiz Erişim: Bireysel müşteri hesapları ERP yönetim paneline erişemez. Lütfen Global Kapak Mobilya kurumsal personel hesabınızla giriş yapın.',
       403,
@@ -605,7 +634,7 @@ export async function handleClerkWebhookRequest(req, res) {
     // Clerk API'den kullanıcının kurum üyeliğini kontrol et
     const fullProfile = await fetchClerkUserAndOrgFromApi(clerkUserId);
 
-    if (fullProfile?.isOrganizationMember || pubMeta.department) {
+    if (fullProfile?.isOrganizationMember || pubMeta.department || pubMeta.role === 'admin' || pubMeta.role === 'staff') {
       const syncedErp = await syncErpUserToSupabase({
         clerk_user_id: clerkUserId,
         email: primaryEmail,
@@ -615,21 +644,35 @@ export async function handleClerkWebhookRequest(req, res) {
         org_id: fullProfile?.orgId || GLOBAL_KAPAK_ORG_ID,
         org_slug: fullProfile?.orgSlug || 'global-kapak-mobilya',
         org_role: fullProfile?.orgRole || 'org:member',
-        department: pubMeta.department || 'viewer',
+        department: pubMeta.department || (pubMeta.role === 'admin' ? 'admin' : 'viewer'),
         public_metadata: pubMeta
       });
       return res.status(200).json({ ok: true, event: eventType, target: 'erp_users', user: syncedErp });
     } else {
-      // Organizasyon üyesi olmayan bireysel B2C vitrin müşterisi -> crm_customers tablosuna kaydet
-      const syncedCrm = await upsertCrmCustomerToSupabase({
-        clerk_user_id: clerkUserId,
-        email: primaryEmail,
-        full_name: fullName,
-        phone: primaryPhone,
-        source: 'clerk_webhook_b2c',
-        metadata: pubMeta
+      // Bireysel B2C müşteri: Unified public.customers + leads_and_quotes hesabını sahiplen (Account Claiming)
+      const [claimedResult, syncedCrm] = await Promise.all([
+        claimCustomerAccount({
+          clerkUserId,
+          phone: primaryPhone,
+          email: primaryEmail,
+          fullName
+        }).catch(() => null),
+        upsertCrmCustomerToSupabase({
+          clerk_user_id: clerkUserId,
+          email: primaryEmail,
+          full_name: fullName,
+          phone: primaryPhone,
+          source: 'clerk_webhook_b2c',
+          metadata: pubMeta
+        }).catch(() => ({ customer: null }))
+      ]);
+      return res.status(200).json({
+        ok: true,
+        event: eventType,
+        target: 'customers',
+        customer: claimedResult?.customer || syncedCrm?.customer || null,
+        claimed_count: claimedResult?.claimed_count || 0
       });
-      return res.status(200).json({ ok: true, event: eventType, target: 'crm_customers', customer: syncedCrm.customer });
     }
   }
 
