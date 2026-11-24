@@ -168,7 +168,7 @@ async function products(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
 
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
   const body = req.body || {};
 
   if (req.method === 'DELETE') {
@@ -454,7 +454,7 @@ async function settings(req, res) {
     res.setHeader('Allow', 'GET, PUT');
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
   const value = req.body?.settings;
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length > 1000) {
     return res.status(400).json({ ok: false, error: 'Dönüştürme ayarları geçersiz.' });
@@ -492,7 +492,7 @@ async function aiProfiles(req, res) {
     res.setHeader('Allow', 'GET, PUT, POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
 
   // Tekil ürün veya koleksiyon pazarlama profili kaydetme desteği (POST)
   if (req.method === 'POST') {
@@ -567,10 +567,12 @@ async function media(req, res) {
     res.setHeader('Allow', 'POST');
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
-  await authenticateRoles(req, ['admin', 'product_manager']);
-  const { slug, data_url, mode, mime_type, file_size } = req.body || {};
-  if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz ürün kodu.' });
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager', 'social_media']);
+  const { slug, data_url, mode, mime_type, file_size, folder } = req.body || {};
+  if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz ürün/medya kodu.' });
   if (!SUPABASE_URL || !SERVICE_KEY) throw error('Storage server configuration is incomplete.', 503);
+
+  const safeFolder = String(folder || 'products').toLowerCase().replace(/[^a-z0-9_-]/g, '') || 'products';
 
   // Yüksek boyutlu görseller (50 MB'a kadar) için doğrudan Cloudflare R2 imzalı yükleme URL'si üretimi (Vercel 4.5 MB limitini aşar)
   if (mode === 'sign') {
@@ -579,8 +581,8 @@ async function media(req, res) {
     if (sizeNum > MAX_IMAGE_BYTES) {
       return res.status(413).json({ ok: false, error: 'Görsel en fazla 50 MB olabilir.' });
     }
-    const ext = rawMime.includes('webp') ? 'webp' : rawMime.includes('png') ? 'png' : 'jpg';
-    const path = `products/${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
+    const ext = rawMime.includes('webp') ? 'webp' : rawMime.includes('png') ? 'png' : rawMime.includes('avif') ? 'avif' : rawMime.includes('svg') ? 'svg' : 'jpg';
+    const path = `${safeFolder}/${slug}-${Date.now()}-${Math.random().toString(36).slice(2, 6)}.${ext}`;
     const signedUploadUrl = createR2PresignedUrl(path, 'PUT', 3600);
     const publicUrl = getR2PublicUrl(path);
     return res.status(200).json({
@@ -594,12 +596,12 @@ async function media(req, res) {
 
   if (typeof data_url !== 'string') return res.status(400).json({ ok: false, error: 'Görsel verisi eksik.' });
   const match = data_url.match(/^data:(image\/(?:png|jpeg|jpg|webp|avif));base64,([A-Za-z0-9+/=\s]+)$/);
-  if (!match) return res.status(400).json({ ok: false, error: 'Yalnızca PNG, JPEG veya WebP görselleri kabul edilir.' });
+  if (!match) return res.status(400).json({ ok: false, error: 'Yalnızca PNG, JPEG, WebP veya AVIF görselleri kabul edilir.' });
   const mime = match[1] === 'image/jpg' ? 'image/jpeg' : match[1];
   const bytes = Buffer.from(match[2], 'base64');
   if (!bytes.length || bytes.length > MAX_IMAGE_BYTES) return res.status(413).json({ ok: false, error: 'Görsel en fazla 50 MB olabilir.' });
-  const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/webp' ? 'webp' : 'png';
-  const path = `products/${slug}-${Date.now()}.${ext}`;
+  const ext = mime === 'image/jpeg' ? 'jpg' : mime === 'image/webp' ? 'webp' : mime === 'image/avif' ? 'avif' : 'png';
+  const path = `${safeFolder}/${slug}-${Date.now()}.${ext}`;
   const up = await uploadBufferToR2(path, bytes, mime);
   return res.status(201).json({
     ok: true,
@@ -712,9 +714,10 @@ async function collections(req, res) {
         code: col.code || col.slug,
         hero_image_url: col.hero_image || col.hero_image_url || '',
         status: col.is_visible === false ? 'draft' : 'active',
+        sort_order: typeof col.sort_order === 'number' ? col.sort_order : 0,
         parts: colParts
       };
-    });
+    }).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
     if (slug) {
       if (!validSlug(slug)) return res.status(400).json({ ok: false, error: 'Geçersiz koleksiyon slug.' });
@@ -731,7 +734,7 @@ async function collections(req, res) {
     return res.status(405).json({ ok: false, error: 'Method not allowed.' });
   }
 
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
   const body = req.body || {};
 
   if (req.method === 'DELETE') {
@@ -788,19 +791,26 @@ async function collections(req, res) {
 
   const extStore = await readExtendedCatalogStore();
   const existingIdx = (extStore.collections || []).findIndex(c => c.slug === slug);
-  const prevVersion = existingIdx >= 0 ? Number(extStore.collections[existingIdx].version || 1) : 0;
+  const prevRec = existingIdx >= 0 ? extStore.collections[existingIdx] : {};
+  const prevVersion = Number(prevRec.version || 0);
 
   const fullColRecord = {
-    id: savedCol?.id || (existingIdx >= 0 ? extStore.collections[existingIdx].id : slug),
+    id: savedCol?.id || (prevRec.id || slug),
     ...dbPayload,
     code: body.code ? String(body.code).trim() : slug.toUpperCase(),
     description: body.description ? String(body.description).trim() : (dbPayload.short_description || ''),
-    features: Array.isArray(body.features) ? body.features : [],
-    materials: Array.isArray(body.materials) ? body.materials : [],
-    dimensions: (body.dimensions && typeof body.dimensions === 'object') ? body.dimensions : {},
-    technical_specs: (body.technical_specs && typeof body.technical_specs === 'object') ? body.technical_specs : {},
-    video_urls: Array.isArray(body.video_urls) ? body.video_urls : [],
-    marketing_preferences: (body.marketing_preferences && typeof body.marketing_preferences === 'object') ? body.marketing_preferences : {},
+    city: body.city !== undefined ? String(body.city || '').trim() : (prevRec.city || ''),
+    country: body.country !== undefined ? String(body.country || '').trim() : (prevRec.country || ''),
+    coords: body.coords !== undefined ? String(body.coords || '').trim() : (prevRec.coords || ''),
+    aurora: (body.aurora && typeof body.aurora === 'object') ? body.aurora : (prevRec.aurora || null),
+    scene_config: (body.scene_config !== undefined) ? body.scene_config : (prevRec.scene_config || null),
+    ambient_image_url: body.ambient_image_url !== undefined ? String(body.ambient_image_url || '').trim() : (prevRec.ambient_image_url || ''),
+    features: Array.isArray(body.features) ? body.features : (prevRec.features || []),
+    materials: Array.isArray(body.materials) ? body.materials : (prevRec.materials || []),
+    dimensions: (body.dimensions && typeof body.dimensions === 'object') ? body.dimensions : (prevRec.dimensions || {}),
+    technical_specs: (body.technical_specs && typeof body.technical_specs === 'object') ? body.technical_specs : (prevRec.technical_specs || {}),
+    video_urls: Array.isArray(body.video_urls) ? body.video_urls : (prevRec.video_urls || []),
+    marketing_preferences: (body.marketing_preferences && typeof body.marketing_preferences === 'object') ? body.marketing_preferences : (prevRec.marketing_preferences || {}),
     version: prevVersion + 1
   };
 
@@ -860,7 +870,7 @@ async function collectionProducts(req, res) {
     return res.status(200).json({ ok: true, items: combined });
   }
 
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
   const body = req.body || {};
 
   if (req.method === 'DELETE') {
@@ -977,7 +987,7 @@ async function productMedia(req, res) {
     return res.status(200).json({ ok: true, media: list });
   }
 
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
   const body = req.body || {};
 
   if (req.method === 'DELETE') {
@@ -1095,7 +1105,7 @@ async function quotes(req, res) {
     });
   }
 
-  await authenticateRoles(req, ['admin', 'product_manager']);
+  await authenticateRoles(req, ['admin', 'product_manager', 'content_manager']);
 
   if (req.method === 'GET') {
     const rows = await supabase('/rest/v1/quote_requests?select=*&order=created_at.desc&limit=100', SERVICE_KEY).catch(() => []);
@@ -1820,14 +1830,26 @@ async function handleB2CPublicCatalog(req, res) {
     return res.status(200).json({ ok: true, orders: hayOrders });
   }
 
-  res.setHeader('Cache-Control', 'public, max-age=60, s-maxage=60, stale-while-revalidate=300');
+  const isFresh = String(req.query?.fresh || '') === '1';
+  res.setHeader(
+    'Cache-Control',
+    isFresh ? 'no-store, max-age=0' : 'public, max-age=10, s-maxage=10, stale-while-revalidate=30'
+  );
 
-  const [prodsRes, extStore, studioRows, threeDRows] = await Promise.all([
+  const [prodsRes, extStore, studioRows, threeDRows, cmsRows] = await Promise.all([
     supabase('/rest/v1/products?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => []),
     readExtendedCatalogStore(),
     supabase('/rest/v1/site_settings?key=eq.module8_studio_store&select=data&limit=1', SERVICE_KEY || ANON_KEY).catch(() => []),
-    supabase('/rest/v1/three_d_assets?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => [])
+    supabase('/rest/v1/three_d_assets?select=*&order=created_at.desc', SERVICE_KEY || ANON_KEY).catch(() => []),
+    supabase('/rest/v1/site_settings?key=in.(anasayfa_v2,koleksiyon_sayfasi,galeri_sayfasi,iletisim_sayfasi,hakkimizda,genel)&select=key,data', SERVICE_KEY || ANON_KEY).catch(() => [])
   ]);
+
+  const cmsMap = {};
+  for (const row of (Array.isArray(cmsRows) ? cmsRows : [])) {
+    if (row && row.key && row.data && typeof row.data === 'object') {
+      cmsMap[row.key] = row.data;
+    }
+  }
 
   const rawProducts = Array.isArray(prodsRes) ? prodsRes : [];
   const studioStore = Array.isArray(studioRows) && studioRows[0]?.data ? studioRows[0].data : {};
@@ -1864,7 +1886,7 @@ async function handleB2CPublicCatalog(req, res) {
           slug: cp.product_slug,
           name: pcProd.title || cp.title || cp.product_slug,
           dimensions: cp.dimensions || pcProd.body || 'Özel Mimari Ölçü',
-          material: '1. Sınıf 18mm E1 MDF, CNC Membran Kapak',
+          material: '1. Sınıf E1 Ahşap Gövde & Mimari İşçilik',
           image_url: normalizePublicR2Url(pcProd.ana_resim || cp.image_url || baseProd.ana_resim || ''),
           model_3d_url: model3dBySlug.get(cp.product_slug) || null
         };
@@ -1876,9 +1898,16 @@ async function handleB2CPublicCatalog(req, res) {
       name: c.title || c.name || baseProd.title || c.slug,
       category: c.category || baseProd.kategori || 'Koleksiyon',
       design_story: c.design_story || c.promo_quote || baseProd.kisa_aciklama || baseProd.body || '',
-      architecture_style: c.category ? `${c.category} Koleksiyonu` : 'Modern Mimari & CNC Zarafeti',
+      architecture_style: c.category ? `${c.category} Koleksiyonu` : 'Modern Mimari & Zanaat',
       color_palette: Array.isArray(c.color_palette) && c.color_palette.length ? c.color_palette : (baseProd.renkler || ['Kaşmir', 'Doğal Meşe', 'Antrasit']),
       features: Array.isArray(c.features) && c.features.length ? c.features : (baseProd.ozellikler || []),
+      city: c.city || '',
+      country: c.country || '',
+      coords: c.coords || '',
+      aurora: (c.aurora && typeof c.aurora === 'object') ? c.aurora : null,
+      scene_config: (c.scene_config && typeof c.scene_config === 'object') ? c.scene_config : null,
+      ambient_image_url: c.ambient_image_url ? normalizePublicR2Url(c.ambient_image_url) : '',
+      sort_order: typeof c.sort_order === 'number' ? c.sort_order : 0,
       hero_image_url: normalizePublicR2Url(c.hero_image || c.hero_image_url || baseProd.ana_resim || ''),
       model_3d_url: model3dBySlug.get(c.slug) || null,
       pieces: linkedPieces
@@ -1901,16 +1930,21 @@ async function handleB2CPublicCatalog(req, res) {
       model_3d_url: model3dBySlug.get(p.slug) || null
     }));
 
+  const sortedCollections = Array.from(colMap.values()).sort(
+    (a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0)
+  );
+
   return res.status(200).json({
     ok: true,
     generated_at: new Date().toISOString(),
     storage_provider: 'cloudflare_r2',
     brand: {
-      name: 'Global Kapak Mobilya',
-      whatsapp: '0505 015 1035',
-      website: 'globalkapakmobilya.com'
+      name: cmsMap.genel?.firma?.ad || 'Global Mobilya',
+      whatsapp: cmsMap.genel?.iletisim?.whatsapp || '0505 015 1035',
+      website: 'beta.globalkapakmobilya.com'
     },
-    collections: Array.from(colMap.values()),
+    cms: cmsMap,
+    collections: sortedCollections,
     products: independentProducts,
     total_3d_models: model3dBySlug.size
   });

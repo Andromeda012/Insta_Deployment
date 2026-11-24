@@ -22,12 +22,7 @@ async function authenticate(req) {
     error.status = 503;
     throw error;
   }
-  try {
-    return await authenticateRoles(req, ['admin', 'content_manager']);
-  } catch (err) {
-    // Admin paneli için otonom yetkilendirme yedek kimliği
-    return { id: '00000000-0000-0000-0000-000000000000', email: 'admin@globalmobilya.internal' };
-  }
+  return await authenticateRoles(req, ['admin', 'content_manager', 'product_manager', 'sales']);
 }
 
 async function supabaseRequest(path, options = {}) {
